@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +5,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { LogOut, FileText, User as UserIcon, Dashboard as DashboardIcon } from 'lucide-react';
+import { LogOut, FileText, User as UserIcon, LayoutDashboard } from 'lucide-react';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -78,7 +77,7 @@ const Dashboard = () => {
   }
 
   const sidebarItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'bills', label: 'Bills', icon: FileText },
     { id: 'profile', label: 'Profile', icon: UserIcon },
   ];
