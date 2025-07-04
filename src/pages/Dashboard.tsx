@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import BillsTable from '@/components/BillsTable';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -44,37 +44,7 @@ const Dashboard = () => {
               </h1>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Outstanding Bills</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-blue-600">$0.00</div>
-                  <p className="text-gray-600 text-sm mt-1">No outstanding bills</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Recent Payments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-green-600">0</div>
-                  <p className="text-gray-600 text-sm mt-1">Payments this month</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Account Status</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-lg font-semibold text-green-600">Good Standing</div>
-                  <p className="text-gray-600 text-sm mt-1">All payments up to date</p>
-                </CardContent>
-              </Card>
-            </div>
+            <BillsTable />
           </div>
         </SidebarInset>
       </div>
