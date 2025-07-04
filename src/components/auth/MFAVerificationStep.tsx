@@ -291,24 +291,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Verification Info */}
-          <Card className="bg-muted/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                  {verificationMethod === 'email' ? '📧' : '📱'}
-                </div>
-                <div>
-                  <p className="text-sm font-medium">
-                    Code sent to your {verificationMethod === 'email' ? 'email' : 'phone'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {verificationMethod === 'email' ? email : phone}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* OTP Input */}
           <div className="space-y-4">
