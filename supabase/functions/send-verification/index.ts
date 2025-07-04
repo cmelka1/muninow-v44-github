@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
 import { Resend } from "npm:resend@2.0.0";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { hash, compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,8 +28,25 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Validate environment variables
+  const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'RESEND_API_KEY'];
+  for (const envVar of requiredEnvVars) {
+    if (!Deno.env.get(envVar)) {
+      console.error(`Missing required environment variable: ${envVar}`);
+      return new Response(
+        JSON.stringify({ error: `Server configuration error: Missing ${envVar}`, success: false }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+  }
+
   try {
+    console.log(`Incoming request: ${req.method} ${req.url}`);
     const { identifier, type, action = 'send', code }: VerificationRequest = await req.json();
+    console.log(`Processing ${action} request for ${type}: ${identifier}`);
 
     if (action === 'send') {
       return await sendVerificationCode(identifier, type);
@@ -80,7 +97,8 @@ async function sendVerificationCode(identifier: string, type: 'email' | 'sms'): 
 
   // Generate 6-digit code
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const codeHash = await bcrypt.hash(code);
+  console.log(`Generating verification code for ${type}: ${identifier}`);
+  const codeHash = await hash(code);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
   // Store verification code
@@ -259,7 +277,7 @@ async function verifyCode(identifier: string, type: 'email' | 'sms', inputCode: 
   const newAttemptCount = storedCode.attempt_count + 1;
   
   // Check if code is correct
-  const isValidCode = await bcrypt.compare(inputCode, storedCode.code_hash);
+  const isValidCode = await compare(inputCode, storedCode.code_hash);
 
   if (isValidCode) {
     // Mark code as verified
