@@ -802,27 +802,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
               />
             </div>
 
-            {/* Submit Buttons */}
-            <div className="flex gap-4 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                asChild
-                className="flex-1 h-11"
-                disabled={isSubmitting || isCheckingEmail}
-              >
-                <Link to="/signin">Back to Sign In</Link>
-              </Button>
-              
+            {/* Submit Button */}
+            <div className="pt-4">
               <Button
                 type="submit"
-                className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={isSubmitting || isCheckingEmail}
               >
                 {isSubmitting || isCheckingEmail ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : null}
-                Create Account
+                Continue to Verification
               </Button>
             </div>
           </form>
