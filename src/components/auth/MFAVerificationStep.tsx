@@ -241,9 +241,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                   placeholder="(555) 123-4567"
                   className="h-11"
                 />
-                <p className="text-sm text-muted-foreground">
-                  Code will be sent to {maskPhone(phoneNumber)} • Standard messaging rates may apply
-                </p>
               </div>
             )}
           </div>
