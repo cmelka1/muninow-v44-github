@@ -62,64 +62,64 @@ const PaymentHistory = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <div className="p-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment History</h2>
-          <p className="text-gray-600">
-            View your payment history and transaction details.
-          </p>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$259.25</div>
-              <p className="text-xs text-muted-foreground">
-                This month
+          <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Payment History</h1>
+              <p className="text-gray-600">
+                View your payment history and transaction details.
               </p>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Successful</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">2</div>
-              <p className="text-xs text-muted-foreground">
-                Transactions
-              </p>
-            </CardContent>
-          </Card>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 md:mb-8">
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Total Payments</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl md:text-2xl font-bold text-gray-900">$259.25</div>
+                  <p className="text-sm text-gray-600">
+                    This month
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Failed</CardTitle>
-              <XCircle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">1</div>
-              <p className="text-xs text-muted-foreground">
-                Transactions
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Successful</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl md:text-2xl font-bold text-green-600">2</div>
+                  <p className="text-sm text-gray-600">
+                    Transactions
+                  </p>
+                </CardContent>
+              </Card>
 
-        {/* Payment History Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-          </CardHeader>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Failed</CardTitle>
+                  <XCircle className="h-4 w-4 text-red-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl md:text-2xl font-bold text-red-600">1</div>
+                  <p className="text-sm text-gray-600">
+                    Transactions
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Payment History Table */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-900">Recent Transactions</CardTitle>
+              </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {payments.map((payment) => (
@@ -154,8 +154,8 @@ const PaymentHistory = () => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
           </div>
         </SidebarInset>
       </div>

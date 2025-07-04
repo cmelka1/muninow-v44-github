@@ -62,74 +62,74 @@ const Members = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <div className="p-8">
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Members</h2>
-              <p className="text-gray-600">
-                Manage {profile?.account_type === 'business' ? 'team members' : 'household members'} and their access.
-              </p>
+          <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+            <div className="mb-6 md:mb-8">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Members</h1>
+                  <p className="text-gray-600">
+                    Manage {profile?.account_type === 'business' ? 'team members' : 'household members'} and their access.
+                  </p>
+                </div>
+                <Button className="flex items-center gap-2 self-start md:self-auto">
+                  <Plus className="h-4 w-4" />
+                  Add Member
+                </Button>
+              </div>
             </div>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Add Member
-            </Button>
-          </div>
-        </div>
 
-        {/* Summary Card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{members.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Active members
-              </p>
-            </CardContent>
-          </Card>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 md:mb-8">
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Total Members</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl md:text-2xl font-bold text-gray-900">{members.length}</div>
+                  <p className="text-sm text-gray-600">
+                    Active members
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Admins</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground">
-                Admin roles
-              </p>
-            </CardContent>
-          </Card>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Admins</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl md:text-2xl font-bold text-gray-900">1</div>
+                  <p className="text-sm text-gray-600">
+                    Admin roles
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Members</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground">
-                Regular members
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Members</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl md:text-2xl font-bold text-gray-900">1</div>
+                  <p className="text-sm text-gray-600">
+                    Regular members
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Members List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {profile?.account_type === 'business' ? 'Team Members' : 'Household Members'}
-            </CardTitle>
-          </CardHeader>
+            {/* Members List */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  {profile?.account_type === 'business' ? 'Team Members' : 'Household Members'}
+                </CardTitle>
+              </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {members.map((member) => (
@@ -163,8 +163,8 @@ const Members = () => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
           </div>
         </SidebarInset>
       </div>

@@ -76,21 +76,21 @@ const Profile = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <div className="max-w-4xl mx-auto p-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Settings</h2>
-          <p className="text-gray-600">
-            Manage your account information and preferences.
-          </p>
-        </div>
+          <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
+              <p className="text-gray-600">
+                Manage your account information and preferences.
+              </p>
+            </div>
 
-        <div className="space-y-6">
-          {/* Profile Header */}
-          <Card>
-            <CardContent className="pt-6">
+            <div className="space-y-6">
+              {/* Profile Header */}
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-20 w-20">
@@ -129,14 +129,14 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
+              {/* Personal Information */}
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Personal Information
+                  </CardTitle>
+                </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -183,14 +183,14 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Address Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Address Information
-              </CardTitle>
-            </CardHeader>
+              {/* Address Information */}
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Address Information
+                  </CardTitle>
+                </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="streetAddress">Street Address</Label>
@@ -233,15 +233,15 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Business Information (if applicable) */}
-          {profile?.account_type === 'business' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" />
-                  Business Information
-                </CardTitle>
-              </CardHeader>
+              {/* Business Information (if applicable) */}
+              {profile?.account_type === 'business' && (
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <Building className="h-5 w-5" />
+                      Business Information
+                    </CardTitle>
+                  </CardHeader>
               <CardContent>
                 <div>
                   <Label htmlFor="businessName">Business Legal Name</Label>
@@ -252,15 +252,15 @@ const Profile = () => {
                     disabled={!isEditing}
                   />
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Account Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-            </CardHeader>
+              {/* Account Information */}
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-900">Account Information</CardTitle>
+                </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -284,9 +284,9 @@ const Profile = () => {
                   {user?.id}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </SidebarInset>
       </div>
