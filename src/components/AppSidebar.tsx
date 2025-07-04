@@ -78,9 +78,9 @@ export function AppSidebar() {
       <SidebarContent className="px-4">
         <SidebarGroup>
           <div className="mb-6">
-            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4 pl-4">
-              MAIN MENU
-            </h2>
+             <h2 className="text-base font-medium text-gray-500 uppercase tracking-wide mb-4 pl-4">
+               MAIN MENU
+             </h2>
             <nav role="navigation" aria-label="Main navigation">
               <ul className="space-y-2">
                 {navigationItems.map((item) => {
@@ -92,7 +92,7 @@ export function AppSidebar() {
                       <NavLink
                         to={item.url}
                         className={({ isActive }) => 
-                          `flex items-center gap-3 px-4 py-2 rounded-md text-sm min-h-[40px] transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                          `flex items-center gap-3 px-4 py-2 rounded-md text-base min-h-[40px] transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                             isActive 
                               ? 'bg-primary/5 text-primary font-medium' 
                               : 'text-gray-600 hover:bg-primary/5 hover:text-primary'
