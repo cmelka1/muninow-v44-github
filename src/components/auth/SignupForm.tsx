@@ -167,7 +167,6 @@ interface SignupFormProps {
 
 export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const { signUp, isSubmitting } = useAuth();
@@ -710,16 +709,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                       <div className="relative">
                         <Input
                           {...field}
-                          type={showConfirmPassword ? "text" : "password"}
+                          type={showPassword ? "text" : "password"}
                           placeholder="Confirm your password"
                           className="h-11 pr-10"
                         />
                         <button
                           type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() => setShowPassword(!showPassword)}
                           className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          {showConfirmPassword ? (
+                          {showPassword ? (
                             <EyeOff className="h-4 w-4" />
                           ) : (
                             <Eye className="h-4 w-4" />
