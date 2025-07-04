@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -344,20 +344,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                     Account Type
                   </FormLabel>
                   <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
+                    <Tabs
+                      defaultValue="resident"
                       value={field.value}
-                      className="flex gap-6"
+                      onValueChange={field.onChange}
                     >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="resident" id="resident" />
-                        <Label htmlFor="resident" className="cursor-pointer">Resident</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="business" id="business" />
-                        <Label htmlFor="business" className="cursor-pointer">Business</Label>
-                      </div>
-                    </RadioGroup>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="resident">Resident</TabsTrigger>
+                        <TabsTrigger value="business">Business</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
