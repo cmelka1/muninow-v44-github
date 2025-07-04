@@ -31,6 +31,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (password: string) => Promise<{ error: any }>;
   setForgotPasswordOpen: (open: boolean) => void;
   clearError: () => void;
 }
@@ -271,6 +272,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updatePassword = async (password: string) => {
+    setIsSubmitting(true);
+    setLoginError(null);
+    
+    logAuthState('Password update attempt');
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+      
+      if (error) {
+        setLoginError(error.message);
+        logAuthState('Password update failed', { error: error.message });
+        return { error };
+      }
+
+      logAuthState('Password update successful');
+      
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated."
+      });
+      
+      return { error: null };
+    } catch (error: any) {
+      setLoginError(error.message);
+      logAuthState('Password update exception', { error: error.message });
+      return { error };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const setForgotPasswordOpen = (open: boolean) => {
     setIsForgotPasswordOpen(open);
     if (!open) {
@@ -296,6 +331,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUp,
     signOut,
     resetPassword,
+    updatePassword,
     setForgotPasswordOpen,
     clearError
   };
