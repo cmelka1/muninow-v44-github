@@ -13,7 +13,7 @@ const Dashboard = () => {
   // Redirect unauthenticated users
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate('/auth');
+      navigate('/signin');
     }
   }, [user, isLoading, navigate]);
 

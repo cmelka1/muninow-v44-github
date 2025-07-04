@@ -73,8 +73,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   };
 
-  // Load user profile
+  // Load user profile with timeout protection
   const loadProfile = async (userId: string) => {
+    const timeoutId = setTimeout(() => {
+      logAuthState('Profile loading timeout');
+      setIsLoading(false);
+    }, 10000); // 10 second timeout
+
     try {
       logAuthState('Loading profile', { userId });
       
@@ -84,8 +89,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .eq('id', userId)
         .maybeSingle();
 
+      clearTimeout(timeoutId);
+
       if (error) {
         console.error('Profile loading error:', error);
+        setIsLoading(false);
         return;
       }
 
@@ -95,9 +103,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         logAuthState('No profile found');
       }
+      
+      setIsLoading(false);
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Profile loading exception:', error);
       logAuthState('Profile loading failed', { error: error.message });
+      setIsLoading(false);
     }
   };
 
@@ -107,21 +119,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         logAuthState('Auth state change', { event, hasSession: !!session });
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Load profile for authenticated user
-          await loadProfile(session.user.id);
+          // Load profile for authenticated user with timeout protection
+          setTimeout(() => {
+            loadProfile(session.user.id);
+          }, 0);
         } else {
           // Clear profile when user signs out
           setProfile(null);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 

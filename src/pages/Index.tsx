@@ -1,41 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 const Index = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          navigate('/dashboard');
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        navigate('/dashboard');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
@@ -47,7 +16,7 @@ const Index = () => {
               <h1 className="text-xl font-bold text-blue-600">MuniNow</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/auth">
+              <Link to="/signin">
                 <Button variant="outline" size="sm">
                   Login
                 </Button>
@@ -70,12 +39,12 @@ const Index = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
+            <Link to="/signin">
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-lg">
                 Get Started
               </Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/signin">
               <Button variant="outline" size="lg" className="px-8 py-3 text-lg">
                 Login
               </Button>
