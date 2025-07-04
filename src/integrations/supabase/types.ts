@@ -9,250 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      autopay_settings: {
-        Row: {
-          account_type: string
-          business_id: string | null
-          category: string
-          created_at: string
-          id: string
-          is_enabled: boolean
-          is_paused: boolean | null
-          last_processed_at: string | null
-          max_amount_cents: number | null
-          pause_until: string | null
-          payment_method_id: string | null
-          retry_count: number | null
-          setting_type: string
-          updated_at: string
-          user_id: string
-          vendor: string | null
-        }
-        Insert: {
-          account_type?: string
-          business_id?: string | null
-          category: string
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          is_paused?: boolean | null
-          last_processed_at?: string | null
-          max_amount_cents?: number | null
-          pause_until?: string | null
-          payment_method_id?: string | null
-          retry_count?: number | null
-          setting_type?: string
-          updated_at?: string
-          user_id: string
-          vendor?: string | null
-        }
-        Update: {
-          account_type?: string
-          business_id?: string | null
-          category?: string
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          is_paused?: boolean | null
-          last_processed_at?: string | null
-          max_amount_cents?: number | null
-          pause_until?: string | null
-          payment_method_id?: string | null
-          retry_count?: number | null
-          setting_type?: string
-          updated_at?: string
-          user_id?: string
-          vendor?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "autopay_settings_payment_method_id_fkey"
-            columns: ["payment_method_id"]
-            isOneToOne: false
-            referencedRelation: "payment_methods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_autopay_settings_payment_method"
-            columns: ["payment_method_id"]
-            isOneToOne: false
-            referencedRelation: "payment_methods"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      autopay_transactions: {
-        Row: {
-          amount_cents: number
-          autopay_setting_id: string
-          bill_id: string | null
-          created_at: string
-          error_message: string | null
-          finix_transfer_id: string | null
-          id: string
-          processed_at: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          amount_cents: number
-          autopay_setting_id: string
-          bill_id?: string | null
-          created_at?: string
-          error_message?: string | null
-          finix_transfer_id?: string | null
-          id?: string
-          processed_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          amount_cents?: number
-          autopay_setting_id?: string
-          bill_id?: string | null
-          created_at?: string
-          error_message?: string | null
-          finix_transfer_id?: string | null
-          id?: string
-          processed_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "autopay_transactions_autopay_setting_id_fkey"
-            columns: ["autopay_setting_id"]
-            isOneToOne: false
-            referencedRelation: "autopay_settings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_autopay_transactions_setting"
-            columns: ["autopay_setting_id"]
-            isOneToOne: false
-            referencedRelation: "autopay_settings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bank_account_audit_log: {
-        Row: {
-          action: string
-          bank_account_id: string
-          changed_by: string
-          changed_by_type: string
-          created_at: string
-          id: string
-          new_values: Json | null
-          notes: string | null
-          old_values: Json | null
-        }
-        Insert: {
-          action: string
-          bank_account_id: string
-          changed_by: string
-          changed_by_type: string
-          created_at?: string
-          id?: string
-          new_values?: Json | null
-          notes?: string | null
-          old_values?: Json | null
-        }
-        Update: {
-          action?: string
-          bank_account_id?: string
-          changed_by?: string
-          changed_by_type?: string
-          created_at?: string
-          id?: string
-          new_values?: Json | null
-          notes?: string | null
-          old_values?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bank_account_audit_log_bank_account_id_fkey"
-            columns: ["bank_account_id"]
-            isOneToOne: false
-            referencedRelation: "municipality_bank_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bank_account_categories: {
-        Row: {
-          created_at: string
-          description: string | null
-          display_order: number
-          id: string
-          is_default: boolean
-          municipality_id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          is_default?: boolean
-          municipality_id: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          is_default?: boolean
-          municipality_id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      bank_account_notifications: {
-        Row: {
-          bank_account_id: string
-          created_at: string
-          id: string
-          message: string
-          notification_type: string
-          read_at: string | null
-          recipient_id: string | null
-          recipient_type: string
-        }
-        Insert: {
-          bank_account_id: string
-          created_at?: string
-          id?: string
-          message: string
-          notification_type: string
-          read_at?: string | null
-          recipient_id?: string | null
-          recipient_type: string
-        }
-        Update: {
-          bank_account_id?: string
-          created_at?: string
-          id?: string
-          message?: string
-          notification_type?: string
-          read_at?: string | null
-          recipient_id?: string | null
-          recipient_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bank_account_notifications_bank_account_id_fkey"
-            columns: ["bank_account_id"]
-            isOneToOne: false
-            referencedRelation: "municipality_bank_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       business_members: {
         Row: {
           activated_at: string | null
@@ -298,33 +54,6 @@ export type Database = {
           revoked_at?: string | null
           role?: string
           status?: string
-        }
-        Relationships: []
-      }
-      email_verification_codes: {
-        Row: {
-          code: string
-          created_at: string
-          expires_at: string
-          id: string
-          recipient: string
-          used_at: string | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          recipient: string
-          used_at?: string | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          recipient?: string
-          used_at?: string | null
         }
         Relationships: []
       }
@@ -379,63 +108,6 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           verification_status?: string | null
-        }
-        Relationships: []
-      }
-      finix_transactions: {
-        Row: {
-          account_type: string
-          amount_cents: number
-          bill_id: string | null
-          business_id: string | null
-          created_at: string | null
-          currency: string | null
-          failure_reason: string | null
-          finix_fee_cents: number | null
-          finix_payment_instrument_id: string
-          finix_transfer_id: string
-          id: string
-          merchant_identity_id: string | null
-          processor_response: Json | null
-          status: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          account_type?: string
-          amount_cents: number
-          bill_id?: string | null
-          business_id?: string | null
-          created_at?: string | null
-          currency?: string | null
-          failure_reason?: string | null
-          finix_fee_cents?: number | null
-          finix_payment_instrument_id: string
-          finix_transfer_id: string
-          id?: string
-          merchant_identity_id?: string | null
-          processor_response?: Json | null
-          status: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          account_type?: string
-          amount_cents?: number
-          bill_id?: string | null
-          business_id?: string | null
-          created_at?: string | null
-          currency?: string | null
-          failure_reason?: string | null
-          finix_fee_cents?: number | null
-          finix_payment_instrument_id?: string
-          finix_transfer_id?: string
-          id?: string
-          merchant_identity_id?: string | null
-          processor_response?: Json | null
-          status?: string
-          updated_at?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -567,7 +239,6 @@ export type Database = {
           account_type: string | null
           address: string
           amount_due: number
-          bank_account_category_id: string | null
           bill_number: string
           business_legal_name: string | null
           category: string
@@ -617,7 +288,6 @@ export type Database = {
           account_type?: string | null
           address: string
           amount_due: number
-          bank_account_category_id?: string | null
           bill_number: string
           business_legal_name?: string | null
           category: string
@@ -667,7 +337,6 @@ export type Database = {
           account_type?: string | null
           address?: string
           amount_due?: number
-          bank_account_category_id?: string | null
           bill_number?: string
           business_legal_name?: string | null
           category?: string
@@ -726,13 +395,6 @@ export type Database = {
             columns: ["system_id"]
             isOneToOne: false
             referencedRelation: "municipal_systems"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "municipal_bills_bank_account_category_id_fkey"
-            columns: ["bank_account_category_id"]
-            isOneToOne: false
-            referencedRelation: "bank_account_categories"
             referencedColumns: ["id"]
           },
           {
@@ -949,48 +611,6 @@ export type Database = {
           },
         ]
       }
-      municipal_service_areas: {
-        Row: {
-          account_number_patterns: string[] | null
-          address_patterns: string[] | null
-          created_at: string
-          id: string
-          is_active: boolean | null
-          municipality_id: string
-          service_area_name: string
-          territory_codes: string[] | null
-          updated_at: string
-          vendor: string
-          zip_codes: string[] | null
-        }
-        Insert: {
-          account_number_patterns?: string[] | null
-          address_patterns?: string[] | null
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          municipality_id: string
-          service_area_name: string
-          territory_codes?: string[] | null
-          updated_at?: string
-          vendor: string
-          zip_codes?: string[] | null
-        }
-        Update: {
-          account_number_patterns?: string[] | null
-          address_patterns?: string[] | null
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          municipality_id?: string
-          service_area_name?: string
-          territory_codes?: string[] | null
-          updated_at?: string
-          vendor?: string
-          zip_codes?: string[] | null
-        }
-        Relationships: []
-      }
       municipal_systems: {
         Row: {
           code: string
@@ -1052,113 +672,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      municipality_bank_accounts: {
-        Row: {
-          account_number_last_four: string | null
-          account_type: string | null
-          bank_account_category_id: string | null
-          bank_name: string | null
-          business_details: Json | null
-          created_at: string
-          finix_merchant_identity_id: string | null
-          id: string
-          is_primary: boolean | null
-          last_reminder_sent_at: string | null
-          merchant_application_id: string | null
-          municipality_id: string
-          municipality_notified_at: string | null
-          onboarded_at: string | null
-          onboarded_by: string | null
-          onboarding_data: Json | null
-          onboarding_status: string
-          priority_score: number | null
-          rejection_reason: string | null
-          routing_number: string | null
-          status: string
-          super_admin_approved_at: string | null
-          super_admin_approved_by: string | null
-          super_admin_notes: string | null
-          super_admin_requested_info: string | null
-          update_notes: string | null
-          update_requested_at: string | null
-          update_requirements: Json | null
-          updated_at: string
-          verification_documents: Json | null
-        }
-        Insert: {
-          account_number_last_four?: string | null
-          account_type?: string | null
-          bank_account_category_id?: string | null
-          bank_name?: string | null
-          business_details?: Json | null
-          created_at?: string
-          finix_merchant_identity_id?: string | null
-          id?: string
-          is_primary?: boolean | null
-          last_reminder_sent_at?: string | null
-          merchant_application_id?: string | null
-          municipality_id: string
-          municipality_notified_at?: string | null
-          onboarded_at?: string | null
-          onboarded_by?: string | null
-          onboarding_data?: Json | null
-          onboarding_status?: string
-          priority_score?: number | null
-          rejection_reason?: string | null
-          routing_number?: string | null
-          status?: string
-          super_admin_approved_at?: string | null
-          super_admin_approved_by?: string | null
-          super_admin_notes?: string | null
-          super_admin_requested_info?: string | null
-          update_notes?: string | null
-          update_requested_at?: string | null
-          update_requirements?: Json | null
-          updated_at?: string
-          verification_documents?: Json | null
-        }
-        Update: {
-          account_number_last_four?: string | null
-          account_type?: string | null
-          bank_account_category_id?: string | null
-          bank_name?: string | null
-          business_details?: Json | null
-          created_at?: string
-          finix_merchant_identity_id?: string | null
-          id?: string
-          is_primary?: boolean | null
-          last_reminder_sent_at?: string | null
-          merchant_application_id?: string | null
-          municipality_id?: string
-          municipality_notified_at?: string | null
-          onboarded_at?: string | null
-          onboarded_by?: string | null
-          onboarding_data?: Json | null
-          onboarding_status?: string
-          priority_score?: number | null
-          rejection_reason?: string | null
-          routing_number?: string | null
-          status?: string
-          super_admin_approved_at?: string | null
-          super_admin_approved_by?: string | null
-          super_admin_notes?: string | null
-          super_admin_requested_info?: string | null
-          update_notes?: string | null
-          update_requested_at?: string | null
-          update_requirements?: Json | null
-          updated_at?: string
-          verification_documents?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "municipality_bank_accounts_bank_account_category_id_fkey"
-            columns: ["bank_account_category_id"]
-            isOneToOne: false
-            referencedRelation: "bank_account_categories"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       payment_methods: {
         Row: {
@@ -1470,35 +983,6 @@ export type Database = {
         }
         Relationships: []
       }
-      role_permissions: {
-        Row: {
-          created_at: string
-          id: string
-          permission: string
-          role_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          permission: string
-          role_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          permission?: string
-          role_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_permissions_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       roles: {
         Row: {
           created_at: string
@@ -1517,69 +1001,6 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
-        }
-        Relationships: []
-      }
-      security_logs: {
-        Row: {
-          created_at: string | null
-          event_data: Json | null
-          event_type: string
-          id: string
-          ip_address: string | null
-          timestamp: string
-          user_agent: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          event_data?: Json | null
-          event_type: string
-          id?: string
-          ip_address?: string | null
-          timestamp?: string
-          user_agent?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          event_data?: Json | null
-          event_type?: string
-          id?: string
-          ip_address?: string | null
-          timestamp?: string
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
-      user_profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string
-          first_name: string
-          id: string
-          last_name: string
-          phone: string | null
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email: string
-          first_name: string
-          id: string
-          last_name: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string
-          first_name?: string
-          id?: string
-          last_name?: string
-          phone?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -1654,39 +1075,6 @@ export type Database = {
           user_id?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
           year?: string
-        }
-        Relationships: []
-      }
-      vendor_territory_mappings: {
-        Row: {
-          created_at: string
-          id: string
-          is_active: boolean | null
-          municipality_id: string
-          territory_code: string
-          updated_at: string
-          vendor: string
-          zip_codes: string[] | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          municipality_id: string
-          territory_code: string
-          updated_at?: string
-          vendor: string
-          zip_codes?: string[] | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          municipality_id?: string
-          territory_code?: string
-          updated_at?: string
-          vendor?: string
-          zip_codes?: string[] | null
         }
         Relationships: []
       }
