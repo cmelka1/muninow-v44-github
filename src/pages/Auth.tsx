@@ -94,14 +94,14 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="shadow-xl border-0 bg-card/95 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-3xl font-bold text-blue-600 mb-1">
+            <CardTitle className="text-3xl font-bold text-primary mb-1">
               {isSignUp ? 'Create Account' : 'Sign In'}
             </CardTitle>
-            <CardDescription className="text-gray-500 text-base">
+            <CardDescription className="text-muted-foreground text-base">
               {isSignUp 
                 ? 'Enter your details to create a new account' 
                 : 'Welcome back! Please enter your details.'
@@ -111,7 +111,7 @@ const Auth = () => {
           <CardContent className="px-8 pb-8">
             <form onSubmit={handleAuth} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   Email
                 </Label>
                 <Input
@@ -121,12 +121,12 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="h-11 focus:ring-primary"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Password
                 </Label>
                 <div className="relative">
@@ -137,12 +137,12 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                    className="h-11 focus:ring-primary pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -163,14 +163,14 @@ const Auth = () => {
                     />
                     <Label 
                       htmlFor="remember" 
-                      className="text-sm text-gray-600 cursor-pointer"
+                      className="text-sm text-muted-foreground cursor-pointer"
                     >
                       Remember for 30 days
                     </Label>
                   </div>
                   <button
                     type="button"
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
                   >
                     Forgot password?
                   </button>
@@ -180,20 +180,20 @@ const Auth = () => {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-colors"
               >
                 {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
               </Button>
             </form>
             
             <div className="mt-6 text-center">
-              <span className="text-gray-600 text-sm">
+              <span className="text-muted-foreground text-sm">
                 {isSignUp ? 'Already have an account?' : "Don't have an account?"}
               </span>
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="ml-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                className="ml-1 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
               >
                 {isSignUp ? 'Sign in' : 'Sign up for free'}
               </button>
