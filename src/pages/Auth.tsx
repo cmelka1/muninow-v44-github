@@ -94,11 +94,11 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md mx-auto">
-        <Card className="border-0 shadow-2xl backdrop-blur-sm bg-white/95 transition-all duration-300 hover:shadow-3xl">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-3xl font-bold text-blue-600 mb-1 transition-colors duration-200">
+            <CardTitle className="text-3xl font-bold text-blue-600 mb-1">
               {isSignUp ? 'Create Account' : 'Sign In'}
             </CardTitle>
             <CardDescription className="text-gray-500 text-base">
@@ -121,8 +121,7 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={loading}
-                  className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50"
+                  className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               
@@ -138,14 +137,12 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    disabled={loading}
-                    className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10 transition-all duration-200 disabled:opacity-50"
+                    className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors duration-200 disabled:opacity-50"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -157,25 +154,23 @@ const Auth = () => {
               </div>
 
               {!isSignUp && (
-                <div className="flex items-center justify-between animate-fade-in">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="remember"
                       checked={rememberMe}
                       onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                      disabled={loading}
                     />
                     <Label 
                       htmlFor="remember" 
-                      className="text-sm text-gray-600 cursor-pointer transition-colors duration-200"
+                      className="text-sm text-gray-600 cursor-pointer"
                     >
                       Remember for 30 days
                     </Label>
                   </div>
                   <button
                     type="button"
-                    disabled={loading}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 disabled:opacity-50"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Forgot password?
                   </button>
@@ -185,16 +180,9 @@ const Auth = () => {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
               >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading...</span>
-                  </div>
-                ) : (
-                  isSignUp ? 'Create Account' : 'Sign In'
-                )}
+                {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
               </Button>
             </form>
             
@@ -205,8 +193,7 @@ const Auth = () => {
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                disabled={loading}
-                className="ml-1 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 disabled:opacity-50"
+                className="ml-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
                 {isSignUp ? 'Sign in' : 'Sign up for free'}
               </button>
