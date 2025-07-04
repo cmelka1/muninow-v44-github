@@ -1,0 +1,327 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
+import { Resend } from "npm:resend@2.0.0";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface VerificationRequest {
+  identifier: string; // email or phone number
+  type: 'email' | 'sms';
+  action?: 'send' | 'verify';
+  code?: string;
+}
+
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+);
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { identifier, type, action = 'send', code }: VerificationRequest = await req.json();
+
+    if (action === 'send') {
+      return await sendVerificationCode(identifier, type);
+    } else if (action === 'verify') {
+      return await verifyCode(identifier, type, code!);
+    } else {
+      throw new Error('Invalid action');
+    }
+  } catch (error: any) {
+    console.error("Error in send-verification function:", error);
+    return new Response(
+      JSON.stringify({ error: error.message, success: false }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+};
+
+async function sendVerificationCode(identifier: string, type: 'email' | 'sms'): Promise<Response> {
+  // Check rate limiting - max 3 attempts per 10 minutes
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  
+  const { data: recentCodes, error: checkError } = await supabase
+    .from('verification_codes')
+    .select('*')
+    .eq('user_identifier', identifier)
+    .eq('verification_type', type)
+    .gte('created_at', tenMinutesAgo);
+
+  if (checkError) {
+    throw new Error(`Error checking rate limit: ${checkError.message}`);
+  }
+
+  if (recentCodes && recentCodes.length >= 3) {
+    return new Response(
+      JSON.stringify({ 
+        error: "Too many verification attempts. Please wait 10 minutes before trying again.",
+        success: false 
+      }),
+      {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+
+  // Generate 6-digit code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const codeHash = await bcrypt.hash(code);
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
+
+  // Store verification code
+  const { error: insertError } = await supabase
+    .from('verification_codes')
+    .insert({
+      user_identifier: identifier,
+      code_hash: codeHash,
+      verification_type: type,
+      expires_at: expiresAt,
+      status: 'pending'
+    });
+
+  if (insertError) {
+    throw new Error(`Error storing verification code: ${insertError.message}`);
+  }
+
+  // Send code based on type
+  try {
+    if (type === 'email') {
+      await sendEmailCode(identifier, code);
+    } else if (type === 'sms') {
+      await sendSMSCode(identifier, code);
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        message: `Verification code sent via ${type}`,
+        success: true 
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  } catch (sendError: any) {
+    console.error(`Error sending ${type} code:`, sendError);
+    
+    // Clean up the stored code if sending failed
+    await supabase
+      .from('verification_codes')
+      .update({ status: 'expired' })
+      .eq('user_identifier', identifier)
+      .eq('verification_type', type)
+      .eq('status', 'pending');
+
+    throw new Error(`Failed to send verification code: ${sendError.message}`);
+  }
+}
+
+async function sendEmailCode(email: string, code: string): Promise<void> {
+  const emailResponse = await resend.emails.send({
+    from: "MuniPay <verification@resend.dev>",
+    to: [email],
+    subject: "Your MuniPay Verification Code",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #333; margin-bottom: 10px;">MuniPay Verification</h1>
+          <p style="color: #666; font-size: 16px;">Complete your account setup</p>
+        </div>
+        
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h2 style="color: #333; margin-bottom: 20px;">Your Verification Code</h2>
+          <div style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 8px; margin: 20px 0; font-family: 'Courier New', monospace;">
+            ${code}
+          </div>
+          <p style="color: #666; font-size: 14px; margin-top: 20px;">
+            This code will expire in 5 minutes
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+          <p style="color: #333; font-size: 16px; margin-bottom: 10px;">
+            Enter this code to verify your email address and complete your MuniPay account setup.
+          </p>
+          <p style="color: #666; font-size: 14px;">
+            If you didn't request this code, you can safely ignore this email.
+          </p>
+        </div>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        
+        <div style="text-align: center;">
+          <p style="color: #999; font-size: 12px;">
+            This is an automated message from MuniPay. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
+    `,
+  });
+
+  if (emailResponse.error) {
+    throw new Error(`Email sending failed: ${emailResponse.error.message}`);
+  }
+}
+
+async function sendSMSCode(phone: string, code: string): Promise<void> {
+  // Clean phone number (remove any formatting)
+  const cleanPhone = phone.replace(/\D/g, '');
+  const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
+
+  const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+  
+  if (!accountSid || !authToken) {
+    throw new Error('Twilio credentials not configured');
+  }
+
+  const message = `Your MuniPay verification code is: ${code}. This code expires in 5 minutes.`;
+
+  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      From: '+18449463299', // Twilio phone number
+      To: formattedPhone,
+      Body: message,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(`SMS sending failed: ${errorData}`);
+  }
+}
+
+async function verifyCode(identifier: string, type: 'email' | 'sms', inputCode: string): Promise<Response> {
+  if (!inputCode || inputCode.length !== 6) {
+    return new Response(
+      JSON.stringify({ 
+        error: "Please enter a valid 6-digit code",
+        success: false 
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+
+  // Get the most recent pending code for this identifier and type
+  const { data: codes, error: fetchError } = await supabase
+    .from('verification_codes')
+    .select('*')
+    .eq('user_identifier', identifier)
+    .eq('verification_type', type)
+    .eq('status', 'pending')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (fetchError) {
+    throw new Error(`Error fetching verification code: ${fetchError.message}`);
+  }
+
+  if (!codes || codes.length === 0) {
+    return new Response(
+      JSON.stringify({ 
+        error: "No valid verification code found. Please request a new code.",
+        success: false 
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+
+  const storedCode = codes[0];
+
+  // Increment attempt count
+  const newAttemptCount = storedCode.attempt_count + 1;
+  
+  // Check if code is correct
+  const isValidCode = await bcrypt.compare(inputCode, storedCode.code_hash);
+
+  if (isValidCode) {
+    // Mark code as verified
+    const { error: updateError } = await supabase
+      .from('verification_codes')
+      .update({ 
+        status: 'verified',
+        attempt_count: newAttemptCount
+      })
+      .eq('id', storedCode.id);
+
+    if (updateError) {
+      throw new Error(`Error updating verification code: ${updateError.message}`);
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        message: "Code verified successfully",
+        success: true 
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  } else {
+    // Update attempt count
+    await supabase
+      .from('verification_codes')
+      .update({ attempt_count: newAttemptCount })
+      .eq('id', storedCode.id);
+
+    // If too many attempts, expire the code
+    if (newAttemptCount >= 3) {
+      await supabase
+        .from('verification_codes')
+        .update({ status: 'expired' })
+        .eq('id', storedCode.id);
+
+      return new Response(
+        JSON.stringify({ 
+          error: "Too many incorrect attempts. Please request a new code.",
+          success: false 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        error: `Incorrect code. ${3 - newAttemptCount} attempts remaining.`,
+        success: false 
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+}
+
+serve(handler);
