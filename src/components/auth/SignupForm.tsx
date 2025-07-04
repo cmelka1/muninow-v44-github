@@ -503,6 +503,26 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         // Continue with account creation - payment can be set up later
       }
       
+      // Phase 5: Assign appropriate admin role based on account type
+      console.log('Assigning user role...');
+      try {
+        const roleName = formData.accountType === 'business' ? 'businessAdmin' : 'residentAdmin';
+        const { error: roleError } = await supabase.rpc('assign_role_to_user', {
+          _user_id: authData.user.id,
+          _role_name: roleName
+        });
+        
+        if (roleError) {
+          console.error('Role assignment failed:', roleError);
+          // Don't block account creation - user can be assigned role later
+        } else {
+          console.log('Role assigned successfully:', roleName);
+        }
+      } catch (roleError) {
+        console.error('Role assignment error:', roleError);
+        // Continue with account creation - role can be assigned later
+      }
+      
       // Success - show completion message
       toast({
         title: "Account created successfully!",
