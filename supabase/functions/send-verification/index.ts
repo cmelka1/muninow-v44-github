@@ -210,35 +210,69 @@ async function sendEmailCode(email: string, code: string): Promise<void> {
 }
 
 async function sendSMSCode(phone: string, code: string): Promise<void> {
+  console.log(`Original phone number received: ${phone}`);
+  
   // Clean phone number (remove any formatting)
-  const cleanPhone = phone.replace(/\D/g, '');
-  const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
+  let cleanPhone = phone.replace(/\D/g, '');
+  console.log(`Phone after cleaning: ${cleanPhone}`);
+  
+  // Handle US phone numbers: remove leading 1 if present, then ensure we have exactly 10 digits
+  if (cleanPhone.startsWith('1') && cleanPhone.length === 11) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  
+  // Validate we have exactly 10 digits for US phone numbers
+  if (cleanPhone.length !== 10) {
+    throw new Error(`Invalid US phone number format. Expected 10 digits, got ${cleanPhone.length}: ${cleanPhone}`);
+  }
+  
+  // Format for Twilio E.164 (US numbers)
+  const formattedPhone = `+1${cleanPhone}`;
+  console.log(`Phone formatted for Twilio: ${formattedPhone}`);
 
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const twilioNumber = Deno.env.get('TWILIO_PHONE_NUMBER') || '+18449463299';
   
   if (!accountSid || !authToken) {
     throw new Error('Twilio credentials not configured');
   }
 
+  console.log(`Using Twilio sender number: ${twilioNumber}`);
   const message = `Your MuniPay verification code is: ${code}. This code expires in 5 minutes.`;
 
-  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${btoa(`${accountSid}:${authToken}`)}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      From: '+18449463299', // Twilio phone number
-      To: formattedPhone,
-      Body: message,
-    }),
-  });
+  try {
+    const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        From: twilioNumber,
+        To: formattedPhone,
+        Body: message,
+      }),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.text();
-    throw new Error(`SMS sending failed: ${errorData}`);
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error(`Twilio API error response: ${errorData}`);
+      
+      // Parse Twilio error for better user feedback
+      try {
+        const errorJson = JSON.parse(errorData);
+        const twilioError = errorJson.message || errorData;
+        throw new Error(`SMS sending failed: ${twilioError}`);
+      } catch {
+        throw new Error(`SMS sending failed: ${errorData}`);
+      }
+    }
+
+    console.log(`SMS sent successfully to ${formattedPhone}`);
+  } catch (error) {
+    console.error(`Error sending SMS to ${formattedPhone}:`, error);
+    throw error;
   }
 }
 

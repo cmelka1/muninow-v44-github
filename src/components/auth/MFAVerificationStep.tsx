@@ -157,13 +157,22 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
   const formatPhoneInput = (value: string) => {
     const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length <= 3) {
-      return cleaned;
-    } else if (cleaned.length <= 6) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    // Handle US phone numbers - remove leading 1 if present
+    const usNumber = cleaned.startsWith('1') && cleaned.length === 11 ? cleaned.substring(1) : cleaned;
+    
+    if (usNumber.length <= 3) {
+      return usNumber;
+    } else if (usNumber.length <= 6) {
+      return `(${usNumber.slice(0, 3)}) ${usNumber.slice(3)}`;
     } else {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+      return `(${usNumber.slice(0, 3)}) ${usNumber.slice(3, 6)}-${usNumber.slice(6, 10)}`;
     }
+  };
+
+  const validatePhoneNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    const usNumber = cleaned.startsWith('1') && cleaned.length === 11 ? cleaned.substring(1) : cleaned;
+    return usNumber.length === 10;
   };
 
   const maskEmail = (email: string) => {
@@ -236,8 +245,11 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(formatPhoneInput(e.target.value))}
                   placeholder="(555) 123-4567"
-                  className="h-11"
+                  className={`h-11 ${phoneNumber && !validatePhoneNumber(phoneNumber) ? 'border-destructive' : ''}`}
                 />
+                {phoneNumber && !validatePhoneNumber(phoneNumber) && (
+                  <p className="text-sm text-destructive">Please enter a valid 10-digit US phone number</p>
+                )}
               </div>
             )}
           </div>
@@ -256,7 +268,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
           <Button
             onClick={sendVerificationCode}
             className="flex-1"
-            disabled={isSending || (verificationType === 'sms' && !phoneNumber) || (verificationType === 'email' && !customEmail)}
+            disabled={isSending || (verificationType === 'sms' && (!phoneNumber || !validatePhoneNumber(phoneNumber))) || (verificationType === 'email' && !customEmail)}
           >
             {isSending ? (
               <>
