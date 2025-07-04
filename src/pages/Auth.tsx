@@ -1,86 +1,55 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  
+  const { 
+    user, 
+    isSubmitting, 
+    loginError, 
+    signIn, 
+    signUp, 
+    setForgotPasswordOpen,
+    clearError 
+  } = useAuth();
 
+  // Redirect authenticated users
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          navigate('/dashboard');
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        navigate('/dashboard');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    clearError();
 
-    try {
-      if (isSignUp) {
-        const redirectUrl = `${window.location.origin}/`;
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: redirectUrl
-          }
-        });
-        
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        if (error) throw error;
-      }
-    } catch (error: any) {
-      toast({
-        title: "Authentication Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    const { error } = isSignUp 
+      ? await signUp(email, password)
+      : await signIn(email, password);
+
+    if (!error && !isSignUp) {
+      // Navigation will be handled by the auth context effect
     }
-    
-    setLoading(false);
+  };
+
+  const handleForgotPassword = () => {
+    setForgotPasswordOpen(true);
   };
 
   return (
@@ -160,37 +129,62 @@ const Auth = () => {
                   </div>
                   <button
                     type="button"
+                    onClick={handleForgotPassword}
                     className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
                   >
                     Forgot password?
                   </button>
                 </div>
               )}
+
+              {loginError && (
+                <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                  <p className="text-sm text-destructive">{loginError}</p>
+                </div>
+              )}
               
               <Button 
                 type="submit" 
-                disabled={loading}
+                disabled={isSubmitting}
                 className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-colors"
               >
-                {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
+                {isSubmitting ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
               </Button>
             </form>
             
-            <div className="mt-6 text-center">
-              <span className="text-muted-foreground text-sm">
-                {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="ml-1 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
-              >
-                {isSignUp ? 'Sign in' : 'Sign up for free'}
-              </button>
+            <div className="mt-6 space-y-4">
+              <div className="text-center">
+                <span className="text-muted-foreground text-sm">
+                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="ml-1 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+                >
+                  {isSignUp ? 'Sign in' : 'Sign up for free'}
+                </button>
+              </div>
+              
+              {!isSignUp && (
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsSignUp(true)}
+                    className="w-full group hover:bg-primary/5 transition-colors"
+                  >
+                    Create Account
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
+      
+      <ForgotPasswordDialog />
     </div>
   );
 };

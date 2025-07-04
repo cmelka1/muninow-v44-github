@@ -1,62 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
 import { LogOut, FileText, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const navigate = useNavigate();
+  const { user, profile, isLoading, signOut } = useAuth();
 
+  // Redirect unauthenticated users
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (!session?.user) {
-          navigate('/auth');
-        }
-        setLoading(false);
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (!session?.user) {
-        navigate('/auth');
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (!isLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, isLoading, navigate]);
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await signOut();
       navigate('/');
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (error) {
+      // Error handling is done in the auth context
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -131,7 +101,7 @@ const Dashboard = () => {
             <div>
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Welcome, {user.email?.split('@')[0] || 'User'}!
+                  Welcome, {profile?.first_name || user.email?.split('@')[0] || 'User'}!
                 </h2>
                 <p className="text-gray-600">
                   Manage your municipal bills and payments from your dashboard.
@@ -193,12 +163,28 @@ const Dashboard = () => {
                   <CardTitle>Account Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {profile?.first_name && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Name
+                      </label>
+                      <div className="text-gray-900">{profile.first_name} {profile.last_name}</div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address
                     </label>
                     <div className="text-gray-900">{user.email}</div>
                   </div>
+                  {profile?.account_type && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Account Type
+                      </label>
+                      <div className="text-gray-900 capitalize">{profile.account_type}</div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Account Created
