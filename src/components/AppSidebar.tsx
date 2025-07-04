@@ -60,67 +60,75 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="w-64 bg-white border-r border-gray-200">
+    <Sidebar className="w-64 bg-background border-r border-border">
       {/* Header */}
-      <SidebarHeader className="p-6">
+      <SidebarHeader className="px-6 py-8">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-blue-600">MuniNow</h1>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">M</span>
+            </div>
+            <h1 className="text-xl font-bold text-primary">MuniNow</h1>
+          </div>
         </div>
       </SidebarHeader>
 
-      <SidebarSeparator />
-
       {/* Navigation */}
-      <SidebarContent className="p-4">
+      <SidebarContent className="px-4">
         <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => {
-                const isActive = location.pathname === item.url;
-                const Icon = item.icon;
-                
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <NavLink
-                        to={item.url}
-                        className={({ isActive }) => 
-                          `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                            isActive 
-                              ? 'bg-primary/5 text-primary font-semibold' 
-                              : 'text-gray-600 hover:bg-primary/5 hover:text-primary'
-                          }`
-                        }
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
+          <div className="mb-6">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+              MAIN MENU
+            </h2>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-2">
+                {navigationItems.map((item) => {
+                  const isActive = location.pathname === item.url;
+                  const Icon = item.icon;
+                  
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <NavLink
+                          to={item.url}
+                          className={({ isActive }) => 
+                            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                              isActive 
+                                ? 'bg-primary text-primary-foreground shadow-sm' 
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            }`
+                          }
+                        >
+                          <Icon className="h-5 w-5 flex-shrink-0" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </div>
         </SidebarGroup>
       </SidebarContent>
 
       {/* User Profile Section */}
-      <SidebarFooter className="p-4 border-t border-gray-200">
+      <SidebarFooter className="p-4 border-t border-border mt-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-sm">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="text-sm font-medium bg-muted">
                 {getInitials(profile?.first_name, profile?.last_name)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-900">
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-foreground truncate">
                 {profile?.first_name && profile?.last_name 
                   ? `${profile.first_name} ${profile.last_name}`
                   : user?.email?.split('@')[0] || 'User'
                 }
               </span>
-              <span className="text-xs text-gray-500 capitalize">
+              <span className="text-xs text-muted-foreground capitalize">
                 {profile?.account_type || 'resident'} account
               </span>
             </div>
@@ -129,9 +137,10 @@ export function AppSidebar() {
             onClick={handleLogout}
             variant="ghost"
             size="sm"
-            className="text-red-500 hover:bg-red-50 hover:text-red-600 p-2"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-2 flex-shrink-0"
           >
             <LogOut className="h-4 w-4" />
+            <span className="sr-only">Log out</span>
           </Button>
         </div>
       </SidebarFooter>
