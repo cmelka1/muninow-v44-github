@@ -132,10 +132,14 @@ export function AppSidebar() {
               </span>
             </div>
           </div>
+          
+          {/* Separator line */}
+          <div className="border-t border-border"></div>
+          
           <Button
             onClick={handleLogout}
-            variant="ghost"
-            className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 p-2 h-auto"
+            variant="outline"
+            className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-border p-3 h-auto"
           >
             <LogOut className="h-4 w-4 mr-2" />
             <span className="text-sm">Log Out</span>
