@@ -239,19 +239,19 @@ function normalizePhoneNumber(phone: string): string {
     throw new Error(`Invalid US phone number format. Expected 10 digits, got ${cleanPhone.length}: ${cleanPhone}`);
   }
   
-  // Return normalized 10-digit number
-  return cleanPhone;
+  // Return E.164 format for US numbers
+  return `+1${cleanPhone}`;
 }
 
 async function sendSMSCode(phone: string, code: string): Promise<void> {
   console.log(`Original phone number received: ${phone}`);
   
-  // Normalize phone number
-  const cleanPhone = normalizePhoneNumber(phone);
-  console.log(`Phone after normalization: ${cleanPhone}`);
+  // Normalize phone number (already in E.164 format)
+  const normalizedPhone = normalizePhoneNumber(phone);
+  console.log(`Phone after normalization: ${normalizedPhone}`);
   
-  // Format for Twilio E.164 (US numbers)
-  const formattedPhone = `+1${cleanPhone}`;
+  // Use the normalized phone directly since it's already in E.164 format
+  const formattedPhone = normalizedPhone;
   console.log(`Phone formatted for Twilio: ${formattedPhone}`);
 
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
