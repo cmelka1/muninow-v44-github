@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Home, Clock, Users, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const navigationItems = [
   {
@@ -44,6 +45,11 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
 
+  // Get the logo URL from Supabase Storage
+  const logoUrl = supabase.storage
+    .from('muninow-logo')
+    .getPublicUrl('MuniNow_Logo_Exploration_Blue.png').data.publicUrl;
+
   const getInitials = (firstName?: string, lastName?: string) => {
     if (!firstName && !lastName) {
       return user?.email?.charAt(0).toUpperCase() || 'U';
@@ -65,7 +71,7 @@ export function AppSidebar() {
       <SidebarHeader className="px-6 py-8">
         <NavLink to="/dashboard" className="block hover:opacity-80 transition-opacity">
           <img 
-            src="https://qcuiuubbaozccmejzvxje.supabase.co/storage/v1/object/public/muninow-logo/MuniNow_Logo_Exploration_Blue.png" 
+            src={logoUrl} 
             alt="MuniNow" 
             className="h-12 w-auto"
           />
