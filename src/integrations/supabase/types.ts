@@ -264,7 +264,6 @@ export type Database = {
           payment_history: Json
           payment_method_type: string | null
           payment_status: string | null
-          profile_id: string
           receipt_code: string
           routing_confidence_score: number | null
           sequence_number: number | null
@@ -313,7 +312,6 @@ export type Database = {
           payment_history?: Json
           payment_method_type?: string | null
           payment_status?: string | null
-          profile_id: string
           receipt_code: string
           routing_confidence_score?: number | null
           sequence_number?: number | null
@@ -362,7 +360,6 @@ export type Database = {
           payment_history?: Json
           payment_method_type?: string | null
           payment_status?: string | null
-          profile_id?: string
           receipt_code?: string
           routing_confidence_score?: number | null
           sequence_number?: number | null
@@ -395,13 +392,6 @@ export type Database = {
             columns: ["system_id"]
             isOneToOne: false
             referencedRelation: "municipal_systems"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "municipal_bills_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "municipal_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -515,57 +505,6 @@ export type Database = {
           sms_user_registrations?: boolean
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      municipal_profiles: {
-        Row: {
-          account_status: string
-          address: string
-          business_type: string | null
-          city: string
-          created_at: string
-          ein_number: string | null
-          id: string
-          name: string
-          outstanding_amount: number
-          parcel_number: string | null
-          state: string
-          type: string
-          updated_at: string
-          zip_code: string
-        }
-        Insert: {
-          account_status: string
-          address: string
-          business_type?: string | null
-          city: string
-          created_at?: string
-          ein_number?: string | null
-          id: string
-          name: string
-          outstanding_amount?: number
-          parcel_number?: string | null
-          state: string
-          type: string
-          updated_at?: string
-          zip_code: string
-        }
-        Update: {
-          account_status?: string
-          address?: string
-          business_type?: string | null
-          city?: string
-          created_at?: string
-          ein_number?: string | null
-          id?: string
-          name?: string
-          outstanding_amount?: number
-          parcel_number?: string | null
-          state?: string
-          type?: string
-          updated_at?: string
-          zip_code?: string
         }
         Relationships: []
       }

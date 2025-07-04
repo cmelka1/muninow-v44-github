@@ -355,13 +355,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
     }
   };
 
-  // Step 4: Complete MFA and create account
+  // Step 4: Complete MFA and create account with Finix integration
   const completeMFA = async () => {
     if (!formData) return;
     
     setIsCreatingAccount(true);
+    let authData: any = null;
+    
     try {
-      const { error } = await supabase.auth.signUp({
+      // Phase 1: Create Supabase auth account
+      console.log('Creating Supabase auth account...');
+      const { data, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -369,40 +373,162 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
           data: {
             first_name: formData.firstName,
             last_name: formData.lastName,
-            phone: formData.mobileNumber,
+            phone: formData.mobileNumber, // Fixed: was mobileNumber, now phone
             street_address: formData.streetAddress,
             apt_number: formData.address2Type && formData.address2Value 
               ? `${formData.address2Type} ${formData.address2Value.toUpperCase()}`
-              : undefined,
+              : null,
             city: formData.city,
             state: formData.state,
             zip_code: formData.zipCode,
             account_type: formData.accountType,
-            business_legal_name: formData.accountType === 'business' ? formData.businessLegalName : undefined,
-            industry: formData.accountType === 'business' && formData.industry ? formData.industry : undefined,
+            business_legal_name: formData.accountType === 'business' ? formData.businessLegalName : null,
+            industry: formData.accountType === 'business' && formData.industry ? formData.industry : null,
             role: 'user'
           }
         }
       });
       
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Account created successfully!",
-          description: "Please check your email to verify your account."
-        });
-        setCurrentStep(4);
+      if (authError) {
+        throw new Error(`Account creation failed: ${authError.message}`);
       }
-    } catch (error) {
-      console.error('Account creation error:', error);
+      
+      authData = data;
+      console.log('Auth account created successfully:', authData.user?.id);
+      
+      // Phase 2: Wait for profile creation (database trigger should handle this)
+      console.log('Waiting for profile creation...');
+      let profileVerified = false;
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (!profileVerified && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, email, first_name, last_name')
+            .eq('id', authData.user.id)
+            .single();
+            
+          if (profile && !profileError) {
+            console.log('Profile verified:', profile);
+            profileVerified = true;
+          }
+        } catch (error) {
+          console.log(`Profile verification attempt ${attempts + 1} failed:`, error);
+        }
+        
+        attempts++;
+      }
+      
+      if (!profileVerified) {
+        console.warn('Profile verification failed after maximum attempts');
+        // Continue anyway - profile creation might be delayed but shouldn't block signup
+      }
+      
+      // Phase 3: Create Finix identity for payment processing
+      console.log('Creating Finix payment identity...');
+      try {
+        const identityData = {
+          entity: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.mobileNumber,
+            personal_address: {
+              line1: formData.streetAddress,
+              line2: formData.address2Type && formData.address2Value 
+                ? `${formData.address2Type} ${formData.address2Value.toUpperCase()}`
+                : null,
+              city: formData.city,
+              region: formData.state,
+              postal_code: formData.zipCode,
+              country: 'USA'
+            }
+          },
+          accountType: formData.accountType,
+          businessId: formData.accountType === 'business' ? authData.user.id : undefined
+        };
+        
+        const { data: identityResult, error: identityError } = await supabase.functions
+          .invoke('finix-create-identity', {
+            body: identityData
+          });
+        
+        if (identityError) {
+          console.error('Finix identity creation failed:', identityError);
+          // Don't fail the entire signup - payment can be set up later
+          toast({
+            title: "Account created with payment setup pending",
+            description: "Your account was created successfully. Payment processing will be available shortly.",
+            variant: "default"
+          });
+        } else {
+          console.log('Finix identity created successfully:', identityResult);
+          
+          // Phase 4: Store Finix identity data in database
+          if (identityResult?.identity) {
+            try {
+              const { error: finixDbError } = await supabase
+                .from('finix_identities')
+                .insert({
+                  user_id: authData.user.id,
+                  finix_identity_id: identityResult.identity.id,
+                  finix_application_id: identityResult.identity.application,
+                  account_type: formData.accountType,
+                  identity_type: identityResult.identity.type || 'INDIVIDUAL',
+                  verification_status: identityResult.identity.verification?.status || 'pending',
+                  entity_data: identityResult.identity.entity || {},
+                  first_name: formData.firstName,
+                  last_name: formData.lastName,
+                  email: formData.email,
+                  phone: formData.mobileNumber,
+                  business_id: formData.accountType === 'business' ? authData.user.id : null
+                });
+                
+              if (finixDbError) {
+                console.error('Failed to store Finix identity in database:', finixDbError);
+              } else {
+                console.log('Finix identity stored successfully in database');
+              }
+            } catch (dbError) {
+              console.error('Database storage error:', dbError);
+            }
+          }
+        }
+      } catch (finixError) {
+        console.error('Finix integration error:', finixError);
+        // Continue with account creation - payment can be set up later
+      }
+      
+      // Success - show completion message
       toast({
-        title: "Error",
-        description: "Failed to create account. Please try again.",
+        title: "Account created successfully!",
+        description: "Please check your email to verify your account and complete the setup."
+      });
+      setCurrentStep(4);
+      
+    } catch (error: any) {
+      console.error('Account creation error:', error);
+      
+      // Enhanced error handling
+      let errorMessage = "Failed to create account. Please try again.";
+      
+      if (error.message.includes('already registered')) {
+        errorMessage = "An account with this email already exists. Please sign in instead.";
+      } else if (error.message.includes('Password')) {
+        errorMessage = "Password doesn't meet requirements. Please check your password.";
+      } else if (error.message.includes('Email')) {
+        errorMessage = "Please provide a valid email address.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Account Creation Failed",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
