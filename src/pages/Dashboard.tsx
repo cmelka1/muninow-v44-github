@@ -46,11 +46,6 @@ const Dashboard = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
-      toast({
-        title: "Logged out",
-        description: "Successfully signed out."
-      });
       navigate('/');
     } catch (error: any) {
       toast({

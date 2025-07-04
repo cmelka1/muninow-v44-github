@@ -64,11 +64,6 @@ const Auth = () => {
         });
         
         if (error) throw error;
-        
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link."
-        });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -76,11 +71,6 @@ const Auth = () => {
         });
         
         if (error) throw error;
-        
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in."
-        });
       }
     } catch (error: any) {
       toast({
