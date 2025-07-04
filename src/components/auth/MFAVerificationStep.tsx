@@ -29,8 +29,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verificationSent, setVerificationSent] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(formData?.mobileNumber || '');
-  const [emailAddress, setEmailAddress] = useState(formData?.email || '');
-  const [isEditingContact, setIsEditingContact] = useState(false);
 
   // Cooldown timer
   useEffect(() => {
@@ -43,7 +41,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const sendVerificationCode = async () => {
     setIsSending(true);
     try {
-      const identifier = verificationType === 'email' ? emailAddress : phoneNumber;
+      const identifier = verificationType === 'email' ? formData.email : phoneNumber;
       
       const { data } = await supabase.functions.invoke('send-verification', {
         body: {
@@ -89,7 +87,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
     setIsVerifying(true);
     try {
-      const identifier = verificationType === 'email' ? emailAddress : phoneNumber;
+      const identifier = verificationType === 'email' ? formData.email : phoneNumber;
       
       const { data } = await supabase.functions.invoke('send-verification', {
         body: {
@@ -190,144 +188,59 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
           <Label className="text-base font-medium">Verification Method</Label>
           <div className="space-y-3">
             <div 
-              className={`flex items-center justify-between space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
+              className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
                 verificationType === 'email' ? 'border-primary bg-primary/5' : 'border-border'
               }`}
               onClick={() => setVerificationType('email')}
             >
-              <div className="flex items-center space-x-3">
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                  verificationType === 'email' ? 'border-primary' : 'border-muted-foreground'
-                }`}>
-                  {verificationType === 'email' && (
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-primary" />
-                    <Label className="font-medium cursor-pointer">
-                      Email Verification
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Send code to {emailAddress}
-                  </p>
-                </div>
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                verificationType === 'email' ? 'border-primary' : 'border-muted-foreground'
+              }`}>
+                {verificationType === 'email' && (
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditingContact(true);
-                }}
-                className="text-xs"
-              >
-                Change
-              </Button>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <Label className="font-medium cursor-pointer">
+                    Email Verification
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Send code to {maskEmail(formData.email)}
+                </p>
+              </div>
             </div>
 
             <div 
-              className={`flex items-center justify-between space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
+              className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
                 verificationType === 'sms' ? 'border-primary bg-primary/5' : 'border-border'
               }`}
               onClick={() => setVerificationType('sms')}
             >
-              <div className="flex items-center space-x-3">
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                  verificationType === 'sms' ? 'border-primary' : 'border-muted-foreground'
-                }`}>
-                  {verificationType === 'sms' && (
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <MessageSquare className="h-4 w-4 text-primary" />
-                    <Label className="font-medium cursor-pointer">
-                      SMS Verification
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Send code to {formatPhoneDisplay(phoneNumber)}
-                  </p>
-                </div>
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                verificationType === 'sms' ? 'border-primary' : 'border-muted-foreground'
+              }`}>
+                {verificationType === 'sms' && (
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditingContact(true);
-                }}
-                className="text-xs"
-              >
-                Change
-              </Button>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="h-4 w-4 text-primary" />
+                  <Label className="font-medium cursor-pointer">
+                    SMS Verification
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Send code to {maskPhone(phoneNumber)}
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Contact editing section */}
-          {isEditingContact && (
-            <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">
-                  Edit {verificationType === 'email' ? 'Email Address' : 'Phone Number'}
-                </Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditingContact(false)}
-                  className="text-xs"
-                >
-                  Cancel
-                </Button>
-              </div>
-
-              {verificationType === 'email' ? (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email Address</Label>
-                  <Input
-                    id="edit-email"
-                    type="email"
-                    value={emailAddress}
-                    onChange={(e) => setEmailAddress(e.target.value)}
-                    placeholder="Enter email address"
-                    className="h-11"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Make sure you have access to this email address
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Phone Number</Label>
-                  <Input
-                    id="edit-phone"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="(555) 123-4567"
-                    className="h-11"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Standard messaging rates may apply
-                  </p>
-                </div>
-              )}
-
-              <Button
-                onClick={() => setIsEditingContact(false)}
-                className="w-full"
-                disabled={verificationType === 'email' ? !emailAddress : !phoneNumber}
-              >
-                Save {verificationType === 'email' ? 'Email' : 'Phone Number'}
-              </Button>
-            </div>
-          )}
-
-          {/* Show phone input for SMS when not editing */}
-          {verificationType === 'sms' && !isEditingContact && (
+          {verificationType === 'sms' && (
             <div className="space-y-2">
               <Label htmlFor="phone">Confirm Phone Number</Label>
               <Input
@@ -389,7 +302,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
         <p className="text-muted-foreground">
           We've sent a 6-digit code to{' '}
           {verificationType === 'email' 
-            ? maskEmail(emailAddress)
+            ? maskEmail(formData.email)
             : maskPhone(phoneNumber)
           }
         </p>
