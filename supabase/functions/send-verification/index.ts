@@ -81,13 +81,28 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 async function sendVerificationCode(identifier: string, type: 'email' | 'sms'): Promise<Response> {
+  // Normalize the identifier for consistent storage
+  let normalizedIdentifier = identifier;
+  if (type === 'sms') {
+    normalizedIdentifier = normalizePhoneNumber(identifier);
+    console.log(`Normalized phone number from ${identifier} to ${normalizedIdentifier}`);
+  }
+  
+  // Clean up old pending codes for this identifier/type before creating new one
+  await supabase
+    .from('verification_codes')
+    .update({ status: 'expired' })
+    .eq('user_identifier', normalizedIdentifier)
+    .eq('verification_type', type)
+    .eq('status', 'pending');
+
   // Check rate limiting - max 3 attempts per 10 minutes
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   
   const { data: recentCodes, error: checkError } = await supabase
     .from('verification_codes')
     .select('*')
-    .eq('user_identifier', identifier)
+    .eq('user_identifier', normalizedIdentifier)
     .eq('verification_type', type)
     .gte('created_at', tenMinutesAgo);
 
@@ -110,15 +125,15 @@ async function sendVerificationCode(identifier: string, type: 'email' | 'sms'): 
 
   // Generate 6-digit code
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  console.log(`Generating verification code for ${type}: ${identifier}`);
+  console.log(`Generating verification code for ${type}: ${normalizedIdentifier}, code: ${code}`);
   const codeHash = await hashCode(code);
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // Extended to 10 minutes
 
   // Store verification code
   const { error: insertError } = await supabase
     .from('verification_codes')
     .insert({
-      user_identifier: identifier,
+      user_identifier: normalizedIdentifier,
       code_hash: codeHash,
       verification_type: type,
       expires_at: expiresAt,
@@ -209,14 +224,12 @@ async function sendEmailCode(email: string, code: string): Promise<void> {
   }
 }
 
-async function sendSMSCode(phone: string, code: string): Promise<void> {
-  console.log(`Original phone number received: ${phone}`);
-  
-  // Clean phone number (remove any formatting)
+// Helper function to normalize phone numbers consistently
+function normalizePhoneNumber(phone: string): string {
+  // Remove all non-digit characters
   let cleanPhone = phone.replace(/\D/g, '');
-  console.log(`Phone after cleaning: ${cleanPhone}`);
   
-  // Handle US phone numbers: remove leading 1 if present, then ensure we have exactly 10 digits
+  // Handle US phone numbers: remove leading 1 if present
   if (cleanPhone.startsWith('1') && cleanPhone.length === 11) {
     cleanPhone = cleanPhone.substring(1);
   }
@@ -225,6 +238,17 @@ async function sendSMSCode(phone: string, code: string): Promise<void> {
   if (cleanPhone.length !== 10) {
     throw new Error(`Invalid US phone number format. Expected 10 digits, got ${cleanPhone.length}: ${cleanPhone}`);
   }
+  
+  // Return normalized 10-digit number
+  return cleanPhone;
+}
+
+async function sendSMSCode(phone: string, code: string): Promise<void> {
+  console.log(`Original phone number received: ${phone}`);
+  
+  // Normalize phone number
+  const cleanPhone = normalizePhoneNumber(phone);
+  console.log(`Phone after normalization: ${cleanPhone}`);
   
   // Format for Twilio E.164 (US numbers)
   const formattedPhone = `+1${cleanPhone}`;
@@ -290,22 +314,35 @@ async function verifyCode(identifier: string, type: 'email' | 'sms', inputCode: 
     );
   }
 
+  // Normalize the identifier for consistent lookup
+  let normalizedIdentifier = identifier;
+  if (type === 'sms') {
+    normalizedIdentifier = normalizePhoneNumber(identifier);
+    console.log(`Verifying code for normalized phone number: ${normalizedIdentifier} (original: ${identifier})`);
+  }
+
+  console.log(`Looking up verification code for ${type}: ${normalizedIdentifier}`);
+
   // Get the most recent pending code for this identifier and type
   const { data: codes, error: fetchError } = await supabase
     .from('verification_codes')
     .select('*')
-    .eq('user_identifier', identifier)
+    .eq('user_identifier', normalizedIdentifier)
     .eq('verification_type', type)
     .eq('status', 'pending')
     .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
     .limit(1);
 
+  console.log(`Database lookup result: found ${codes?.length || 0} codes`);
+
   if (fetchError) {
+    console.error(`Database fetch error: ${fetchError.message}`);
     throw new Error(`Error fetching verification code: ${fetchError.message}`);
   }
 
   if (!codes || codes.length === 0) {
+    console.log(`No valid codes found for ${normalizedIdentifier} of type ${type}`);
     return new Response(
       JSON.stringify({ 
         error: "No valid verification code found. Please request a new code.",
@@ -319,12 +356,15 @@ async function verifyCode(identifier: string, type: 'email' | 'sms', inputCode: 
   }
 
   const storedCode = codes[0];
+  console.log(`Found stored code with hash: ${storedCode.code_hash}, created: ${storedCode.created_at}, expires: ${storedCode.expires_at}`);
 
   // Increment attempt count
   const newAttemptCount = storedCode.attempt_count + 1;
+  console.log(`Comparing input code ${inputCode} against stored hash ${storedCode.code_hash}`);
   
   // Check if code is correct
   const isValidCode = await compareCode(inputCode, storedCode.code_hash);
+  console.log(`Code comparison result: ${isValidCode}`);
 
   if (isValidCode) {
     // Mark code as verified
