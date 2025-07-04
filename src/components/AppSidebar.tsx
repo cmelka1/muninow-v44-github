@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/sidebar';
 import { Home, Clock, Users, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import muniNowLogo from '@/assets/muninow-logo-full.png';
 
 const navigationItems = [
   {
@@ -64,12 +63,26 @@ export function AppSidebar() {
     <Sidebar className="w-64 bg-background border-r border-border">
       {/* Header */}
       <SidebarHeader className="px-6 py-8">
-        <NavLink to="/dashboard" className="block">
-          <img 
-            src={muniNowLogo} 
-            alt="MuniNow" 
-            className="h-12 w-auto hover:opacity-80 transition-opacity"
-          />
+        <NavLink to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="flex items-center gap-2">
+            {/* Building icons */}
+            <div className="flex items-center gap-1">
+              <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                <div className="grid grid-cols-2 gap-0.5">
+                  <div className="w-1 h-1 bg-white rounded-full"></div>
+                  <div className="w-1 h-1 bg-white rounded-full"></div>
+                  <div className="w-1 h-1 bg-white rounded-full"></div>
+                  <div className="w-1 h-1 bg-white rounded-full"></div>
+                </div>
+              </div>
+              <div className="w-6 h-6 border-2 border-blue-600 rounded-sm relative">
+                <div className="absolute top-1 left-1 right-1 h-0.5 bg-blue-600"></div>
+                <div className="absolute bottom-0 left-2 w-2 h-2 bg-blue-600"></div>
+              </div>
+            </div>
+            {/* MuniNow text */}
+            <span className="text-2xl font-bold text-blue-600">MuniNow</span>
+          </div>
         </NavLink>
       </SidebarHeader>
 
