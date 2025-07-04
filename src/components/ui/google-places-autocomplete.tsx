@@ -83,6 +83,8 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           }
         });
 
+        console.log('Raw address components:', addressComponents);
+
         // Build street address only (no city, state, country)
         let streetAddress = '';
         if (addressComponents.streetNumber && addressComponents.route) {
@@ -93,7 +95,11 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           streetAddress = addressComponents.streetNumber;
         }
 
+        console.log('Built street address:', streetAddress);
+
+        // Update both internal state and form field
         setInputValue(streetAddress);
+        onChange?.(streetAddress);
         onAddressSelect(addressComponents);
       });
     }
