@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
 import { Resend } from "npm:resend@2.0.0";
-import { hash, compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +20,20 @@ const supabase = createClient(
 );
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Helper functions for hashing using Deno's crypto API
+async function hashCode(code: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(code);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function compareCode(inputCode: string, hashedCode: string): Promise<boolean> {
+  const inputHash = await hashCode(inputCode);
+  return inputHash === hashedCode;
+}
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -98,7 +111,7 @@ async function sendVerificationCode(identifier: string, type: 'email' | 'sms'): 
   // Generate 6-digit code
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   console.log(`Generating verification code for ${type}: ${identifier}`);
-  const codeHash = await hash(code);
+  const codeHash = await hashCode(code);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
   // Store verification code
@@ -277,7 +290,7 @@ async function verifyCode(identifier: string, type: 'email' | 'sms', inputCode: 
   const newAttemptCount = storedCode.attempt_count + 1;
   
   // Check if code is correct
-  const isValidCode = await compare(inputCode, storedCode.code_hash);
+  const isValidCode = await compareCode(inputCode, storedCode.code_hash);
 
   if (isValidCode) {
     // Mark code as verified
