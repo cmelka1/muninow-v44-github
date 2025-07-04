@@ -167,9 +167,14 @@ interface SignupFormProps {
 }
 
 export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [isCheckingAddress, setIsCheckingAddress] = useState(false);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [addressStatus, setAddressStatus] = useState<'checking' | 'available' | 'duplicate' | null>(null);
+  const [formData, setFormData] = useState<SignupFormValues | null>(null);
   const { signUp, isSubmitting } = useAuth();
 
   const form = useForm<SignupFormValues>({
@@ -257,51 +262,123 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
     form.trigger(['streetAddress', 'city', 'state', 'zipCode']);
   };
 
+  // Step 1: Handle form submission (validate and store data)
   const onSubmit = async (data: SignupFormValues) => {
-    try {
-      // Final email duplicate check
+    if (currentStep === 1) {
+      // Validate email and store form data for next steps
       setIsCheckingEmail(true);
-      const { data: emailExists, error: emailError } = await supabase.rpc('check_email_duplicate', {
-        email_input: data.email
-      });
+      try {
+        const { data: emailExists, error: emailError } = await supabase.rpc('check_email_duplicate', {
+          email_input: data.email
+        });
 
-      if (emailError) {
+        if (emailError) {
+          toast({
+            title: "Error",
+            description: "Failed to validate email. Please try again.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (emailExists) {
+          form.setError('email', {
+            type: 'manual',
+            message: 'An account with this email already exists'
+          });
+          return;
+        }
+
+        // Store form data and move to address verification
+        setFormData(data);
+        setCurrentStep(2);
+        verifyAddress(data);
+      } catch (error) {
+        console.error('Email validation error:', error);
         toast({
           title: "Error",
           description: "Failed to validate email. Please try again.",
           variant: "destructive"
         });
-        return;
+      } finally {
+        setIsCheckingEmail(false);
       }
+    }
+  };
 
-      if (emailExists) {
-        form.setError('email', {
-          type: 'manual',
-          message: 'An account with this email already exists'
+  // Step 2: Verify address
+  const verifyAddress = async (data: SignupFormValues) => {
+    setIsCheckingAddress(true);
+    setAddressStatus('checking');
+    
+    try {
+      const { data: addressExists, error } = await supabase.rpc('check_address_duplicate', {
+        street_input: data.streetAddress,
+        city_input: data.city,
+        state_input: data.state,
+        zip_input: data.zipCode,
+        apt_input: data.address2Type && data.address2Value 
+          ? `${data.address2Type} ${data.address2Value.toUpperCase()}`
+          : undefined
+      });
+
+      if (error) {
+        console.error('Address verification error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to verify address. Please try again.",
+          variant: "destructive"
         });
+        setAddressStatus(null);
         return;
       }
 
-      // Call signUp with extended user metadata
+      setAddressStatus(addressExists ? 'duplicate' : 'available');
+    } catch (error) {
+      console.error('Address verification exception:', error);
+      toast({
+        title: "Error",
+        description: "Failed to verify address. Please try again.",
+        variant: "destructive"
+      });
+      setAddressStatus(null);
+    } finally {
+      setIsCheckingAddress(false);
+    }
+  };
+
+  // Step 3: Confirm address and move to MFA
+  const confirmAddress = () => {
+    if (addressStatus === 'available') {
+      setCurrentStep(3);
+    }
+  };
+
+  // Step 4: Complete MFA and create account
+  const completeMFA = async () => {
+    if (!formData) return;
+    
+    setIsCreatingAccount(true);
+    try {
       const { error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
+        email: formData.email,
+        password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            first_name: data.firstName,
-            last_name: data.lastName,
-            phone: data.mobileNumber,
-            street_address: data.streetAddress,
-            apt_number: data.address2Type && data.address2Value 
-              ? `${data.address2Type} ${data.address2Value.toUpperCase()}`
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            phone: formData.mobileNumber,
+            street_address: formData.streetAddress,
+            apt_number: formData.address2Type && formData.address2Value 
+              ? `${formData.address2Type} ${formData.address2Value.toUpperCase()}`
               : undefined,
-            city: data.city,
-            state: data.state,
-            zip_code: data.zipCode,
-            account_type: data.accountType,
-            business_legal_name: data.accountType === 'business' ? data.businessLegalName : undefined,
-            industry: data.accountType === 'business' && data.industry ? data.industry : undefined,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            account_type: formData.accountType,
+            business_legal_name: formData.accountType === 'business' ? formData.businessLegalName : undefined,
+            industry: formData.accountType === 'business' && formData.industry ? formData.industry : undefined,
             role: 'user'
           }
         }
@@ -318,16 +395,29 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
           title: "Account created successfully!",
           description: "Please check your email to verify your account."
         });
+        setCurrentStep(4);
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Account creation error:', error);
       toast({
         title: "Error",
         description: "Failed to create account. Please try again.",
         variant: "destructive"
       });
     } finally {
-      setIsCheckingEmail(false);
+      setIsCreatingAccount(false);
+    }
+  };
+
+  // Go back to previous step
+  const goBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      if (currentStep === 2) {
+        setAddressStatus(null);
+      }
+    } else {
+      onBack();
     }
   };
 
@@ -355,9 +445,25 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       </CardHeader>
       
       <CardContent className="px-8 pb-8">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Account Type Selection */}
+        {/* Progress Indicator */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+            <span>Step {currentStep} of 4</span>
+            <span>
+              {currentStep === 1 && "Information"}
+              {currentStep === 2 && "Address Verification"}
+              {currentStep === 3 && "Security Setup"}
+              {currentStep === 4 && "Complete"}
+            </span>
+          </div>
+          <Progress value={(currentStep / 4) * 100} className="h-2" />
+        </div>
+
+        {/* Step 1: Form Collection */}
+        {currentStep === 1 && (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Account Type Selection */}
             <FormField
               control={form.control}
               name="accountType"
@@ -817,6 +923,155 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
             </div>
           </form>
         </Form>
+        )}
+
+        {/* Step 2: Address Verification */}
+        {currentStep === 2 && formData && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Verify Your Address
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Please confirm the address you entered is correct
+              </p>
+            </div>
+
+            <div className={`p-6 rounded-lg border-2 transition-all duration-300 ${
+              addressStatus === 'checking' ? 'border-muted bg-muted/20' :
+              addressStatus === 'duplicate' ? 'border-destructive bg-destructive/10' :
+              addressStatus === 'available' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20' :
+              'border-muted bg-muted/20'
+            }`}>
+              <div className="space-y-2">
+                <div className="font-medium">
+                  {formData.streetAddress}
+                  {formData.address2Type && formData.address2Value && 
+                    `, ${formData.address2Type} ${formData.address2Value}`
+                  }
+                </div>
+                <div className="text-muted-foreground">
+                  {formData.city}, {formData.state} {formData.zipCode}
+                </div>
+              </div>
+
+              {addressStatus === 'checking' && (
+                <div className="flex items-center mt-4 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Checking address availability...
+                </div>
+              )}
+
+              {addressStatus === 'duplicate' && (
+                <div className="mt-4 text-destructive font-medium">
+                  ⚠️ Address already exists in our system
+                </div>
+              )}
+
+              {addressStatus === 'available' && (
+                <div className="mt-4 text-blue-700 dark:text-blue-300 font-medium">
+                  ✅ Address is available
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={goBack}
+                className="flex-1"
+                disabled={isCheckingAddress}
+              >
+                Edit Address
+              </Button>
+              
+              {addressStatus === 'available' && (
+                <Button
+                  onClick={confirmAddress}
+                  className="flex-1"
+                  disabled={isCheckingAddress}
+                >
+                  Confirm Address
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Multi-Factor Authentication */}
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Set Up Multi-Factor Authentication
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                For your security, MFA is required for all accounts
+              </p>
+            </div>
+
+            <div className="bg-muted/20 p-6 rounded-lg text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🔐</span>
+                </div>
+                <p className="text-muted-foreground">
+                  MFA setup will be implemented here. For now, click continue to proceed with account creation.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={goBack}
+                className="flex-1"
+              >
+                Back
+              </Button>
+              
+              <Button
+                onClick={completeMFA}
+                className="flex-1"
+                disabled={isCreatingAccount}
+              >
+                {isCreatingAccount ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Complete Setup'
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Success */}
+        {currentStep === 4 && (
+          <div className="space-y-6 text-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
+              <span className="text-2xl">✅</span>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Account Created Successfully!
+              </h3>
+              <p className="text-muted-foreground">
+                Please check your email to verify your account and complete the setup.
+              </p>
+            </div>
+
+            <Button
+              onClick={() => window.location.href = '/signin'}
+              className="w-full"
+            >
+              Go to Sign In
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
