@@ -1,0 +1,211 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Building, House, Facebook, Twitter, Linkedin } from 'lucide-react';
+
+export const PreloginFooter = () => {
+  const currentYear = new Date().getFullYear();
+
+  const Logo = () => (
+    <div className="flex items-center space-x-2">
+      <div className="flex items-center">
+        <Building className="h-6 w-6 text-primary" />
+        <House className="h-6 w-6 text-primary -ml-1" />
+      </div>
+      <span className="text-xl font-bold text-primary">MuniNow</span>
+    </div>
+  );
+
+  const socialLinks = [
+    { name: 'Facebook', icon: Facebook, href: '#' },
+    { name: 'Twitter', icon: Twitter, href: '#' },
+    { name: 'LinkedIn', icon: Linkedin, href: '#' },
+  ];
+
+  return (
+    <footer className="bg-muted border-t">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand Section */}
+          <div className="space-y-4">
+            <Logo />
+            <p className="text-sm text-muted-foreground max-w-xs">
+              Municipal Payment Portal - Pay your municipal bills quickly and securely online.
+            </p>
+            <div className="flex space-x-4">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  aria-label={social.name}
+                >
+                  <social.icon className="h-5 w-5" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* For Residents */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">For Residents</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/signin"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Pay My Bill
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/signup"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Create Account
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="/#how-it-works"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  How It Works
+                </a>
+              </li>
+              <li>
+                <Link
+                  to="/residents#faq"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  FAQ
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* For Municipalities */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">For Municipalities</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/municipal-login"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Municipal Login
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/municipal-signup"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Municipal Sign Up
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/services"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Services
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/integration"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Integration Guide
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Company</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/about"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/privacy"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/terms"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/accessibility"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Accessibility
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="border-t mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="text-sm text-muted-foreground">
+              © {currentYear} MuniNow. All rights reserved.
+            </div>
+            <div className="flex flex-wrap justify-center md:justify-end space-x-6">
+              <Link
+                to="/privacy"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Privacy
+              </Link>
+              <Link
+                to="/terms"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Terms
+              </Link>
+              <Link
+                to="/cookies"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Cookies
+              </Link>
+              <Link
+                to="/accessibility"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Accessibility
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};

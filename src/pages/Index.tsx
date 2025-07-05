@@ -3,28 +3,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { PreloginHeader } from '@/components/layout/PreloginHeader';
+import { PreloginFooter } from '@/components/layout/PreloginFooter';
 
 const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-blue-600">MuniNow</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/signin">
-                <Button variant="outline" size="sm">
-                  Login
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PreloginHeader />
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
@@ -98,20 +84,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <h3 className="text-lg font-bold text-blue-600">MuniNow</h3>
-              <span className="ml-3 text-gray-600">Municipal Payment Portal</span>
-            </div>
-            <div className="text-gray-500 text-sm">
-              © 2024 MuniNow. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PreloginFooter />
     </div>
   );
 };
