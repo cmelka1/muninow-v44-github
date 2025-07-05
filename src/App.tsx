@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CookieConsentProvider } from "@/components/CookieConsentProvider";
+import ScrollToTop from "@/components/navigation/ScrollToTop";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Signup from "./pages/Signup";
@@ -33,6 +34,7 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <BrowserRouter>
+            <ScrollToTop />
             <CookieConsentProvider>
               <Toaster />
               <Sonner />
