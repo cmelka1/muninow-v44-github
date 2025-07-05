@@ -43,7 +43,7 @@ const finixSellerSchema = z.object({
     email: z.string().email('Valid email is required'),
     phone: z.string().min(10, 'Phone number is required'),
     date_of_birth: z.string(),
-    ssn: z.string().min(4, 'SSN is required'),
+    ssn: z.string().length(4, 'Last 4 digits of SSN required'),
     address: z.object({
       line1: z.string().min(1, 'Address line 1 is required'),
       line2: z.string().optional(),
@@ -559,9 +559,9 @@ const SuperAdminCustomers = () => {
                         name="principal.ssn"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>SSN (Last 4 or Full) *</FormLabel>
+                            <FormLabel>SSN (Last 4 digits) *</FormLabel>
                             <FormControl>
-                              <Input placeholder="1234 or 123-45-6789" {...field} />
+                              <Input placeholder="1234" maxLength={4} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
