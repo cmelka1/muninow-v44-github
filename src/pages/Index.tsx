@@ -25,7 +25,7 @@ const Index = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signin">
+            <Link to="/signup">
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-lg">
                 Get Started
               </Button>
