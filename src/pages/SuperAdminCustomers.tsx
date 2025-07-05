@@ -101,6 +101,21 @@ const usStates = [
   'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
 ];
 
+// Phone number formatting utility
+const formatPhoneNumber = (value: string) => {
+  // Remove all non-digit characters
+  const phoneNumber = value.replace(/\D/g, '');
+  
+  // Format as (xxx) xxx-xxxx
+  if (phoneNumber.length >= 6) {
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+  } else if (phoneNumber.length >= 3) {
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+  } else {
+    return phoneNumber;
+  }
+};
+
 const SuperAdminCustomers = () => {
   const { toast } = useToast();
 
@@ -263,7 +278,14 @@ const SuperAdminCustomers = () => {
                         <FormItem>
                           <FormLabel>Business Phone *</FormLabel>
                           <FormControl>
-                            <Input placeholder="(555) 123-4567" {...field} />
+                            <Input 
+                              placeholder="(555) 123-4567" 
+                              {...field}
+                              onChange={(e) => {
+                                const formatted = formatPhoneNumber(e.target.value);
+                                field.onChange(formatted);
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -533,7 +555,14 @@ const SuperAdminCustomers = () => {
                           <FormItem>
                             <FormLabel>Phone Number *</FormLabel>
                             <FormControl>
-                              <Input placeholder="(555) 123-4567" {...field} />
+                              <Input 
+                                placeholder="(555) 123-4567" 
+                                {...field}
+                                onChange={(e) => {
+                                  const formatted = formatPhoneNumber(e.target.value);
+                                  field.onChange(formatted);
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
