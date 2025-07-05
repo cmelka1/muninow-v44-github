@@ -15,6 +15,27 @@ export const generateFAQStructuredData = (faqs: Array<{question: string, answer:
   };
 };
 
+export const generateOrganizationStructuredData = () => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "MuniNow",
+    "url": "https://muninow.com",
+    "logo": "https://muninow.com/favicon.ico",
+    "description": "Simplified municipal bill pay platform for residents, businesses, and municipalities",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+1-800-MUNINOW",
+      "contactType": "customer service",
+      "availableLanguage": "English"
+    },
+    "sameAs": [
+      "https://twitter.com/muninow",
+      "https://linkedin.com/company/muninow"
+    ]
+  };
+};
+
 export const getPageMetadata = (page: string): SEOMetadata => {
   const metadata: Record<string, SEOMetadata> = {
     home: {
@@ -40,6 +61,12 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       description: "Residents can pay all municipal bills in one place. View water, electric, gas, tax, and other city bills on a single dashboard. Set up autopay and never miss a payment.",
       keywords: "resident bill pay, municipal bills for residents, city bill payment, water bill pay, electric bill pay, property tax payment",
       canonical: "https://muninow.com/residents"
+    },
+    about: {
+      title: "About MuniNow - Simplifying Municipal Operations",
+      description: "Learn about MuniNow's mission to modernize local government operations by connecting critical systems and simplifying payments for municipalities and residents.",
+      keywords: "about muninow, municipal technology, local government software, payment platform, municipal operations, city technology",
+      canonical: "https://muninow.com/about"
     }
   };
 
