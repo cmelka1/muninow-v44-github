@@ -67,6 +67,18 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       description: "Learn about MuniNow's mission to modernize local government operations by connecting critical systems and simplifying payments for municipalities and residents.",
       keywords: "about muninow, municipal technology, local government software, payment platform, municipal operations, city technology",
       canonical: "https://muninow.com/about"
+    },
+    privacy: {
+      title: "Privacy Policy - MuniNow",
+      description: "Learn how MuniNow protects your privacy and handles your personal information. Our comprehensive privacy policy covers payment processing, data security, and your privacy rights.",
+      keywords: "privacy policy, data protection, payment security, PCI compliance, financial data privacy, municipal payment privacy",
+      canonical: "https://muninow.com/privacy"
+    },
+    contact: {
+      title: "Contact MuniNow - Get in Touch",
+      description: "Contact MuniNow for questions about our municipal payment platform. Reach out for support, partnerships, or to learn more about our services.",
+      keywords: "contact muninow, municipal payment support, customer service, partnerships, get in touch",
+      canonical: "https://muninow.com/contact"
     }
   };
 
