@@ -192,23 +192,33 @@ export const PersonalTab = () => {
           {/* Profile Header */}
           <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-6">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarFallback className="text-lg bg-primary text-primary-foreground">
-                      {getInitials(watchedValues.firstName, watchedValues.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-xl font-semibold text-slate-800">
-                      {watchedValues.firstName} {watchedValues.lastName}
-                    </h3>
-                    <p className="text-slate-600">{user?.email}</p>
-                    <Badge variant="secondary" className="mt-1">
-                      {profile?.account_type === 'business' ? 'Business Account' : 'Resident Account'}
-                    </Badge>
-                  </div>
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarFallback className="text-lg bg-primary text-primary-foreground">
+                    {getInitials(watchedValues.firstName, watchedValues.lastName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-800">
+                    {watchedValues.firstName} {watchedValues.lastName}
+                  </h3>
+                  <p className="text-slate-600">{user?.email}</p>
+                  <Badge variant="secondary" className="mt-1">
+                    {profile?.account_type === 'business' ? 'Business Account' : 'Resident Account'}
+                  </Badge>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Personal Information */}
+          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Personal Information
+                </CardTitle>
                 {!isEditing ? (
                   <Button type="button" onClick={() => setIsEditing(true)} variant="outline">
                     <Edit2 className="h-4 w-4 mr-2" />
@@ -231,16 +241,6 @@ export const PersonalTab = () => {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Personal Information */}
-          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Personal Information
-              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
