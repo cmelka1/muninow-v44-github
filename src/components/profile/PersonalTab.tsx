@@ -189,28 +189,6 @@ export const PersonalTab = () => {
     <div className="space-y-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          {/* Profile Header */}
-          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-6">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarFallback className="text-lg bg-primary text-primary-foreground">
-                    {getInitials(watchedValues.firstName, watchedValues.lastName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-800">
-                    {watchedValues.firstName} {watchedValues.lastName}
-                  </h3>
-                  <p className="text-slate-600">{user?.email}</p>
-                  <Badge variant="secondary" className="mt-1">
-                    {profile?.account_type === 'business' ? 'Business Account' : 'Resident Account'}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Personal Information */}
           <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-6">
             <CardHeader>
