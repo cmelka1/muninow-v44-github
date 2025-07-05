@@ -17,6 +17,7 @@ import Features from "./pages/Features";
 import Municipalities from "./pages/Municipalities";
 import Residents from "./pages/Residents";
 import About from "./pages/About";
+import ContactUs from "./pages/ContactUs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/municipalities" element={<Municipalities />} />
               <Route path="/residents" element={<Residents />} />
               <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<ContactUs />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
