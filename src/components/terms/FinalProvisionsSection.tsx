@@ -81,10 +81,7 @@ const FinalProvisionsSection: React.FC = () => {
       </p>
       <div className="mb-4">
         <p className="mb-1"><strong>Muni Now, Inc.</strong></p>
-        <p className="mb-1">123 Tech Plaza, Suite 400</p>
-        <p className="mb-1">Boston, MA 02110</p>
         <p className="mb-1">Email: <a href="mailto:contact@muninow.com" className="text-primary hover:underline">contact@muninow.com</a></p>
-        <p className="mb-1">Phone: 1-800-MUNINOW</p>
       </div>
       
       <h3 className="text-xl font-medium mb-3">14.7 Electronic Communications</h3>
@@ -104,7 +101,7 @@ const FinalProvisionsSection: React.FC = () => {
       
       <p className="mt-8 text-sm text-muted-foreground">
         <strong>Effective Date:</strong> December 25, 2024<br />
-        <strong>Last Updated:</strong> December 25, 2024
+        <strong>Last Updated:</strong> July 5, 2025
       </p>
     </TermsSection>
   );

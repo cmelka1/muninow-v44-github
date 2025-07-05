@@ -28,7 +28,7 @@ const TermsOfService: React.FC = () => {
         <h1 className="text-3xl font-bold mb-8 text-foreground">Terms of Service</h1>
         
         <div className="prose prose-slate max-w-none">
-          <p className="text-muted-foreground mb-8">Last Updated: December 25, 2024</p>
+          <p className="text-muted-foreground mb-8">Last Updated: July 5, 2025</p>
 
           <TermsSection title="1. Acceptance of Terms">
             <p>
