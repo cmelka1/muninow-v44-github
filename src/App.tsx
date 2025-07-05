@@ -31,33 +31,33 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <TooltipProvider>
-        <CookieConsentProvider>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<Auth />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/members" element={<Members />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/municipalities" element={<Municipalities />} />
-              <Route path="/residents" element={<Residents />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/cookies" element={<CookiesPolicy />} />
-              <Route path="/accessibility" element={<Accessibility />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+        <AuthProvider>
+          <BrowserRouter>
+            <CookieConsentProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/signin" element={<Auth />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/members" element={<Members />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/municipalities" element={<Municipalities />} />
+                <Route path="/residents" element={<Residents />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/cookies" element={<CookiesPolicy />} />
+                <Route path="/accessibility" element={<Accessibility />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </CookieConsentProvider>
           </BrowserRouter>
         </AuthProvider>
-        </CookieConsentProvider>
       </TooltipProvider>
     </HelmetProvider>
   </QueryClientProvider>
