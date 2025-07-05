@@ -25,6 +25,10 @@ import TermsOfService from "./pages/TermsOfService";
 import CookiesPolicy from "./pages/CookiesPolicy";
 import Accessibility from "./pages/Accessibility";
 import NotFound from "./pages/NotFound";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminCustomers from "./pages/SuperAdminCustomers";
+import SuperAdminProfile from "./pages/SuperAdminProfile";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +59,21 @@ const App = () => (
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/cookies" element={<CookiesPolicy />} />
                 <Route path="/accessibility" element={<Accessibility />} />
+                <Route path="/superadmin/dashboard" element={
+                  <ProtectedRoute requiredRole="superAdmin">
+                    <SuperAdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/superadmin/customers" element={
+                  <ProtectedRoute requiredRole="superAdmin">
+                    <SuperAdminCustomers />
+                  </ProtectedRoute>
+                } />
+                <Route path="/superadmin/profile" element={
+                  <ProtectedRoute requiredRole="superAdmin">
+                    <SuperAdminProfile />
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </CookieConsentProvider>

@@ -7,40 +7,33 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator
+  SidebarGroup
 } from '@/components/ui/sidebar';
-import { Home, Users, User, LogOut, Shield } from 'lucide-react';
+import { Home, Users, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserRole } from '@/hooks/useUserRole';
 
 const navigationItems = [
   {
     title: 'Dashboard',
     icon: Home,
-    url: '/dashboard'
+    url: '/superadmin/dashboard'
   },
   {
-    title: 'Members',
+    title: 'Customers',
     icon: Users,
-    url: '/members'
+    url: '/superadmin/customers'
   },
   {
     title: 'Profile',
     icon: User,
-    url: '/profile'
+    url: '/superadmin/profile'
   }
 ];
 
-export function AppSidebar() {
+export function SuperAdminSidebar() {
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
-  const { hasRole } = useUserRole();
 
   // Get the logo URL from Supabase Storage
   const logoUrl = supabase.storage
@@ -66,10 +59,10 @@ export function AppSidebar() {
     <Sidebar className="w-64 bg-background border-r border-border">
       {/* Header */}
       <SidebarHeader className="px-6 py-8">
-        <NavLink to="/dashboard" className="block hover:opacity-80 transition-opacity">
+        <NavLink to="/superadmin/dashboard" className="block hover:opacity-80 transition-opacity">
           <img 
             src={logoUrl} 
-            alt="MuniNow" 
+            alt="MuniNow SuperAdmin" 
             className="h-10 w-auto object-contain"
             style={{ imageRendering: 'crisp-edges' }}
           />
@@ -81,9 +74,9 @@ export function AppSidebar() {
         <SidebarGroup>
           <div className="mb-6">
              <h2 className="text-base font-medium text-gray-500 uppercase tracking-wide mb-4 pl-4">
-               MAIN MENU
+               ADMIN PANEL
              </h2>
-            <nav role="navigation" aria-label="Main navigation">
+            <nav role="navigation" aria-label="SuperAdmin navigation">
               <ul className="space-y-2">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
@@ -112,36 +105,6 @@ export function AppSidebar() {
             </nav>
           </div>
         </SidebarGroup>
-
-        {/* SuperAdmin Access */}
-        {hasRole('superAdmin') && (
-          <SidebarGroup>
-            <div className="mb-6">
-              <h2 className="text-base font-medium text-gray-500 uppercase tracking-wide mb-4 pl-4">
-                ADMIN
-              </h2>
-              <nav role="navigation" aria-label="Admin navigation">
-                <ul className="space-y-2">
-                  <li>
-                    <NavLink
-                      to="/superadmin/dashboard"
-                      className={({ isActive }) => 
-                        `flex items-center gap-3 px-4 py-2 rounded-md text-base min-h-[40px] transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                          isActive 
-                            ? 'bg-primary/5 text-primary font-medium' 
-                            : 'text-gray-600 hover:bg-primary/5 hover:text-primary'
-                        }`
-                      }
-                    >
-                      <Shield className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-                      <span className="leading-tight">SuperAdmin</span>
-                    </NavLink>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       {/* User Profile Section */}
@@ -157,11 +120,11 @@ export function AppSidebar() {
               <span className="text-sm font-medium text-foreground truncate">
                 {profile?.first_name && profile?.last_name 
                   ? `${profile.first_name} ${profile.last_name}`
-                  : user?.email?.split('@')[0] || 'User'
+                  : user?.email?.split('@')[0] || 'Admin'
                 }
               </span>
-              <span className="text-xs text-muted-foreground capitalize">
-                {profile?.account_type || 'resident'} account
+              <span className="text-xs text-muted-foreground">
+                SuperAdmin
               </span>
             </div>
           </div>
