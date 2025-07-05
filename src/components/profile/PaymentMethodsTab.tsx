@@ -113,7 +113,7 @@ export const PaymentMethodsTab = () => {
 
   const getCardIcon = (methodType: string, cardBrand?: string) => {
     if (methodType === 'ach') {
-      return <Building className="h-5 w-5 text-primary" />;
+      return <Building className="h-8 w-8 text-primary" />;
     }
     
     if (cardBrand) {
@@ -123,13 +123,13 @@ export const PaymentMethodsTab = () => {
           <img 
             src={logoUrl} 
             alt={`${cardBrand} logo`}
-            className="h-5 w-5 object-contain"
+            className="h-8 w-8 object-contain"
           />
         );
       }
     }
     
-    return <CreditCard className="h-5 w-5 text-primary" />;
+    return <CreditCard className="h-8 w-8 text-primary" />;
   };
 
   const getMethodDisplayName = (method: PaymentMethod) => {
@@ -180,9 +180,7 @@ export const PaymentMethodsTab = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="bg-primary/10 p-2 rounded-lg">
-                          {getCardIcon(method.method_type, method.card_brand || undefined)}
-                        </div>
+                        {getCardIcon(method.method_type, method.card_brand || undefined)}
                         <div>
                           <div className="flex items-center space-x-2">
                             <h4 className="font-semibold text-slate-800">
