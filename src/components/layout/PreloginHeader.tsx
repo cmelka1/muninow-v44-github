@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Building, House, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -32,11 +32,11 @@ export const PreloginHeader = () => {
 
   const Logo = ({ className = "" }: { className?: string }) => (
     <Link to="/" className={`flex items-center space-x-2 hover:opacity-80 transition-opacity ${className}`}>
-      <div className="flex items-center">
-        <Building className="h-6 w-6 text-primary" />
-        <House className="h-6 w-6 text-primary -ml-1" />
-      </div>
-      <span className="text-xl font-bold text-primary">MuniNow</span>
+      <img 
+        src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/muninow-logo/logo.png"
+        alt="MuniNow Logo"
+        className="h-8 w-auto"
+      />
     </Link>
   );
 
