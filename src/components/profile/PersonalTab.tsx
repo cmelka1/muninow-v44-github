@@ -229,10 +229,7 @@ export const PersonalTab = () => {
                     <FormItem>
                       <FormLabel className="text-slate-700 font-medium">First Name</FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input {...field} disabled={!isEditing} className="pl-10" />
-                        </div>
+                        <Input {...field} disabled={!isEditing} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -245,10 +242,7 @@ export const PersonalTab = () => {
                     <FormItem>
                       <FormLabel className="text-slate-700 font-medium">Last Name</FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input {...field} disabled={!isEditing} className="pl-10" />
-                        </div>
+                        <Input {...field} disabled={!isEditing} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -258,15 +252,12 @@ export const PersonalTab = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-medium">Email Address</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      type="email"
-                      value={user?.email || ''}
-                      disabled={true}
-                      className="pl-10 bg-slate-50"
-                    />
-                  </div>
+                  <Input
+                    type="email"
+                    value={user?.email || ''}
+                    disabled={true}
+                    className="bg-slate-50"
+                  />
                   <p className="text-xs text-slate-500">
                     Email cannot be changed here. Contact support if needed.
                   </p>
@@ -278,10 +269,7 @@ export const PersonalTab = () => {
                     <FormItem>
                       <FormLabel className="text-slate-700 font-medium">Phone Number</FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input {...field} disabled={!isEditing} className="pl-10" type="tel" />
-                        </div>
+                        <Input {...field} disabled={!isEditing} type="tel" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -315,12 +303,9 @@ export const PersonalTab = () => {
                           placeholder="Start typing your address..."
                           className="w-full h-11"
                         />
-                      ) : (
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input {...field} disabled={true} className="pl-10" />
-                        </div>
-                      )}
+                       ) : (
+                         <Input {...field} disabled={true} />
+                       )}
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -350,12 +335,9 @@ export const PersonalTab = () => {
                                 ))}
                               </SelectContent>
                             </Select>
-                          ) : (
-                            <div className="relative">
-                              <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                              <Input {...field} disabled={true} className="pl-10" />
-                            </div>
-                          )}
+                           ) : (
+                             <Input {...field} disabled={true} />
+                           )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -367,19 +349,15 @@ export const PersonalTab = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-slate-600 text-sm">Value</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input
-                              {...field}
-                              disabled={!isEditing}
-                              className="pl-10"
-                              placeholder="e.g., 4B, 12A"
-                              maxLength={5}
-                              onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                            />
-                          </div>
-                        </FormControl>
+                         <FormControl>
+                           <Input
+                             {...field}
+                             disabled={!isEditing}
+                             placeholder="e.g., 4B, 12A"
+                             maxLength={5}
+                             onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                           />
+                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -447,12 +425,9 @@ export const PersonalTab = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-700 font-medium">Business Legal Name</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input {...field} disabled={!isEditing} className="pl-10" />
-                        </div>
-                      </FormControl>
+                       <FormControl>
+                         <Input {...field} disabled={!isEditing} />
+                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
