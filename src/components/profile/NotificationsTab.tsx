@@ -285,57 +285,6 @@ export const NotificationsTab = () => {
         </CardContent>
       </Card>
 
-      {/* Delivery Information */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-800">
-            Notification Delivery
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-slate-50 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <Mail className="h-5 w-5 text-primary" />
-                <h4 className="font-medium text-slate-800">Email Notifications</h4>
-              </div>
-              <p className="text-sm text-slate-600 mb-2">
-                Delivered to: {user?.email}
-              </p>
-              <p className="text-xs text-slate-500">
-                Email notifications are sent immediately when events occur.
-              </p>
-            </div>
-            
-            <div className="bg-slate-50 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <Smartphone className="h-5 w-5 text-primary" />
-                <h4 className="font-medium text-slate-800">SMS Notifications</h4>
-              </div>
-              <p className="text-sm text-slate-600 mb-2">
-                Phone number not configured
-              </p>
-              <p className="text-xs text-slate-500">
-                Add a phone number in your profile to receive SMS notifications.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <Bell className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-blue-900">Important Notice</h4>
-                <p className="text-sm text-blue-700 mt-1">
-                  Critical account notifications (such as delinquency notices) will always be sent regardless of your preferences 
-                  to ensure you receive important account information.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Save Button */}
       <div className="flex justify-end">
         <button
