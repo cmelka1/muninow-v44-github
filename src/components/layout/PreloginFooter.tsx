@@ -1,27 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin } from 'lucide-react';
+import { Building, House, Facebook, Twitter, Linkedin } from 'lucide-react';
 
 export const PreloginFooter = () => {
   const currentYear = new Date().getFullYear();
 
   const Logo = () => (
-    <div className="flex items-center">
-      <img 
-        src="/lovable-uploads/14cad4bc-45c5-4b44-b3d1-8cc9dbe1995c.png"
-        alt="MuniNow Logo"
-        className="h-8 w-auto"
-        onError={(e) => {
-          console.error('Footer logo failed to load:', e);
-          // Fallback to text if image fails
-          e.currentTarget.style.display = 'none';
-          const sibling = e.currentTarget.nextElementSibling as HTMLElement;
-          if (sibling) {
-            sibling.style.display = 'block';
-          }
-        }}
-      />
-      <span className="text-xl font-bold text-primary hidden">MuniNow</span>
+    <div className="flex items-center space-x-2">
+      <div className="flex items-center">
+        <Building className="h-6 w-6 text-primary" />
+        <House className="h-6 w-6 text-primary -ml-1" />
+      </div>
+      <span className="text-xl font-bold text-primary">MuniNow</span>
     </div>
   );
 

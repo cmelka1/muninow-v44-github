@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Building, House, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -31,22 +31,12 @@ export const PreloginHeader = () => {
   };
 
   const Logo = ({ className = "" }: { className?: string }) => (
-    <Link to="/" className={`flex items-center hover:opacity-80 transition-opacity ${className}`}>
-      <img 
-        src="/lovable-uploads/14cad4bc-45c5-4b44-b3d1-8cc9dbe1995c.png"
-        alt="MuniNow Logo"
-        className="h-8 w-auto"
-        onError={(e) => {
-          console.error('Logo failed to load:', e);
-          // Fallback to text if image fails
-          e.currentTarget.style.display = 'none';
-          const sibling = e.currentTarget.nextElementSibling as HTMLElement;
-          if (sibling) {
-            sibling.style.display = 'block';
-          }
-        }}
-      />
-      <span className="text-xl font-bold text-primary hidden">MuniNow</span>
+    <Link to="/" className={`flex items-center space-x-2 hover:opacity-80 transition-opacity ${className}`}>
+      <div className="flex items-center">
+        <Building className="h-6 w-6 text-primary" />
+        <House className="h-6 w-6 text-primary -ml-1" />
+      </div>
+      <span className="text-xl font-bold text-primary">MuniNow</span>
     </Link>
   );
 
