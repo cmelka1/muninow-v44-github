@@ -461,38 +461,6 @@ export const PersonalTab = () => {
             </Card>
           )}
 
-          {/* Account Information */}
-          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-slate-800">
-                Account Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-slate-700 font-medium">Account Type</Label>
-                  <div className="mt-1">
-                    <Badge variant="secondary">
-                      {profile?.account_type === 'business' ? 'Business' : 'Resident'}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-slate-700 font-medium">Account Created</Label>
-                  <div className="mt-1 text-sm text-slate-600">
-                    {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label className="text-slate-700 font-medium">User ID</Label>
-                <div className="mt-1 text-sm text-slate-600 font-mono">
-                  {user?.id}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </form>
       </Form>
     </div>
