@@ -12,7 +12,7 @@ import {
 
 const navigationItems = [
   { name: 'Home', href: '/' },
-  { name: 'Features', href: '/#features' },
+  { name: 'Features', href: '/features' },
   { name: 'Municipalities', href: '/municipalities' },
   { name: 'Residents', href: '/residents' },
   { name: 'About', href: '/about' },

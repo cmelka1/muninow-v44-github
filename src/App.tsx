@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import Features from "./pages/Features";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/members" element={<Members />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/features" element={<Features />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
