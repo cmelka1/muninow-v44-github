@@ -21,7 +21,7 @@ const teamMembers: TeamMember[] = [
     name: 'Charles Melka',
     role: 'Co-Founder',
     bio: 'Charles brings seven years of experience evaluating & investing in technology and payments companies',
-    imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/founder-photos/Melka_Charles_Headshot.png',
+    imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/founder-photos/Melka_Charles_Headshot.png?t=' + Date.now(),
     initials: 'CM'
   }, 
   {
