@@ -95,10 +95,40 @@ export const PaymentMethodsTab = () => {
     }
   };
 
+  const getCardBrandIcon = (cardBrand: string) => {
+    const brandMap: { [key: string]: string } = {
+      'visa': 'visa-brandmark-blue-1960x622.webp',
+      'mastercard': 'Mastercard-Logo.wine.png',
+      'amex': 'Amex_logo_color.png',
+      'american express': 'Amex_logo_color.png',
+      'discover': 'Discover Logo.png'
+    };
+
+    const fileName = brandMap[cardBrand.toLowerCase()];
+    if (fileName) {
+      return `https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/credit-card-logos/${fileName}`;
+    }
+    return null;
+  };
+
   const getCardIcon = (methodType: string, cardBrand?: string) => {
     if (methodType === 'ach') {
       return <Building className="h-5 w-5 text-primary" />;
     }
+    
+    if (cardBrand) {
+      const logoUrl = getCardBrandIcon(cardBrand);
+      if (logoUrl) {
+        return (
+          <img 
+            src={logoUrl} 
+            alt={`${cardBrand} logo`}
+            className="h-5 w-5 object-contain"
+          />
+        );
+      }
+    }
+    
     return <CreditCard className="h-5 w-5 text-primary" />;
   };
 
