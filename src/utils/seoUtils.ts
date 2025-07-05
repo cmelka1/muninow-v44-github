@@ -13,6 +13,12 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       description: "Explore MuniNow's powerful features including secure payments, automated reminders, detailed analytics, and seamless municipal integrations for enhanced efficiency.",
       keywords: "muninow features, municipal payment features, secure payments, bill automation, payment analytics, municipal software, payment processing",
       canonical: "https://muninow.com/features"
+    },
+    municipalities: {
+      title: "MuniNow for Municipalities - Streamline Municipal Bill Collection",
+      description: "Comprehensive platform for municipalities to modernize payment processes, reduce administrative overhead, and improve resident satisfaction with automated billing and reconciliation.",
+      keywords: "municipal bill collection, municipal payment processing, government billing software, municipal administration, automated billing, payment reconciliation",
+      canonical: "https://muninow.com/municipalities"
     }
   };
 

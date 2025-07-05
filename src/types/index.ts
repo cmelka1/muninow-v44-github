@@ -17,3 +17,12 @@ export interface Breadcrumb {
   name: string;
   url: string;
 }
+
+export interface MunicipalService {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  features: string[];
+  icon?: string;
+}

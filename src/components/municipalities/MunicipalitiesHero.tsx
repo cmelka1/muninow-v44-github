@@ -1,0 +1,41 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import ResponsiveTypography from '@/components/ui/responsive-typography';
+import ResponsiveContainer from '@/components/ui/responsive-container';
+
+const MunicipalitiesHero: React.FC = () => {
+  return (
+    <section className="bg-gradient-to-b from-primary/10 to-white">
+      <ResponsiveContainer variant="hero" maxWidth="6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <ResponsiveTypography variant="h1" className="mb-6">
+              Streamline Municipal Bill Collection
+            </ResponsiveTypography>
+            <ResponsiveTypography variant="body" className="text-muted-foreground mb-8 text-xl">
+              Our comprehensive platform helps municipalities modernize payment processes, reduce administrative overhead, and improve resident and business satisfaction.
+            </ResponsiveTypography>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/signup" aria-label="Schedule a demo with MuniNow">
+                <Button size="lg" className="px-8">
+                  Schedule a Demo
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="rounded-lg overflow-hidden shadow-xl">
+            <img 
+              src="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e" 
+              alt="Municipal City Hall Building" 
+              className="w-full h-auto"
+              loading="eager"
+            />
+          </div>
+        </div>
+      </ResponsiveContainer>
+    </section>
+  );
+};
+
+export default MunicipalitiesHero;
