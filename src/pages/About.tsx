@@ -15,13 +15,13 @@ interface TeamMember {
   initials: string;
 }
 
-const teamMembers: TeamMember[] = [
+  const teamMembers: TeamMember[] = [
   {
     id: '0',
     name: 'Charles Melka',
     role: 'Co-Founder',
     bio: 'Charles brings seven years of experience evaluating & investing in technology and payments companies',
-    imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/founder-photos/Melka_Charles_Headshot.png?t=' + Date.now(),
+    imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/founder-photos/Melka_Charles_Headshot.png',
     initials: 'CM'
   }, 
   {
@@ -52,6 +52,16 @@ const About: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('teamMemberImages', JSON.stringify(localImages));
   }, [localImages]);
+
+  // Preload team member images for faster loading
+  useEffect(() => {
+    teamMembers.forEach(member => {
+      if (member.imageUrl) {
+        const img = new Image();
+        img.src = member.imageUrl;
+      }
+    });
+  }, []);
 
   const handleImageUpload = (memberId: string, imageDataUrl: string) => {
     setLocalImages(prev => ({

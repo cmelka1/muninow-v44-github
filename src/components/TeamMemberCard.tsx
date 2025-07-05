@@ -116,7 +116,8 @@ const TeamMemberCard: React.FC<TeamMemberProps> = ({
                   height={192}
                   className={`w-full h-full object-cover ${id === '0' ? 'object-[center_top]' : ''}`}
                   quality="high"
-                  loading="lazy"
+                  priority={true}
+                  loading="eager"
                 />
               ) : (
                 <div className="w-full h-full bg-primary/10 text-primary text-3xl flex items-center justify-center">
