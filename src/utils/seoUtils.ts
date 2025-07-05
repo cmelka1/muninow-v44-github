@@ -85,6 +85,12 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       description: "Read MuniNow's Terms of Service covering payment processing, user responsibilities, compliance, and legal provisions for our municipal payment platform.",
       keywords: "terms of service, user agreement, payment terms, legal terms, municipal payment terms, service agreement",
       canonical: "https://muninow.com/terms"
+    },
+    cookies: {
+      title: "Cookies Policy - MuniNow",
+      description: "Learn about MuniNow's use of cookies, your privacy choices, and how we protect your data. Manage your cookie preferences and understand our compliance with GDPR and CCPA.",
+      keywords: "cookies policy, privacy choices, GDPR compliance, CCPA compliance, data protection, cookie preferences, web tracking",
+      canonical: "https://muninow.com/cookies"
     }
   };
 
