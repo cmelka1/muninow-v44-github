@@ -21,7 +21,7 @@ const teamMembers: TeamMember[] = [
     name: 'Charles Melka',
     role: 'Co-Founder',
     bio: 'Charles brings seven years of experience evaluating & investing in technology and payments companies',
-    imageUrl: '/lovable-uploads/c58569d2-964f-489e-b48e-8e9f174604c1.png',
+    imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/founder-photos/Melka_Charles_Headshot.png',
     initials: 'CM'
   }, 
   {
@@ -29,7 +29,7 @@ const teamMembers: TeamMember[] = [
     name: 'Bewley Wales',
     role: 'Co-Founder',
     bio: 'Bewley has extensive experience building & implementing technology systems for investors and real estate brokers',
-    imageUrl: '/lovable-uploads/04d4f4dd-70e2-45d5-bed5-5d099daa6c48.png',
+    imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/founder-photos/Bewley Headshot.jfif',
     initials: 'BW'
   }
 ];

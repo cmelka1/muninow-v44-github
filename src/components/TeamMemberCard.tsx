@@ -3,6 +3,7 @@ import { Upload, UserRound } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import OptimizedImage from '@/components/ui/optimized-image';
 import { toast } from '@/hooks/use-toast';
 import { compressImage, isImageFile, exceedsMaxSize } from '@/utils/imageUtils';
 
@@ -106,19 +107,27 @@ const TeamMemberCard: React.FC<TeamMemberProps> = ({
               />
             )}
             
-            <Avatar className="h-32 w-32 border-2 border-border shadow-md">
+            <div className="relative h-32 w-32 border-2 border-border shadow-md rounded-full overflow-hidden">
               {imageUrl ? (
-                <AvatarImage src={imageUrl} alt={`${name} profile`} className="object-cover" />
+                <OptimizedImage
+                  src={imageUrl}
+                  alt={`${name} profile`}
+                  width={128}
+                  height={128}
+                  className="w-full h-full object-cover"
+                  quality="high"
+                  loading="lazy"
+                />
               ) : (
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                <div className="w-full h-full bg-primary/10 text-primary text-2xl flex items-center justify-center">
                   {initials}
-                </AvatarFallback>
+                </div>
               )}
               {allowImageUpload && (
                 <div className="absolute inset-0 bg-black/0 flex items-center justify-center rounded-full transition-all group-hover:bg-black/20">
                 </div>
               )}
-            </Avatar>
+            </div>
           </div>
           <CardTitle className="text-2xl">{name}</CardTitle>
           <CardDescription className="text-primary font-medium text-lg">{role}</CardDescription>
