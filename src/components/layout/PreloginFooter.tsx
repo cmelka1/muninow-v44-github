@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin } from 'lucide-react';
 
 export const PreloginFooter = () => {
   const currentYear = new Date().getFullYear();
@@ -22,9 +21,21 @@ export const PreloginFooter = () => {
   );
 
   const socialLinks = [
-    { name: 'Facebook', icon: Facebook, href: '#' },
-    { name: 'Twitter', icon: Twitter, href: '#' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#' },
+    { 
+      name: 'Facebook', 
+      imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/Facebook_Logo_Primary.png',
+      href: '#' 
+    },
+    { 
+      name: 'X', 
+      imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/X Logo.png',
+      href: '#' 
+    },
+    { 
+      name: 'LinkedIn', 
+      imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/LinkedIn Logo.png',
+      href: '#' 
+    },
   ];
 
   return (
@@ -45,7 +56,11 @@ export const PreloginFooter = () => {
                   className="text-muted-foreground hover:text-primary transition-colors"
                   aria-label={social.name}
                 >
-                  <social.icon className="h-5 w-5" />
+                  <img 
+                    src={social.imageUrl}
+                    alt={social.name}
+                    className="h-5 w-5 filter grayscale brightness-75 hover:grayscale-0 hover:brightness-100 transition-all duration-200"
+                  />
                 </a>
               ))}
             </div>
