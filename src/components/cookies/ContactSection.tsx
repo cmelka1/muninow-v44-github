@@ -14,7 +14,7 @@ const ContactSection: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-2 text-foreground">General Inquiries</h3>
             <div className="space-y-2">
-              <p><strong>Email:</strong> privacy@muninow.com</p>
+              <p><strong>Email:</strong> contact@muninow.com</p>
             </div>
           </div>
         </div>
