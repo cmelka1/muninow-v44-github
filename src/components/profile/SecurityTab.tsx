@@ -3,10 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Lock, Eye, EyeOff, Smartphone, Mail, AlertTriangle } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -30,8 +28,6 @@ export const SecurityTab = () => {
     confirm: false
   });
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [mfaEnabled, setMfaEnabled] = useState(false);
-  const [mfaMethod, setMfaMethod] = useState<'sms' | 'email'>('sms');
 
   const handlePasswordUpdate = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -206,84 +202,6 @@ export const SecurityTab = () => {
         </CardContent>
       </Card>
 
-      {/* Multi-Factor Authentication */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            Multi-Factor Authentication
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-slate-800">Enable MFA</h4>
-              <p className="text-sm text-slate-600">
-                Add an extra layer of security to your account
-              </p>
-            </div>
-            <Switch
-              checked={mfaEnabled}
-              onCheckedChange={setMfaEnabled}
-            />
-          </div>
-          
-          {mfaEnabled && (
-            <div className="space-y-4 pt-4 border-t border-slate-200">
-              <div>
-                <Label className="text-slate-700 font-medium">Authentication Method</Label>
-                <div className="mt-2 space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      id="sms"
-                      name="mfaMethod"
-                      value="sms"
-                      checked={mfaMethod === 'sms'}
-                      onChange={(e) => setMfaMethod(e.target.value as 'sms')}
-                      className="text-primary"
-                    />
-                    <label htmlFor="sms" className="flex items-center space-x-2 text-sm">
-                      <Smartphone className="h-4 w-4 text-slate-500" />
-                      <span>SMS Text Message</span>
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      id="email"
-                      name="mfaMethod"
-                      value="email"
-                      checked={mfaMethod === 'email'}
-                      onChange={(e) => setMfaMethod(e.target.value as 'email')}
-                      className="text-primary"
-                    />
-                    <label htmlFor="email" className="flex items-center space-x-2 text-sm">
-                      <Mail className="h-4 w-4 text-slate-500" />
-                      <span>Email</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-blue-900">MFA Setup Required</h4>
-                    <p className="text-sm text-blue-700 mt-1">
-                      {mfaMethod === 'sms' 
-                        ? 'You will need to verify your phone number to complete SMS MFA setup.'
-                        : 'You will receive MFA codes at your registered email address.'
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
     </div>
   );
