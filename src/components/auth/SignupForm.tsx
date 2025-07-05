@@ -1025,7 +1025,14 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="cursor-pointer text-sm">
-                        I agree to the terms of service and privacy policy
+                        I agree to the{' '}
+                        <Link to="/terms" className="text-primary hover:underline">
+                          terms of service
+                        </Link>
+                        {' '}and{' '}
+                        <Link to="/privacy" className="text-primary hover:underline">
+                          privacy policy
+                        </Link>
                       </FormLabel>
                       <FormMessage />
                     </div>
