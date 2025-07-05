@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Edit2, Save, X, User, Mail, Phone, MapPin, Building, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AddressComponents {
   streetAddress: string;
@@ -17,6 +18,20 @@ interface AddressComponents {
   state: string;
   zipCode: string;
 }
+
+// Address 2 Types (same as signup form)
+const ADDRESS_2_TYPES = [
+  'Apartment',
+  'Suite',
+  'Floor',
+  'Building',
+  'Room',
+  'Unit',
+  'Department',
+  'Lot',
+  'Basement',
+  'Penthouse'
+];
 
 export const PersonalTab = () => {
   const { user, profile } = useAuth();
@@ -29,7 +44,8 @@ export const PersonalTab = () => {
     email: user?.email || '',
     phone: profile?.phone || '',
     streetAddress: profile?.street_address || '',
-    aptNumber: '',
+    address2Type: '',
+    address2Value: '',
     city: profile?.city || '',
     state: profile?.state || '',
     zipCode: profile?.zip_code || '',
@@ -44,7 +60,8 @@ export const PersonalTab = () => {
         email: user.email || '',
         phone: profile.phone || '',
         streetAddress: profile.street_address || '',
-        aptNumber: '',
+        address2Type: '',
+        address2Value: '',
         city: profile.city || '',
         state: profile.state || '',
         zipCode: profile.zip_code || '',
@@ -79,7 +96,9 @@ export const PersonalTab = () => {
           last_name: formData.lastName,
           phone: formData.phone,
           street_address: formData.streetAddress,
-          apt_number: formData.aptNumber,
+          apt_number: formData.address2Type && formData.address2Value 
+            ? `${formData.address2Type} ${formData.address2Value.toUpperCase()}`
+            : null,
           city: formData.city,
           state: formData.state,
           zip_code: formData.zipCode,
@@ -114,7 +133,8 @@ export const PersonalTab = () => {
       email: user?.email || '',
       phone: profile?.phone || '',
       streetAddress: profile?.street_address || '',
-      aptNumber: '',
+      address2Type: '',
+      address2Value: '',
       city: profile?.city || '',
       state: profile?.state || '',
       zipCode: profile?.zip_code || '',
@@ -284,19 +304,52 @@ export const PersonalTab = () => {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="aptNumber" className="text-slate-700 font-medium">
-              Apartment / Unit (Optional)
-            </Label>
-            <div className="relative">
-              <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="aptNumber"
-                value={formData.aptNumber}
-                onChange={(e) => setFormData({...formData, aptNumber: e.target.value})}
-                disabled={!isEditing}
-                className="pl-10"
-                placeholder="Apt 123, Unit B, etc."
-              />
+            <Label className="text-slate-700 font-medium">Address 2 (Optional)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="address2Type" className="text-slate-600 text-sm">Type</Label>
+                {isEditing ? (
+                  <Select 
+                    value={formData.address2Type} 
+                    onValueChange={(value) => setFormData({...formData, address2Type: value})}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ADDRESS_2_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      value={formData.address2Type}
+                      disabled={true}
+                      className="pl-10"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address2Value" className="text-slate-600 text-sm">Value</Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="address2Value"
+                    value={formData.address2Value}
+                    onChange={(e) => setFormData({...formData, address2Value: e.target.value.toUpperCase()})}
+                    disabled={!isEditing}
+                    className="pl-10"
+                    placeholder="e.g., 4B, 12A"
+                    maxLength={5}
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
