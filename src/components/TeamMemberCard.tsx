@@ -114,7 +114,7 @@ const TeamMemberCard: React.FC<TeamMemberProps> = ({
                   alt={`${name} profile`}
                   width={128}
                   height={128}
-                  className="w-full h-full object-cover object-top"
+                  className="w-full h-full object-cover"
                   quality="high"
                   loading="lazy"
                 />
