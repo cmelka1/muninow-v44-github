@@ -9,7 +9,43 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+// Google Maps Script Loader
+const loadGoogleMapsScript = async () => {
+  return new Promise(async (resolve, reject) => {
+    if (window.google) {
+      resolve(window.google);
+      return;
+    }
+
+    try {
+      // Fetch API key from edge function
+      const { data, error } = await supabase.functions.invoke('get-google-maps-key');
+      
+      if (error) {
+        throw new Error(`Failed to fetch Google Maps API key: ${error.message}`);
+      }
+      
+      const { apiKey } = data;
+      
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => resolve(window.google);
+      script.onerror = reject;
+      
+      document.head.appendChild(script);
+    } catch (error) {
+      console.error('Error loading Google Maps API:', error);
+      reject(error);
+    }
+  });
+};
 
 // Define the Finix seller identity schema
 const finixSellerSchema = z.object({
@@ -130,6 +166,11 @@ const formatPhoneNumber = (value: string, previousValue: string = '') => {
 
 const SuperAdminCustomers = () => {
   const { toast } = useToast();
+
+  // Load Google Maps API on component mount
+  React.useEffect(() => {
+    loadGoogleMapsScript().catch(console.error);
+  }, []);
 
   const form = useForm<FinixSellerFormData>({
     resolver: zodResolver(finixSellerSchema),
@@ -379,21 +420,32 @@ const SuperAdminCustomers = () => {
                     <h4 className="font-medium text-gray-800">Business Address</h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="md:col-span-2">
-                        <FormField
-                          control={form.control}
-                          name="business_address.line1"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Address Line 1 *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Street address" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                       <div className="md:col-span-2">
+                         <FormField
+                           control={form.control}
+                           name="business_address.line1"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Address Line 1 *</FormLabel>
+                               <FormControl>
+                                 <GooglePlacesAutocomplete
+                                   placeholder="Enter business street address"
+                                   value={field.value}
+                                   onChange={field.onChange}
+                                   onAddressSelect={(addressComponents) => {
+                                     // Update form fields with selected address
+                                     form.setValue('business_address.line1', addressComponents.streetAddress);
+                                     form.setValue('business_address.city', addressComponents.city);
+                                     form.setValue('business_address.region', addressComponents.state);
+                                     form.setValue('business_address.postal_code', addressComponents.zipCode);
+                                   }}
+                                 />
+                               </FormControl>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                       </div>
                       
                       <FormField
                         control={form.control}
@@ -615,21 +667,32 @@ const SuperAdminCustomers = () => {
                       <h4 className="font-medium text-gray-800">Control Owner Address</h4>
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="md:col-span-2">
-                          <FormField
-                            control={form.control}
-                            name="principal.address.line1"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Address Line 1 *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Street address" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                         <div className="md:col-span-2">
+                           <FormField
+                             control={form.control}
+                             name="principal.address.line1"
+                             render={({ field }) => (
+                               <FormItem>
+                                 <FormLabel>Address Line 1 *</FormLabel>
+                                 <FormControl>
+                                   <GooglePlacesAutocomplete
+                                     placeholder="Enter owner's street address"
+                                     value={field.value}
+                                     onChange={field.onChange}
+                                     onAddressSelect={(addressComponents) => {
+                                       // Update form fields with selected address
+                                       form.setValue('principal.address.line1', addressComponents.streetAddress);
+                                       form.setValue('principal.address.city', addressComponents.city);
+                                       form.setValue('principal.address.region', addressComponents.state);
+                                       form.setValue('principal.address.postal_code', addressComponents.zipCode);
+                                     }}
+                                   />
+                                 </FormControl>
+                                 <FormMessage />
+                               </FormItem>
+                             )}
+                           />
+                         </div>
                         
                         <FormField
                           control={form.control}
