@@ -13,8 +13,8 @@ import {
 const navigationItems = [
   { name: 'Home', href: '/' },
   { name: 'Features', href: '/#features' },
-  { name: 'For Municipalities', href: '/municipalities' },
-  { name: 'For Residents', href: '/residents' },
+  { name: 'Municipalities', href: '/municipalities' },
+  { name: 'Residents', href: '/residents' },
   { name: 'About', href: '/about' },
   { name: 'Contact Us', href: '/contact' },
 ];
