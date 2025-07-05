@@ -102,11 +102,23 @@ const usStates = [
 ];
 
 // Phone number formatting utility
-const formatPhoneNumber = (value: string) => {
+const formatPhoneNumber = (value: string, previousValue: string = '') => {
   // Remove all non-digit characters
   const phoneNumber = value.replace(/\D/g, '');
+  const previousPhoneNumber = previousValue.replace(/\D/g, '');
   
-  // Format as (xxx) xxx-xxxx
+  // If user is deleting (current length is less than previous), don't format immediately
+  if (phoneNumber.length < previousPhoneNumber.length) {
+    if (phoneNumber.length <= 3) {
+      return phoneNumber;
+    } else if (phoneNumber.length <= 6) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    } else {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+    }
+  }
+  
+  // Format as (xxx) xxx-xxxx for normal typing
   if (phoneNumber.length >= 6) {
     return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
   } else if (phoneNumber.length >= 3) {
@@ -282,7 +294,7 @@ const SuperAdminCustomers = () => {
                               placeholder="(555) 123-4567" 
                               {...field}
                               onChange={(e) => {
-                                const formatted = formatPhoneNumber(e.target.value);
+                                const formatted = formatPhoneNumber(e.target.value, field.value);
                                 field.onChange(formatted);
                               }}
                             />
@@ -559,7 +571,7 @@ const SuperAdminCustomers = () => {
                                 placeholder="(555) 123-4567" 
                                 {...field}
                                 onChange={(e) => {
-                                  const formatted = formatPhoneNumber(e.target.value);
+                                  const formatted = formatPhoneNumber(e.target.value, field.value);
                                   field.onChange(formatted);
                                 }}
                               />
