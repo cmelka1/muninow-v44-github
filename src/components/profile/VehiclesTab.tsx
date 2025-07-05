@@ -325,7 +325,7 @@ export const VehiclesTab = () => {
                           </div>
                           <p className="text-sm text-slate-600">{vehicle.color}</p>
                           <p className="text-sm text-slate-500 font-mono">
-                            {vehicle.license_plate} • {vehicle.state}
+                            {vehicle.license_plate}•{vehicle.state}
                           </p>
                         </div>
                       </div>
