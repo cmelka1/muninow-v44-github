@@ -24,17 +24,17 @@ export const PreloginFooter = () => {
     { 
       name: 'Facebook', 
       imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/Facebook_Logo_Primary.png',
-      href: '#' 
+      href: 'https://www.facebook.com/people/MuniNow/61577405370617/#' 
     },
     { 
       name: 'X', 
       imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/X-logo-black.png',
-      href: '#' 
+      href: 'https://x.com/MuniNow' 
     },
     { 
       name: 'LinkedIn', 
       imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/LinkedIn_logo_initials.png',
-      href: '#' 
+      href: 'https://www.linkedin.com/company/muninow' 
     },
   ];
 
