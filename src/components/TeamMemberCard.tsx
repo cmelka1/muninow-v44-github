@@ -107,19 +107,19 @@ const TeamMemberCard: React.FC<TeamMemberProps> = ({
               />
             )}
             
-            <div className="relative h-32 w-32 border-2 border-border shadow-md rounded-full overflow-hidden">
+            <div className="relative h-48 w-48 border-2 border-border shadow-md rounded-full overflow-hidden">
               {imageUrl ? (
                 <OptimizedImage
                   src={imageUrl}
                   alt={`${name} profile`}
-                  width={128}
-                  height={128}
-                  className="w-full h-full object-cover"
+                  width={192}
+                  height={192}
+                  className={`w-full h-full object-cover ${id === '0' ? 'object-[center_top]' : ''}`}
                   quality="high"
                   loading="lazy"
                 />
               ) : (
-                <div className="w-full h-full bg-primary/10 text-primary text-2xl flex items-center justify-center">
+                <div className="w-full h-full bg-primary/10 text-primary text-3xl flex items-center justify-center">
                   {initials}
                 </div>
               )}
