@@ -7,6 +7,7 @@ import { CreditCard, Plus, Trash2, Star, Building } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import { AddPaymentMethodDialog } from './AddPaymentMethodDialog';
 
 type PaymentMethod = Tables<'payment_methods'>;
 
@@ -15,6 +16,7 @@ export const PaymentMethodsTab = () => {
   const { toast } = useToast();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -158,7 +160,7 @@ export const PaymentMethodsTab = () => {
               <CreditCard className="h-5 w-5 text-primary" />
               Payment Methods
             </CardTitle>
-            <Button>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Payment Method
             </Button>
@@ -227,6 +229,12 @@ export const PaymentMethodsTab = () => {
           )}
         </CardContent>
       </Card>
+
+      <AddPaymentMethodDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={loadPaymentMethods}
+      />
 
       {paymentMethods.length > 0 && (
         <Card className="border-slate-200 shadow-sm">
