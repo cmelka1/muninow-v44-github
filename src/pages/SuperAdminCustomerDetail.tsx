@@ -4,7 +4,15 @@ import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Building2, User, Package } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ArrowLeft, Building2, User, CreditCard, Plus } from 'lucide-react';
 import { useCustomerDetail } from '@/hooks/useCustomerDetail';
 import {
   Breadcrumb,
@@ -189,20 +197,39 @@ const SuperAdminCustomerDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Tile 3: Placeholder */}
+          {/* Tile 3: Merchant Accounts */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center text-lg font-medium">
-                <Package className="h-5 w-5 mr-2" />
-                Additional Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-sm text-gray-500">
-                  This section is reserved for future content.
-                </p>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center text-lg font-medium">
+                  <CreditCard className="h-5 w-5 mr-2" />
+                  Merchant Accounts
+                </CardTitle>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Merchant Account
+                </Button>
               </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Account Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={3} className="py-8 text-center">
+                      <span className="text-muted-foreground">
+                        No merchant accounts found. Click "Add Merchant Account" to get started.
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </div>
