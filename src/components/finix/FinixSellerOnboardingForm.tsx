@@ -87,7 +87,7 @@ export function FinixSellerOnboardingForm() {
         maxAchAmount: 0,
         maxCardAmount: 0,
         hasAcceptedCardsPreviously: false,
-        refundPolicy: 'FULL_REFUNDS',
+        refundPolicy: 'NO_REFUNDS',
         merchantAgreementAccepted: false,
         merchantAgreementMetadata: {
           ipAddress: '',

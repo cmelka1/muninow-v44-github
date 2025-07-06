@@ -18,9 +18,9 @@ export const OwnershipTypeEnum = z.enum([
 // Refund policy enum
 export const RefundPolicyEnum = z.enum([
   "NO_REFUNDS",
-  "FULL_REFUNDS",
-  "MERCHANDISE_EXCHANGE",
-  "PARTIAL_REFUNDS"
+  "MERCHANDISE_EXCHANGE_ONLY",
+  "WITHIN_30_DAYS",
+  "OTHER"
 ]);
 
 // Step 1: Business Information Schema

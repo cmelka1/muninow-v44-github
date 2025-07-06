@@ -420,9 +420,9 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="NO_REFUNDS">No Refunds</SelectItem>
-                    <SelectItem value="FULL_REFUNDS">Full Refunds</SelectItem>
-                    <SelectItem value="PARTIAL_REFUNDS">Partial Refunds</SelectItem>
-                    <SelectItem value="MERCHANDISE_EXCHANGE">Merchandise Exchange</SelectItem>
+                    <SelectItem value="MERCHANDISE_EXCHANGE_ONLY">Merchandise Exchange Only</SelectItem>
+                    <SelectItem value="WITHIN_30_DAYS">Refunds Within 30 Days</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
