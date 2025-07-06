@@ -80,12 +80,23 @@ interface FinixSellerRequest {
   };
 }
 
-function formatPhoneForFinix(phoneDigits: string): string {
-  // Convert stored digits to Finix format: +1 (XXX) XXX-XXXX  
-  if (phoneDigits && phoneDigits.length === 10) {
-    return `+1 (${phoneDigits.slice(0, 3)}) ${phoneDigits.slice(3, 6)}-${phoneDigits.slice(6)}`;
+function formatPhoneForFinix(phone: string): string {
+  // Finix expects simple 10-digit format (e.g., 4157775555)
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Handle US numbers with or without country code
+  let digits = cleaned;
+  if (cleaned.startsWith('1') && cleaned.length === 11) {
+    digits = cleaned.substring(1);
   }
-  return phoneDigits; // Return as is if not 10 digits
+  
+  // Return only the 10 digits if valid
+  if (digits.length === 10) {
+    return digits;
+  }
+  
+  return phone; // Return original if not valid
 }
 
 function validateFinixPayload(data: FinixSellerRequest): { isValid: boolean; errors: string[] } {
