@@ -228,20 +228,15 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* User Information - Read Only */}
-            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
-              <h3 className="font-medium text-sm text-muted-foreground">Account Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-xs font-medium text-muted-foreground">First Name</Label>
-                  <div className="mt-1 text-sm font-medium">{profile.first_name}</div>
+                  <Label className="text-sm font-medium text-muted-foreground">User Name</Label>
+                  <div className="mt-1 text-lg font-medium">{profile.first_name} {profile.last_name}</div>
                 </div>
-                <div>
-                  <Label className="text-xs font-medium text-muted-foreground">Last Name</Label>
-                  <div className="mt-1 text-sm font-medium">{profile.last_name}</div>
-                </div>
-                <div>
+                <div className="text-right">
                   <Label className="text-xs font-medium text-muted-foreground">Finix Identity ID</Label>
-                  <div className="mt-1 text-xs font-mono bg-background px-2 py-1 rounded border">
+                  <div className="mt-1 text-xs font-mono text-muted-foreground">
                     {finixIdentityId}
                   </div>
                 </div>
@@ -249,30 +244,26 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
             </div>
 
             {/* Payment Type Toggle */}
-            <div className="flex items-center justify-center space-x-8 py-4 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg transition-colors ${paymentType === 'card' ? 'bg-primary/10' : 'bg-muted'}`}>
+            <div className="flex items-center justify-center space-x-6 py-6">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
                   <CreditCard className={`h-5 w-5 ${paymentType === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <Label className={`text-sm font-medium transition-colors ${paymentType === 'card' ? 'text-primary' : 'text-muted-foreground'}`}>
+                    Card
+                  </Label>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium">Payment Card</Label>
-                  <Switch
-                    checked={paymentType === 'card'}
-                    onCheckedChange={(checked) => setPaymentType(checked ? 'card' : 'bank')}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg transition-colors ${paymentType === 'bank' ? 'bg-primary/10' : 'bg-muted'}`}>
+                
+                <Switch
+                  checked={paymentType === 'bank'}
+                  onCheckedChange={(checked) => setPaymentType(checked ? 'bank' : 'card')}
+                  className="mx-3"
+                />
+                
+                <div className="flex items-center space-x-2">
                   <Building2 className={`h-5 w-5 ${paymentType === 'bank' ? 'text-primary' : 'text-muted-foreground'}`} />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Bank Account</Label>
-                  <Switch
-                    checked={paymentType === 'bank'}
-                    onCheckedChange={(checked) => setPaymentType(checked ? 'bank' : 'card')}
-                  />
+                  <Label className={`text-sm font-medium transition-colors ${paymentType === 'bank' ? 'text-primary' : 'text-muted-foreground'}`}>
+                    Bank Account
+                  </Label>
                 </div>
               </div>
             </div>
