@@ -137,7 +137,10 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
                     value={field.value === 0 ? '' : field.value}
-                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                      field.onChange(Math.min(value, 9999));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -160,7 +163,10 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
                     value={field.value === 0 ? '' : field.value}
-                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                      field.onChange(Math.min(value, 9999));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
