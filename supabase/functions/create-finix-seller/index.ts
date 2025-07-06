@@ -106,26 +106,44 @@ serve(async (req) => {
     const finixData = await finixRes.json()
 
     if (!finixRes.ok) {
-      console.error("Finix API Error:", finixData)
+      console.error("Finix API Error Response:", {
+        status: finixRes.status,
+        statusText: finixRes.statusText,
+        data: finixData,
+        submittedEntity: finixEntity
+      });
       
       // Parse Finix error for better user feedback
       let errorMessage = "Failed to create Finix seller identity";
       let fieldErrors: Record<string, string> = {};
       
-      if (finixData && finixData.details) {
-        // Handle field-specific errors
-        if (Array.isArray(finixData.details)) {
-          finixData.details.forEach((detail: any) => {
-            if (detail.field && detail.message) {
-              fieldErrors[detail.field] = detail.message;
-            }
-          });
+      if (finixData) {
+        // Handle different error response formats
+        if (finixData.details) {
+          if (Array.isArray(finixData.details)) {
+            finixData.details.forEach((detail: any) => {
+              if (detail.field && detail.message) {
+                fieldErrors[detail.field] = detail.message;
+              }
+            });
+          } else if (typeof finixData.details === 'object') {
+            // Handle details as object
+            Object.entries(finixData.details).forEach(([field, messages]: [string, any]) => {
+              if (Array.isArray(messages)) {
+                fieldErrors[field] = messages.join(', ');
+              } else if (typeof messages === 'string') {
+                fieldErrors[field] = messages;
+              }
+            });
+          }
         }
         
         if (Object.keys(fieldErrors).length > 0) {
           errorMessage = `Validation errors: ${Object.entries(fieldErrors).map(([field, msg]) => `${field}: ${msg}`).join(', ')}`;
         } else if (finixData.message) {
           errorMessage = finixData.message;
+        } else if (finixData.error) {
+          errorMessage = finixData.error;
         }
       }
       

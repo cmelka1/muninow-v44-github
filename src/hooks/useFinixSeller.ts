@@ -17,15 +17,28 @@ export const useFinixSeller = () => {
         body: data
       });
 
+      console.log('Edge function response:', { response, error });
+
       if (error) {
+        console.error('Edge function error:', error);
         throw new Error(error.message || 'Failed to create Finix seller identity');
       }
 
-      if (response.error) {
+      if (response?.error) {
         // Handle detailed error messages from the edge function
-        const errorMsg = response.field_errors 
-          ? `Validation errors: ${Object.entries(response.field_errors).map(([field, msg]) => `${field}: ${msg}`).join(', ')}`
-          : response.error;
+        console.error('Finix API error response:', response);
+        let errorMsg = response.error;
+        
+        if (response.field_errors && Object.keys(response.field_errors).length > 0) {
+          errorMsg = `Validation errors: ${Object.entries(response.field_errors).map(([field, msg]) => `${field}: ${msg}`).join(', ')}`;
+        } else if (response.finix_response?.details) {
+          // Extract more detailed error info from Finix response
+          const details = Array.isArray(response.finix_response.details) 
+            ? response.finix_response.details.map((d: any) => `${d.field}: ${d.message}`).join(', ')
+            : JSON.stringify(response.finix_response.details);
+          errorMsg = `Finix validation errors: ${details}`;
+        }
+        
         throw new Error(errorMsg);
       }
 

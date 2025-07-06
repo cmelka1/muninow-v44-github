@@ -29,7 +29,7 @@ export const finixSellerSchema = z.object({
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     title: z.enum(['CEO', 'CFO', 'COO', 'President', 'Owner', 'Partner', 'Director', 'Manager', 'Other']).optional(),
-    email: z.string().email('Valid email is required').optional(),
+    email: z.string().email('Valid email is required').or(z.literal('')).optional(),
     phone: z.string().optional(),
     date_of_birth: z.string().optional(),
     ssn: z.string().optional(),
