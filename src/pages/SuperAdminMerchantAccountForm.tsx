@@ -64,9 +64,15 @@ const SuperAdminMerchantAccountForm = () => {
 
         if (data?.success) {
           console.log('Payment instrument created successfully:', data);
-          alert(`Bank account submitted successfully! Payment instrument ID: ${data.paymentMethod.finixId}`);
-          // Navigate back to customer detail page
-          navigate(`/superadmin/customers/${customerId}`);
+          // Navigate to success page with payment method details
+          const params = new URLSearchParams({
+            paymentMethodId: data.paymentMethod.id,
+            finixId: data.paymentMethod.finixId,
+            accountHolderName: data.paymentMethod.accountHolderName,
+            maskedAccountNumber: data.paymentMethod.maskedAccountNumber,
+            ...(data.paymentMethod.accountNickname && { accountNickname: data.paymentMethod.accountNickname })
+          });
+          navigate(`/superadmin/customers/${customerId}/bank-account/success?${params.toString()}`);
         } else {
           console.error('Unexpected response:', data);
           alert('An unexpected error occurred. Please try again.');
