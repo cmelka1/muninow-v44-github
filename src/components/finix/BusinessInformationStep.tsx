@@ -78,7 +78,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.businessName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Business Name *</FormLabel>
+                <FormLabel>Legal Business Name *</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter business name" {...field} />
                 </FormControl>
