@@ -188,8 +188,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     setIsSubmitting(true);
     
     try {
+      console.log('Submitting payment method:', data.paymentType);
+      
+      let response;
       if (data.paymentType === 'card') {
-        const response = await supabase.functions.invoke('create-user-payment-card', {
+        response = await supabase.functions.invoke('create-user-payment-card', {
           body: {
             cardholderName: data.cardholderName,
             cardNickname: data.cardNickname,
@@ -204,12 +207,8 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
             country: data.country
           }
         });
-
-        if (response.error || !response.data?.success) {
-          throw new Error(response.data?.error || 'Failed to create payment card');
-        }
       } else {
-        const response = await supabase.functions.invoke('create-user-bank-account', {
+        response = await supabase.functions.invoke('create-user-bank-account', {
           body: {
             accountHolderName: data.accountHolderName,
             accountNickname: data.accountNickname,
@@ -223,24 +222,46 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
             country: data.country
           }
         });
+      }
 
-        if (response.error || !response.data?.success) {
-          throw new Error(response.data?.error || 'Failed to create bank account');
-        }
+      console.log('Edge function response:', response);
+
+      // Check for Supabase function invocation errors (network/auth errors)
+      if (response.error) {
+        console.error('Supabase invocation error:', response.error);
+        throw new Error(`Network error: ${response.error.message}`);
+      }
+
+      // Check for edge function business logic errors
+      if (!response.data || response.data.success === false) {
+        const errorMessage = response.data?.error || response.data?.details || 'Unknown error occurred';
+        console.error('Edge function business error:', errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      console.log('Payment method created successfully:', response.data);
+      
+      // Success! Show toast and update UI
+      toast({
+        title: "Success",
+        description: `${data.paymentType === 'card' ? 'Payment card' : 'Bank account'} added successfully.`,
+      });
+      
+      // Refresh payment methods list and close dialog
+      await onSuccess();
+      onOpenChange(false);
+      
+    } catch (error) {
+      console.error('Payment method submission error:', error);
+      
+      let errorMessage = "Failed to add payment method. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
       }
       
       toast({
-        title: "Payment Method Added",
-        description: "Your payment method has been added successfully.",
-      });
-      
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error creating payment method:', error);
-      toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add payment method. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
