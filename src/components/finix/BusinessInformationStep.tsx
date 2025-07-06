@@ -365,7 +365,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
               <FormItem>
                 <FormLabel>Country *</FormLabel>
                 <FormControl>
-                  <Input placeholder="US" {...field} disabled />
+                  <Input placeholder="USA" {...field} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -347,7 +347,7 @@ export function OwnerInformationStep({ form, isGovernmentAgency }: OwnerInformat
               <FormItem>
                 <FormLabel>Country *</FormLabel>
                 <FormControl>
-                  <Input placeholder="US" {...field} disabled />
+                  <Input placeholder="USA" {...field} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>
