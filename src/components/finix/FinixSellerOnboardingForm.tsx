@@ -10,6 +10,7 @@ import {
   type FinixSellerFormData,
   type BusinessType 
 } from '@/schemas/finixSellerSchema';
+import { Form } from '@/components/ui/form';
 import { BusinessInformationStep } from './BusinessInformationStep';
 import { OwnerInformationStep } from './OwnerInformationStep';
 import { ProcessingInformationStep } from './ProcessingInformationStep';
@@ -234,8 +235,9 @@ export function FinixSellerOnboardingForm() {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            {renderCurrentStep()}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)}>
+              {renderCurrentStep()}
             
             <div className="flex justify-between mt-8">
               <Button
@@ -260,6 +262,7 @@ export function FinixSellerOnboardingForm() {
               )}
             </div>
           </form>
+        </Form>
         </CardContent>
       </Card>
     </div>
