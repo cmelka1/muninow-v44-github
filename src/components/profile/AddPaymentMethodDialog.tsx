@@ -188,9 +188,46 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      // TODO: Implement API calls to create payment instruments
-      console.log('Form data:', data);
-      console.log('Finix Identity ID:', finixIdentityId);
+      if (data.paymentType === 'card') {
+        const response = await supabase.functions.invoke('create-user-payment-card', {
+          body: {
+            cardholderName: data.cardholderName,
+            cardNickname: data.cardNickname,
+            cardNumber: data.cardNumber,
+            expirationMonth: data.expirationMonth,
+            expirationYear: data.expirationYear,
+            securityCode: data.securityCode,
+            streetAddress: data.streetAddress,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode,
+            country: data.country
+          }
+        });
+
+        if (response.error || !response.data?.success) {
+          throw new Error(response.data?.error || 'Failed to create payment card');
+        }
+      } else {
+        const response = await supabase.functions.invoke('create-user-bank-account', {
+          body: {
+            accountHolderName: data.accountHolderName,
+            accountNickname: data.accountNickname,
+            routingNumber: data.routingNumber,
+            accountNumber: data.accountNumber,
+            accountType: data.accountType,
+            streetAddress: data.streetAddress,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode,
+            country: data.country
+          }
+        });
+
+        if (response.error || !response.data?.success) {
+          throw new Error(response.data?.error || 'Failed to create bank account');
+        }
+      }
       
       toast({
         title: "Payment Method Added",
@@ -203,7 +240,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       console.error('Error creating payment method:', error);
       toast({
         title: "Error",
-        description: "Failed to add payment method. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to add payment method. Please try again.",
         variant: "destructive",
       });
     } finally {

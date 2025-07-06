@@ -1296,6 +1296,182 @@ export type Database = {
         }
         Relationships: []
       }
+      user_payment_instruments: {
+        Row: {
+          bank_account_type: string | null
+          bank_account_validation_check: string | null
+          bank_code: string | null
+          bank_country: string | null
+          bank_institution_number: string | null
+          bank_last_four: string | null
+          bank_masked_account_number: string | null
+          bank_name: string | null
+          bank_transit_number: string | null
+          billing_address_line1: string | null
+          billing_address_line2: string | null
+          billing_city: string | null
+          billing_country: string | null
+          billing_postal_code: string | null
+          billing_region: string | null
+          card_account_updater_enabled: boolean | null
+          card_address_verification: string | null
+          card_bin: string | null
+          card_brand: string | null
+          card_expiration_month: number | null
+          card_expiration_year: number | null
+          card_issuer_country: string | null
+          card_last_four: string | null
+          card_name: string | null
+          card_network_token_enabled: boolean | null
+          card_network_token_state: string | null
+          card_security_code_verification: string | null
+          card_type: string | null
+          created_at: string
+          created_via: string | null
+          currency: string
+          disabled_at: string | null
+          disabled_code: string | null
+          disabled_message: string | null
+          enabled: boolean
+          finix_application_id: string | null
+          finix_created_at: string | null
+          finix_fingerprint: string | null
+          finix_identity_id: string
+          finix_links: Json | null
+          finix_payment_instrument_id: string
+          finix_tags: Json | null
+          finix_updated_at: string | null
+          id: string
+          instrument_type: string
+          is_default: boolean
+          nickname: string | null
+          raw_finix_response: Json | null
+          status: string
+          third_party: string | null
+          third_party_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_type?: string | null
+          bank_account_validation_check?: string | null
+          bank_code?: string | null
+          bank_country?: string | null
+          bank_institution_number?: string | null
+          bank_last_four?: string | null
+          bank_masked_account_number?: string | null
+          bank_name?: string | null
+          bank_transit_number?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_region?: string | null
+          card_account_updater_enabled?: boolean | null
+          card_address_verification?: string | null
+          card_bin?: string | null
+          card_brand?: string | null
+          card_expiration_month?: number | null
+          card_expiration_year?: number | null
+          card_issuer_country?: string | null
+          card_last_four?: string | null
+          card_name?: string | null
+          card_network_token_enabled?: boolean | null
+          card_network_token_state?: string | null
+          card_security_code_verification?: string | null
+          card_type?: string | null
+          created_at?: string
+          created_via?: string | null
+          currency?: string
+          disabled_at?: string | null
+          disabled_code?: string | null
+          disabled_message?: string | null
+          enabled?: boolean
+          finix_application_id?: string | null
+          finix_created_at?: string | null
+          finix_fingerprint?: string | null
+          finix_identity_id: string
+          finix_links?: Json | null
+          finix_payment_instrument_id: string
+          finix_tags?: Json | null
+          finix_updated_at?: string | null
+          id?: string
+          instrument_type: string
+          is_default?: boolean
+          nickname?: string | null
+          raw_finix_response?: Json | null
+          status?: string
+          third_party?: string | null
+          third_party_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_account_type?: string | null
+          bank_account_validation_check?: string | null
+          bank_code?: string | null
+          bank_country?: string | null
+          bank_institution_number?: string | null
+          bank_last_four?: string | null
+          bank_masked_account_number?: string | null
+          bank_name?: string | null
+          bank_transit_number?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_region?: string | null
+          card_account_updater_enabled?: boolean | null
+          card_address_verification?: string | null
+          card_bin?: string | null
+          card_brand?: string | null
+          card_expiration_month?: number | null
+          card_expiration_year?: number | null
+          card_issuer_country?: string | null
+          card_last_four?: string | null
+          card_name?: string | null
+          card_network_token_enabled?: boolean | null
+          card_network_token_state?: string | null
+          card_security_code_verification?: string | null
+          card_type?: string | null
+          created_at?: string
+          created_via?: string | null
+          currency?: string
+          disabled_at?: string | null
+          disabled_code?: string | null
+          disabled_message?: string | null
+          enabled?: boolean
+          finix_application_id?: string | null
+          finix_created_at?: string | null
+          finix_fingerprint?: string | null
+          finix_identity_id?: string
+          finix_links?: Json | null
+          finix_payment_instrument_id?: string
+          finix_tags?: Json | null
+          finix_updated_at?: string | null
+          id?: string
+          instrument_type?: string
+          is_default?: boolean
+          nickname?: string | null
+          raw_finix_response?: Json | null
+          status?: string
+          third_party?: string | null
+          third_party_token?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_payment_instruments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1507,6 +1683,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      disable_user_payment_instrument: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       enable_payment_method: {
         Args: { p_id: string }
         Returns: undefined
@@ -1518,6 +1698,16 @@ export type Database = {
       get_next_sequence_number: {
         Args: { p_municipality_id: string; p_system_id: string }
         Returns: number
+      }
+      get_payment_instrument_display_name: {
+        Args: {
+          p_nickname: string
+          p_instrument_type: string
+          p_card_brand: string
+          p_card_last_four: string
+          p_bank_last_four: string
+        }
+        Returns: string
       }
       get_payment_methods: {
         Args: Record<PropertyKey, never> | { p_account_type?: string }
@@ -1552,6 +1742,32 @@ export type Database = {
       get_role_id_by_name: {
         Args: { _role_name: string }
         Returns: string
+      }
+      get_user_payment_instruments_with_display_names: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          user_id: string
+          finix_payment_instrument_id: string
+          instrument_type: string
+          nickname: string
+          display_name: string
+          is_default: boolean
+          enabled: boolean
+          status: string
+          card_brand: string
+          card_last_four: string
+          card_expiration_month: number
+          card_expiration_year: number
+          bank_account_type: string
+          bank_last_four: string
+          billing_address_line1: string
+          billing_city: string
+          billing_region: string
+          billing_postal_code: string
+          created_at: string
+          updated_at: string
+        }[]
       }
       get_user_roles: {
         Args: { _user_id: string }
@@ -1638,6 +1854,10 @@ export type Database = {
       }
       set_default_payment_method: {
         Args: { p_id: string } | { p_id: string; p_account_type?: string }
+        Returns: undefined
+      }
+      set_default_user_payment_instrument: {
+        Args: { p_id: string }
         Returns: undefined
       }
       update_bank_account_priorities: {

@@ -1,100 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Plus, Trash2, Star, Building } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import type { Tables } from '@/integrations/supabase/types';
 import { AddPaymentMethodDialog } from './AddPaymentMethodDialog';
-
-type PaymentMethod = Tables<'payment_methods'>;
+import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 
 export const PaymentMethodsTab = () => {
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    paymentInstruments,
+    isLoading,
+    loadPaymentInstruments,
+    setDefaultPaymentInstrument,
+    deletePaymentInstrument,
+  } = useUserPaymentInstruments();
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      loadPaymentMethods();
-    }
-  }, [user]);
-
-  const loadPaymentMethods = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase.rpc('get_payment_methods', {
-        p_account_type: profile?.account_type || 'resident'
-      });
-
-      if (error) throw error;
-      setPaymentMethods(data || []);
-    } catch (error) {
-      console.error('Error loading payment methods:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load payment methods. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSetDefault = async (instrumentId: string) => {
+    await setDefaultPaymentInstrument(instrumentId);
   };
 
-  const handleSetDefault = async (paymentMethodId: string) => {
-    try {
-      const { error } = await supabase.rpc('set_default_payment_method', {
-        p_id: paymentMethodId,
-        p_account_type: profile?.account_type || 'resident'
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Default payment method updated",
-        description: "Your default payment method has been updated.",
-      });
-
-      loadPaymentMethods();
-    } catch (error) {
-      console.error('Error setting default payment method:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update default payment method. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeletePaymentMethod = async (paymentMethodId: string) => {
+  const handleDeletePaymentMethod = async (instrumentId: string) => {
     if (!confirm('Are you sure you want to delete this payment method?')) return;
-
-    try {
-      const { error } = await supabase.rpc('delete_payment_method', {
-        p_id: paymentMethodId
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Payment method deleted",
-        description: "Your payment method has been deleted successfully.",
-      });
-
-      loadPaymentMethods();
-    } catch (error) {
-      console.error('Error deleting payment method:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete payment method. Please try again.",
-        variant: "destructive",
-      });
-    }
+    await deletePaymentInstrument(instrumentId);
   };
 
   const getCardBrandIcon = (cardBrand: string) => {
@@ -113,8 +42,8 @@ export const PaymentMethodsTab = () => {
     return null;
   };
 
-  const getCardIcon = (methodType: string, cardBrand?: string) => {
-    if (methodType === 'ach') {
+  const getCardIcon = (instrumentType: string, cardBrand?: string) => {
+    if (instrumentType === 'BANK_ACCOUNT') {
       return <Building className="h-8 w-8 text-primary" />;
     }
     
@@ -132,15 +61,6 @@ export const PaymentMethodsTab = () => {
     }
     
     return <CreditCard className="h-8 w-8 text-primary" />;
-  };
-
-  const getMethodDisplayName = (method: PaymentMethod) => {
-    if (method.method_type === 'ach') {
-      return `Bank Account •••• ${method.last_four}`;
-    }
-    
-    const brand = method.card_brand ? method.card_brand.charAt(0).toUpperCase() + method.card_brand.slice(1) : 'Card';
-    return `${brand} •••• ${method.last_four}`;
   };
 
   if (isLoading) {
@@ -167,7 +87,7 @@ export const PaymentMethodsTab = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {paymentMethods.length === 0 ? (
+          {paymentInstruments.length === 0 ? (
             <div className="text-center py-8">
               <CreditCard className="h-12 w-12 text-slate-400 mx-auto mb-4" />
               <p className="text-slate-600 mb-2">No payment methods added</p>
@@ -177,37 +97,39 @@ export const PaymentMethodsTab = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {paymentMethods.map((method) => (
-                <Card key={method.id} className="border-slate-200">
+              {paymentInstruments.map((instrument) => (
+                <Card key={instrument.id} className="border-slate-200">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        {getCardIcon(method.method_type, method.card_brand || undefined)}
+                        {getCardIcon(instrument.instrument_type, instrument.card_brand || undefined)}
                         <div>
                           <div className="flex items-center space-x-2">
                             <h4 className="font-semibold text-slate-800">
-                              {getMethodDisplayName(method)}
+                              {instrument.display_name}
                             </h4>
-                            {method.is_default && (
+                            {instrument.is_default && (
                               <Badge variant="default" className="text-xs">
                                 <Star className="h-3 w-3 mr-1" />
                                 Default
                               </Badge>
                             )}
                           </div>
-                          {method.method_type === 'card' && method.expires_at && (
+                          {instrument.instrument_type === 'PAYMENT_CARD' && 
+                           instrument.card_expiration_month && 
+                           instrument.card_expiration_year && (
                             <p className="text-sm text-slate-500">
-                              Expires {new Date(method.expires_at).toLocaleDateString()}
+                              Expires {instrument.card_expiration_month.toString().padStart(2, '0')}/{instrument.card_expiration_year}
                             </p>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {!method.is_default && (
+                        {!instrument.is_default && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleSetDefault(method.id)}
+                            onClick={() => handleSetDefault(instrument.id)}
                           >
                             Set Default
                           </Button>
@@ -215,7 +137,7 @@ export const PaymentMethodsTab = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDeletePaymentMethod(method.id)}
+                          onClick={() => handleDeletePaymentMethod(instrument.id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -233,10 +155,10 @@ export const PaymentMethodsTab = () => {
       <AddPaymentMethodDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSuccess={loadPaymentMethods}
+        onSuccess={loadPaymentInstruments}
       />
 
-      {paymentMethods.length > 0 && (
+      {paymentInstruments.length > 0 && (
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-slate-800">
