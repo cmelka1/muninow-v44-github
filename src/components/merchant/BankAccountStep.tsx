@@ -92,6 +92,7 @@ const BankAccountStep: React.FC<BankAccountStepProps> = ({
                   <Input 
                     placeholder="9-digit ABA routing number"
                     maxLength={9}
+                    minLength={9}
                     {...field} 
                   />
                 </FormControl>
