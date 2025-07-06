@@ -23,7 +23,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+        <h3 className="text-lg font-semibold mb-4">Entity Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <FormField
@@ -31,7 +31,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.businessType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Business Type *</FormLabel>
+                <FormLabel>Entity Type *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -78,9 +78,9 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.businessName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Legal Business Name *</FormLabel>
+                <FormLabel>Legal Entity Name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter business name" {...field} />
+                  <Input placeholder="Enter entity name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -106,7 +106,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.businessTaxId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Business Tax ID (EIN/SSN) *</FormLabel>
+                <FormLabel>Entity Tax ID (EIN/SSN) *</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Enter tax ID" 
@@ -127,7 +127,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.businessPhone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Business Phone *</FormLabel>
+                <FormLabel>Entity Phone *</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Enter phone number" 
@@ -148,7 +148,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.businessWebsite"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Business Website *</FormLabel>
+                <FormLabel>Entity Website *</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="https://example.com" 
@@ -184,10 +184,10 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
           name="businessInformation.businessDescription"
           render={({ field }) => (
             <FormItem className="mt-6">
-              <FormLabel>Business Description *</FormLabel>
+              <FormLabel>Entity Description *</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Describe your business and what products/services you offer"
+                  placeholder="Describe your entity and what products/services you offer"
                   className="min-h-[100px]"
                   {...field} 
                 />
@@ -199,7 +199,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
       </div>
 
       <div>
-        <h4 className="text-md font-semibold mb-4">Business Address</h4>
+        <h4 className="text-md font-semibold mb-4">Entity Address</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <FormField
@@ -210,7 +210,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
                 <FormLabel>Address Line 1 *</FormLabel>
                 <FormControl>
                   <GooglePlacesAutocomplete
-                    placeholder="Enter business address"
+                    placeholder="Enter entity address"
                     value={field.value}
                     onChange={(value) => field.onChange(value)}
                     onAddressSelect={(addressComponents) => {

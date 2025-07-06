@@ -17,7 +17,7 @@ import { ProcessingInformationStep } from './ProcessingInformationStep';
 import { useToast } from '@/hooks/use-toast';
 
 const STEPS = [
-  { id: 1, title: "Business Information" },
+  { id: 1, title: "Entity Information" },
   { id: 2, title: "Owner Information" },
   { id: 3, title: "Processing Information" }
 ];
