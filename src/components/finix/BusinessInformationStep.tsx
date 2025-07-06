@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { 
   FormField, 
@@ -19,6 +19,15 @@ interface BusinessInformationStepProps {
 }
 
 export function BusinessInformationStep({ form }: BusinessInformationStepProps) {
+  const businessType = form.watch('businessInformation.businessType');
+  
+  // Auto-set ownership type to PUBLIC when GOVERNMENT_AGENCY is selected
+  useEffect(() => {
+    if (businessType === 'GOVERNMENT_AGENCY') {
+      form.setValue('businessInformation.ownershipType', 'PUBLIC');
+    }
+  }, [businessType, form]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -75,7 +84,6 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
                   <SelectContent>
                     <SelectItem value="PRIVATE">Private</SelectItem>
                     <SelectItem value="PUBLIC">Public</SelectItem>
-                    <SelectItem value="GOVERNMENT">Government</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

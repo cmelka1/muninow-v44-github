@@ -12,8 +12,7 @@ export const BusinessTypeEnum = z.enum([
 // Ownership type enum
 export const OwnershipTypeEnum = z.enum([
   "PRIVATE",
-  "PUBLIC", 
-  "GOVERNMENT"
+  "PUBLIC"
 ]);
 
 // Refund policy enum
