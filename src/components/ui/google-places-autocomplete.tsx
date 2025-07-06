@@ -182,24 +182,10 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
       document.head.appendChild(style);
     };
 
-    // Add event delegation to ensure clicks work on Google Places items  
+    // Ensure Google Places dropdown works properly in modal context
     const addClickEventHandling = () => {
-      const handleGooglePlacesClick = (e: Event) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('.pac-item') || target.classList.contains('pac-item')) {
-          // Ensure the click event is not prevented
-          e.stopPropagation();
-          // Allow the Google Places autocomplete to handle the click
-          return true;
-        }
-      };
-
-      // Add click event listener to document to catch Google Places clicks
-      document.addEventListener('click', handleGooglePlacesClick, { capture: true });
-      
-      return () => {
-        document.removeEventListener('click', handleGooglePlacesClick, { capture: true });
-      };
+      // No event interference - let Google Places handle its own clicks
+      return () => {}; // No cleanup needed
     };
 
     initializeAutocomplete();

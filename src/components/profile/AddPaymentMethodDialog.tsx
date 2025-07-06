@@ -216,10 +216,27 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     onOpenChange(false);
   };
 
+  // Prevent dialog from closing when clicking on Google Places autocomplete
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Check if Google Places dropdown is currently visible
+      const googlePlacesContainer = document.querySelector('.pac-container');
+      const isGooglePlacesVisible = googlePlacesContainer && 
+        window.getComputedStyle(googlePlacesContainer).display !== 'none' &&
+        window.getComputedStyle(googlePlacesContainer).visibility !== 'hidden';
+      
+      if (isGooglePlacesVisible) {
+        // Don't close the dialog if Google Places dropdown is visible
+        return;
+      }
+      handleClose();
+    }
+  };
+
   if (!profile) return null;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Add Payment Method</DialogTitle>
