@@ -203,14 +203,14 @@ const SuperAdminCustomerDetail = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center text-lg font-medium">
                   <CreditCard className="h-5 w-5 mr-2" />
-                  Merchant Accounts
+                  Payment Methods
                 </CardTitle>
                 <Button 
                   size="sm"
                   onClick={() => navigate(`/superadmin/customers/${customerId}/add-merchant-account`)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Merchant Account
+                  Add New Payment Method
                 </Button>
               </div>
             </CardHeader>
@@ -226,9 +226,9 @@ const SuperAdminCustomerDetail = () => {
                 <TableBody>
                   <TableRow>
                     <TableCell colSpan={3} className="py-8 text-center">
-                      <span className="text-muted-foreground">
-                        No merchant accounts found. Click "Add Merchant Account" to get started.
-                      </span>
+                       <span className="text-muted-foreground">
+                         No payment methods found. Click "Add New Payment Method" to get started.
+                       </span>
                     </TableCell>
                   </TableRow>
                 </TableBody>
