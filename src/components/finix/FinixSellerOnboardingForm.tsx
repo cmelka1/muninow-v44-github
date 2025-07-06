@@ -144,12 +144,14 @@ export function FinixSellerOnboardingForm() {
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < STEPS.length) {
       setCurrentStep(currentStep + 1);
+      window.scrollTo(0, 0);
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      window.scrollTo(0, 0);
     }
   };
 
