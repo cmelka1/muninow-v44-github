@@ -36,7 +36,7 @@ export function FinixSellerOnboardingForm() {
         doingBusinessAs: '',
         businessTaxId: '',
         businessPhone: '',
-        businessWebsite: '',
+        businessWebsite: 'https://',
         businessDescription: '',
         incorporationDate: '',
         ownershipType: 'PUBLIC',
@@ -82,7 +82,7 @@ export function FinixSellerOnboardingForm() {
           b2c: 100,
           p2p: 0
         },
-        mccCode: '',
+        mccCode: '5999', // Default MCC for miscellaneous retail
         statementDescriptor: '',
         maxAchAmount: 0,
         maxCardAmount: 0,
@@ -101,6 +101,21 @@ export function FinixSellerOnboardingForm() {
 
   const businessType = form.watch('businessInformation.businessType') as BusinessType;
   const isGovernmentAgency = businessType === 'GOVERNMENT_AGENCY';
+
+  // Auto-update MCC code based on business type
+  React.useEffect(() => {
+    const mccDefaults: Record<BusinessType, string> = {
+      'INDIVIDUAL_SOLE_PROPRIETORSHIP': '5999',
+      'LIMITED_LIABILITY_COMPANY': '5999', 
+      'CORPORATION': '5999',
+      'TAX_EXEMPT_ORGANIZATION': '8398',
+      'GOVERNMENT_AGENCY': '9399'
+    };
+    
+    if (businessType && mccDefaults[businessType]) {
+      form.setValue('processingInformation.mccCode', mccDefaults[businessType]);
+    }
+  }, [businessType, form]);
 
   const progress = (currentStep / STEPS.length) * 100;
 

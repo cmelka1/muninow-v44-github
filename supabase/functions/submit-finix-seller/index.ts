@@ -80,6 +80,67 @@ interface FinixSellerRequest {
   };
 }
 
+function formatPhoneForFinix(phoneDigits: string): string {
+  // Convert stored digits to Finix format: +1 (XXX) XXX-XXXX  
+  if (phoneDigits && phoneDigits.length === 10) {
+    return `+1 (${phoneDigits.slice(0, 3)}) ${phoneDigits.slice(3, 6)}-${phoneDigits.slice(6)}`;
+  }
+  return phoneDigits; // Return as is if not 10 digits
+}
+
+function validateFinixPayload(data: FinixSellerRequest): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Required business fields
+  if (!data.businessInformation.businessName?.trim()) {
+    errors.push("Business name is required");
+  }
+  if (!data.businessInformation.businessWebsite?.trim()) {
+    errors.push("Business website is required");
+  }
+  if (!data.businessInformation.businessDescription?.trim()) {
+    errors.push("Business description is required");
+  }
+  if (!data.businessInformation.businessPhone?.trim()) {
+    errors.push("Business phone is required");
+  }
+  
+  // Required processing fields
+  if (!data.processingInformation.mccCode?.trim()) {
+    errors.push("MCC code is required");
+  }
+  if (!data.processingInformation.statementDescriptor?.trim()) {
+    errors.push("Statement descriptor is required");
+  }
+  
+  // For non-government entities, personal info is required
+  if (data.businessInformation.businessType !== "GOVERNMENT_AGENCY") {
+    if (!data.ownerInformation.dateOfBirth?.trim()) {
+      errors.push("Date of birth is required for non-government entities");
+    }
+    if (!data.ownerInformation.personalTaxId?.trim()) {
+      errors.push("Personal tax ID is required for non-government entities");
+    }
+  }
+  
+  // Validate volume distributions
+  const cardTotal = data.processingInformation.cardVolumeDistribution.cardPresent + 
+                   data.processingInformation.cardVolumeDistribution.moto + 
+                   data.processingInformation.cardVolumeDistribution.ecommerce;
+  if (cardTotal !== 100) {
+    errors.push(`Card volume distribution must total 100%, got ${cardTotal}%`);
+  }
+  
+  const businessTotal = data.processingInformation.businessVolumeDistribution.b2b + 
+                       data.processingInformation.businessVolumeDistribution.b2c + 
+                       data.processingInformation.businessVolumeDistribution.p2p;
+  if (businessTotal !== 100) {
+    errors.push(`Business volume distribution must total 100%, got ${businessTotal}%`);
+  }
+  
+  return { isValid: errors.length === 0, errors };
+}
+
 function transformToFinixFormat(data: FinixSellerRequest) {
   const { businessInformation, ownerInformation, processingInformation } = data;
   
@@ -97,6 +158,10 @@ function transformToFinixFormat(data: FinixSellerRequest) {
     };
   }
 
+  // Format phone numbers for Finix API
+  const formattedBusinessPhone = formatPhoneForFinix(businessInformation.businessPhone);
+  const formattedPersonalPhone = formatPhoneForFinix(ownerInformation.personalPhone);
+
   return {
     type: "BUSINESS",
     identity_roles: ["SELLER"],
@@ -105,7 +170,7 @@ function transformToFinixFormat(data: FinixSellerRequest) {
       business_name: businessInformation.businessName,
       doing_business_as: businessInformation.doingBusinessAs,
       business_tax_id: businessInformation.businessTaxId,
-      business_phone: businessInformation.businessPhone,
+      business_phone: formattedBusinessPhone,
       url: businessInformation.businessWebsite,
       business_description: businessInformation.businessDescription,
       incorporation_date: {
@@ -134,7 +199,7 @@ function transformToFinixFormat(data: FinixSellerRequest) {
       last_name: ownerInformation.lastName,
       title: ownerInformation.jobTitle,
       email: ownerInformation.workEmail,
-      phone: ownerInformation.personalPhone,
+      phone: formattedPersonalPhone,
       annual_card_volume: processingInformation.annualCardVolume,
       max_transaction_amount: processingInformation.maxCardAmount,
       ach_max_transaction_amount: processingInformation.maxAchAmount,
@@ -192,6 +257,27 @@ serve(async (req) => {
     // Get request data
     const requestData: FinixSellerRequest = await req.json();
     
+    console.log('=== FINIX SUBMISSION START ===');
+    console.log('Raw Request Data:', JSON.stringify(requestData, null, 2));
+    
+    // Validate payload before sending to Finix
+    const validation = validateFinixPayload(requestData);
+    if (!validation.isValid) {
+      console.error('=== VALIDATION ERRORS ===');
+      console.error('Validation failed:', validation.errors);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Validation failed', 
+          details: validation.errors 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
     // Get Finix credentials
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID')!;
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET')!;
@@ -205,7 +291,10 @@ serve(async (req) => {
     // Transform data to Finix format
     const finixPayload = transformToFinixFormat(requestData);
     
-    console.log('Submitting to Finix:', JSON.stringify(finixPayload, null, 2));
+    console.log('=== FINIX PAYLOAD ===');
+    console.log('Transformed Payload:', JSON.stringify(finixPayload, null, 2));
+    console.log('API URL:', `${baseUrl}/identities`);
+    console.log('Environment:', finixEnvironment);
 
     // Submit to Finix API
     const finixResponse = await fetch(`${baseUrl}/identities`, {
@@ -221,13 +310,34 @@ serve(async (req) => {
 
     const finixResult = await finixResponse.json();
     
+    console.log('=== FINIX RESPONSE ===');
+    console.log('Response Status:', finixResponse.status);
+    console.log('Response Headers:', Object.fromEntries(finixResponse.headers.entries()));
+    console.log('Response Body:', JSON.stringify(finixResult, null, 2));
+    
     if (!finixResponse.ok) {
-      console.error('Finix API Error:', finixResult);
+      console.error('=== FINIX API ERROR ===');
+      console.error('Status:', finixResponse.status);
+      console.error('Error Details:', finixResult);
+      
+      // Extract specific error messages from Finix response  
+      let errorMessage = 'Finix API error';
+      let errorDetails = finixResult;
+      
+      if (finixResult.errors && Array.isArray(finixResult.errors)) {
+        errorMessage = finixResult.errors.map((err: any) => err.message || err.detail || JSON.stringify(err)).join(', ');
+      } else if (finixResult.message) {
+        errorMessage = finixResult.message;
+      } else if (finixResult.detail) {
+        errorMessage = finixResult.detail;
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Finix API error', 
-          details: finixResult 
+          error: errorMessage,
+          status: finixResponse.status,
+          details: errorDetails 
         }),
         { 
           status: 400, 
@@ -236,7 +346,8 @@ serve(async (req) => {
       );
     }
 
-    console.log('Finix Response:', JSON.stringify(finixResult, null, 2));
+    console.log('=== SUCCESS ===');
+    console.log('Finix Identity Created:', finixResult.id);
 
     // Generate a unique Finix identity ID for our database
     const finixIdentityId = finixResult.id || `ID_${Date.now()}`;

@@ -44,7 +44,7 @@ export const businessInformationSchema = z.object({
   })
 });
 
-// Step 2: Owner/Principal Information Schema
+// Step 2: Owner/Principal Information Schema  
 export const ownerInformationSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -118,11 +118,30 @@ export const processingInformationSchema = z.object({
   }).optional()
 });
 
-// Complete form schema
+// Complete form schema with conditional validation
 export const finixSellerSchema = z.object({
   businessInformation: businessInformationSchema,
   ownerInformation: ownerInformationSchema,
   processingInformation: processingInformationSchema
+}).superRefine((data, ctx) => {
+  // For non-government entities, DOB and Personal Tax ID are required
+  if (data.businessInformation.businessType !== "GOVERNMENT_AGENCY") {
+    if (!data.ownerInformation.dateOfBirth || data.ownerInformation.dateOfBirth === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Date of birth is required for non-government entities",
+        path: ["ownerInformation", "dateOfBirth"]
+      });
+    }
+    
+    if (!data.ownerInformation.personalTaxId || data.ownerInformation.personalTaxId === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Personal tax ID is required for non-government entities", 
+        path: ["ownerInformation", "personalTaxId"]
+      });
+    }
+  }
 });
 
 // Type exports
