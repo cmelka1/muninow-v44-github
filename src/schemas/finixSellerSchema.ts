@@ -31,7 +31,7 @@ export const businessInformationSchema = z.object({
   businessTaxId: z.string().min(9, "Valid tax ID is required"),
   businessPhone: z.string().min(10, "Valid phone number is required"),
   businessWebsite: z.string().url("Valid website URL is required"),
-  businessDescription: z.string().min(10, "Business description is required"),
+  businessDescription: z.string().min(2, "Business description is required"),
   incorporationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   ownershipType: OwnershipTypeEnum,
   businessAddress: z.object({
