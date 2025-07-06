@@ -47,6 +47,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -68,6 +69,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -89,6 +91,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -110,6 +113,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -131,6 +135,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -152,6 +157,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -224,6 +230,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -246,6 +253,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -268,6 +276,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -306,6 +315,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -328,6 +338,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
@@ -350,6 +361,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
+                    value={field.value === 0 ? '' : field.value}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
