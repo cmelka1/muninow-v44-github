@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { ArrowLeft, Building2, User, CreditCard, Plus } from 'lucide-react';
 import { useCustomerDetail } from '@/hooks/useCustomerDetail';
+import { useCustomerPaymentMethods } from '@/hooks/useCustomerPaymentMethods';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,11 +23,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 const SuperAdminCustomerDetail = () => {
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
   const { data: customer, isLoading, error } = useCustomerDetail(customerId!);
+  const { data: paymentMethodsData, isLoading: isLoadingPaymentMethods } = useCustomerPaymentMethods({ 
+    customerId: customerId!, 
+    pageSize: 10 
+  });
 
   const handleGoBack = () => {
     navigate('/superadmin/customers');
@@ -48,6 +55,28 @@ const SuperAdminCustomerDetail = () => {
     ].filter(Boolean);
     return parts.join(', ');
   };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'enabled':
+      case 'active':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>;
+      case 'disabled':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Disabled</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const formatDate = (date: string) => {
+    return format(new Date(date), 'MMM dd, yyyy');
+  };
+
+  const paymentMethods = paymentMethodsData?.data || [];
 
   if (error) {
     return (
@@ -215,24 +244,69 @@ const SuperAdminCustomerDetail = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Account Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={3} className="py-8 text-center">
-                       <span className="text-muted-foreground">
-                         No payment methods found. Click "Add New Payment Method" to get started.
-                       </span>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead>Account Name</TableHead>
+                      <TableHead className="hidden sm:table-cell">Account Number</TableHead>
+                      <TableHead className="hidden md:table-cell text-center">Status</TableHead>
+                      <TableHead className="text-right">Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingPaymentMethods ? (
+                      [...Array(3)].map((_, i) => (
+                        <TableRow key={i} className="h-12">
+                          <TableCell className="py-2">
+                            <Skeleton className="h-4 w-32" />
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell py-2">
+                            <Skeleton className="h-4 w-24" />
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell py-2 text-center">
+                            <Skeleton className="h-4 w-16" />
+                          </TableCell>
+                          <TableCell className="text-right py-2">
+                            <Skeleton className="h-4 w-20" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : paymentMethods.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-8 text-center">
+                          <span className="text-muted-foreground">
+                            No payment methods found. Click "Add New Payment Method" to get started.
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paymentMethods.map((method) => (
+                        <TableRow key={method.id} className="h-12">
+                          <TableCell className="py-2">
+                            <span className="truncate block max-w-[200px]" title={method.account_nickname || method.account_holder_name || 'N/A'}>
+                              {method.account_nickname || method.account_holder_name || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell py-2">
+                            <span className="font-mono text-sm truncate block max-w-[150px]" title={method.masked_account_number || 'N/A'}>
+                              {method.masked_account_number || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell py-2 text-center">
+                            {getStatusBadge(method.status || 'pending')}
+                          </TableCell>
+                          <TableCell className="text-right py-2">
+                            <span className="text-sm">
+                              {method.created_at ? formatDate(method.created_at) : 'N/A'}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </div>
