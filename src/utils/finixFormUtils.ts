@@ -26,24 +26,34 @@ export const finixSellerSchema = z.object({
     country: z.string().default('USA')
   }),
   principal: z.object({
-    first_name: z.string().min(1, 'First name is required'),
-    last_name: z.string().min(1, 'Last name is required'),
-    title: z.enum(['CEO', 'CFO', 'COO', 'President', 'Owner', 'Partner', 'Director', 'Manager', 'Other']),
-    email: z.string().email('Valid email is required'),
-    phone: z.string().min(10, 'Phone number is required'),
-    date_of_birth: z.string(),
-    ssn: z.string().length(4, 'Last 4 digits of SSN required'),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    title: z.enum(['CEO', 'CFO', 'COO', 'President', 'Owner', 'Partner', 'Director', 'Manager', 'Other']).optional(),
+    email: z.string().email('Valid email is required').optional(),
+    phone: z.string().optional(),
+    date_of_birth: z.string().optional(),
+    ssn: z.string().optional(),
     address: z.object({
-      line1: z.string().min(1, 'Address line 1 is required'),
+      line1: z.string().optional(),
       line2: z.string().optional(),
-      city: z.string().min(1, 'City is required'),
-      region: z.string().min(2, 'State is required'),
-      postal_code: z.string().min(5, 'Zip code is required'),
+      city: z.string().optional(),
+      region: z.string().optional(),
+      postal_code: z.string().optional(),
       country: z.string().default('USA')
-    })
+    }).optional()
   }).optional()
 }).refine((data) => {
   // Principal is required for all business types except GOVERNMENT_AGENCY
+  if (data.business_type !== 'GOVERNMENT_AGENCY' && data.principal) {
+    // For non-government agencies, validate required principal fields
+    const p = data.principal;
+    if (!p.first_name || !p.last_name || !p.title || !p.email || !p.phone || !p.date_of_birth || !p.ssn) {
+      return false;
+    }
+    if (!p.address?.line1 || !p.address?.city || !p.address?.region || !p.address?.postal_code) {
+      return false;
+    }
+  }
   if (data.business_type !== 'GOVERNMENT_AGENCY' && !data.principal) {
     return false;
   }
@@ -134,21 +144,5 @@ export const defaultFormValues: FinixSellerFormData = {
     postal_code: '',
     country: 'USA'
   },
-  principal: {
-    first_name: '',
-    last_name: '',
-    title: undefined,
-    email: '',
-    phone: '',
-    date_of_birth: '',
-    ssn: '',
-    address: {
-      line1: '',
-      line2: '',
-      city: '',
-      region: '',
-      postal_code: '',
-      country: 'USA'
-    }
-  }
+  principal: undefined
 };

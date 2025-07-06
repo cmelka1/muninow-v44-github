@@ -5,6 +5,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Helper function to convert date string to Finix date object
+function convertDateToFinixFormat(dateString: string) {
+  if (!dateString) return undefined;
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date format: ${dateString}`);
+  }
+  
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1, // JavaScript months are 0-indexed
+    day: date.getDate()
+  };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,6 +29,8 @@ serve(async (req) => {
 
   try {
     const payload = await req.json()
+
+    console.log('Received payload:', JSON.stringify(payload, null, 2))
 
     // Load Finix secrets
     const FINIX_APPLICATION_ID = Deno.env.get("FINIX_APPLICATION_ID")!
@@ -26,6 +44,9 @@ serve(async (req) => {
     const FINIX_API_URL = `${FINIX_BASE_URL}/identities`
     const basicAuth = btoa(`${FINIX_APPLICATION_ID}:${FINIX_API_SECRET}`)
 
+    // Convert incorporation date to Finix format
+    const incorporationDate = convertDateToFinixFormat(payload.incorporation_date);
+
     // Construct Finix entity object
     const finixEntity: Record<string, unknown> = {
       business_type: payload.business_type,
@@ -34,7 +55,7 @@ serve(async (req) => {
       business_tax_id: payload.business_tax_id,
       business_phone: payload.business_phone,
       business_url: payload.business_url || undefined,
-      incorporation_date: payload.incorporation_date,
+      incorporation_date: incorporationDate,
       ownership_type: payload.ownership_type,
       business_address: {
         line1: payload.business_address.line1,
@@ -48,13 +69,16 @@ serve(async (req) => {
 
     // Add principal data if not a government agency
     if (payload.business_type !== "GOVERNMENT_AGENCY" && payload.principal) {
+      // Convert date of birth to Finix format
+      const dob = convertDateToFinixFormat(payload.principal.date_of_birth);
+      
       finixEntity.principal = {
         first_name: payload.principal.first_name,
         last_name: payload.principal.last_name,
         title: payload.principal.title,
         email: payload.principal.email,
         phone: payload.principal.phone,
-        date_of_birth: payload.principal.date_of_birth,
+        dob: dob, // Use 'dob' instead of 'date_of_birth' for Finix API
         ssn: payload.principal.ssn,
         address: {
           line1: payload.principal.address.line1,
@@ -83,9 +107,32 @@ serve(async (req) => {
 
     if (!finixRes.ok) {
       console.error("Finix API Error:", finixData)
+      
+      // Parse Finix error for better user feedback
+      let errorMessage = "Failed to create Finix seller identity";
+      let fieldErrors: Record<string, string> = {};
+      
+      if (finixData && finixData.details) {
+        // Handle field-specific errors
+        if (Array.isArray(finixData.details)) {
+          finixData.details.forEach((detail: any) => {
+            if (detail.field && detail.message) {
+              fieldErrors[detail.field] = detail.message;
+            }
+          });
+        }
+        
+        if (Object.keys(fieldErrors).length > 0) {
+          errorMessage = `Validation errors: ${Object.entries(fieldErrors).map(([field, msg]) => `${field}: ${msg}`).join(', ')}`;
+        } else if (finixData.message) {
+          errorMessage = finixData.message;
+        }
+      }
+      
       return new Response(
         JSON.stringify({
-          error: "Finix request failed",
+          error: errorMessage,
+          field_errors: fieldErrors,
           finix_response: finixData,
           submitted_payload: payload,
         }),

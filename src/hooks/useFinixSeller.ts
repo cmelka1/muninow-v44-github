@@ -22,7 +22,11 @@ export const useFinixSeller = () => {
       }
 
       if (response.error) {
-        throw new Error(response.error);
+        // Handle detailed error messages from the edge function
+        const errorMsg = response.field_errors 
+          ? `Validation errors: ${Object.entries(response.field_errors).map(([field, msg]) => `${field}: ${msg}`).join(', ')}`
+          : response.error;
+        throw new Error(errorMsg);
       }
 
       console.log('Finix Seller Identity Created:', JSON.stringify(response, null, 2));

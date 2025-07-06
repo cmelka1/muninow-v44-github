@@ -37,6 +37,30 @@ export const FinixSellerForm: React.FC<FinixSellerFormProps> = ({
     defaultValues: defaultFormValues
   });
 
+  // Initialize principal fields when business type changes
+  React.useEffect(() => {
+    const businessType = form.watch('business_type');
+    if (businessType !== 'GOVERNMENT_AGENCY' && !form.getValues('principal')) {
+      form.setValue('principal', {
+        first_name: '',
+        last_name: '',
+        title: undefined,
+        email: '',
+        phone: '',
+        date_of_birth: '',
+        ssn: '',
+        address: {
+          line1: '',
+          line2: '',
+          city: '',
+          region: '',
+          postal_code: '',
+          country: 'USA'
+        }
+      });
+    }
+  }, [form]);
+
   const watchBusinessType = form.watch('business_type');
   const showPrincipalSection = watchBusinessType && watchBusinessType !== 'GOVERNMENT_AGENCY';
 
