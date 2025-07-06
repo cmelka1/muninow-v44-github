@@ -135,14 +135,6 @@ export const PreloginFooter = () => {
                   Services
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/integration"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Integration Guide
-                </Link>
-              </li>
             </ul>
           </div>
 
