@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import BankAccountStep from '@/components/merchant/BankAccountStep';
 import { merchantAccountSchema, MerchantAccountFormData } from '@/schemas/merchantAccountSchema';
+import { supabase } from '@/integrations/supabase/client';
 
 const SuperAdminMerchantAccountForm = () => {
   const { customerId } = useParams<{ customerId: string }>();
@@ -45,8 +46,35 @@ const SuperAdminMerchantAccountForm = () => {
   const handleSubmit = async () => {
     const isValid = await form.trigger('bankAccount');
     if (isValid) {
-      console.log('Bank Account Data:', form.getValues('bankAccount'));
-      alert('Bank account submitted for approval!');
+      try {
+        console.log('Submitting bank account data...');
+        
+        const { data, error } = await supabase.functions.invoke('create-finix-customer-payment-instrument', {
+          body: {
+            customerId,
+            bankAccount: form.getValues('bankAccount')
+          }
+        });
+
+        if (error) {
+          console.error('Error creating payment instrument:', error);
+          alert(`Error: ${error.message}`);
+          return;
+        }
+
+        if (data?.success) {
+          console.log('Payment instrument created successfully:', data);
+          alert(`Bank account submitted successfully! Payment instrument ID: ${data.paymentMethod.finixId}`);
+          // Navigate back to customer detail page
+          navigate(`/superadmin/customers/${customerId}`);
+        } else {
+          console.error('Unexpected response:', data);
+          alert('An unexpected error occurred. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error submitting bank account:', error);
+        alert('Failed to submit bank account. Please try again.');
+      }
     }
   };
 
