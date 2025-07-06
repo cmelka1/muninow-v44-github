@@ -16,6 +16,7 @@ import { OwnerInformationStep } from './OwnerInformationStep';
 import { ProcessingInformationStep } from './ProcessingInformationStep';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const STEPS = [
   { id: 1, title: "Entity Information" },
@@ -26,6 +27,7 @@ const STEPS = [
 export function FinixSellerOnboardingForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const form = useForm<FinixSellerFormData>({
     resolver: zodResolver(finixSellerSchema),
@@ -183,12 +185,14 @@ export function FinixSellerOnboardingForm() {
 
       console.log('Finix Submission Result:', result);
       
-      toast({
-        title: "Application Submitted Successfully!",
-        description: `Your seller application has been submitted to Finix. Seller ID: ${result.sellerId}`,
+      // Navigate to success page with submission details
+      const searchParams = new URLSearchParams({
+        sellerId: result.sellerId || '',
+        ...(result.applicationId && { applicationId: result.applicationId }),
+        ...(result.verificationStatus && { verificationStatus: result.verificationStatus })
       });
-
-      // Optionally redirect or show success details
+      
+      navigate(`/superadmin/finix-onboarding/success?${searchParams.toString()}`);
       
     } catch (error) {
       console.error('Form submission error:', error);

@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminCustomers from "./pages/SuperAdminCustomers";
 import SuperAdminFinixOnboarding from "./pages/SuperAdminFinixOnboarding";
+import SuperAdminFinixOnboardingSuccess from "./pages/SuperAdminFinixOnboardingSuccess";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -73,6 +74,11 @@ const App = () => (
                 <Route path="/superadmin/finix-onboarding" element={
                   <ProtectedRoute requiredRole="superAdmin">
                     <SuperAdminFinixOnboarding />
+                  </ProtectedRoute>
+                } />
+                <Route path="/superadmin/finix-onboarding/success" element={
+                  <ProtectedRoute requiredRole="superAdmin">
+                    <SuperAdminFinixOnboardingSuccess />
                   </ProtectedRoute>
                 } />
                 <Route path="/superadmin/profile" element={
