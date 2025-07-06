@@ -159,10 +159,24 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
   // Handle address selection from Google Places
   const handleAddressSelect = (addressComponents: any) => {
-    form.setValue('streetAddress', addressComponents.streetAddress);
-    form.setValue('city', addressComponents.city);
-    form.setValue('state', addressComponents.state);
-    form.setValue('zipCode', addressComponents.zipCode);
+    console.log('Address selected:', addressComponents);
+    
+    // Distribute to proper form fields using setValue with conditional checks
+    if (addressComponents.streetAddress) {
+      form.setValue('streetAddress', addressComponents.streetAddress);
+    }
+    if (addressComponents.city) {
+      form.setValue('city', addressComponents.city);
+    }
+    if (addressComponents.state) {
+      form.setValue('state', addressComponents.state);
+    }
+    if (addressComponents.zipCode) {
+      form.setValue('zipCode', addressComponents.zipCode);
+    }
+    
+    // Trigger validation for updated fields
+    form.trigger(['streetAddress', 'city', 'state', 'zipCode']);
   };
 
   // Handle profile address checkbox change
@@ -598,12 +612,13 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                       <FormItem>
                         <FormLabel>Street Address</FormLabel>
                         <FormControl>
-                          <GooglePlacesAutocomplete
-                            value={field.value}
-                            onChange={field.onChange}
-                            onAddressSelect={handleAddressSelect}
-                            placeholder="Enter your street address"
-                          />
+                           <GooglePlacesAutocomplete
+                             onAddressSelect={handleAddressSelect}
+                             className="h-11"
+                             value={field.value}
+                             onChange={field.onChange}
+                             placeholder="Enter your street address"
+                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
