@@ -129,7 +129,7 @@ export const PreloginFooter = () => {
               </li>
               <li>
                 <Link
-                  to="/services"
+                  to="/municipalities"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Services
