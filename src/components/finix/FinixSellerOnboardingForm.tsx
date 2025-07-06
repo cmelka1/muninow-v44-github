@@ -45,7 +45,7 @@ export function FinixSellerOnboardingForm() {
           city: '',
           state: '',
           zipCode: '',
-          country: 'US'
+          country: 'USA'
         }
       },
       ownerInformation: {
@@ -60,7 +60,7 @@ export function FinixSellerOnboardingForm() {
           city: '',
           state: '',
           zipCode: '',
-          country: 'US'
+          country: 'USA'
         },
         dateOfBirth: '',
         personalTaxId: '',
