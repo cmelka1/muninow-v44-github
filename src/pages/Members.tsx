@@ -80,124 +80,117 @@ const Members = () => {
                 </div>
               </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 md:mb-8">
+            {/* Main Action Tiles */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Send Invitations Tile */}
               <Card className="hover:shadow-md transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-semibold text-gray-900">Total Members</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl md:text-2xl font-bold text-gray-900">{members.length}</div>
-                  <p className="text-sm text-gray-600">
-                    Active {organizationLabels.plural}
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Send Invitations
+                  </CardTitle>
+                  <p className="text-gray-600">
+                    Invite new {organizationLabels.plural} to join your{' '}
+                    {profile?.account_type === 'business' ? 'team' : 
+                     profile?.account_type === 'municipal' ? 'organization' : 'household'}
                   </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-md transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-semibold text-gray-900">Admins</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-xl md:text-2xl font-bold text-gray-900">{adminCount}</div>
-                  <p className="text-sm text-gray-600">
-                    Admin roles
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-md transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-semibold text-gray-900">Members</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl md:text-2xl font-bold text-gray-900">{userCount}</div>
-                  <p className="text-sm text-gray-600">
-                    Regular members
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Members List */}
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  {profile?.account_type === 'business' ? 'Team Members' : 
-                   profile?.account_type === 'municipal' ? 'Organization Members' : 'Household Members'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {membersLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{members.length}</div>
+                      <div className="text-sm text-blue-600">Total Members</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{adminCount}</div>
+                      <div className="text-sm text-green-600">Admins</div>
+                    </div>
                   </div>
-                ) : members.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No {organizationLabels.plural} yet.</p>
-                    <p className="text-sm">Invite someone to get started.</p>
+                  
+                  <div className="pt-4 border-t">
+                    <InviteMemberDialog onInvite={inviteMember} />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {members.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <Avatar>
-                            <AvatarFallback>{getInitials(member.first_name, member.last_name)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium text-gray-900">{member.first_name} {member.last_name}</div>
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <Mail className="h-3 w-3" />
-                                {member.email}
+
+                  {members.length === 0 && (
+                    <div className="text-center py-6 text-gray-500">
+                      <Users className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">No {organizationLabels.plural} yet.</p>
+                      <p className="text-xs">Send your first invitation to get started.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Manage Organization Tile */}
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Manage {profile?.account_type === 'business' ? 'Team' : 
+                            profile?.account_type === 'municipal' ? 'Organization' : 'Household'}
+                  </CardTitle>
+                  <p className="text-gray-600">
+                    Control member roles and manage your organization
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {membersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : members.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Shield className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">No members to manage yet.</p>
+                      <p className="text-xs">Send invitations to start building your {getOrganizationLabel().singular} group.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {members.map((member) => (
+                        <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">{getInitials(member.first_name, member.last_name)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-gray-900 text-sm truncate">
+                                {member.first_name} {member.last_name}
                               </div>
-                              {member.phone && (
-                                <div className="flex items-center gap-1">
-                                  <Phone className="h-3 w-3" />
-                                  {member.phone}
-                                </div>
-                              )}
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                {member.role === 'admin' && <Shield className="h-3 w-3" />}
+                                <span>{member.role === 'admin' ? 'Admin' : 'Member'}</span>
+                                <span className="text-green-600">• Active</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="text-right mr-4">
-                            <div className="flex items-center gap-1 font-medium text-gray-900">
-                              {member.role === 'admin' && <Shield className="h-3 w-3" />}
-                              {member.role === 'admin' ? 'Admin' : 'Member'}
-                            </div>
-                            <div className="text-sm text-green-600">Active</div>
-                          </div>
+                          
                           {member.member_id !== user?.id && (
                             <div className="flex items-center space-x-1">
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="h-7 px-2 text-xs"
                                 onClick={() => handleUpdateRole(member.member_id, member.role === 'admin' ? 'user' : 'admin')}
                               >
-                                {member.role === 'admin' ? 'Make Member' : 'Make Admin'}
+                                {member.role === 'admin' ? 'Demote' : 'Promote'}
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="h-7 w-7 p-0"
                                 onClick={() => handleRemoveMember(member.member_id)}
                               >
-                                <UserMinus className="h-4 w-4" />
+                                <UserMinus className="h-3 w-3" />
                               </Button>
                             </div>
                           )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </SidebarInset>
       </div>
