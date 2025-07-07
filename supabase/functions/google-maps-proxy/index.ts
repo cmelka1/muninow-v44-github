@@ -46,13 +46,146 @@ serve(async (req) => {
 
     console.log('Processing request for service:', service);
 
-    let apiUrl = '';
-    
     switch (service) {
       case 'js':
         // Return the Google Maps JavaScript API URL with our secure key
-        apiUrl = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&v=weekly`;
-        break;
+        const apiUrl = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&v=weekly`;
+        return new Response(
+          JSON.stringify({ url: apiUrl }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+
+      case 'autocomplete':
+        // Handle Places Autocomplete API
+        if (req.method !== 'POST') {
+          return new Response(
+            JSON.stringify({ error: 'Autocomplete service requires POST method' }),
+            { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        try {
+          const requestBody = await req.json();
+          const { 
+            input, 
+            includedRegionCodes, 
+            languageCode, 
+            locationBias, 
+            locationRestriction, 
+            inputOffset, 
+            regionCode, 
+            sessionToken, 
+            includedPrimaryTypes 
+          } = requestBody;
+
+          if (!input || input.trim() === '') {
+            return new Response(
+              JSON.stringify({ error: 'Input parameter required for autocomplete' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          const autocompleteBody: any = { input: input.trim() };
+          
+          // Add optional parameters if provided
+          if (includedRegionCodes) autocompleteBody.includedRegionCodes = includedRegionCodes;
+          if (languageCode) autocompleteBody.languageCode = languageCode;
+          if (locationBias) autocompleteBody.locationBias = locationBias;
+          if (locationRestriction) autocompleteBody.locationRestriction = locationRestriction;
+          if (inputOffset !== undefined) autocompleteBody.inputOffset = inputOffset;
+          if (regionCode) autocompleteBody.regionCode = regionCode;
+          if (sessionToken) autocompleteBody.sessionToken = sessionToken;
+          if (includedPrimaryTypes) autocompleteBody.includedPrimaryTypes = includedPrimaryTypes;
+
+          console.log('Making autocomplete request:', autocompleteBody);
+
+          const response = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-Api-Key': googleMapsApiKey,
+              'X-Goog-FieldMask': 'suggestions.placePrediction.text,suggestions.placePrediction.placeId'
+            },
+            body: JSON.stringify(autocompleteBody)
+          });
+
+          const data = await response.json();
+          
+          if (!response.ok) {
+            console.error('Autocomplete API error:', data);
+            return new Response(
+              JSON.stringify({ error: 'Autocomplete API error', details: data }),
+              { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          return new Response(
+            JSON.stringify(data),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          console.error('Error processing autocomplete request:', error);
+          return new Response(
+            JSON.stringify({ error: 'Failed to process autocomplete request' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+      case 'place-details':
+        // Handle Place Details API
+        if (req.method !== 'POST') {
+          return new Response(
+            JSON.stringify({ error: 'Place details service requires POST method' }),
+            { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        try {
+          const { placeId, sessionToken } = await req.json();
+          
+          if (!placeId) {
+            return new Response(
+              JSON.stringify({ error: 'placeId parameter required for place details' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          const detailsBody: any = {};
+          if (sessionToken) detailsBody.sessionToken = sessionToken;
+
+          console.log('Making place details request for:', placeId);
+
+          const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-Api-Key': googleMapsApiKey,
+              'X-Goog-FieldMask': 'addressComponents,formattedAddress'
+            }
+          });
+
+          const data = await response.json();
+          
+          if (!response.ok) {
+            console.error('Place details API error:', data);
+            return new Response(
+              JSON.stringify({ error: 'Place details API error', details: data }),
+              { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          return new Response(
+            JSON.stringify(data),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          console.error('Error processing place details request:', error);
+          return new Response(
+            JSON.stringify({ error: 'Failed to process place details request' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
       case 'geocoding':
         const address = url.searchParams.get('address');
         if (!address) {
@@ -61,33 +194,32 @@ serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`;
-        break;
+        const geocodingUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`;
+        
+        try {
+          const response = await fetch(geocodingUrl);
+          const data = await response.json();
+          
+          return new Response(
+            JSON.stringify(data),
+            { 
+              status: response.status,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        } catch (error) {
+          console.error('Geocoding error:', error);
+          return new Response(
+            JSON.stringify({ error: 'Geocoding API error' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
       default:
         return new Response(
-          JSON.stringify({ error: 'Unsupported service' }),
+          JSON.stringify({ error: 'Unsupported service. Available services: js, autocomplete, place-details, geocoding' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
-    }
-
-    if (service === 'js') {
-      // For JavaScript API, return the URL
-      return new Response(
-        JSON.stringify({ url: apiUrl }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      // For other services, proxy the request
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      
-      return new Response(
-        JSON.stringify(data),
-        { 
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
     }
   } catch (error) {
     return new Response(
