@@ -60,7 +60,8 @@ export const useOrganizationMembers = () => {
 
   const inviteMember = async (email: string, role: 'admin' | 'user', organizationType: 'resident' | 'business' | 'municipal') => {
     try {
-      const { data, error } = await supabase.rpc('create_organization_invitation', {
+      // Step 1: Create invitation in database
+      const { data: invitationId, error } = await supabase.rpc('create_organization_invitation', {
         p_invitation_email: email,
         p_role: role,
         p_organization_type: organizationType
@@ -70,20 +71,76 @@ export const useOrganizationMembers = () => {
         console.error('Error creating invitation:', error);
         toast({
           title: "Error",
-          description: "Failed to send invitation. Please try again.",
+          description: "Failed to create invitation. Please try again.",
           variant: "destructive",
         });
         return false;
       }
 
+      // Step 2: Get invitation details for email
+      const { data: invitation, error: fetchError } = await supabase
+        .from('organization_invitations')
+        .select('id, invitation_token, invitation_email, role, organization_type')
+        .eq('id', invitationId)
+        .single();
+
+      if (fetchError || !invitation) {
+        console.error('Error fetching invitation details:', fetchError);
+        toast({
+          title: "Error",
+          description: "Failed to retrieve invitation details. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Step 3: Get admin profile for email context
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Error fetching admin profile:', profileError);
+        toast({
+          title: "Error",
+          description: "Failed to load profile information. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Step 4: Send invitation email
+      const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-organization-invitation', {
+        body: {
+          invitation_id: invitation.id,
+          invitation_email: invitation.invitation_email,
+          admin_name: `${profile.first_name} ${profile.last_name}`,
+          organization_type: invitation.organization_type,
+          role: invitation.role,
+          invitation_token: invitation.invitation_token
+        }
+      });
+
+      if (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        toast({
+          title: "Invitation Created",
+          description: "Invitation was created but email sending failed. Please contact the user directly.",
+          variant: "destructive",
+        });
+        return true; // Still consider success since invitation exists
+      }
+
       toast({
         title: "Success",
-        description: "Invitation sent successfully.",
+        description: "Invitation sent successfully via email.",
       });
 
       return true;
     } catch (error) {
-      console.error('Error creating invitation:', error);
+      console.error('Error in invite flow:', error);
       toast({
         title: "Error",
         description: "Failed to send invitation. Please try again.",

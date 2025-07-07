@@ -176,6 +176,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [addressStatus, setAddressStatus] = useState<'checking' | 'available' | 'duplicate' | null>(null);
   const [formData, setFormData] = useState<SignupFormValues | null>(null);
+  const [invitationData, setInvitationData] = useState<any>(null);
+  const [isValidatingInvitation, setIsValidatingInvitation] = useState(false);
   const { signUp, isSubmitting } = useAuth();
 
   const form = useForm<SignupFormValues>({
@@ -201,6 +203,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
     }
   });
 
+  // Check for invitation token on component mount
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const invitationToken = urlParams.get('invitation');
+    
+    if (invitationToken) {
+      validateInvitation(invitationToken);
+    }
+  }, []);
+
   const watchPassword = form.watch('password');
   const watchAccountType = form.watch('accountType');
 
@@ -212,6 +224,49 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       setPasswordStrength(0);
     }
   }, [watchPassword]);
+
+  // Validate invitation token
+  const validateInvitation = async (token: string) => {
+    setIsValidatingInvitation(true);
+    try {
+      const { data: invitation, error } = await supabase
+        .from('organization_invitations')
+        .select('*')
+        .eq('invitation_token', token)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (error || !invitation) {
+        toast({
+          title: "Invalid Invitation",
+          description: "This invitation link is invalid or has expired. Please contact the person who invited you.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setInvitationData(invitation);
+      
+      // Pre-populate form with invitation data
+      form.setValue('email', invitation.invitation_email);
+      form.setValue('accountType', invitation.organization_type as 'resident' | 'business');
+      
+      toast({
+        title: "Welcome!",
+        description: `You've been invited to join as a ${invitation.role === 'admin' ? 'administrator' : 'member'}.`,
+      });
+    } catch (error) {
+      console.error('Error validating invitation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to validate invitation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidatingInvitation(false);
+    }
+  };
 
   // Check email for duplicates
   const checkEmailDuplicate = async (email: string) => {
@@ -485,26 +540,53 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         // Continue with account creation - payment can be set up later
       }
       
-      // Phase 5: Assign appropriate admin role based on account type
-      try {
-        const roleName = formData.accountType === 'business' ? 'businessAdmin' : 'residentAdmin';
-        const { error: roleError } = await supabase.rpc('assign_role_to_user', {
-          _user_id: authData.user.id,
-          _role_name: roleName
-        });
-        
-        if (roleError) {
-          // Don't block account creation - user can be assigned role later
+      // Phase 5: Handle invitation acceptance if applicable
+      if (invitationData) {
+        try {
+          const { error: acceptError } = await supabase.rpc('accept_organization_invitation', {
+            p_invitation_token: invitationData.invitation_token
+          });
+          
+          if (acceptError) {
+            console.error('Error accepting invitation:', acceptError);
+            toast({
+              title: "Account created but invitation failed",
+              description: "Your account was created successfully, but we couldn't accept the invitation. Please contact your admin.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Welcome to the organization!",
+              description: `Your account was created and you've been added as a ${invitationData.role === 'admin' ? 'administrator' : 'member'}.`
+            });
+          }
+        } catch (inviteError) {
+          console.error('Error processing invitation:', inviteError);
+          // Continue anyway
         }
-      } catch (roleError) {
-        // Continue with account creation - role can be assigned later
+      } else {
+        // Phase 5b: Assign appropriate admin role for non-invitation signups
+        try {
+          const roleName = formData.accountType === 'business' ? 'businessAdmin' : 'residentAdmin';
+          const { error: roleError } = await supabase.rpc('assign_role_to_user', {
+            _user_id: authData.user.id,
+            _role_name: roleName
+          });
+          
+          if (roleError) {
+            // Don't block account creation - user can be assigned role later
+          }
+        } catch (roleError) {
+          // Continue with account creation - role can be assigned later
+        }
+        
+        // Success - show completion message for normal signup
+        toast({
+          title: "Account created successfully!",
+          description: "Please check your email to verify your account and complete the setup."
+        });
       }
       
-      // Success - show completion message
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your email to verify your account and complete the setup."
-      });
       setCurrentStep(4);
       
     } catch (error: any) {
@@ -581,8 +663,29 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
           <Progress value={(currentStep / 4) * 100} className="h-2" />
         </div>
 
+        {/* Loading state for invitation validation */}
+        {isValidatingInvitation && (
+          <div className="text-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Validating invitation...</p>
+          </div>
+        )}
+
+        {/* Invitation banner */}
+        {invitationData && !isValidatingInvitation && (
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-primary font-semibold">🎉 You're invited!</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              You've been invited to join as a <strong>{invitationData.role === 'admin' ? 'administrator' : 'member'}</strong> 
+              {' '}in a <strong>{invitationData.organization_type}</strong> organization.
+            </p>
+          </div>
+        )}
+
         {/* Step 1: Form Collection */}
-        {currentStep === 1 && (
+        {currentStep === 1 && !isValidatingInvitation && (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Account Type Selection */}
@@ -598,14 +701,19 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                     <Tabs
                       defaultValue="resident"
                       value={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={invitationData ? () => {} : field.onChange}
                     >
-                      <TabsList className="grid w-full grid-cols-2">
+                      <TabsList className={`grid w-full grid-cols-2 ${invitationData ? 'opacity-50 pointer-events-none' : ''}`}>
                         <TabsTrigger value="resident">Resident</TabsTrigger>
                         <TabsTrigger value="business">Business</TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </FormControl>
+                  {invitationData && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Account type set by invitation
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -663,16 +771,19 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                     <FormLabel>Email Address *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder="Enter your email address"
-                          className="h-11 pr-10"
-                          onBlur={(e) => {
-                            field.onBlur();
-                            checkEmailDuplicate(e.target.value);
-                          }}
-                        />
+                         <Input
+                           {...field}
+                           type="email"
+                           placeholder="Enter your email address"
+                           className="h-11 pr-10"
+                           disabled={!!invitationData}
+                           onBlur={(e) => {
+                             field.onBlur();
+                             if (!invitationData) {
+                               checkEmailDuplicate(e.target.value);
+                             }
+                           }}
+                         />
                         {isCheckingEmail && (
                           <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-1/2 transform -translate-y-1/2" />
                         )}
