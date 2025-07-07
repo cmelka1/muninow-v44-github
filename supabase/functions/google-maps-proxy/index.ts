@@ -24,12 +24,13 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     let service = url.searchParams.get('service');
+    let requestBody = null;
     
     // If no service in query params, try to get it from request body
     if (!service && req.method === 'POST') {
       try {
-        const body = await req.json();
-        service = body.service;
+        requestBody = await req.json();
+        service = requestBody.service;
         console.log('Extracted service from request body:', service);
       } catch (error) {
         console.error('Failed to parse request body:', error);
@@ -65,7 +66,8 @@ serve(async (req) => {
         }
 
         try {
-          const requestBody = await req.json();
+          // Use the already parsed request body if available, otherwise parse it
+          const body = requestBody || await req.json();
           const { 
             input, 
             includedRegionCodes, 
@@ -76,7 +78,7 @@ serve(async (req) => {
             regionCode, 
             sessionToken, 
             includedPrimaryTypes 
-          } = requestBody;
+          } = body;
 
           if (!input || input.trim() === '') {
             return new Response(
