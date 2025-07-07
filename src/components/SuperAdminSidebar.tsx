@@ -20,6 +20,11 @@ const navigationItems = [
     url: '/superadmin/dashboard'
   },
   {
+    title: 'Customers',
+    icon: Users,
+    url: '/superadmin/customers'
+  },
+  {
     title: 'Profile',
     icon: User,
     url: '/superadmin/profile'

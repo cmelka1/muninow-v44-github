@@ -26,6 +26,7 @@ import CookiesPolicy from "./pages/CookiesPolicy";
 import Accessibility from "./pages/Accessibility";
 import NotFound from "./pages/NotFound";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminCustomers from "./pages/SuperAdminCustomers";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -66,6 +67,11 @@ const App = () => (
                 <Route path="/superadmin/profile" element={
                   <ProtectedRoute requiredRole="superAdmin">
                     <SuperAdminProfile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/superadmin/customers" element={
+                  <ProtectedRoute requiredRole="superAdmin">
+                    <SuperAdminCustomers />
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />
