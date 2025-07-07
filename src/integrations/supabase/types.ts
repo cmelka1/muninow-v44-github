@@ -931,6 +931,81 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_invitations: {
+        Row: {
+          activated_at: string | null
+          expires_at: string | null
+          id: string
+          invitation_email: string
+          invitation_token: string | null
+          invited_at: string
+          old_tokens: string[] | null
+          organization_admin_id: string
+          organization_type: string
+          revoked_at: string | null
+          role: string
+          status: string
+        }
+        Insert: {
+          activated_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitation_email: string
+          invitation_token?: string | null
+          invited_at?: string
+          old_tokens?: string[] | null
+          organization_admin_id: string
+          organization_type: string
+          revoked_at?: string | null
+          role: string
+          status?: string
+        }
+        Update: {
+          activated_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitation_email?: string
+          invitation_token?: string | null
+          invited_at?: string
+          old_tokens?: string[] | null
+          organization_admin_id?: string
+          organization_type?: string
+          revoked_at?: string | null
+          role?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      organization_memberships: {
+        Row: {
+          id: string
+          joined_at: string
+          member_id: string
+          organization_admin_id: string
+          organization_type: string
+          role: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          member_id: string
+          organization_admin_id: string
+          organization_type: string
+          role: string
+          status?: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          member_id?: string
+          organization_admin_id?: string
+          organization_type?: string
+          role?: string
+          status?: string
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           account_type: string
@@ -1589,6 +1664,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_organization_invitation: {
+        Args: { p_invitation_token: string }
+        Returns: boolean
+      }
       assign_role_to_user: {
         Args: { _user_id: string; _role_name: string; _entity_id?: string }
         Returns: boolean
@@ -1622,6 +1701,14 @@ export type Database = {
       count_payment_methods: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      create_organization_invitation: {
+        Args: {
+          p_invitation_email: string
+          p_role: string
+          p_organization_type: string
+        }
+        Returns: string
       }
       create_payment_method: {
         Args:
@@ -1693,6 +1780,52 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      get_available_payment_methods: {
+        Args: { user_id: string }
+        Returns: {
+          account_type: string
+          bank_account_validation_check: string | null
+          business_id: string | null
+          business_name: string | null
+          card_brand: string | null
+          created_at: string
+          department: string | null
+          disabled_at: string | null
+          enabled: boolean | null
+          expires_at: string | null
+          finix_application_id: string | null
+          finix_funding_source: string | null
+          finix_identity_id: string | null
+          finix_payment_instrument_id: string | null
+          finix_processor: string | null
+          id: string
+          is_default: boolean
+          is_expired: boolean
+          last_four: string
+          method_name: string
+          method_type: string
+          payment_token: string
+          updated_at: string
+          user_id: string
+          verification_status: string | null
+        }[]
+      }
+      get_available_vehicles: {
+        Args: { user_id: string }
+        Returns: {
+          color: string
+          created_at: string
+          id: string
+          license_plate: string
+          make: string
+          model: string
+          state: string
+          updated_at: string
+          user_id: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          year: string
+        }[]
+      }
       get_household_admin_id: {
         Args: { member_id: string }
         Returns: string
@@ -1700,6 +1833,20 @@ export type Database = {
       get_next_sequence_number: {
         Args: { p_municipality_id: string; p_system_id: string }
         Returns: number
+      }
+      get_organization_members: {
+        Args: { user_id: string }
+        Returns: {
+          id: string
+          member_id: string
+          role: string
+          organization_type: string
+          joined_at: string
+          first_name: string
+          last_name: string
+          email: string
+          phone: string
+        }[]
       }
       get_payment_instrument_display_name: {
         Args: {
@@ -1806,6 +1953,10 @@ export type Database = {
         Returns: boolean
       }
       is_in_same_household: {
+        Args: { user_a: string; user_b: string }
+        Returns: boolean
+      }
+      is_in_same_organization: {
         Args: { user_a: string; user_b: string }
         Returns: boolean
       }
