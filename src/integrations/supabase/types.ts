@@ -1824,10 +1824,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      migrate_business_admins: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       migrate_payment_records_metadata: {
         Args: Record<PropertyKey, never>
         Returns: undefined
