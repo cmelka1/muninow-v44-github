@@ -45,7 +45,7 @@ export const RestPlacesAutocomplete: React.FC<RestPlacesAutocompleteProps> = ({
   } = useRestPlacesAutocomplete({
     regionCode,
     includedRegionCodes,
-    includedPrimaryTypes: ['address']
+    includedPrimaryTypes: ['premise', 'street_address']
   });
 
   // Update input value when prop changes
