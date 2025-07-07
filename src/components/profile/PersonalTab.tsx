@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
+import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { useToast } from '@/hooks/use-toast';
 import { Edit2, Save, X, User, Mail, Phone, MapPin, Building, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -306,7 +306,7 @@ export const PersonalTab = () => {
                     <FormLabel className="text-slate-700 font-medium">Street Address</FormLabel>
                     <FormControl>
                       {isEditing ? (
-                        <GooglePlacesAutocomplete
+                        <GooglePlacesAutocompleteV2
                           value={field.value || ''}
                           onChange={field.onChange}
                           onAddressSelect={handleAddressSelect}
