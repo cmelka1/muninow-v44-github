@@ -25,7 +25,6 @@ export type Database = {
           invited_at: string
           member_id: string | null
           old_tokens: string[] | null
-          parent_manager_id: string | null
           revoked_at: string | null
           role: string
           status: string
@@ -40,7 +39,6 @@ export type Database = {
           invited_at?: string
           member_id?: string | null
           old_tokens?: string[] | null
-          parent_manager_id?: string | null
           revoked_at?: string | null
           role: string
           status: string
@@ -55,7 +53,6 @@ export type Database = {
           invited_at?: string
           member_id?: string | null
           old_tokens?: string[] | null
-          parent_manager_id?: string | null
           revoked_at?: string | null
           role?: string
           status?: string
@@ -1781,22 +1778,12 @@ export type Database = {
           entity_id: string
         }[]
       }
-      has_any_role: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
       has_permission: {
         Args: { _user_id: string; _permission: string; _entity_id?: string }
         Returns: boolean
       }
       has_role: {
-        Args:
-          | {
-              _user_id: string
-              _role: Database["public"]["Enums"]["app_role"]
-              _entity_id?: string
-            }
-          | { _user_id: string; _role: string; _entity_id?: string }
+        Args: { _user_id: string; _role: string; _entity_id?: string }
         Returns: boolean
       }
       insert_bills_for_cmelka_accounts: {
@@ -1810,10 +1797,6 @@ export type Database = {
         Args: { business_id: string }
         Returns: boolean
       }
-      is_business_manager: {
-        Args: { business_id: string }
-        Returns: boolean
-      }
       is_household_admin: {
         Args: { user_id: string }
         Returns: boolean
@@ -1824,10 +1807,6 @@ export type Database = {
       }
       is_in_same_household: {
         Args: { user_a: string; user_b: string }
-        Returns: boolean
-      }
-      is_manager_of_user: {
-        Args: { manager_id: string; user_id: string }
         Returns: boolean
       }
       is_municipal_admin: {
@@ -1877,7 +1856,6 @@ export type Database = {
         | "municipalUser"
         | "residentAdmin"
         | "residentUser"
-        | "businessOwner"
         | "businessAdmin"
         | "businessUser"
       payment_method_type: "card" | "ach"
@@ -2015,7 +1993,6 @@ export const Constants = {
         "municipalUser",
         "residentAdmin",
         "residentUser",
-        "businessOwner",
         "businessAdmin",
         "businessUser",
       ],
