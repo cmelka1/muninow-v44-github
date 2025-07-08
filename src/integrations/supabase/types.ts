@@ -319,11 +319,11 @@ export type Database = {
           average_card_amount: number
           b2b_percentage: number
           b2c_percentage: number
-          bank_account_holder_name: string
-          bank_account_number: string
-          bank_account_number_confirmation: string
-          bank_account_type: string
-          bank_routing_number: string
+          bank_account_holder_name: string | null
+          bank_account_number: string | null
+          bank_account_number_confirmation: string | null
+          bank_account_type: string | null
+          bank_routing_number: string | null
           business_address_city: string
           business_address_country: string
           business_address_line1: string
@@ -358,8 +358,10 @@ export type Database = {
           finix_entity_data: Json | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
+          finix_merchant_profile_id: string | null
           finix_raw_response: Json | null
           finix_tags: Json | null
+          finix_verification_id: string | null
           has_accepted_cards_previously: boolean
           id: string
           incorporation_date: string | null
@@ -374,6 +376,7 @@ export type Database = {
           merchant_name: string
           moto_percentage: number
           notes: string | null
+          onboarding_state: string | null
           owner_date_of_birth: string | null
           owner_first_name: string
           owner_job_title: string
@@ -390,8 +393,12 @@ export type Database = {
           owner_work_email: string
           ownership_type: string
           p2p_percentage: number
+          processing_enabled: boolean | null
           processing_status: string
+          processor_mid: string | null
+          processor_type: string | null
           refund_policy: string
+          settlement_enabled: boolean | null
           statement_descriptor: string
           submission_metadata: Json | null
           updated_at: string
@@ -405,11 +412,11 @@ export type Database = {
           average_card_amount?: number
           b2b_percentage?: number
           b2c_percentage?: number
-          bank_account_holder_name: string
-          bank_account_number: string
-          bank_account_number_confirmation: string
-          bank_account_type: string
-          bank_routing_number: string
+          bank_account_holder_name?: string | null
+          bank_account_number?: string | null
+          bank_account_number_confirmation?: string | null
+          bank_account_type?: string | null
+          bank_routing_number?: string | null
           business_address_city: string
           business_address_country?: string
           business_address_line1: string
@@ -444,8 +451,10 @@ export type Database = {
           finix_entity_data?: Json | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
+          finix_merchant_profile_id?: string | null
           finix_raw_response?: Json | null
           finix_tags?: Json | null
+          finix_verification_id?: string | null
           has_accepted_cards_previously?: boolean
           id?: string
           incorporation_date?: string | null
@@ -460,6 +469,7 @@ export type Database = {
           merchant_name: string
           moto_percentage?: number
           notes?: string | null
+          onboarding_state?: string | null
           owner_date_of_birth?: string | null
           owner_first_name: string
           owner_job_title: string
@@ -476,8 +486,12 @@ export type Database = {
           owner_work_email: string
           ownership_type: string
           p2p_percentage?: number
+          processing_enabled?: boolean | null
           processing_status?: string
+          processor_mid?: string | null
+          processor_type?: string | null
           refund_policy: string
+          settlement_enabled?: boolean | null
           statement_descriptor: string
           submission_metadata?: Json | null
           updated_at?: string
@@ -491,11 +505,11 @@ export type Database = {
           average_card_amount?: number
           b2b_percentage?: number
           b2c_percentage?: number
-          bank_account_holder_name?: string
-          bank_account_number?: string
-          bank_account_number_confirmation?: string
-          bank_account_type?: string
-          bank_routing_number?: string
+          bank_account_holder_name?: string | null
+          bank_account_number?: string | null
+          bank_account_number_confirmation?: string | null
+          bank_account_type?: string | null
+          bank_routing_number?: string | null
           business_address_city?: string
           business_address_country?: string
           business_address_line1?: string
@@ -530,8 +544,10 @@ export type Database = {
           finix_entity_data?: Json | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
+          finix_merchant_profile_id?: string | null
           finix_raw_response?: Json | null
           finix_tags?: Json | null
+          finix_verification_id?: string | null
           has_accepted_cards_previously?: boolean
           id?: string
           incorporation_date?: string | null
@@ -546,6 +562,7 @@ export type Database = {
           merchant_name?: string
           moto_percentage?: number
           notes?: string | null
+          onboarding_state?: string | null
           owner_date_of_birth?: string | null
           owner_first_name?: string
           owner_job_title?: string
@@ -562,8 +579,12 @@ export type Database = {
           owner_work_email?: string
           ownership_type?: string
           p2p_percentage?: number
+          processing_enabled?: boolean | null
           processing_status?: string
+          processor_mid?: string | null
+          processor_type?: string | null
           refund_policy?: string
+          settlement_enabled?: boolean | null
           statement_descriptor?: string
           submission_metadata?: Json | null
           updated_at?: string

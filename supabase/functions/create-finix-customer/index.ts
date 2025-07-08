@@ -195,7 +195,7 @@ serve(async (req) => {
 
     const finixData = await finixResponse.json();
 
-    // Insert merchant record into database
+    // Insert merchant record into database (Step 1: Identity created, bank fields left NULL)
     const { data: merchantData, error: insertError } = await supabase
       .from('merchants')
       .insert({
@@ -283,6 +283,11 @@ serve(async (req) => {
         finix_tags: finixData.tags,
         processing_status: 'seller_created',
         verification_status: 'pending'
+        
+        // Note: Bank account fields (bank_account_holder_name, bank_routing_number, etc.) 
+        // are now nullable and will be populated in Step 2
+        // Note: Final Finix merchant fields (finix_merchant_profile_id, onboarding_state, etc.)
+        // are nullable and will be populated in Step 3
       })
       .select()
       .single();
