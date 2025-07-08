@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface CreatePaymentInstrumentRequest {
   customer_id: string;
+  merchant_id: string;
   bank_account_holder_name: string;
   bank_routing_number: string;
   bank_account_number: string;
@@ -23,6 +24,7 @@ serve(async (req) => {
   try {
     const { 
       customer_id, 
+      merchant_id,
       bank_account_holder_name,
       bank_routing_number,
       bank_account_number,
@@ -30,7 +32,7 @@ serve(async (req) => {
       bank_account_type
     }: CreatePaymentInstrumentRequest = await req.json();
     
-    if (!customer_id || !bank_account_holder_name || !bank_routing_number || !bank_account_number || !bank_account_type) {
+    if (!customer_id || !merchant_id || !bank_account_holder_name || !bank_routing_number || !bank_account_number || !bank_account_type) {
       throw new Error('Missing required fields');
     }
 
@@ -44,15 +46,33 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Find the existing merchant record
+    // Find the existing merchant record using merchant_id
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, finix_identity_id, finix_application_id, user_id')
-      .eq('user_id', (await supabase.from('customers').select('user_id').eq('customer_id', customer_id).single()).data?.user_id)
+      .select('id, finix_identity_id, finix_application_id, user_id, finix_raw_response')
+      .eq('id', merchant_id)
       .single();
 
     if (merchantError || !merchant) {
+      console.error('Merchant lookup error:', merchantError);
       throw new Error('Merchant record not found. Please complete Step 1 first.');
+    }
+
+    // Validate that the merchant belongs to the correct customer for security
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('user_id')
+      .eq('customer_id', customer_id)
+      .single();
+
+    if (customerError || !customer) {
+      console.error('Customer lookup error:', customerError);
+      throw new Error('Customer not found.');
+    }
+
+    if (merchant.user_id !== customer.user_id) {
+      console.error('Security validation failed: merchant user_id does not match customer user_id');
+      throw new Error('Invalid merchant-customer relationship.');
     }
 
     if (!merchant.finix_identity_id) {

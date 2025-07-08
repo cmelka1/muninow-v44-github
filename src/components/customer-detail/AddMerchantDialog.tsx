@@ -126,6 +126,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
       const { error: instrumentError } = await supabase.functions.invoke('create-finix-customer-payment-instrument', {
         body: {
           customer_id: customer.customer_id,
+          merchant_id: step1Data.merchant_id,
           ...data,
         },
       });
