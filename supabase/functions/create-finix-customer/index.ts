@@ -202,7 +202,8 @@ serve(async (req) => {
         user_id: customer.user_id,
         finix_identity_id: finixData.id,
         finix_application_id: finixData.application,
-        business_name: merchant_name,
+        merchant_name: merchant_name,
+        business_name: customer.legal_entity_name,
         statement_descriptor: statement_descriptor,
         
         // Customer data
