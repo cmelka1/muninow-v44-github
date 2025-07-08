@@ -68,6 +68,37 @@ serve(async (req) => {
     const incorporationDate = formatDate(customer.incorporation_date);
     const dateOfBirth = formatDate(customer.date_of_birth);
 
+    // Map business type to Finix-compatible enum
+    const mapBusinessType = (entityType: string): string => {
+      const mappings: Record<string, string> = {
+        'Corporation': 'CORPORATION',
+        'LLC': 'LIMITED_LIABILITY_COMPANY',
+        'Limited Liability Company': 'LIMITED_LIABILITY_COMPANY', 
+        'Partnership': 'PARTNERSHIP',
+        'Limited Partnership': 'LIMITED_PARTNERSHIP',
+        'General Partnership': 'GENERAL_PARTNERSHIP',
+        'Sole Proprietorship': 'INDIVIDUAL_SOLE_PROPRIETORSHIP',
+        'Individual Sole Proprietorship': 'INDIVIDUAL_SOLE_PROPRIETORSHIP',
+        'Association Estate Trust': 'ASSOCIATION_ESTATE_TRUST',
+        'Tax Exempt Organization': 'TAX_EXEMPT_ORGANIZATION',
+        'International Organization': 'INTERNATIONAL_ORGANIZATION',
+        'Government Agency': 'GOVERNMENT_AGENCY',
+        'Joint Venture': 'JOINT_VENTURE',
+        'LLC Disregarded': 'LLC_DISREGARDED'
+      };
+      
+      const mapped = mappings[entityType] || mappings[entityType.toUpperCase()];
+      if (!mapped) {
+        console.error(`Unmapped business type: ${entityType}. Using CORPORATION as fallback.`);
+        return 'CORPORATION';
+      }
+      
+      console.log(`Mapped business type: ${entityType} -> ${mapped}`);
+      return mapped;
+    };
+
+    const mappedBusinessType = mapBusinessType(customer.entity_type);
+
     // Create Finix identity payload
     const finixPayload = {
       additional_underwriting_data: {
@@ -110,7 +141,7 @@ serve(async (req) => {
         business_name: customer.legal_entity_name,
         business_phone: customer.entity_phone,
         business_tax_id: customer.tax_id,
-        business_type: customer.entity_type,
+        business_type: mappedBusinessType,
         default_statement_descriptor: statement_descriptor,
         dob: dateOfBirth,
         doing_business_as: customer.doing_business_as,
@@ -187,7 +218,7 @@ serve(async (req) => {
         customer_country: customer.business_country,
         
         // Business information
-        business_type: customer.entity_type,
+        business_type: mappedBusinessType,
         doing_business_as: customer.doing_business_as,
         business_tax_id: customer.tax_id,
         business_phone: customer.entity_phone,
