@@ -311,6 +311,261 @@ export type Database = {
         }
         Relationships: []
       }
+      merchants: {
+        Row: {
+          annual_ach_volume: number
+          annual_card_volume: number
+          average_ach_amount: number
+          average_card_amount: number
+          b2b_percentage: number
+          b2c_percentage: number
+          bank_account_holder_name: string
+          bank_account_number: string
+          bank_account_number_confirmation: string
+          bank_account_type: string
+          bank_routing_number: string
+          business_address_city: string
+          business_address_country: string
+          business_address_line1: string
+          business_address_line2: string | null
+          business_address_state: string
+          business_address_zip_code: string
+          business_description: string
+          business_name: string
+          business_phone: string
+          business_tax_id: string
+          business_type: string
+          business_website: string | null
+          card_present_percentage: number
+          created_at: string
+          credit_check_consent: boolean
+          credit_check_ip_address: string | null
+          credit_check_timestamp: string | null
+          credit_check_user_agent: string | null
+          customer_apt_number: string | null
+          customer_city: string
+          customer_country: string
+          customer_email: string
+          customer_first_name: string
+          customer_last_name: string
+          customer_phone: string
+          customer_state: string
+          customer_street_address: string
+          customer_zip_code: string
+          doing_business_as: string
+          ecommerce_percentage: number
+          finix_application_id: string | null
+          finix_entity_data: Json | null
+          finix_identity_id: string | null
+          finix_merchant_id: string | null
+          finix_raw_response: Json | null
+          finix_tags: Json | null
+          has_accepted_cards_previously: boolean
+          id: string
+          incorporation_date: string | null
+          max_ach_amount: number
+          max_card_amount: number
+          mcc_code: string
+          merchant_agreement_accepted: boolean
+          merchant_agreement_ip_address: string
+          merchant_agreement_timestamp: string
+          merchant_agreement_user_agent: string
+          moto_percentage: number
+          notes: string | null
+          owner_date_of_birth: string | null
+          owner_first_name: string
+          owner_job_title: string
+          owner_last_name: string
+          owner_ownership_percentage: number | null
+          owner_personal_address_city: string
+          owner_personal_address_country: string
+          owner_personal_address_line1: string
+          owner_personal_address_line2: string | null
+          owner_personal_address_state: string
+          owner_personal_address_zip_code: string
+          owner_personal_phone: string
+          owner_personal_tax_id: string | null
+          owner_work_email: string
+          ownership_type: string
+          p2p_percentage: number
+          processing_status: string
+          refund_policy: string
+          statement_descriptor: string
+          submission_metadata: Json | null
+          updated_at: string
+          user_id: string
+          verification_status: string
+        }
+        Insert: {
+          annual_ach_volume?: number
+          annual_card_volume?: number
+          average_ach_amount?: number
+          average_card_amount?: number
+          b2b_percentage?: number
+          b2c_percentage?: number
+          bank_account_holder_name: string
+          bank_account_number: string
+          bank_account_number_confirmation: string
+          bank_account_type: string
+          bank_routing_number: string
+          business_address_city: string
+          business_address_country?: string
+          business_address_line1: string
+          business_address_line2?: string | null
+          business_address_state: string
+          business_address_zip_code: string
+          business_description: string
+          business_name: string
+          business_phone: string
+          business_tax_id: string
+          business_type: string
+          business_website?: string | null
+          card_present_percentage?: number
+          created_at?: string
+          credit_check_consent?: boolean
+          credit_check_ip_address?: string | null
+          credit_check_timestamp?: string | null
+          credit_check_user_agent?: string | null
+          customer_apt_number?: string | null
+          customer_city: string
+          customer_country?: string
+          customer_email: string
+          customer_first_name: string
+          customer_last_name: string
+          customer_phone: string
+          customer_state: string
+          customer_street_address: string
+          customer_zip_code: string
+          doing_business_as: string
+          ecommerce_percentage?: number
+          finix_application_id?: string | null
+          finix_entity_data?: Json | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_raw_response?: Json | null
+          finix_tags?: Json | null
+          has_accepted_cards_previously?: boolean
+          id?: string
+          incorporation_date?: string | null
+          max_ach_amount?: number
+          max_card_amount?: number
+          mcc_code: string
+          merchant_agreement_accepted: boolean
+          merchant_agreement_ip_address: string
+          merchant_agreement_timestamp: string
+          merchant_agreement_user_agent: string
+          moto_percentage?: number
+          notes?: string | null
+          owner_date_of_birth?: string | null
+          owner_first_name: string
+          owner_job_title: string
+          owner_last_name: string
+          owner_ownership_percentage?: number | null
+          owner_personal_address_city: string
+          owner_personal_address_country?: string
+          owner_personal_address_line1: string
+          owner_personal_address_line2?: string | null
+          owner_personal_address_state: string
+          owner_personal_address_zip_code: string
+          owner_personal_phone: string
+          owner_personal_tax_id?: string | null
+          owner_work_email: string
+          ownership_type: string
+          p2p_percentage?: number
+          processing_status?: string
+          refund_policy: string
+          statement_descriptor: string
+          submission_metadata?: Json | null
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+        }
+        Update: {
+          annual_ach_volume?: number
+          annual_card_volume?: number
+          average_ach_amount?: number
+          average_card_amount?: number
+          b2b_percentage?: number
+          b2c_percentage?: number
+          bank_account_holder_name?: string
+          bank_account_number?: string
+          bank_account_number_confirmation?: string
+          bank_account_type?: string
+          bank_routing_number?: string
+          business_address_city?: string
+          business_address_country?: string
+          business_address_line1?: string
+          business_address_line2?: string | null
+          business_address_state?: string
+          business_address_zip_code?: string
+          business_description?: string
+          business_name?: string
+          business_phone?: string
+          business_tax_id?: string
+          business_type?: string
+          business_website?: string | null
+          card_present_percentage?: number
+          created_at?: string
+          credit_check_consent?: boolean
+          credit_check_ip_address?: string | null
+          credit_check_timestamp?: string | null
+          credit_check_user_agent?: string | null
+          customer_apt_number?: string | null
+          customer_city?: string
+          customer_country?: string
+          customer_email?: string
+          customer_first_name?: string
+          customer_last_name?: string
+          customer_phone?: string
+          customer_state?: string
+          customer_street_address?: string
+          customer_zip_code?: string
+          doing_business_as?: string
+          ecommerce_percentage?: number
+          finix_application_id?: string | null
+          finix_entity_data?: Json | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_raw_response?: Json | null
+          finix_tags?: Json | null
+          has_accepted_cards_previously?: boolean
+          id?: string
+          incorporation_date?: string | null
+          max_ach_amount?: number
+          max_card_amount?: number
+          mcc_code?: string
+          merchant_agreement_accepted?: boolean
+          merchant_agreement_ip_address?: string
+          merchant_agreement_timestamp?: string
+          merchant_agreement_user_agent?: string
+          moto_percentage?: number
+          notes?: string | null
+          owner_date_of_birth?: string | null
+          owner_first_name?: string
+          owner_job_title?: string
+          owner_last_name?: string
+          owner_ownership_percentage?: number | null
+          owner_personal_address_city?: string
+          owner_personal_address_country?: string
+          owner_personal_address_line1?: string
+          owner_personal_address_line2?: string | null
+          owner_personal_address_state?: string
+          owner_personal_address_zip_code?: string
+          owner_personal_phone?: string
+          owner_personal_tax_id?: string | null
+          owner_work_email?: string
+          ownership_type?: string
+          p2p_percentage?: number
+          processing_status?: string
+          refund_policy?: string
+          statement_descriptor?: string
+          submission_metadata?: Json | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
       municipal_bills: {
         Row: {
           account_type: string | null
