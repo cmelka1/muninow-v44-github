@@ -320,9 +320,9 @@ export type Database = {
           b2b_percentage: number
           b2c_percentage: number
           bank_account_holder_name: string | null
-          bank_account_number: string | null
-          bank_account_number_confirmation: string | null
           bank_account_type: string | null
+          bank_last_four: string | null
+          bank_masked_account_number: string | null
           bank_routing_number: string | null
           business_address_city: string
           business_address_country: string
@@ -413,9 +413,9 @@ export type Database = {
           b2b_percentage?: number
           b2c_percentage?: number
           bank_account_holder_name?: string | null
-          bank_account_number?: string | null
-          bank_account_number_confirmation?: string | null
           bank_account_type?: string | null
+          bank_last_four?: string | null
+          bank_masked_account_number?: string | null
           bank_routing_number?: string | null
           business_address_city: string
           business_address_country?: string
@@ -506,9 +506,9 @@ export type Database = {
           b2b_percentage?: number
           b2c_percentage?: number
           bank_account_holder_name?: string | null
-          bank_account_number?: string | null
-          bank_account_number_confirmation?: string | null
           bank_account_type?: string | null
+          bank_last_four?: string | null
+          bank_masked_account_number?: string | null
           bank_routing_number?: string | null
           business_address_city?: string
           business_address_country?: string

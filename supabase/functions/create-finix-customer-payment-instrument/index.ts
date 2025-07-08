@@ -140,16 +140,20 @@ serve(async (req) => {
     const finixData = await finixResponse.json();
     console.log('Finix payment instrument created:', finixData.id);
 
-    // Update merchant record with bank account details and payment instrument data
+    // Extract masked account data from Finix response for security
+    const bankLastFour = finixData.account_number ? finixData.account_number.slice(-4) : null;
+    const maskedAccountNumber = finixData.account_number || null;
+
+    // Update merchant record with masked bank account details and payment instrument data
     const { data: updatedMerchant, error: updateError } = await supabase
       .from('merchants')
       .update({
-        // Bank account details from Step 2
+        // Secure bank account details from Step 2 (no full account numbers stored)
         bank_account_holder_name: bank_account_holder_name,
         bank_routing_number: bank_routing_number,
-        bank_account_number: bank_account_number,
-        bank_account_number_confirmation: bank_account_number_confirmation,
         bank_account_type: bank_account_type,
+        bank_last_four: bankLastFour,
+        bank_masked_account_number: maskedAccountNumber,
         
         // Update processing status
         processing_status: 'payment_instrument_created',
