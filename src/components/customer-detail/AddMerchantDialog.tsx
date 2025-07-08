@@ -317,7 +317,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
                   <Label htmlFor="bank_account_number">Account Number *</Label>
                   <Input
                     id="bank_account_number"
-                    type="password"
+                    type="text"
                     {...step2Form.register('bank_account_number')}
                   />
                   {step2Form.formState.errors.bank_account_number && (
@@ -331,7 +331,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
                   <Label htmlFor="bank_account_number_confirmation">Confirm Account Number *</Label>
                   <Input
                     id="bank_account_number_confirmation"
-                    type="password"
+                    type="text"
                     {...step2Form.register('bank_account_number_confirmation')}
                   />
                   {step2Form.formState.errors.bank_account_number_confirmation && (
