@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -11,22 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
-import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
-
-interface Customer {
-  customer_id: string;
-  legal_entity_name: string;
-  entity_type: string;
-  status: string;
-  created_at: string;
-  first_name: string;
-  last_name: string;
-  work_email: string;
-}
 
 interface CustomerTableProps {
   onAddCustomer?: () => void;
@@ -36,31 +22,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  const fetchCustomers = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('customers')
-        .select('customer_id, legal_entity_name, entity_type, status, created_at, first_name, last_name, work_email')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCustomers(data || []);
-    } catch (err) {
-      console.error('Error fetching customers:', err);
-      setError('Failed to load customers');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  
+  // Placeholder data - will be replaced with actual customer data later
+  const customers: any[] = [];
+  const isLoading = false;
+  const error = null;
   
   const totalCount = customers.length;
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -118,20 +84,19 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
 
   return (
     <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Customers</CardTitle>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Customer
-          </Button>
-        </CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Customers</CardTitle>
+        <Button onClick={() => setShowAddDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Customer
+        </Button>
+      </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead>Customer Name</TableHead>
-                <TableHead className="hidden md:table-cell">Contact</TableHead>
                 <TableHead className="hidden md:table-cell">Type</TableHead>
                 <TableHead className="hidden lg:table-cell">Status</TableHead>
                 <TableHead className="hidden sm:table-cell">Created</TableHead>
@@ -141,42 +106,30 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
             <TableBody>
               {customers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center">
+                  <TableCell colSpan={5} className="py-8 text-center">
                     <span className="text-muted-foreground">
                       No customers found. Click "Add Customer" to get started.
                     </span>
                   </TableCell>
                 </TableRow>
               ) : (
-                customers.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((customer) => (
-                  <TableRow key={customer.customer_id} className="h-12">
+                customers.map((customer, index) => (
+                  <TableRow key={index} className="h-12">
                     <TableCell className="py-2">
-                      <div>
-                        <div className="font-medium truncate max-w-[200px]">
-                          {customer.legal_entity_name}
-                        </div>
-                        <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-                          {customer.first_name} {customer.last_name}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell py-2">
-                      <span className="truncate block max-w-[150px]">
-                        {customer.work_email}
+                      <span className="truncate block max-w-[200px]">
+                        {/* Customer name will go here */}
                       </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell py-2">
                       <span className="truncate block max-w-[150px]">
-                        {customer.entity_type.replace(/_/g, ' ')}
+                        {/* Customer type will go here */}
                       </span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell py-2">
-                      <Badge variant={customer.status === 'pending' ? 'secondary' : 'default'}>
-                        {customer.status}
-                      </Badge>
+                      {/* Status badge will go here */}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell py-2">
-                      {format(new Date(customer.created_at), 'MMM dd, yyyy')}
+                      {/* Created date will go here */}
                     </TableCell>
                     <TableCell className="text-center py-2">
                       <Button size="sm" variant="outline" className="w-full h-8">
@@ -240,12 +193,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
       
       <AddCustomerDialog
         open={showAddDialog}
-        onOpenChange={(open) => {
-          setShowAddDialog(open);
-          if (!open) {
-            fetchCustomers(); // Refresh data when dialog closes
-          }
-        }}
+        onOpenChange={setShowAddDialog}
       />
     </Card>
   );
