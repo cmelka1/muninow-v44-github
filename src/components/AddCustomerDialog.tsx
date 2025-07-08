@@ -1157,63 +1157,69 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                      )}
                    />
 
-                   {/* Maximum ACH Transaction Amount */}
-                   <FormField
-                     control={step3Form.control}
-                     name="maxAchAmount"
-                     render={({ field }) => (
-                       <FormItem>
-                         <FormLabel>Maximum ACH Transaction Amount ($)</FormLabel>
-                         <FormControl>
-                           <Input
-                             type="number"
-                             className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                             placeholder="0"
-                             min="0"
-                             max="9999"
-                             value={field.value}
-                             onChange={(e) => field.onChange(Number(e.target.value))}
-                             onFocus={(e) => {
-                               if (e.target.value === '0') {
-                                 field.onChange('');
-                                 e.target.value = '';
-                               }
-                             }}
-                           />
-                         </FormControl>
-                         <FormMessage />
-                       </FormItem>
-                     )}
-                   />
+                    {/* Maximum ACH Transaction Amount */}
+                    <FormField
+                      control={step3Form.control}
+                      name="maxAchAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maximum ACH Transaction Amount ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              placeholder="0"
+                              min="0"
+                              max="9999"
+                              value={field.value}
+                              onChange={(e) => {
+                                const value = Number(e.target.value);
+                                field.onChange(value > 9999 ? 9999 : value);
+                              }}
+                              onFocus={(e) => {
+                                if (e.target.value === '0') {
+                                  field.onChange('');
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                   {/* Maximum Card Transaction Amount */}
-                   <FormField
-                     control={step3Form.control}
-                     name="maxCardAmount"
-                     render={({ field }) => (
-                       <FormItem>
-                         <FormLabel>Maximum Card Transaction Amount ($)</FormLabel>
-                         <FormControl>
-                           <Input
-                             type="number"
-                             className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                             placeholder="0"
-                             min="0"
-                             max="9999"
-                             value={field.value}
-                             onChange={(e) => field.onChange(Number(e.target.value))}
-                             onFocus={(e) => {
-                               if (e.target.value === '0') {
-                                 field.onChange('');
-                                 e.target.value = '';
-                               }
-                             }}
-                           />
-                         </FormControl>
-                         <FormMessage />
-                       </FormItem>
-                     )}
-                   />
+                    {/* Maximum Card Transaction Amount */}
+                    <FormField
+                      control={step3Form.control}
+                      name="maxCardAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maximum Card Transaction Amount ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              placeholder="0"
+                              min="0"
+                              max="9999"
+                              value={field.value}
+                              onChange={(e) => {
+                                const value = Number(e.target.value);
+                                field.onChange(value > 9999 ? 9999 : value);
+                              }}
+                              onFocus={(e) => {
+                                if (e.target.value === '0') {
+                                  field.onChange('');
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                  </div>
               </div>
 
