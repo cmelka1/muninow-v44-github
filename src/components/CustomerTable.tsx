@@ -16,6 +16,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { formatPhoneForDisplay } from '@/lib/phoneUtils';
 
 interface Customer {
   customer_id: string;
