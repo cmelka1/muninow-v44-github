@@ -17,7 +17,8 @@ import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autoco
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Progress } from '@/components/ui/progress';
-import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CalendarIcon, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
@@ -96,8 +97,47 @@ const step2Schema = z.object({
   personalCountry: z.string().default('USA'),
 });
 
+// Step 3 schema for processing information
+const step3Schema = z.object({
+  annualAchVolume: z.number().min(0).default(0),
+  annualCardVolume: z.number().min(0).default(0),
+  averageAchAmount: z.number().min(0).default(0),
+  averageCardAmount: z.number().min(0).default(0),
+  maxAchAmount: z.number().min(0).max(9999).default(0),
+  maxCardAmount: z.number().min(0).max(9999).default(0),
+  mccCode: z.string().length(4, 'MCC code must be exactly 4 digits').regex(/^\d{4}$/, 'MCC code must contain only digits'),
+  cardPresentPercent: z.number().min(0).max(100).default(0),
+  motoPercent: z.number().min(0).max(100).default(0),
+  ecommercePercent: z.number().min(0).max(100).default(100),
+  b2bPercent: z.number().min(0).max(100).default(0),
+  b2cPercent: z.number().min(0).max(100).default(100),
+  p2pPercent: z.number().min(0).max(100).default(0),
+  hasAcceptedCardsPreviously: z.boolean().default(false),
+  refundPolicy: z.enum(['no_refunds', 'merchandise_exchange', 'within_30_days', 'other']).default('no_refunds'),
+}).refine((data) => {
+  const cardTotal = data.cardPresentPercent + data.motoPercent + data.ecommercePercent;
+  return cardTotal === 100;
+}, {
+  message: 'Card volume distribution must total 100%',
+  path: ['cardVolume']
+}).refine((data) => {
+  const businessTotal = data.b2bPercent + data.b2cPercent + data.p2pPercent;
+  return businessTotal === 100;
+}, {
+  message: 'Business volume distribution must total 100%',
+  path: ['businessVolume']
+});
+
 type Step1FormData = z.infer<typeof step1Schema>;
 type Step2FormData = z.infer<typeof step2Schema>;
+type Step3FormData = z.infer<typeof step3Schema>;
+
+const REFUND_POLICY_OPTIONS = [
+  { value: 'no_refunds', label: 'No Refunds' },
+  { value: 'merchandise_exchange', label: 'Merchandise Exchange Only' },
+  { value: 'within_30_days', label: 'Within 30 Days' },
+  { value: 'other', label: 'Other' },
+];
 
 export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
   open,
@@ -107,6 +147,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dobCalendarOpen, setDobCalendarOpen] = useState(false);
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null);
+  const [step2Data, setStep2Data] = useState<Step2FormData | null>(null);
 
   const step1Form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -126,6 +167,26 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
     },
   });
 
+  const step3Form = useForm<Step3FormData>({
+    resolver: zodResolver(step3Schema),
+    defaultValues: {
+      annualAchVolume: 0,
+      annualCardVolume: 0,
+      averageAchAmount: 0,
+      averageCardAmount: 0,
+      maxAchAmount: 0,
+      maxCardAmount: 0,
+      cardPresentPercent: 0,
+      motoPercent: 0,
+      ecommercePercent: 100,
+      b2bPercent: 0,
+      b2cPercent: 100,
+      p2pPercent: 0,
+      hasAcceptedCardsPreviously: false,
+      refundPolicy: 'no_refunds',
+    },
+  });
+
   const isGovernmentEntity = step1Data?.entityType === 'government';
 
   const onStep1Submit = (data: Step1FormData) => {
@@ -134,14 +195,24 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
   };
 
   const onStep2Submit = (data: Step2FormData) => {
+    setStep2Data(data);
+    setCurrentStep(3);
+  };
+
+  const onStep3Submit = (data: Step3FormData) => {
     console.log('Step 1 data:', step1Data);
-    console.log('Step 2 data:', data);
-    // TODO: Move to step 3 when implemented
+    console.log('Step 2 data:', step2Data);
+    console.log('Step 3 data:', data);
+    // TODO: Submit complete customer data
     onOpenChange(false);
   };
 
   const goBackToStep1 = () => {
     setCurrentStep(1);
+  };
+
+  const goBackToStep2 = () => {
+    setCurrentStep(2);
   };
 
   const handleStep1AddressSelect = (addressComponents: any) => {
@@ -924,6 +995,437 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                 </Button>
                 <Button type="submit" className="flex items-center gap-2">
                   Next Step
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+
+        {currentStep === 3 && (
+          <Form {...step3Form}>
+            <form onSubmit={step3Form.handleSubmit(onStep3Submit)} className="space-y-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-medium">Processing Information</h3>
+                <p className="text-sm text-muted-foreground">
+                  Payment processing volumes, limits, and business model information
+                </p>
+              </div>
+
+              {/* Processing Volumes Section */}
+              <div className="space-y-4">
+                <h4 className="text-md font-medium">Processing Volumes</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Annual ACH Volume */}
+                  <FormField
+                    control={step3Form.control}
+                    name="annualAchVolume"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Annual ACH Volume ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Annual Card Volume */}
+                  <FormField
+                    control={step3Form.control}
+                    name="annualCardVolume"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Annual Card Volume ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Average ACH Transfer Amount */}
+                  <FormField
+                    control={step3Form.control}
+                    name="averageAchAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Average ACH Transfer Amount ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Average Card Transfer Amount */}
+                  <FormField
+                    control={step3Form.control}
+                    name="averageCardAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Average Card Transfer Amount ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Maximum ACH Transaction Amount */}
+                  <FormField
+                    control={step3Form.control}
+                    name="maxAchAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Maximum ACH Transaction Amount ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="9999"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Maximum Card Transaction Amount */}
+                  <FormField
+                    control={step3Form.control}
+                    name="maxCardAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Maximum Card Transaction Amount ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="9999"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Business Information Section */}
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-md font-medium">MCC Code (Merchant Category Code)</h4>
+                  <a
+                    href="https://docs.finix.com/guides/managing-operations/security-compliance/approved-merchant-category-codes"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+                
+                <FormField
+                  control={step3Form.control}
+                  name="mccCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>MCC Code *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="5814"
+                          maxLength={4}
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Card Volume Distribution */}
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="text-md font-medium">Card Volume Distribution (Must total 100%)</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={step3Form.control}
+                    name="cardPresentPercent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Card Present (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={step3Form.control}
+                    name="motoPercent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>MOTO (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={step3Form.control}
+                    name="ecommercePercent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-commerce (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="100"
+                            min="0"
+                            max="100"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  Total: {(step3Form.watch('cardPresentPercent') || 0) + (step3Form.watch('motoPercent') || 0) + (step3Form.watch('ecommercePercent') || 0)}%
+                </div>
+              </div>
+
+              {/* Business Volume Distribution */}
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="text-md font-medium">Business Volume Distribution (Must total 100%)</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={step3Form.control}
+                    name="b2bPercent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>B2B (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={step3Form.control}
+                    name="b2cPercent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>B2C (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="100"
+                            min="0"
+                            max="100"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={step3Form.control}
+                    name="p2pPercent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>P2P (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                            value={field.value}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  Total: {(step3Form.watch('b2bPercent') || 0) + (step3Form.watch('b2cPercent') || 0) + (step3Form.watch('p2pPercent') || 0)}%
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="text-md font-medium">Additional Information</h4>
+                
+                <FormField
+                  control={step3Form.control}
+                  name="hasAcceptedCardsPreviously"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Has the business accepted cards previously?
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={step3Form.control}
+                  name="refundPolicy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Refund Policy *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select refund policy" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {REFUND_POLICY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Legal Agreements & Consent */}
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="text-md font-medium">Legal Agreements & Consent</h4>
+                
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    The information you provide will be used to verify your identity. Additional information may be requested.
+                  </p>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span>By proceeding, you agree to our</span>
+                      <a
+                        href="/terms-of-service"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Terms of Service
+                      </a>
+                      <span>and</span>
+                      <a
+                        href="https://finix-hosted-content.s3.amazonaws.com/flex/v3/finix-terms-of-service.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Finix Terms of Service
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-between pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={goBackToStep2}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </Button>
+                <Button type="submit" className="flex items-center gap-2">
+                  Complete Setup
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
