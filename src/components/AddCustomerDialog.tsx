@@ -24,6 +24,13 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { normalizePhoneInput, formatPhoneForStorage } from '@/lib/phoneUtils';
 
+// Tax ID formatting utility
+const formatTaxId = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 2) return numbers;
+  return `${numbers.slice(0, 2)}-${numbers.slice(2, 9)}`;
+};
+
 interface AddCustomerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -325,7 +332,20 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                     <FormItem>
                       <FormLabel>Tax ID *</FormLabel>
                       <FormControl>
-                        <Input placeholder="123456789" {...field} maxLength={9} />
+                        <Input 
+                          placeholder="12-3456789" 
+                          {...field}
+                          value={field.value}
+                          onChange={(e) => {
+                            const formatted = formatTaxId(e.target.value);
+                            field.onChange(formatted.replace('-', ''));
+                          }}
+                          onBlur={(e) => {
+                            const formatted = formatTaxId(e.target.value);
+                            field.onChange(formatted.replace('-', ''));
+                          }}
+                          maxLength={10}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -541,6 +561,52 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                             const formatted = normalizePhoneInput(e.target.value);
                             field.onChange(formatted);
                           }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="personalTaxId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Personal Tax ID (SSN)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="12-3456789" 
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const formatted = formatTaxId(e.target.value);
+                            field.onChange(formatted.replace('-', '') || null);
+                          }}
+                          maxLength={10}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="ownershipPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ownership Percentage</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          min="0"
+                          max="100"
                         />
                       </FormControl>
                       <FormMessage />
