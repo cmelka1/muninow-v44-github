@@ -251,36 +251,6 @@ const SuperAdminCustomerDetail = () => {
             </CardContent>
           </Card>
 
-          {/* System Information */}
-          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <Hash className="h-5 w-5 text-primary" />
-                System Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Customer ID</label>
-                <p className="text-slate-900 mt-1 font-mono text-sm">{customer.customer_id}</p>
-              </div>
-              
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Status</label>
-                <div className="mt-1">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    customer.status === 'pending' 
-                      ? 'bg-yellow-100 text-yellow-800' 
-                      : customer.status === 'approved'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {customer.status}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </SuperAdminLayout>
