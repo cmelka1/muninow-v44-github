@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -10,8 +10,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { AddMerchantDialog } from './AddMerchantDialog';
+import { useMerchants } from '@/hooks/useMerchants';
+import { format } from 'date-fns';
 
 interface Customer {
   customer_id: string;
@@ -40,14 +43,35 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [addMerchantOpen, setAddMerchantOpen] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  
+  const { merchants, isLoading, error, fetchMerchantsByCustomer, subscribeToMerchantChanges } = useMerchants();
+
+  const loadMerchants = async () => {
+    const result = await fetchMerchantsByCustomer(customer.customer_id, currentPage, pageSize);
+    setTotalCount(result.count);
+  };
+
+  useEffect(() => {
+    loadMerchants();
+  }, [customer.customer_id, currentPage, pageSize]);
+
+  useEffect(() => {
+    // Set up real-time subscription - we need to get the customer's user_id first
+    const setupSubscription = async () => {
+      // For now, skip real-time subscription as we'd need customer's user_id
+      // This can be enhanced later to include real-time updates
+    };
+    
+    setupSubscription();
+  }, [customer.customer_id]);
 
   const handleAddMerchant = () => {
     setAddMerchantOpen(true);
   };
 
   const handleMerchantCreated = () => {
-    // TODO: Refresh merchant list
-    console.log('Merchant created, refreshing list...');
+    loadMerchants();
   };
 
   const handlePageSizeChange = (newPageSize: string) => {
@@ -62,6 +86,31 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
   const handleNextPage = () => {
     setCurrentPage(prev => prev + 1);
   };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return 'secondary';
+      case 'approved':
+      case 'verified':
+        return 'default';
+      case 'rejected':
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <>
@@ -85,13 +134,46 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center">
-                    <span className="text-muted-foreground">
-                      No merchants found. Click "Add Merchant" to get started.
-                    </span>
-                  </TableCell>
-                </TableRow>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center">
+                      <span className="text-muted-foreground">Loading merchants...</span>
+                    </TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center">
+                      <span className="text-destructive">Error: {error}</span>
+                    </TableCell>
+                  </TableRow>
+                ) : merchants.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center">
+                      <span className="text-muted-foreground">
+                        No merchants found. Click "Add Merchant" to get started.
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  merchants.map((merchant) => (
+                    <TableRow key={merchant.id}>
+                      <TableCell className="font-medium">
+                        {merchant.merchant_name}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant={getStatusBadgeVariant(merchant.verification_status)}>
+                          {merchant.verification_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {merchant.processing_enabled ? 'Enabled' : 'Disabled'}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-center">
+                        {formatDate(merchant.created_at)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -125,14 +207,14 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
               </Button>
               
               <span className="text-sm font-medium px-2">
-                {currentPage}
+                Page {currentPage} of {totalPages || 1}
               </span>
               
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleNextPage}
-                disabled={true} // Always disabled since there's no data
+                disabled={currentPage >= totalPages || totalPages === 0}
                 className="h-8 px-3"
               >
                 Next
