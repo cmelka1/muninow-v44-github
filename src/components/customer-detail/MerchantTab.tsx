@@ -79,7 +79,7 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Merchant Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Verification Status</TableHead>
                   <TableHead className="hidden lg:table-cell">Processing Type</TableHead>
                   <TableHead className="hidden sm:table-cell text-center">Created</TableHead>
                 </TableRow>
