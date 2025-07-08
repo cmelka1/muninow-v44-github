@@ -197,9 +197,18 @@ export const useCustomers = () => {
       return data;
     } catch (err: any) {
       setError(err.message);
+      
+      // Provide specific error messages for common issues
+      let errorMessage = err.message;
+      if (err.message.includes('row-level security policy')) {
+        errorMessage = "Access denied. You need superAdmin privileges to create customers. Please contact your administrator.";
+      } else if (err.message.includes('permission denied')) {
+        errorMessage = "Permission denied. Please ensure you have the required role to perform this action.";
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to create customer: ${err.message}`,
+        description: `Failed to create customer: ${errorMessage}`,
         variant: "destructive",
       });
       throw err;

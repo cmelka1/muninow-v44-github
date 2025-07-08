@@ -196,25 +196,29 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
   const onStep1Submit = (data: Step1FormData) => {
     setStep1Data(data);
     setCurrentStep(2);
-    // Scroll to top of dialog content
+    // Scroll to top of dialog content with better selector and longer timeout
     setTimeout(() => {
-      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      const dialogContent = document.querySelector('[data-radix-scroll-area-viewport]') ||
+                           document.querySelector('.overflow-y-auto') ||
+                           document.querySelector('[role="dialog"] .max-h-\\[90vh\\]');
       if (dialogContent) {
         dialogContent.scrollTop = 0;
       }
-    }, 0);
+    }, 100);
   };
 
   const onStep2Submit = (data: Step2FormData) => {
     setStep2Data(data);
     setCurrentStep(3);
-    // Scroll to top of dialog content
+    // Scroll to top of dialog content with better selector and longer timeout
     setTimeout(() => {
-      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      const dialogContent = document.querySelector('[data-radix-scroll-area-viewport]') ||
+                           document.querySelector('.overflow-y-auto') ||
+                           document.querySelector('[role="dialog"] .max-h-\\[90vh\\]');
       if (dialogContent) {
         dialogContent.scrollTop = 0;
       }
-    }, 0);
+    }, 100);
   };
 
   const onStep3Submit = async (data: Step3FormData) => {
@@ -292,24 +296,28 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
 
   const goBackToStep1 = () => {
     setCurrentStep(1);
-    // Scroll to top of dialog content
+    // Scroll to top of dialog content with better selector and longer timeout
     setTimeout(() => {
-      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      const dialogContent = document.querySelector('[data-radix-scroll-area-viewport]') ||
+                           document.querySelector('.overflow-y-auto') ||
+                           document.querySelector('[role="dialog"] .max-h-\\[90vh\\]');
       if (dialogContent) {
         dialogContent.scrollTop = 0;
       }
-    }, 0);
+    }, 100);
   };
 
   const goBackToStep2 = () => {
     setCurrentStep(2);
-    // Scroll to top of dialog content
+    // Scroll to top of dialog content with better selector and longer timeout
     setTimeout(() => {
-      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      const dialogContent = document.querySelector('[data-radix-scroll-area-viewport]') ||
+                           document.querySelector('.overflow-y-auto') ||
+                           document.querySelector('[role="dialog"] .max-h-\\[90vh\\]');
       if (dialogContent) {
         dialogContent.scrollTop = 0;
       }
-    }, 0);
+    }, 100);
   };
 
   const handleStep1AddressSelect = (addressComponents: any) => {
