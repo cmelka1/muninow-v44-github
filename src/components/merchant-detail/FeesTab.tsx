@@ -111,8 +111,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Fee Configuration
+            Fee Profile
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -129,8 +128,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Fee Configuration
+            Fee Profile
           </CardTitle>
         </CardHeader>
         <CardContent className="py-8">
@@ -150,8 +148,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Fee Configuration
+            Fee Profile
           </CardTitle>
         </CardHeader>
         <CardContent className="py-8">
@@ -179,8 +176,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Fee Configuration
+              Fee Profile
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant={feeProfile?.sync_status === 'synced' ? 'default' : 'secondary'}>
