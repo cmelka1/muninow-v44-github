@@ -65,12 +65,19 @@ serve(async (req) => {
     };
 
     if (profileData.type === 'NET') {
-      finixPayload.net = {
+      const netConfig = {
         frequency: profileData.net_frequency,
         submission_delay_days: profileData.net_submission_delay_days || 0,
         payment_instrument_id: profileData.net_payment_instrument_id,
         rail: profileData.net_rail,
       };
+
+      // Always include day_of_month as 1 if frequency is MONTHLY
+      if (profileData.net_frequency === 'MONTHLY') {
+        netConfig.day_of_month = 1;
+      }
+
+      finixPayload.net = netConfig;
     } else if (profileData.type === 'GROSS') {
       const feesConfig = {
         frequency: profileData.gross_fees_frequency,
