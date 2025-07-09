@@ -92,22 +92,22 @@ serve(async (req) => {
     console.log('Creating fee profile for merchant:', merchantId);
 
     // Create fee profile in Finix API
-    const finixUsername = Deno.env.get('FINIX_USERNAME');
-    const finixPassword = Deno.env.get('FINIX_PASSWORD');
+    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
+    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixApiUrl = Deno.env.get('FINIX_API_URL') || 'https://finix.sandbox-payments-api.com';
 
-    if (!finixUsername || !finixPassword) {
+    if (!finixApplicationId || !finixApiSecret) {
       return new Response(
         JSON.stringify({ error: 'Finix API credentials not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const finixResponse = await fetch(`${finixApiUrl}/v2/fee_profiles`, {
+    const finixResponse = await fetch(`${finixApiUrl}/fee_profiles`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/vnd.api+json',
-        'Authorization': `Basic ${btoa(`${finixUsername}:${finixPassword}`)}`
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
       },
       body: JSON.stringify(feeData)
     });
