@@ -311,6 +311,92 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_fee_profiles: {
+        Row: {
+          ach_credit_fixed_fee_cents: number | null
+          ach_credit_percentage_fee: number | null
+          ach_debit_fixed_fee_cents: number | null
+          ach_debit_percentage_fee: number | null
+          card_not_present_fixed_fee_cents: number | null
+          card_not_present_percentage_fee: number | null
+          card_present_fixed_fee_cents: number | null
+          card_present_percentage_fee: number | null
+          chargeback_fixed_fee_cents: number | null
+          created_at: string | null
+          finix_fee_profile_id: string | null
+          finix_merchant_id: string | null
+          finix_raw_response: Json | null
+          fixed_fee_cents: number | null
+          id: string
+          last_synced_at: string | null
+          merchant_id: string
+          merchant_name: string | null
+          monthly_fee_cents: number | null
+          percentage_fee: number | null
+          refund_fixed_fee_cents: number | null
+          sync_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ach_credit_fixed_fee_cents?: number | null
+          ach_credit_percentage_fee?: number | null
+          ach_debit_fixed_fee_cents?: number | null
+          ach_debit_percentage_fee?: number | null
+          card_not_present_fixed_fee_cents?: number | null
+          card_not_present_percentage_fee?: number | null
+          card_present_fixed_fee_cents?: number | null
+          card_present_percentage_fee?: number | null
+          chargeback_fixed_fee_cents?: number | null
+          created_at?: string | null
+          finix_fee_profile_id?: string | null
+          finix_merchant_id?: string | null
+          finix_raw_response?: Json | null
+          fixed_fee_cents?: number | null
+          id?: string
+          last_synced_at?: string | null
+          merchant_id: string
+          merchant_name?: string | null
+          monthly_fee_cents?: number | null
+          percentage_fee?: number | null
+          refund_fixed_fee_cents?: number | null
+          sync_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ach_credit_fixed_fee_cents?: number | null
+          ach_credit_percentage_fee?: number | null
+          ach_debit_fixed_fee_cents?: number | null
+          ach_debit_percentage_fee?: number | null
+          card_not_present_fixed_fee_cents?: number | null
+          card_not_present_percentage_fee?: number | null
+          card_present_fixed_fee_cents?: number | null
+          card_present_percentage_fee?: number | null
+          chargeback_fixed_fee_cents?: number | null
+          created_at?: string | null
+          finix_fee_profile_id?: string | null
+          finix_merchant_id?: string | null
+          finix_raw_response?: Json | null
+          fixed_fee_cents?: number | null
+          id?: string
+          last_synced_at?: string | null
+          merchant_id?: string
+          merchant_name?: string | null
+          monthly_fee_cents?: number | null
+          percentage_fee?: number | null
+          refund_fixed_fee_cents?: number | null
+          sync_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_fee_profiles_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_payout_profiles: {
         Row: {
           created_at: string
