@@ -78,6 +78,7 @@ serve(async (req) => {
     // Get Finix credentials
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
+    const finixBaseUrl = Deno.env.get('FINIX_BASE_URL') || 'https://finix.sandbox-payments-api.com/v2';
 
     if (!finixApplicationId || !finixApiSecret) {
       return new Response(
@@ -89,21 +90,22 @@ serve(async (req) => {
     // Update fee profile in Finix
     const finixAuth = btoa(`${finixApplicationId}:${finixApiSecret}`);
     
-    const finixResponse = await fetch(`https://finix.com/fee_profiles/${existingProfile.finix_fee_profile_id}`, {
+    const finixResponse = await fetch(`${finixBaseUrl}/fee_profiles/${existingProfile.finix_fee_profile_id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Basic ${finixAuth}`,
-        'Content-Type': 'application/json',
-        'Finix-Version': '2022-02-01'
+        'Content-Type': 'application/vnd.api+json'
       },
       body: JSON.stringify({
-        basis_points: Math.round(feeProfileData.percentage_fee * 10000), // Convert to basis points
+        basis_points: Math.round(feeProfileData.percentage_fee * 100), // Convert percentage to basis points
         fixed_fee: feeProfileData.fixed_fee_cents,
-        fee_type: 'APPLICATION_FEE',
-        tags: {
-          merchant_id: merchantId,
-          updated_by: user.id
-        }
+        ach_basis_points: Math.round((feeProfileData.ach_debit_percentage_fee || 0) * 100),
+        ach_fixed_fee: feeProfileData.ach_debit_fixed_fee_cents || 0,
+        dispute_fixed_fee: feeProfileData.chargeback_fixed_fee_cents || 0,
+        dispute_inquiry_fixed_fee: feeProfileData.chargeback_fixed_fee_cents || 0,
+        ach_basis_points_fee_limit: 500,
+        ach_credit_return_fixed_fee: feeProfileData.ach_credit_fixed_fee_cents || 0,
+        ach_debit_return_fixed_fee: feeProfileData.ach_debit_fixed_fee_cents || 0
       })
     });
 
