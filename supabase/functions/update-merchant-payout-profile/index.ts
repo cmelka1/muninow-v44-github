@@ -84,13 +84,20 @@ serve(async (req) => {
         feesConfig.day_of_month = 1;
       }
 
+      const payoutsConfig = {
+        frequency: profileData.gross_payouts_frequency,
+        submission_delay_days: profileData.gross_payouts_submission_delay_days || 0,
+        payment_instrument_id: profileData.gross_payouts_payment_instrument_id,
+        rail: profileData.gross_payouts_rail,
+      };
+
+      // Always include day_of_month as 1 if frequency is MONTHLY
+      if (profileData.gross_payouts_frequency === 'MONTHLY') {
+        payoutsConfig.day_of_month = 1;
+      }
+
       finixPayload.gross = {
-        payouts: {
-          frequency: profileData.gross_payouts_frequency,
-          submission_delay_days: profileData.gross_payouts_submission_delay_days || 0,
-          payment_instrument_id: profileData.gross_payouts_payment_instrument_id,
-          rail: profileData.gross_payouts_rail,
-        },
+        payouts: payoutsConfig,
         fees: feesConfig,
       };
     }
