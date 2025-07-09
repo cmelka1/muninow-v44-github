@@ -21,8 +21,8 @@ export const generateOrganizationStructuredData = () => {
     "@type": "Organization",
     "name": "MuniNow",
     "url": "https://muninow.com",
-    "logo": "https://muninow.com/favicon.ico",
-    "description": "Simplified municipal bill pay platform for residents, businesses, and municipalities",
+    "logo": "https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png",
+    "description": "MuniNow simplifies local government payments with a fast, secure, and unified platform",
     "contactPoint": {
       "@type": "ContactPoint",
       "telephone": "+1-800-MUNINOW",
@@ -39,8 +39,8 @@ export const generateOrganizationStructuredData = () => {
 export const getPageMetadata = (page: string): SEOMetadata => {
   const metadata: Record<string, SEOMetadata> = {
     home: {
-      title: "MuniNow - Simplified Municipal Bill Pay Platform",
-      description: "Pay all your municipal bills in one place. Secure, easy-to-use platform for residents, businesses, and municipalities. Schedule automatic payments and never miss a due date.",
+      title: "MuniNow – Streamlining Municipal Payments",
+      description: "MuniNow simplifies local government payments with a fast, secure, and unified platform",
       keywords: "municipal bill pay, city bills, utility payments, autopay, bill management, local government payments, online bill pay, municipal services",
       canonical: "https://muninow.com/"
     },
