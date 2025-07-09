@@ -11,6 +11,23 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+// Default values for fee profile
+const DEFAULT_VALUES = {
+  fixed_fee_cents: 30,
+  percentage_fee: 0.029,
+  card_present_fixed_fee_cents: 30,
+  card_present_percentage_fee: 0.029,
+  card_not_present_fixed_fee_cents: 30,
+  card_not_present_percentage_fee: 0.029,
+  ach_debit_fixed_fee_cents: 30,
+  ach_debit_percentage_fee: 0.002,
+  ach_credit_fixed_fee_cents: 30,
+  ach_credit_percentage_fee: 0.002,
+  chargeback_fixed_fee_cents: 1500,
+  refund_fixed_fee_cents: 0,
+  monthly_fee_cents: 0,
+};
+
 interface Merchant {
   id: string;
   merchant_name: string;
@@ -46,6 +63,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   const [feeProfile, setFeeProfile] = useState<FeeProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<FeeProfile>>({});
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [profileLoading, setProfileLoading] = useState(true);
   
   const { fetchFeeProfile, createFeeProfile, updateFeeProfile, isLoading } = useMerchants();
@@ -72,11 +90,33 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   };
 
   const handleInputChange = (field: keyof FeeProfile, value: string) => {
+    // Mark field as touched when user types
+    setTouchedFields(prev => new Set(prev).add(field));
+    
     const numericValue = field.includes('cents') ? parseInt(value) || 0 : parseFloat(value) || 0;
     setFormData(prev => ({
       ...prev,
       [field]: numericValue
     }));
+  };
+
+  const handleInputFocus = (field: keyof FeeProfile) => {
+    setTouchedFields(prev => new Set(prev).add(field));
+  };
+
+  const getInputValue = (field: keyof FeeProfile) => {
+    if (touchedFields.has(field) || (formData[field] !== undefined && formData[field] !== 0)) {
+      return formData[field] || 0;
+    }
+    return '';
+  };
+
+  const getPlaceholderText = (field: keyof FeeProfile) => {
+    const defaultValue = DEFAULT_VALUES[field as keyof typeof DEFAULT_VALUES];
+    if (field.includes('percentage')) {
+      return `${(defaultValue * 100).toFixed(1)}% (${defaultValue})`;
+    }
+    return `${defaultValue} cents`;
   };
 
   const handleSave = async () => {
@@ -95,6 +135,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
 
   const handleCancel = () => {
     setFormData(feeProfile || {});
+    setTouchedFields(new Set());
     setIsEditing(false);
   };
 
@@ -176,9 +217,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     id="fixed_fee_cents"
                     type="number"
-                    value={formData.fixed_fee_cents || 0}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    value={getInputValue('fixed_fee_cents')}
                     onChange={(e) => handleInputChange('fixed_fee_cents', e.target.value)}
-                    placeholder="Amount in cents"
+                    onFocus={() => handleInputFocus('fixed_fee_cents')}
+                    placeholder={getPlaceholderText('fixed_fee_cents')}
                   />
                 </div>
                 <div>
@@ -187,9 +230,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     id="percentage_fee"
                     type="number"
                     step="0.0001"
-                    value={formData.percentage_fee || 0}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    value={getInputValue('percentage_fee')}
                     onChange={(e) => handleInputChange('percentage_fee', e.target.value)}
-                    placeholder="Decimal (e.g., 0.029 for 2.9%)"
+                    onFocus={() => handleInputFocus('percentage_fee')}
+                    placeholder={getPlaceholderText('percentage_fee')}
                   />
                 </div>
               </div>
@@ -210,8 +255,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     <Input
                       id="card_present_fixed_fee_cents"
                       type="number"
-                      value={formData.card_present_fixed_fee_cents || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('card_present_fixed_fee_cents')}
                       onChange={(e) => handleInputChange('card_present_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('card_present_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('card_present_fixed_fee_cents')}
                     />
                   </div>
                   <div>
@@ -220,8 +268,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       id="card_present_percentage_fee"
                       type="number"
                       step="0.0001"
-                      value={formData.card_present_percentage_fee || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('card_present_percentage_fee')}
                       onChange={(e) => handleInputChange('card_present_percentage_fee', e.target.value)}
+                      onFocus={() => handleInputFocus('card_present_percentage_fee')}
+                      placeholder={getPlaceholderText('card_present_percentage_fee')}
                     />
                   </div>
                 </div>
@@ -231,8 +282,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     <Input
                       id="card_not_present_fixed_fee_cents"
                       type="number"
-                      value={formData.card_not_present_fixed_fee_cents || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('card_not_present_fixed_fee_cents')}
                       onChange={(e) => handleInputChange('card_not_present_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('card_not_present_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('card_not_present_fixed_fee_cents')}
                     />
                   </div>
                   <div>
@@ -241,8 +295,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       id="card_not_present_percentage_fee"
                       type="number"
                       step="0.0001"
-                      value={formData.card_not_present_percentage_fee || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('card_not_present_percentage_fee')}
                       onChange={(e) => handleInputChange('card_not_present_percentage_fee', e.target.value)}
+                      onFocus={() => handleInputFocus('card_not_present_percentage_fee')}
+                      placeholder={getPlaceholderText('card_not_present_percentage_fee')}
                     />
                   </div>
                 </div>
@@ -264,8 +321,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     <Input
                       id="ach_debit_fixed_fee_cents"
                       type="number"
-                      value={formData.ach_debit_fixed_fee_cents || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('ach_debit_fixed_fee_cents')}
                       onChange={(e) => handleInputChange('ach_debit_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('ach_debit_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('ach_debit_fixed_fee_cents')}
                     />
                   </div>
                   <div>
@@ -274,8 +334,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       id="ach_debit_percentage_fee"
                       type="number"
                       step="0.0001"
-                      value={formData.ach_debit_percentage_fee || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('ach_debit_percentage_fee')}
                       onChange={(e) => handleInputChange('ach_debit_percentage_fee', e.target.value)}
+                      onFocus={() => handleInputFocus('ach_debit_percentage_fee')}
+                      placeholder={getPlaceholderText('ach_debit_percentage_fee')}
                     />
                   </div>
                 </div>
@@ -285,8 +348,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     <Input
                       id="ach_credit_fixed_fee_cents"
                       type="number"
-                      value={formData.ach_credit_fixed_fee_cents || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('ach_credit_fixed_fee_cents')}
                       onChange={(e) => handleInputChange('ach_credit_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('ach_credit_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('ach_credit_fixed_fee_cents')}
                     />
                   </div>
                   <div>
@@ -295,8 +361,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       id="ach_credit_percentage_fee"
                       type="number"
                       step="0.0001"
-                      value={formData.ach_credit_percentage_fee || 0}
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('ach_credit_percentage_fee')}
                       onChange={(e) => handleInputChange('ach_credit_percentage_fee', e.target.value)}
+                      onFocus={() => handleInputFocus('ach_credit_percentage_fee')}
+                      placeholder={getPlaceholderText('ach_credit_percentage_fee')}
                     />
                   </div>
                 </div>
@@ -314,8 +383,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     id="chargeback_fixed_fee_cents"
                     type="number"
-                    value={formData.chargeback_fixed_fee_cents || 0}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    value={getInputValue('chargeback_fixed_fee_cents')}
                     onChange={(e) => handleInputChange('chargeback_fixed_fee_cents', e.target.value)}
+                    onFocus={() => handleInputFocus('chargeback_fixed_fee_cents')}
+                    placeholder={getPlaceholderText('chargeback_fixed_fee_cents')}
                   />
                 </div>
                 <div>
@@ -323,8 +395,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     id="refund_fixed_fee_cents"
                     type="number"
-                    value={formData.refund_fixed_fee_cents || 0}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    value={getInputValue('refund_fixed_fee_cents')}
                     onChange={(e) => handleInputChange('refund_fixed_fee_cents', e.target.value)}
+                    onFocus={() => handleInputFocus('refund_fixed_fee_cents')}
+                    placeholder={getPlaceholderText('refund_fixed_fee_cents')}
                   />
                 </div>
                 <div>
@@ -332,8 +407,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     id="monthly_fee_cents"
                     type="number"
-                    value={formData.monthly_fee_cents || 0}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    value={getInputValue('monthly_fee_cents')}
                     onChange={(e) => handleInputChange('monthly_fee_cents', e.target.value)}
+                    onFocus={() => handleInputFocus('monthly_fee_cents')}
+                    placeholder={getPlaceholderText('monthly_fee_cents')}
                   />
                 </div>
               </div>
