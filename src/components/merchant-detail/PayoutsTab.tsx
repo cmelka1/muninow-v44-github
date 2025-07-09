@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, RefreshCw, Save } from 'lucide-react';
+import { Loader2, RefreshCw, Save, Edit2, X } from 'lucide-react';
 import { useMerchants } from '@/hooks/useMerchants';
 import { PayoutProfile, PayoutProfileFormData, PayoutType, PayoutFrequency, PayoutRail } from '@/types/payoutProfile';
 
@@ -28,8 +28,12 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
   const [formData, setFormData] = useState<PayoutProfileFormData>({
     type: 'GROSS'
   });
+  const [originalFormData, setOriginalFormData] = useState<PayoutProfileFormData>({
+    type: 'GROSS'
+  });
   const [hasProfile, setHasProfile] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     loadPayoutProfile();
@@ -39,7 +43,7 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
     const result = await fetchPayoutProfile(merchant.id);
     if (result?.success && result?.profile) {
       setPayoutProfile(result.profile);
-      setFormData({
+      const profileData = {
         type: result.profile.type,
         net_frequency: result.profile.net_frequency,
         net_submission_delay_days: result.profile.net_submission_delay_days,
@@ -54,7 +58,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
         gross_fees_submission_delay_days: result.profile.gross_fees_submission_delay_days,
         gross_fees_payment_instrument_id: result.profile.gross_fees_payment_instrument_id,
         gross_fees_rail: result.profile.gross_fees_rail,
-      });
+      };
+      setFormData(profileData);
+      setOriginalFormData(profileData);
       setHasProfile(true);
     }
   };
@@ -68,11 +74,19 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
     const result = await updatePayoutProfile(merchant.id, formData);
     if (result?.success) {
       setPayoutProfile(result.profile);
+      setOriginalFormData(formData);
+      setIsEditing(false);
     }
     setIsUpdating(false);
   };
 
+  const handleCancel = () => {
+    setFormData(originalFormData);
+    setIsEditing(false);
+  };
+
   const handleTypeChange = (type: PayoutType) => {
+    if (!isEditing) return;
     setFormData({ ...formData, type });
   };
 
@@ -132,7 +146,7 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
               variant="outline"
               size="sm"
               onClick={handleSync}
-              disabled={isLoading}
+              disabled={isLoading || isEditing}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -141,19 +155,40 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
               )}
               {hasProfile ? 'Refresh' : 'Sync from Finix'}
             </Button>
-            {hasProfile && (
+            {hasProfile && !isEditing && (
               <Button
+                variant="outline"
                 size="sm"
-                onClick={handleUpdate}
-                disabled={isUpdating}
+                onClick={() => setIsEditing(true)}
               >
-                {isUpdating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Update Profile
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit Profile
               </Button>
+            )}
+            {hasProfile && isEditing && (
+              <>
+                <Button
+                  size="sm"
+                  onClick={handleUpdate}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save Changes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={isUpdating}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </>
             )}
           </div>
         </CardHeader>
@@ -172,13 +207,14 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                   value={formData.type}
                   onValueChange={handleTypeChange}
                   className="flex gap-6"
+                  disabled={!isEditing}
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="GROSS" id="gross" />
+                    <RadioGroupItem value="GROSS" id="gross" disabled={!isEditing} />
                     <Label htmlFor="gross">GROSS</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="NET" id="net" />
+                    <RadioGroupItem value="NET" id="net" disabled={!isEditing} />
                     <Label htmlFor="net">NET</Label>
                   </div>
                 </RadioGroup>
@@ -197,8 +233,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                         <Select 
                           value={formData.net_frequency} 
                           onValueChange={(value: PayoutFrequency) => 
-                            setFormData({...formData, net_frequency: value})
+                            isEditing && setFormData({...formData, net_frequency: value})
                           }
+                          disabled={!isEditing}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select frequency" />
@@ -215,8 +252,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                         <Select 
                           value={formData.net_rail} 
                           onValueChange={(value: PayoutRail) => 
-                            setFormData({...formData, net_rail: value})
+                            isEditing && setFormData({...formData, net_rail: value})
                           }
+                          disabled={!isEditing}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select rail" />
@@ -234,7 +272,8 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                           type="number"
                           min="0"
                           value={formData.net_submission_delay_days || ''}
-                          onChange={(e) => setFormData({...formData, net_submission_delay_days: parseInt(e.target.value) || 0})}
+                          onChange={(e) => isEditing && setFormData({...formData, net_submission_delay_days: parseInt(e.target.value) || 0})}
+                          disabled={!isEditing}
                         />
                       </div>
                       <div className="space-y-2">
@@ -242,8 +281,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                         <Input
                           id="net_payment_instrument_id"
                           value={formData.net_payment_instrument_id || ''}
-                          onChange={(e) => setFormData({...formData, net_payment_instrument_id: e.target.value})}
+                          onChange={(e) => isEditing && setFormData({...formData, net_payment_instrument_id: e.target.value})}
                           placeholder="Enter payment instrument ID"
+                          disabled={!isEditing}
                         />
                       </div>
                     </div>
@@ -266,8 +306,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                           <Select 
                             value={formData.gross_payouts_frequency} 
                             onValueChange={(value: PayoutFrequency) => 
-                              setFormData({...formData, gross_payouts_frequency: value})
+                              isEditing && setFormData({...formData, gross_payouts_frequency: value})
                             }
+                            disabled={!isEditing}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select frequency" />
@@ -284,8 +325,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                           <Select 
                             value={formData.gross_payouts_rail} 
                             onValueChange={(value: PayoutRail) => 
-                              setFormData({...formData, gross_payouts_rail: value})
+                              isEditing && setFormData({...formData, gross_payouts_rail: value})
                             }
+                            disabled={!isEditing}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select rail" />
@@ -303,7 +345,8 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                             type="number"
                             min="0"
                             value={formData.gross_payouts_submission_delay_days || ''}
-                            onChange={(e) => setFormData({...formData, gross_payouts_submission_delay_days: parseInt(e.target.value) || 0})}
+                            onChange={(e) => isEditing && setFormData({...formData, gross_payouts_submission_delay_days: parseInt(e.target.value) || 0})}
+                            disabled={!isEditing}
                           />
                         </div>
                         <div className="space-y-2">
@@ -311,8 +354,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                           <Input
                             id="gross_payouts_payment_instrument_id"
                             value={formData.gross_payouts_payment_instrument_id || ''}
-                            onChange={(e) => setFormData({...formData, gross_payouts_payment_instrument_id: e.target.value})}
+                            onChange={(e) => isEditing && setFormData({...formData, gross_payouts_payment_instrument_id: e.target.value})}
                             placeholder="Enter payment instrument ID"
+                            disabled={!isEditing}
                           />
                         </div>
                       </div>
@@ -331,8 +375,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                           <Select 
                             value={formData.gross_fees_frequency} 
                             onValueChange={(value: PayoutFrequency) => 
-                              setFormData({...formData, gross_fees_frequency: value})
+                              isEditing && setFormData({...formData, gross_fees_frequency: value})
                             }
+                            disabled={!isEditing}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select frequency" />
@@ -349,8 +394,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                           <Select 
                             value={formData.gross_fees_rail} 
                             onValueChange={(value: PayoutRail) => 
-                              setFormData({...formData, gross_fees_rail: value})
+                              isEditing && setFormData({...formData, gross_fees_rail: value})
                             }
+                            disabled={!isEditing}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select rail" />
@@ -370,7 +416,8 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                               min="1"
                               max="31"
                               value={formData.gross_fees_day_of_month || ''}
-                              onChange={(e) => setFormData({...formData, gross_fees_day_of_month: parseInt(e.target.value) || 1})}
+                              onChange={(e) => isEditing && setFormData({...formData, gross_fees_day_of_month: parseInt(e.target.value) || 1})}
+                              disabled={!isEditing}
                             />
                           </div>
                         )}
@@ -381,7 +428,8 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                             type="number"
                             min="0"
                             value={formData.gross_fees_submission_delay_days || ''}
-                            onChange={(e) => setFormData({...formData, gross_fees_submission_delay_days: parseInt(e.target.value) || 0})}
+                            onChange={(e) => isEditing && setFormData({...formData, gross_fees_submission_delay_days: parseInt(e.target.value) || 0})}
+                            disabled={!isEditing}
                           />
                         </div>
                         <div className="space-y-2">
@@ -389,8 +437,9 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                           <Input
                             id="gross_fees_payment_instrument_id"
                             value={formData.gross_fees_payment_instrument_id || ''}
-                            onChange={(e) => setFormData({...formData, gross_fees_payment_instrument_id: e.target.value})}
+                            onChange={(e) => isEditing && setFormData({...formData, gross_fees_payment_instrument_id: e.target.value})}
                             placeholder="Enter payment instrument ID"
+                            disabled={!isEditing}
                           />
                         </div>
                       </div>
