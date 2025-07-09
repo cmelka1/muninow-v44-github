@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +69,14 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
   const [step1Data, setStep1Data] = useState<(Step1Data & { merchant_id?: string; finix_identity_id?: string }) | null>(null);
   const [step2Data, setStep2Data] = useState<Step2ExtendedData | null>(null);
   const { toast } = useToast();
+  const dialogContentRef = useRef<HTMLDivElement>(null);
+
+  // Function to scroll dialog content to top
+  const scrollToTop = () => {
+    if (dialogContentRef.current) {
+      dialogContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -108,6 +116,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
         finix_identity_id: result.finix_identity_id,
       });
       setCurrentStep(2);
+      scrollToTop();
       toast({
         title: "Seller ID Created",
         description: "Step 1 completed successfully. Please provide bank account details.",
@@ -148,6 +157,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
       });
       
       setCurrentStep(3);
+      scrollToTop();
       toast({
         title: "Payment Instrument Created",
         description: "Step 2 completed successfully. Review all information and create merchant account.",
@@ -216,7 +226,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent ref={dialogContentRef} className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Merchant</DialogTitle>
           {/* Progress Indicator */}
@@ -423,7 +433,10 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => setCurrentStep(1)}
+                onClick={() => {
+                  setCurrentStep(1);
+                  scrollToTop();
+                }}
                 disabled={isLoading}
               >
                 Back
@@ -528,7 +541,10 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => setCurrentStep(2)}
+                onClick={() => {
+                  setCurrentStep(2);
+                  scrollToTop();
+                }}
                 disabled={isLoading}
               >
                 Back
