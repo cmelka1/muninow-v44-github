@@ -125,20 +125,25 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Fee Profile</CardTitle>
-          {!feeProfile ? (
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Fee Profile
-            </Button>
-          ) : (
-            <Button variant="outline" onClick={() => setShowEditDialog(true)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Profile
-            </Button>
-          )}
+      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              Fee Profile
+            </CardTitle>
+            {!feeProfile ? (
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Fee Profile
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setShowEditDialog(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Profile
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {!feeProfile ? (
@@ -148,71 +153,82 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium">
+              {/* Status Indicator */}
+              <div className="flex items-center gap-2 pb-4 border-b border-slate-200">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-slate-700">
                   Status: {feeProfile.sync_status === 'synced' ? 'Synced with Finix' : feeProfile.sync_status}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Card Processing Fees</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Basis Points:</span>
-                      <span className="text-sm font-medium">{feeProfile.basis_points || 0} bp</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Fixed Fee:</span>
-                      <span className="text-sm font-medium">${((feeProfile.fixed_fee || 0) / 100).toFixed(2)}</span>
-                    </div>
+              {/* Fee Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Card Basis Points */}
+                <div className="space-y-2">
+                  <label className="text-slate-700 font-medium">Card Basis Points</label>
+                  <div className="text-slate-900 font-semibold">
+                    {feeProfile.basis_points || 0} bp
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">ACH Processing Fees</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Basis Points:</span>
-                      <span className="text-sm font-medium">{feeProfile.ach_basis_points || 0} bp</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Fixed Fee:</span>
-                      <span className="text-sm font-medium">${((feeProfile.ach_fixed_fee || 0) / 100).toFixed(2)}</span>
-                    </div>
+                {/* Card Fixed Fee */}
+                <div className="space-y-2">
+                  <label className="text-slate-700 font-medium">Card Fixed Fee</label>
+                  <div className="text-slate-900 font-semibold">
+                    ${((feeProfile.fixed_fee || 0) / 100).toFixed(2)}
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Dispute Fees</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Dispute Fee:</span>
-                      <span className="text-sm font-medium">${((feeProfile.dispute_fixed_fee || 0) / 100).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Inquiry Fee:</span>
-                      <span className="text-sm font-medium">${((feeProfile.dispute_inquiry_fixed_fee || 0) / 100).toFixed(2)}</span>
-                    </div>
+                {/* ACH Basis Points */}
+                <div className="space-y-2">
+                  <label className="text-slate-700 font-medium">ACH Basis Points</label>
+                  <div className="text-slate-900 font-semibold">
+                    {feeProfile.ach_basis_points || 0} bp
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Profile Information</h3>
+                {/* ACH Fixed Fee */}
+                <div className="space-y-2">
+                  <label className="text-slate-700 font-medium">ACH Fixed Fee</label>
+                  <div className="text-slate-900 font-semibold">
+                    ${((feeProfile.ach_fixed_fee || 0) / 100).toFixed(2)}
+                  </div>
+                </div>
+
+                {/* Chargeback Fee */}
+                <div className="space-y-2">
+                  <label className="text-slate-700 font-medium">Chargeback Fee</label>
+                  <div className="text-slate-900 font-semibold">
+                    ${((feeProfile.dispute_fixed_fee || 0) / 100).toFixed(2)}
+                  </div>
+                </div>
+
+                {/* Chargeback Inquiry */}
+                <div className="space-y-2">
+                  <label className="text-slate-700 font-medium">Chargeback Inquiry</label>
+                  <div className="text-slate-900 font-semibold">
+                    ${((feeProfile.dispute_inquiry_fixed_fee || 0) / 100).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Information */}
+              <div className="pt-4 border-t border-slate-200">
+                <h4 className="text-md font-semibold text-slate-800 mb-4">Profile Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Finix Profile ID:</span>
-                      <span className="text-sm font-mono">{feeProfile.finix_fee_profile_id || 'N/A'}</span>
+                    <label className="text-slate-700 font-medium">Finix Profile ID</label>
+                    <div className="text-slate-900 font-mono text-sm">
+                      {feeProfile.finix_fee_profile_id || 'N/A'}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Last Synced:</span>
-                      <span className="text-sm">
-                        {feeProfile.last_synced_at 
-                          ? new Date(feeProfile.last_synced_at).toLocaleString()
-                          : 'Never'
-                        }
-                      </span>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-slate-700 font-medium">Last Synced</label>
+                    <div className="text-slate-900">
+                      {feeProfile.last_synced_at 
+                        ? new Date(feeProfile.last_synced_at).toLocaleDateString()
+                        : 'Never'
+                      }
                     </div>
                   </div>
                 </div>
