@@ -141,7 +141,85 @@ serve(async (req) => {
       const errorText = await finixResponse.text();
       console.error('Finix API error:', errorText);
       
-      // Update local profile with error status
+      // Check if the payout profile is no longer active
+      if (errorText.includes('no longer active')) {
+        console.log('Payout profile is inactive, creating a new one...');
+        
+        // Create a new payout profile
+        const createResponse = await fetch(
+          `${baseUrl}/merchants/${merchant.finix_merchant_id}/payout_profiles`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`,
+              'Content-Type': 'application/json',
+              'Finix-Version': '2022-02-01',
+            },
+            body: JSON.stringify(finixPayload),
+          }
+        );
+
+        if (!createResponse.ok) {
+          const createErrorText = await createResponse.text();
+          console.error('Failed to create new payout profile:', createErrorText);
+          
+          await supabase
+            .from('merchant_payout_profiles')
+            .update({ 
+              sync_status: 'error',
+              updated_at: new Date().toISOString()
+            })
+            .eq('merchant_id', merchantId);
+
+          return new Response(
+            JSON.stringify({ error: 'Failed to create new payout profile in Finix', details: createErrorText }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const newFinixProfile = await createResponse.json();
+        console.log('Created new Finix profile:', JSON.stringify(newFinixProfile, null, 2));
+
+        // Update local database with new profile data
+        const dbUpdateData = {
+          ...profileData,
+          merchant_id: merchantId,
+          finix_payout_profile_id: newFinixProfile.id,
+          sync_status: 'synced',
+          last_synced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: savedProfile, error: saveError } = await supabase
+          .from('merchant_payout_profiles')
+          .update(dbUpdateData)
+          .eq('merchant_id', merchantId)
+          .select()
+          .single();
+
+        if (saveError) {
+          console.error('Error updating local payout profile:', saveError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to update local payout profile' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            profile: savedProfile,
+            finixProfile: newFinixProfile,
+            message: 'Created new payout profile (previous was inactive)'
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Update local profile with error status for other errors
       await supabase
         .from('merchant_payout_profiles')
         .update({ 
