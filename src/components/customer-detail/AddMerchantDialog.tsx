@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Progress } from '@/components/ui/progress';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -218,16 +219,17 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Merchant</DialogTitle>
-          <div className="flex items-center space-x-2 mt-4">
-            <Badge variant={currentStep >= 1 ? "default" : "secondary"}>
-              Step 1: Business Information
-            </Badge>
-            <Badge variant={currentStep >= 2 ? "default" : "secondary"}>
-              Step 2: Bank Account
-            </Badge>
-            <Badge variant={currentStep >= 3 ? "default" : "secondary"}>
-              Step 3: Create Merchant
-            </Badge>
+          {/* Progress Indicator */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+              <span>Step {currentStep} of 3</span>
+              <span>
+                {currentStep === 1 && "Business Information"}
+                {currentStep === 2 && "Bank Account"}
+                {currentStep === 3 && "Create Merchant"}
+              </span>
+            </div>
+            <Progress value={(currentStep / 3) * 100} className="h-2" />
           </div>
         </DialogHeader>
 
