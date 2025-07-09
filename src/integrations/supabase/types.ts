@@ -1055,6 +1055,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "municipal_bills_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_backup"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "municipal_bills_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_results"
+            referencedColumns: ["id"]
+          },
         ]
       }
       municipal_members: {
@@ -1888,6 +1902,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_payment_instruments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_backup"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_payment_instruments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_results"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -2002,7 +2030,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      role_migration_backup: {
+        Row: {
+          current_role: string | null
+          email: string | null
+          entity_id: string | null
+          id: string | null
+          profile_account_type: string | null
+          profile_role: string | null
+        }
+        Relationships: []
+      }
+      role_migration_results: {
+        Row: {
+          alignment_status: string | null
+          assigned_role: string | null
+          email: string | null
+          entity_id: string | null
+          expected_role: string | null
+          id: string | null
+          profile_account_type: string | null
+          profile_role: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_organization_invitation: {
