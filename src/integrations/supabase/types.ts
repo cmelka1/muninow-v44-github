@@ -314,6 +314,7 @@ export type Database = {
       merchant_payout_profiles: {
         Row: {
           created_at: string
+          finix_merchant_id: string | null
           finix_payout_profile_id: string | null
           gross_fees_day_of_month: number | null
           gross_fees_frequency:
@@ -331,6 +332,7 @@ export type Database = {
           id: string
           last_synced_at: string | null
           merchant_id: string
+          merchant_name: string | null
           net_frequency: Database["public"]["Enums"]["payout_frequency"] | null
           net_payment_instrument_id: string | null
           net_rail: Database["public"]["Enums"]["payout_rail"] | null
@@ -341,6 +343,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
           gross_fees_day_of_month?: number | null
           gross_fees_frequency?:
@@ -358,6 +361,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           merchant_id: string
+          merchant_name?: string | null
           net_frequency?: Database["public"]["Enums"]["payout_frequency"] | null
           net_payment_instrument_id?: string | null
           net_rail?: Database["public"]["Enums"]["payout_rail"] | null
@@ -368,6 +372,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
           gross_fees_day_of_month?: number | null
           gross_fees_frequency?:
@@ -385,6 +390,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           merchant_id?: string
+          merchant_name?: string | null
           net_frequency?: Database["public"]["Enums"]["payout_frequency"] | null
           net_payment_instrument_id?: string | null
           net_rail?: Database["public"]["Enums"]["payout_rail"] | null
@@ -853,6 +859,20 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "municipal_bills_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_backup"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "municipal_bills_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_results"
             referencedColumns: ["id"]
           },
         ]
@@ -1688,6 +1708,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_payment_instruments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_backup"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_payment_instruments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "role_migration_results"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -1802,7 +1836,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      role_migration_backup: {
+        Row: {
+          current_role: string | null
+          email: string | null
+          entity_id: string | null
+          id: string | null
+          profile_account_type: string | null
+          profile_role: string | null
+        }
+        Relationships: []
+      }
+      role_migration_results: {
+        Row: {
+          alignment_status: string | null
+          assigned_role: string | null
+          email: string | null
+          entity_id: string | null
+          expected_role: string | null
+          id: string | null
+          profile_account_type: string | null
+          profile_role: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_organization_invitation: {
@@ -2146,6 +2203,7 @@ export type Database = {
         | "residentUser"
         | "businessAdmin"
         | "businessUser"
+      fee_profile_sync_status: "pending" | "synced" | "error"
       payment_method_type: "card" | "ach"
       payout_frequency: "DAILY" | "MONTHLY" | "CONTINUOUS"
       payout_rail: "NEXT_DAY_ACH" | "SAME_DAY_ACH"
@@ -2288,6 +2346,7 @@ export const Constants = {
         "businessAdmin",
         "businessUser",
       ],
+      fee_profile_sync_status: ["pending", "synced", "error"],
       payment_method_type: ["card", "ach"],
       payout_frequency: ["DAILY", "MONTHLY", "CONTINUOUS"],
       payout_rail: ["NEXT_DAY_ACH", "SAME_DAY_ACH"],
