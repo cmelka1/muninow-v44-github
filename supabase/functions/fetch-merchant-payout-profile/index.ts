@@ -51,8 +51,21 @@ serve(async (req) => {
     }
 
     // Fetch payout profile from Finix API
-    const finixApiKey = Deno.env.get('FINIX_API_SECRET');
+    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
+    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
+    
+    if (!finixApplicationId || !finixApiSecret) {
+      console.error('Missing Finix credentials:', { 
+        hasApplicationId: !!finixApplicationId, 
+        hasApiSecret: !!finixApiSecret 
+      });
+      return new Response(
+        JSON.stringify({ error: 'Finix API credentials not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const baseUrl = finixEnvironment === 'live' 
       ? 'https://finix.payments-api.com' 
       : 'https://finix.sandbox-payments-api.com';
@@ -64,7 +77,7 @@ serve(async (req) => {
       {
         method: 'GET',
         headers: {
-          'Authorization': `Basic ${btoa(finixApiKey + ':')}`,
+          'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`,
           'Content-Type': 'application/json',
           'Finix-Version': '2022-02-01',
         },
