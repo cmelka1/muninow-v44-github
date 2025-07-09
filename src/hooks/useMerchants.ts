@@ -32,6 +32,65 @@ export const useMerchants = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const fetchPayoutProfile = async (merchantId: string) => {
+    if (!user) return null;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-merchant-payout-profile', {
+        body: { merchantId }
+      });
+
+      if (error) throw error;
+
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "Error",
+        description: "Failed to fetch payout profile",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updatePayoutProfile = async (merchantId: string, profileData: any) => {
+    if (!user) return null;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('update-merchant-payout-profile', {
+        body: { merchantId, profileData }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Payout profile updated successfully",
+      });
+
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "Error",
+        description: "Failed to update payout profile",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const fetchMerchantsByCustomer = async (customerId: string, page = 1, pageSize = 10) => {
     if (!user) return { data: [], count: 0 };
     
@@ -170,6 +229,8 @@ export const useMerchants = () => {
     fetchMerchantsByCustomer,
     fetchMerchantsByUserId,
     fetchMerchantById,
-    subscribeToMerchantChanges
+    subscribeToMerchantChanges,
+    fetchPayoutProfile,
+    updatePayoutProfile
   };
 };
