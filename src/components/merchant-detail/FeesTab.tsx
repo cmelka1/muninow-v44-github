@@ -93,7 +93,15 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
     // Mark field as touched when user types
     setTouchedFields(prev => new Set(prev).add(field));
     
-    const numericValue = field.includes('cents') ? parseInt(value) || 0 : parseFloat(value) || 0;
+    let numericValue: number;
+    if (field.includes('percentage')) {
+      // Convert percentage input (e.g., "2.9") to decimal (e.g., 0.029)
+      numericValue = (parseFloat(value) || 0) / 100;
+    } else {
+      // For cents fields, keep as integer
+      numericValue = parseInt(value) || 0;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: numericValue
@@ -106,7 +114,14 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
 
   const getInputValue = (field: keyof FeeProfile) => {
     if (touchedFields.has(field)) {
-      return formData[field] !== undefined && formData[field] !== 0 ? formData[field] : '';
+      if (formData[field] !== undefined && formData[field] !== 0) {
+        // For percentage fields, convert decimal to percentage for display
+        if (field.includes('percentage')) {
+          return (formData[field] as number) * 100;
+        }
+        return formData[field];
+      }
+      return '';
     }
     return '';
   };
@@ -114,7 +129,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   const getPlaceholderText = (field: keyof FeeProfile) => {
     const defaultValue = DEFAULT_VALUES[field as keyof typeof DEFAULT_VALUES];
     if (field.includes('percentage')) {
-      return `${(defaultValue * 100).toFixed(1)}% (${defaultValue})`;
+      return `${(defaultValue * 100).toFixed(1)}%`;
     }
     return `${defaultValue} cents`;
   };
