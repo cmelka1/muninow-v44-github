@@ -284,93 +284,6 @@ export type Database = {
         }
         Relationships: []
       }
-      fraud_attempts: {
-        Row: {
-          amount_cents: number
-          created_at: string
-          id: string
-          ip_address: string | null
-          payment_instrument_id: string | null
-          reason: string | null
-          resolution_method: string | null
-          resolved: boolean | null
-          risk_level: string | null
-          session_id: string
-          updated_at: string
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          amount_cents: number
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          payment_instrument_id?: string | null
-          reason?: string | null
-          resolution_method?: string | null
-          resolved?: boolean | null
-          risk_level?: string | null
-          session_id: string
-          updated_at?: string
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          amount_cents?: number
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          payment_instrument_id?: string | null
-          reason?: string | null
-          resolution_method?: string | null
-          resolved?: boolean | null
-          risk_level?: string | null
-          session_id?: string
-          updated_at?: string
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      fraud_sessions: {
-        Row: {
-          attempt_count: number | null
-          created_at: string
-          expires_at: string
-          id: string
-          last_attempt_at: string | null
-          risk_score: number | null
-          session_id: string
-          status: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          attempt_count?: number | null
-          created_at?: string
-          expires_at: string
-          id?: string
-          last_attempt_at?: string | null
-          risk_score?: number | null
-          session_id: string
-          status?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          attempt_count?: number | null
-          created_at?: string
-          expires_at?: string
-          id?: string
-          last_attempt_at?: string | null
-          risk_score?: number | null
-          session_id?: string
-          status?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       master_bills: {
         Row: {
           account_type: string | null
@@ -454,7 +367,6 @@ export type Database = {
           merchant_payout_id: string | null
           modification_count: number | null
           modification_reason: string | null
-          municipality_timezone: string | null
           original_amount_cents: number
           original_bill_snapshot: Json | null
           past_due_date: string | null
@@ -568,7 +480,6 @@ export type Database = {
           merchant_payout_id?: string | null
           modification_count?: number | null
           modification_reason?: string | null
-          municipality_timezone?: string | null
           original_amount_cents: number
           original_bill_snapshot?: Json | null
           past_due_date?: string | null
@@ -682,7 +593,6 @@ export type Database = {
           merchant_payout_id?: string | null
           modification_count?: number | null
           modification_reason?: string | null
-          municipality_timezone?: string | null
           original_amount_cents?: number
           original_bill_snapshot?: Json | null
           past_due_date?: string | null
@@ -1226,215 +1136,6 @@ export type Database = {
         }
         Relationships: []
       }
-      municipal_members: {
-        Row: {
-          activated_at: string | null
-          expires_at: string | null
-          id: string
-          invitation_email: string
-          invitation_token: string | null
-          invited_at: string
-          member_id: string | null
-          municipal_id: string
-          old_tokens: string[] | null
-          revoked_at: string | null
-          role: string
-          status: string
-        }
-        Insert: {
-          activated_at?: string | null
-          expires_at?: string | null
-          id?: string
-          invitation_email: string
-          invitation_token?: string | null
-          invited_at?: string
-          member_id?: string | null
-          municipal_id: string
-          old_tokens?: string[] | null
-          revoked_at?: string | null
-          role: string
-          status: string
-        }
-        Update: {
-          activated_at?: string | null
-          expires_at?: string | null
-          id?: string
-          invitation_email?: string
-          invitation_token?: string | null
-          invited_at?: string
-          member_id?: string | null
-          municipal_id?: string
-          old_tokens?: string[] | null
-          revoked_at?: string | null
-          role?: string
-          status?: string
-        }
-        Relationships: []
-      }
-      municipal_notification_preferences: {
-        Row: {
-          created_at: string
-          email_bank_account_updates: boolean
-          email_compliance_alerts: boolean
-          email_payment_alerts: boolean
-          email_report_generation: boolean
-          email_system_maintenance: boolean
-          email_user_registrations: boolean
-          id: string
-          municipality_id: string | null
-          sms_bank_account_updates: boolean
-          sms_compliance_alerts: boolean
-          sms_payment_alerts: boolean
-          sms_report_generation: boolean
-          sms_system_maintenance: boolean
-          sms_user_registrations: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          email_bank_account_updates?: boolean
-          email_compliance_alerts?: boolean
-          email_payment_alerts?: boolean
-          email_report_generation?: boolean
-          email_system_maintenance?: boolean
-          email_user_registrations?: boolean
-          id?: string
-          municipality_id?: string | null
-          sms_bank_account_updates?: boolean
-          sms_compliance_alerts?: boolean
-          sms_payment_alerts?: boolean
-          sms_report_generation?: boolean
-          sms_system_maintenance?: boolean
-          sms_user_registrations?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          email_bank_account_updates?: boolean
-          email_compliance_alerts?: boolean
-          email_payment_alerts?: boolean
-          email_report_generation?: boolean
-          email_system_maintenance?: boolean
-          email_user_registrations?: boolean
-          id?: string
-          municipality_id?: string | null
-          sms_bank_account_updates?: boolean
-          sms_compliance_alerts?: boolean
-          sms_payment_alerts?: boolean
-          sms_report_generation?: boolean
-          sms_system_maintenance?: boolean
-          sms_user_registrations?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      municipal_sequence_counters: {
-        Row: {
-          created_at: string
-          current_sequence: number
-          id: string
-          municipality_id: string
-          system_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          current_sequence?: number
-          id?: string
-          municipality_id: string
-          system_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          current_sequence?: number
-          id?: string
-          municipality_id?: string
-          system_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "municipal_sequence_counters_municipality_id_fkey"
-            columns: ["municipality_id"]
-            isOneToOne: false
-            referencedRelation: "municipalities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "municipal_sequence_counters_system_id_fkey"
-            columns: ["system_id"]
-            isOneToOne: false
-            referencedRelation: "municipal_systems"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      municipal_systems: {
-        Row: {
-          code: string
-          created_at: string
-          id: string
-          municipality_id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          id?: string
-          municipality_id: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          id?: string
-          municipality_id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "municipal_systems_municipality_id_fkey"
-            columns: ["municipality_id"]
-            isOneToOne: false
-            referencedRelation: "municipalities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      municipalities: {
-        Row: {
-          code: string
-          created_at: string
-          id: string
-          name: string
-          state: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          id?: string
-          name: string
-          state: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          id?: string
-          name?: string
-          state?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       organization_invitations: {
         Row: {
           activated_at: string | null
@@ -1600,166 +1301,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_records: {
-        Row: {
-          account_type: string | null
-          amount_cents: number
-          bill_id: string
-          bill_number: string | null
-          billing_city: string | null
-          billing_state: string | null
-          billing_street_address: string | null
-          billing_zip_code: string | null
-          business_legal_name: string | null
-          card_brand: string | null
-          category: string | null
-          confirmation_number: string
-          created_at: string | null
-          currency: string | null
-          fee_amount_cents: number | null
-          finix_payment_instrument_id: string | null
-          finix_transfer_id: string
-          fraud_session_id: string | null
-          id: string
-          instrument_type: string | null
-          merchant_name: string | null
-          metadata: Json | null
-          method_name: string | null
-          municipality_id: string | null
-          net_amount_cents: number | null
-          payment_method_id: string | null
-          payment_method_last_four: string | null
-          payment_method_type: string
-          processed_at: string | null
-          receipt_generated_at: string | null
-          receipt_url: string | null
-          service_address: string | null
-          status: string
-          system_id: string | null
-          transaction_id: string
-          updated_at: string | null
-          user_email: string | null
-          user_first_name: string | null
-          user_id: string
-          user_last_name: string | null
-          user_phone: string | null
-          vendor: string | null
-          verification_status: string | null
-        }
-        Insert: {
-          account_type?: string | null
-          amount_cents: number
-          bill_id: string
-          bill_number?: string | null
-          billing_city?: string | null
-          billing_state?: string | null
-          billing_street_address?: string | null
-          billing_zip_code?: string | null
-          business_legal_name?: string | null
-          card_brand?: string | null
-          category?: string | null
-          confirmation_number: string
-          created_at?: string | null
-          currency?: string | null
-          fee_amount_cents?: number | null
-          finix_payment_instrument_id?: string | null
-          finix_transfer_id: string
-          fraud_session_id?: string | null
-          id?: string
-          instrument_type?: string | null
-          merchant_name?: string | null
-          metadata?: Json | null
-          method_name?: string | null
-          municipality_id?: string | null
-          net_amount_cents?: number | null
-          payment_method_id?: string | null
-          payment_method_last_four?: string | null
-          payment_method_type: string
-          processed_at?: string | null
-          receipt_generated_at?: string | null
-          receipt_url?: string | null
-          service_address?: string | null
-          status?: string
-          system_id?: string | null
-          transaction_id: string
-          updated_at?: string | null
-          user_email?: string | null
-          user_first_name?: string | null
-          user_id: string
-          user_last_name?: string | null
-          user_phone?: string | null
-          vendor?: string | null
-          verification_status?: string | null
-        }
-        Update: {
-          account_type?: string | null
-          amount_cents?: number
-          bill_id?: string
-          bill_number?: string | null
-          billing_city?: string | null
-          billing_state?: string | null
-          billing_street_address?: string | null
-          billing_zip_code?: string | null
-          business_legal_name?: string | null
-          card_brand?: string | null
-          category?: string | null
-          confirmation_number?: string
-          created_at?: string | null
-          currency?: string | null
-          fee_amount_cents?: number | null
-          finix_payment_instrument_id?: string | null
-          finix_transfer_id?: string
-          fraud_session_id?: string | null
-          id?: string
-          instrument_type?: string | null
-          merchant_name?: string | null
-          metadata?: Json | null
-          method_name?: string | null
-          municipality_id?: string | null
-          net_amount_cents?: number | null
-          payment_method_id?: string | null
-          payment_method_last_four?: string | null
-          payment_method_type?: string
-          processed_at?: string | null
-          receipt_generated_at?: string | null
-          receipt_url?: string | null
-          service_address?: string | null
-          status?: string
-          system_id?: string | null
-          transaction_id?: string
-          updated_at?: string | null
-          user_email?: string | null
-          user_first_name?: string | null
-          user_id?: string
-          user_last_name?: string | null
-          user_phone?: string | null
-          vendor?: string | null
-          verification_status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_payment_records_payment_method"
-            columns: ["payment_method_id"]
-            isOneToOne: false
-            referencedRelation: "payment_methods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_payment_records_system"
-            columns: ["system_id"]
-            isOneToOne: false
-            referencedRelation: "municipal_systems"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_records_municipality_id_fkey"
-            columns: ["municipality_id"]
-            isOneToOne: false
-            referencedRelation: "municipalities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           account_type: string
@@ -1773,7 +1314,6 @@ export type Database = {
           id: string
           industry: string | null
           last_name: string
-          municipality_name: string | null
           original_address: Json | null
           phone: string | null
           role: string
@@ -1795,7 +1335,6 @@ export type Database = {
           id: string
           industry?: string | null
           last_name: string
-          municipality_name?: string | null
           original_address?: Json | null
           phone?: string | null
           role?: string
@@ -1817,7 +1356,6 @@ export type Database = {
           id?: string
           industry?: string | null
           last_name?: string
-          municipality_name?: string | null
           original_address?: Json | null
           phone?: string | null
           role?: string
