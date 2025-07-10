@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      bill_matching_queue: {
+        Row: {
+          bill_id: string | null
+          created_at: string | null
+          id: string
+          processed: boolean | null
+          processed_at: string | null
+          trigger_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bill_id?: string | null
+          created_at?: string | null
+          id?: string
+          processed?: boolean | null
+          processed_at?: string | null
+          trigger_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bill_id?: string | null
+          created_at?: string | null
+          id?: string
+          processed?: boolean | null
+          processed_at?: string | null
+          trigger_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bill_processing_failures: {
+        Row: {
+          bill_id: string | null
+          failed_at: string | null
+          failure_reason: string | null
+          id: string
+          manual_review_required: boolean | null
+          raw_bill_data: Json | null
+          retry_count: number | null
+        }
+        Insert: {
+          bill_id?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          manual_review_required?: boolean | null
+          raw_bill_data?: Json | null
+          retry_count?: number | null
+        }
+        Update: {
+          bill_id?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          manual_review_required?: boolean | null
+          raw_bill_data?: Json | null
+          retry_count?: number | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           annual_ach_volume: number | null
@@ -310,6 +370,335 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      master_bills: {
+        Row: {
+          account_type: string | null
+          ach_basis_points: number | null
+          ach_fixed_fee: number | null
+          amount_due_cents: number
+          apt_number: string | null
+          assignment_status:
+            | Database["public"]["Enums"]["assignment_status_enum"]
+            | null
+          bank_masked_account_number: string | null
+          basis_points: number | null
+          bill_id: string
+          bill_specific_data: Json | null
+          bill_status: Database["public"]["Enums"]["bill_status_enum"] | null
+          business_address_line1: string | null
+          business_address_line2: string | null
+          business_city: string | null
+          business_legal_name: string | null
+          business_legal_name_normalized: string | null
+          business_state: string | null
+          business_zip_code: string | null
+          calculated_fee_cents: number | null
+          category: string | null
+          change_history: Json[] | null
+          city: string | null
+          created_at: string | null
+          created_by_system: string | null
+          customer_id: string
+          data_quality_score: number | null
+          data_quality_status:
+            | Database["public"]["Enums"]["data_quality_status_enum"]
+            | null
+          data_source_system: string
+          doing_business_as: string | null
+          due_date: string | null
+          duplicate_check_hash: string | null
+          email: string | null
+          entity_type: string | null
+          error_log: Json | null
+          external_account_number: string | null
+          external_bill_number: string
+          external_payment_reference: string | null
+          finix_fee_profile_id: string | null
+          finix_identity_id: string | null
+          finix_merchant_id: string | null
+          finix_merchant_profile_id: string | null
+          finix_payout_profile_id: string | null
+          first_name: string | null
+          fixed_fee: number | null
+          fraud_session_id: string | null
+          idempotency_id: string | null
+          ingestion_timestamp: string | null
+          issue_date: string | null
+          last_modified_by: string | null
+          last_name: string | null
+          last_reconciled_at: string | null
+          late_fee_1_applied_date: string | null
+          late_fee_1_cents: number | null
+          late_fee_2_applied_date: string | null
+          late_fee_2_cents: number | null
+          late_fee_3_applied_date: string | null
+          late_fee_3_cents: number | null
+          legal_entity_name: string | null
+          manual_match_override: boolean | null
+          manual_review_required: boolean | null
+          match_criteria_details: Json | null
+          match_score: number | null
+          matching_confidence: number | null
+          merchant_fee_profile_id: string | null
+          merchant_id: string | null
+          merchant_name: string | null
+          merchant_payout_id: string | null
+          modification_count: number | null
+          modification_reason: string | null
+          municipality_timezone: string | null
+          original_amount_cents: number
+          original_bill_snapshot: Json | null
+          past_due_date: string | null
+          payment_method_external: string | null
+          payment_processed_by: string | null
+          payment_status:
+            | Database["public"]["Enums"]["payment_status_enum"]
+            | null
+          processing_status: string | null
+          profile_id: string | null
+          raw_source_data: Json | null
+          remaining_balance_cents: number
+          requires_review: boolean | null
+          retry_count: number | null
+          state: string | null
+          statement_descriptor: string | null
+          street_address: string | null
+          subcategory: string | null
+          total_amount_cents: number
+          total_late_fees_cents: number | null
+          total_paid_cents: number | null
+          transformation_applied: string[] | null
+          type: string | null
+          updated_at: string | null
+          usage_details: Json | null
+          user_id: string | null
+          validation_errors: Json | null
+          validation_status: string | null
+          version: number | null
+          zip_code: string | null
+        }
+        Insert: {
+          account_type?: string | null
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          amount_due_cents: number
+          apt_number?: string | null
+          assignment_status?:
+            | Database["public"]["Enums"]["assignment_status_enum"]
+            | null
+          bank_masked_account_number?: string | null
+          basis_points?: number | null
+          bill_id?: string
+          bill_specific_data?: Json | null
+          bill_status?: Database["public"]["Enums"]["bill_status_enum"] | null
+          business_address_line1?: string | null
+          business_address_line2?: string | null
+          business_city?: string | null
+          business_legal_name?: string | null
+          business_legal_name_normalized?: string | null
+          business_state?: string | null
+          business_zip_code?: string | null
+          calculated_fee_cents?: number | null
+          category?: string | null
+          change_history?: Json[] | null
+          city?: string | null
+          created_at?: string | null
+          created_by_system?: string | null
+          customer_id: string
+          data_quality_score?: number | null
+          data_quality_status?:
+            | Database["public"]["Enums"]["data_quality_status_enum"]
+            | null
+          data_source_system: string
+          doing_business_as?: string | null
+          due_date?: string | null
+          duplicate_check_hash?: string | null
+          email?: string | null
+          entity_type?: string | null
+          error_log?: Json | null
+          external_account_number?: string | null
+          external_bill_number: string
+          external_payment_reference?: string | null
+          finix_fee_profile_id?: string | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_merchant_profile_id?: string | null
+          finix_payout_profile_id?: string | null
+          first_name?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          idempotency_id?: string | null
+          ingestion_timestamp?: string | null
+          issue_date?: string | null
+          last_modified_by?: string | null
+          last_name?: string | null
+          last_reconciled_at?: string | null
+          late_fee_1_applied_date?: string | null
+          late_fee_1_cents?: number | null
+          late_fee_2_applied_date?: string | null
+          late_fee_2_cents?: number | null
+          late_fee_3_applied_date?: string | null
+          late_fee_3_cents?: number | null
+          legal_entity_name?: string | null
+          manual_match_override?: boolean | null
+          manual_review_required?: boolean | null
+          match_criteria_details?: Json | null
+          match_score?: number | null
+          matching_confidence?: number | null
+          merchant_fee_profile_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          merchant_payout_id?: string | null
+          modification_count?: number | null
+          modification_reason?: string | null
+          municipality_timezone?: string | null
+          original_amount_cents: number
+          original_bill_snapshot?: Json | null
+          past_due_date?: string | null
+          payment_method_external?: string | null
+          payment_processed_by?: string | null
+          payment_status?:
+            | Database["public"]["Enums"]["payment_status_enum"]
+            | null
+          processing_status?: string | null
+          profile_id?: string | null
+          raw_source_data?: Json | null
+          remaining_balance_cents: number
+          requires_review?: boolean | null
+          retry_count?: number | null
+          state?: string | null
+          statement_descriptor?: string | null
+          street_address?: string | null
+          subcategory?: string | null
+          total_amount_cents: number
+          total_late_fees_cents?: number | null
+          total_paid_cents?: number | null
+          transformation_applied?: string[] | null
+          type?: string | null
+          updated_at?: string | null
+          usage_details?: Json | null
+          user_id?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          version?: number | null
+          zip_code?: string | null
+        }
+        Update: {
+          account_type?: string | null
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          amount_due_cents?: number
+          apt_number?: string | null
+          assignment_status?:
+            | Database["public"]["Enums"]["assignment_status_enum"]
+            | null
+          bank_masked_account_number?: string | null
+          basis_points?: number | null
+          bill_id?: string
+          bill_specific_data?: Json | null
+          bill_status?: Database["public"]["Enums"]["bill_status_enum"] | null
+          business_address_line1?: string | null
+          business_address_line2?: string | null
+          business_city?: string | null
+          business_legal_name?: string | null
+          business_legal_name_normalized?: string | null
+          business_state?: string | null
+          business_zip_code?: string | null
+          calculated_fee_cents?: number | null
+          category?: string | null
+          change_history?: Json[] | null
+          city?: string | null
+          created_at?: string | null
+          created_by_system?: string | null
+          customer_id?: string
+          data_quality_score?: number | null
+          data_quality_status?:
+            | Database["public"]["Enums"]["data_quality_status_enum"]
+            | null
+          data_source_system?: string
+          doing_business_as?: string | null
+          due_date?: string | null
+          duplicate_check_hash?: string | null
+          email?: string | null
+          entity_type?: string | null
+          error_log?: Json | null
+          external_account_number?: string | null
+          external_bill_number?: string
+          external_payment_reference?: string | null
+          finix_fee_profile_id?: string | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_merchant_profile_id?: string | null
+          finix_payout_profile_id?: string | null
+          first_name?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          idempotency_id?: string | null
+          ingestion_timestamp?: string | null
+          issue_date?: string | null
+          last_modified_by?: string | null
+          last_name?: string | null
+          last_reconciled_at?: string | null
+          late_fee_1_applied_date?: string | null
+          late_fee_1_cents?: number | null
+          late_fee_2_applied_date?: string | null
+          late_fee_2_cents?: number | null
+          late_fee_3_applied_date?: string | null
+          late_fee_3_cents?: number | null
+          legal_entity_name?: string | null
+          manual_match_override?: boolean | null
+          manual_review_required?: boolean | null
+          match_criteria_details?: Json | null
+          match_score?: number | null
+          matching_confidence?: number | null
+          merchant_fee_profile_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          merchant_payout_id?: string | null
+          modification_count?: number | null
+          modification_reason?: string | null
+          municipality_timezone?: string | null
+          original_amount_cents?: number
+          original_bill_snapshot?: Json | null
+          past_due_date?: string | null
+          payment_method_external?: string | null
+          payment_processed_by?: string | null
+          payment_status?:
+            | Database["public"]["Enums"]["payment_status_enum"]
+            | null
+          processing_status?: string | null
+          profile_id?: string | null
+          raw_source_data?: Json | null
+          remaining_balance_cents?: number
+          requires_review?: boolean | null
+          retry_count?: number | null
+          state?: string | null
+          statement_descriptor?: string | null
+          street_address?: string | null
+          subcategory?: string | null
+          total_amount_cents?: number
+          total_late_fees_cents?: number | null
+          total_paid_cents?: number | null
+          transformation_applied?: string[] | null
+          type?: string | null
+          updated_at?: string | null
+          usage_details?: Json | null
+          user_id?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          version?: number | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_bills_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       merchant_fee_profiles: {
         Row: {
@@ -1958,6 +2347,17 @@ export type Database = {
       }
     }
     Views: {
+      bill_quality_metrics: {
+        Row: {
+          avg_match_score: number | null
+          bills_requiring_review: number | null
+          data_source_system: string | null
+          total_bills: number | null
+          unassigned_bills: number | null
+          validation_failures: number | null
+        }
+        Relationships: []
+      }
       role_migration_backup: {
         Row: {
           current_role: string | null
@@ -1979,6 +2379,18 @@ export type Database = {
           id: string | null
           profile_account_type: string | null
           profile_role: string | null
+        }
+        Relationships: []
+      }
+      user_bill_summary: {
+        Row: {
+          last_bill_update: string | null
+          next_due_date: string | null
+          profile_id: string | null
+          total_bills: number | null
+          total_due_cents: number | null
+          unpaid_bills: number | null
+          user_id: string | null
         }
         Relationships: []
       }
@@ -2299,6 +2711,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      normalize_business_name: {
+        Args: { business_name: string }
+        Returns: string
+      }
       remove_role_from_user: {
         Args: { _user_id: string; _role_name: string; _entity_id?: string }
         Returns: boolean
@@ -2309,6 +2725,10 @@ export type Database = {
       }
       set_default_user_payment_instrument: {
         Args: { p_id: string }
+        Returns: undefined
+      }
+      smart_bill_matching: {
+        Args: { input_bill_id: string }
         Returns: undefined
       }
       update_bank_account_priorities: {
@@ -2325,8 +2745,24 @@ export type Database = {
         | "residentUser"
         | "businessAdmin"
         | "businessUser"
+      assignment_status_enum: "assigned" | "unassigned" | "pending_review"
+      bill_status_enum:
+        | "paid"
+        | "unpaid"
+        | "overdue"
+        | "delinquent"
+        | "cancelled"
+        | "disputed"
+        | "refunded"
+      data_quality_status_enum:
+        | "validated"
+        | "pending_validation"
+        | "failed_validation"
+        | "manual_review_required"
+        | "corrected"
       fee_profile_sync_status: "pending" | "synced" | "error"
       payment_method_type: "card" | "ach"
+      payment_status_enum: "paid" | "unpaid" | "partially_paid"
       payout_frequency: "DAILY" | "MONTHLY" | "CONTINUOUS"
       payout_rail: "NEXT_DAY_ACH" | "SAME_DAY_ACH"
       payout_type: "GROSS" | "NET"
@@ -2468,8 +2904,26 @@ export const Constants = {
         "businessAdmin",
         "businessUser",
       ],
+      assignment_status_enum: ["assigned", "unassigned", "pending_review"],
+      bill_status_enum: [
+        "paid",
+        "unpaid",
+        "overdue",
+        "delinquent",
+        "cancelled",
+        "disputed",
+        "refunded",
+      ],
+      data_quality_status_enum: [
+        "validated",
+        "pending_validation",
+        "failed_validation",
+        "manual_review_required",
+        "corrected",
+      ],
       fee_profile_sync_status: ["pending", "synced", "error"],
       payment_method_type: ["card", "ach"],
+      payment_status_enum: ["paid", "unpaid", "partially_paid"],
       payout_frequency: ["DAILY", "MONTHLY", "CONTINUOUS"],
       payout_rail: ["NEXT_DAY_ACH", "SAME_DAY_ACH"],
       payout_type: ["GROSS", "NET"],
