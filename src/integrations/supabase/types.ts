@@ -1217,90 +1217,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_methods: {
-        Row: {
-          account_type: string
-          bank_account_validation_check: string | null
-          business_id: string | null
-          business_name: string | null
-          card_brand: string | null
-          created_at: string
-          department: string | null
-          disabled_at: string | null
-          enabled: boolean | null
-          expires_at: string | null
-          finix_application_id: string | null
-          finix_funding_source: string | null
-          finix_identity_id: string | null
-          finix_payment_instrument_id: string | null
-          finix_processor: string | null
-          id: string
-          is_default: boolean
-          is_expired: boolean
-          last_four: string
-          method_name: string
-          method_type: string
-          payment_token: string
-          updated_at: string
-          user_id: string
-          verification_status: string | null
-        }
-        Insert: {
-          account_type?: string
-          bank_account_validation_check?: string | null
-          business_id?: string | null
-          business_name?: string | null
-          card_brand?: string | null
-          created_at?: string
-          department?: string | null
-          disabled_at?: string | null
-          enabled?: boolean | null
-          expires_at?: string | null
-          finix_application_id?: string | null
-          finix_funding_source?: string | null
-          finix_identity_id?: string | null
-          finix_payment_instrument_id?: string | null
-          finix_processor?: string | null
-          id?: string
-          is_default?: boolean
-          is_expired?: boolean
-          last_four: string
-          method_name: string
-          method_type: string
-          payment_token: string
-          updated_at?: string
-          user_id: string
-          verification_status?: string | null
-        }
-        Update: {
-          account_type?: string
-          bank_account_validation_check?: string | null
-          business_id?: string | null
-          business_name?: string | null
-          card_brand?: string | null
-          created_at?: string
-          department?: string | null
-          disabled_at?: string | null
-          enabled?: boolean | null
-          expires_at?: string | null
-          finix_application_id?: string | null
-          finix_funding_source?: string | null
-          finix_identity_id?: string | null
-          finix_payment_instrument_id?: string | null
-          finix_processor?: string | null
-          id?: string
-          is_default?: boolean
-          is_expired?: boolean
-          last_four?: string
-          method_name?: string
-          method_type?: string
-          payment_token?: string
-          updated_at?: string
-          user_id?: string
-          verification_status?: string | null
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           account_type: string
@@ -1595,20 +1511,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_payment_instruments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "role_migration_backup"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_payment_instruments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "role_migration_results"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_roles: {
@@ -1734,30 +1636,6 @@ export type Database = {
         }
         Relationships: []
       }
-      role_migration_backup: {
-        Row: {
-          current_role: string | null
-          email: string | null
-          entity_id: string | null
-          id: string | null
-          profile_account_type: string | null
-          profile_role: string | null
-        }
-        Relationships: []
-      }
-      role_migration_results: {
-        Row: {
-          alignment_status: string | null
-          assigned_role: string | null
-          email: string | null
-          entity_id: string | null
-          expected_role: string | null
-          id: string | null
-          profile_account_type: string | null
-          profile_role: string | null
-        }
-        Relationships: []
-      }
       user_bill_summary: {
         Row: {
           last_bill_update: string | null
@@ -1802,10 +1680,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      count_payment_methods: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
       create_organization_invitation: {
         Args: {
           p_invitation_email: string
@@ -1814,105 +1688,9 @@ export type Database = {
         }
         Returns: string
       }
-      create_payment_method: {
-        Args:
-          | {
-              p_method_name: string
-              p_payment_token: string
-              p_method_type: string
-              p_last_four: string
-              p_account_type?: string
-              p_business_name?: string
-              p_department?: string
-              p_business_id?: string
-              p_expires_at?: string
-              p_card_brand?: string
-              p_bank_account_validation_check?: string
-            }
-          | {
-              p_method_name: string
-              p_payment_token: string
-              p_method_type: string
-              p_last_four: string
-              p_account_type?: string
-              p_business_name?: string
-              p_department?: string
-              p_business_id?: string
-              p_expires_at?: string
-              p_card_brand?: string
-              p_bank_account_validation_check?: string
-              p_finix_payment_instrument_id?: string
-              p_finix_identity_id?: string
-            }
-        Returns: {
-          account_type: string
-          bank_account_validation_check: string | null
-          business_id: string | null
-          business_name: string | null
-          card_brand: string | null
-          created_at: string
-          department: string | null
-          disabled_at: string | null
-          enabled: boolean | null
-          expires_at: string | null
-          finix_application_id: string | null
-          finix_funding_source: string | null
-          finix_identity_id: string | null
-          finix_payment_instrument_id: string | null
-          finix_processor: string | null
-          id: string
-          is_default: boolean
-          is_expired: boolean
-          last_four: string
-          method_name: string
-          method_type: string
-          payment_token: string
-          updated_at: string
-          user_id: string
-          verification_status: string | null
-        }
-      }
-      delete_payment_method: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
       disable_user_payment_instrument: {
         Args: { p_id: string }
         Returns: undefined
-      }
-      enable_payment_method: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      get_available_payment_methods: {
-        Args: { user_id: string }
-        Returns: {
-          account_type: string
-          bank_account_validation_check: string | null
-          business_id: string | null
-          business_name: string | null
-          card_brand: string | null
-          created_at: string
-          department: string | null
-          disabled_at: string | null
-          enabled: boolean | null
-          expires_at: string | null
-          finix_application_id: string | null
-          finix_funding_source: string | null
-          finix_identity_id: string | null
-          finix_payment_instrument_id: string | null
-          finix_processor: string | null
-          id: string
-          is_default: boolean
-          is_expired: boolean
-          last_four: string
-          method_name: string
-          method_type: string
-          payment_token: string
-          updated_at: string
-          user_id: string
-          verification_status: string | null
-        }[]
       }
       get_available_vehicles: {
         Args: { user_id: string }
@@ -1961,36 +1739,6 @@ export type Database = {
           p_bank_last_four: string
         }
         Returns: string
-      }
-      get_payment_methods: {
-        Args: Record<PropertyKey, never> | { p_account_type?: string }
-        Returns: {
-          account_type: string
-          bank_account_validation_check: string | null
-          business_id: string | null
-          business_name: string | null
-          card_brand: string | null
-          created_at: string
-          department: string | null
-          disabled_at: string | null
-          enabled: boolean | null
-          expires_at: string | null
-          finix_application_id: string | null
-          finix_funding_source: string | null
-          finix_identity_id: string | null
-          finix_payment_instrument_id: string | null
-          finix_processor: string | null
-          id: string
-          is_default: boolean
-          is_expired: boolean
-          last_four: string
-          method_name: string
-          method_type: string
-          payment_token: string
-          updated_at: string
-          user_id: string
-          verification_status: string | null
-        }[]
       }
       get_role_id_by_name: {
         Args: { _role_name: string }
@@ -2099,10 +1847,6 @@ export type Database = {
       remove_role_from_user: {
         Args: { _user_id: string; _role_name: string; _entity_id?: string }
         Returns: boolean
-      }
-      set_default_payment_method: {
-        Args: { p_id: string } | { p_id: string; p_account_type?: string }
-        Returns: undefined
       }
       set_default_user_payment_instrument: {
         Args: { p_id: string }
