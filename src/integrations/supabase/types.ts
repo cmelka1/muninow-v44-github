@@ -1625,29 +1625,7 @@ export type Database = {
       }
     }
     Views: {
-      bill_quality_metrics: {
-        Row: {
-          avg_match_score: number | null
-          bills_requiring_review: number | null
-          data_source_system: string | null
-          total_bills: number | null
-          unassigned_bills: number | null
-          validation_failures: number | null
-        }
-        Relationships: []
-      }
-      user_bill_summary: {
-        Row: {
-          last_bill_update: string | null
-          next_due_date: string | null
-          profile_id: string | null
-          total_bills: number | null
-          total_due_cents: number | null
-          unpaid_bills: number | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       accept_organization_invitation: {
@@ -1657,10 +1635,6 @@ export type Database = {
       assign_role_to_user: {
         Args: { _user_id: string; _role_name: string; _entity_id?: string }
         Returns: boolean
-      }
-      calculate_bank_account_priority: {
-        Args: { account_id: string }
-        Returns: number
       }
       check_address_duplicate: {
         Args: {
@@ -1707,14 +1681,6 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
           year: string
         }[]
-      }
-      get_household_admin_id: {
-        Args: { member_id: string }
-        Returns: string
-      }
-      get_next_sequence_number: {
-        Args: { p_municipality_id: string; p_system_id: string }
-        Returns: number
       }
       get_organization_members: {
         Args: { user_id: string }
@@ -1809,18 +1775,6 @@ export type Database = {
         Args: { business_id: string }
         Returns: boolean
       }
-      is_household_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_household_member: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_in_same_household: {
-        Args: { user_a: string; user_b: string }
-        Returns: boolean
-      }
       is_in_same_organization: {
         Args: { user_a: string; user_b: string }
         Returns: boolean
@@ -1866,10 +1820,6 @@ export type Database = {
       }
       smart_bill_matching: {
         Args: { input_bill_id: string }
-        Returns: undefined
-      }
-      update_bank_account_priorities: {
-        Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }
