@@ -138,7 +138,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Due Date</TableHead>
-                <TableHead>Vendor</TableHead>
+                <TableHead>Merchant</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
@@ -147,13 +147,13 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
             </TableHeader>
             <TableBody>
               {bills.map((bill) => (
-                <TableRow key={bill.id} className="h-12">
+                <TableRow key={bill.bill_id} className="h-12">
                   <TableCell className="hidden sm:table-cell py-2">
                     <span className="truncate">{formatDate(bill.due_date)}</span>
                   </TableCell>
                   <TableCell className="py-2">
-                    <span className="truncate block max-w-[200px]" title={bill.vendor}>
-                      {bill.vendor}
+                    <span className="truncate block max-w-[200px]" title={bill.merchant_name}>
+                      {bill.merchant_name}
                     </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
@@ -165,7 +165,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
                     {getStatusBadge(bill.payment_status || 'unpaid')}
                   </TableCell>
                   <TableCell className="text-right font-medium py-2">
-                    {formatAmount(Number(bill.amount_due))}
+                    {formatAmount(Number(bill.amount_due_cents) / 100)}
                   </TableCell>
                   <TableCell className="text-center py-2">
                     <Button size="sm" className="w-full h-8">

@@ -11,11 +11,11 @@ export const useVendorOptions = () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('municipal_bills')
-        .select('vendor')
+        .from('master_bills')
+        .select('merchant_name')
         .eq('user_id', user.id)
-        .in('payment_status', ['unpaid', 'overdue', 'delinquent'])
-        .not('vendor', 'is', null);
+        .not('payment_status', 'eq', 'paid')
+        .not('merchant_name', 'is', null);
 
       if (error) {
         console.error('Error fetching vendor options:', error);
@@ -23,7 +23,7 @@ export const useVendorOptions = () => {
       }
 
       // Get unique vendors
-      const uniqueVendors = [...new Set(data.map(bill => bill.vendor))];
+      const uniqueVendors = [...new Set(data.map(bill => bill.merchant_name))];
       return uniqueVendors.sort();
     },
     enabled: !!user?.id,
@@ -39,10 +39,10 @@ export const useCategoryOptions = () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('municipal_bills')
+        .from('master_bills')
         .select('category')
         .eq('user_id', user.id)
-        .in('payment_status', ['unpaid', 'overdue', 'delinquent'])
+        .not('payment_status', 'eq', 'paid')
         .not('category', 'is', null);
 
       if (error) {
@@ -67,10 +67,10 @@ export const usePaymentStatusOptions = () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('municipal_bills')
+        .from('master_bills')
         .select('payment_status')
         .eq('user_id', user.id)
-        .in('payment_status', ['unpaid', 'overdue', 'delinquent'])
+        .not('payment_status', 'eq', 'paid')
         .not('payment_status', 'is', null);
 
       if (error) {

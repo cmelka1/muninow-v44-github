@@ -24,7 +24,7 @@ export const useMunicipalBills = (params?: UseMunicipalBillsParams) => {
   const { page = 1, pageSize = 5, filters = {} } = params || {};
 
   return useQuery({
-    queryKey: ['municipal-bills', user?.id, page, pageSize, filters],
+    queryKey: ['master-bills', user?.id, page, pageSize, filters],
     queryFn: async () => {
       if (!user?.id) return { data: [], count: 0 };
 
@@ -32,14 +32,14 @@ export const useMunicipalBills = (params?: UseMunicipalBillsParams) => {
       const to = from + pageSize - 1;
 
       let query = supabase
-        .from('municipal_bills')
+        .from('master_bills')
         .select('*', { count: 'exact' })
         .eq('user_id', user.id)
-        .in('payment_status', ['unpaid', 'overdue', 'delinquent']);
+        .not('payment_status', 'eq', 'paid');
 
       // Apply filters
       if (filters.vendor) {
-        query = query.eq('vendor', filters.vendor);
+        query = query.eq('merchant_name', filters.vendor);
       }
       
       if (filters.category) {
@@ -47,7 +47,7 @@ export const useMunicipalBills = (params?: UseMunicipalBillsParams) => {
       }
       
       if (filters.paymentStatus) {
-        query = query.eq('payment_status', filters.paymentStatus);
+        query = query.eq('payment_status', filters.paymentStatus as any);
       }
       
       if (filters.dueDateRange) {
@@ -71,16 +71,16 @@ export const useMunicipalBills = (params?: UseMunicipalBillsParams) => {
       if (filters.amountRange) {
         switch (filters.amountRange) {
           case '0-100':
-            query = query.gte('amount_due', 0).lte('amount_due', 100);
+            query = query.gte('amount_due_cents', 0).lte('amount_due_cents', 10000);
             break;
           case '101-500':
-            query = query.gte('amount_due', 101).lte('amount_due', 500);
+            query = query.gte('amount_due_cents', 10100).lte('amount_due_cents', 50000);
             break;
           case '501-1000':
-            query = query.gte('amount_due', 501).lte('amount_due', 1000);
+            query = query.gte('amount_due_cents', 50100).lte('amount_due_cents', 100000);
             break;
           case '1000+':
-            query = query.gte('amount_due', 1000);
+            query = query.gte('amount_due_cents', 100000);
             break;
         }
       }
