@@ -172,7 +172,7 @@ const SuperAdminMerchantDetail = () => {
               value="fees" 
               className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
-              Fees
+              Merchant Fees
             </TabsTrigger>
             <TabsTrigger 
               value="payment-devices" 
