@@ -413,6 +413,14 @@ export type Database = {
           error_log: Json | null
           external_account_number: string | null
           external_bill_number: string
+          external_business_name: string | null
+          external_customer_address_line1: string | null
+          external_customer_address_line2: string | null
+          external_customer_city: string | null
+          external_customer_name: string | null
+          external_customer_state: string | null
+          external_customer_type: string | null
+          external_customer_zip_code: string | null
           external_payment_reference: string | null
           finix_fee_profile_id: string | null
           finix_identity_id: string | null
@@ -519,6 +527,14 @@ export type Database = {
           error_log?: Json | null
           external_account_number?: string | null
           external_bill_number: string
+          external_business_name?: string | null
+          external_customer_address_line1?: string | null
+          external_customer_address_line2?: string | null
+          external_customer_city?: string | null
+          external_customer_name?: string | null
+          external_customer_state?: string | null
+          external_customer_type?: string | null
+          external_customer_zip_code?: string | null
           external_payment_reference?: string | null
           finix_fee_profile_id?: string | null
           finix_identity_id?: string | null
@@ -625,6 +641,14 @@ export type Database = {
           error_log?: Json | null
           external_account_number?: string | null
           external_bill_number?: string
+          external_business_name?: string | null
+          external_customer_address_line1?: string | null
+          external_customer_address_line2?: string | null
+          external_customer_city?: string | null
+          external_customer_name?: string | null
+          external_customer_state?: string | null
+          external_customer_type?: string | null
+          external_customer_zip_code?: string | null
           external_payment_reference?: string | null
           finix_fee_profile_id?: string | null
           finix_identity_id?: string | null
