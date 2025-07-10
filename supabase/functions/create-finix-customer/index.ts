@@ -10,6 +10,9 @@ interface CreateFinixCustomerRequest {
   customer_id: string;
   merchant_name: string;
   statement_descriptor: string;
+  data_source_system?: string;
+  category?: string;
+  subcategory?: string;
 }
 
 serve(async (req) => {
@@ -18,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { customer_id, merchant_name, statement_descriptor }: CreateFinixCustomerRequest = await req.json();
+    const { customer_id, merchant_name, statement_descriptor, data_source_system, category, subcategory }: CreateFinixCustomerRequest = await req.json();
     
     if (!customer_id || !merchant_name || !statement_descriptor) {
       throw new Error('Missing required fields');
@@ -282,7 +285,12 @@ serve(async (req) => {
         finix_entity_data: finixData.entity,
         finix_tags: finixData.tags,
         processing_status: 'seller_created',
-        verification_status: 'pending'
+        verification_status: 'pending',
+        
+        // Internal tracking fields (not sent to Finix)
+        data_source_system: data_source_system || null,
+        category: category || null,
+        subcategory: subcategory || null
         
         // Note: Bank account fields (bank_account_holder_name, bank_routing_number, etc.) 
         // are now nullable and will be populated in Step 2

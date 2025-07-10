@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { MERCHANT_CATEGORIES, CATEGORY_OPTIONS } from '@/constants/merchantCategories';
 
 interface Customer {
   customer_id: string;
@@ -42,6 +43,9 @@ interface AddMerchantDialogProps {
 const step1Schema = z.object({
   merchant_name: z.string().min(1, 'Merchant name is required'),
   statement_descriptor: z.string().min(1, 'Statement descriptor is required').max(22, 'Statement descriptor must be 22 characters or less'),
+  data_source_system: z.string().optional(),
+  category: z.string().optional(),
+  subcategory: z.string().optional(),
 });
 
 const step2Schema = z.object({
@@ -105,6 +109,9 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
           customer_id: customer.customer_id,
           merchant_name: data.merchant_name,
           statement_descriptor: data.statement_descriptor,
+          data_source_system: data.data_source_system,
+          category: data.category,
+          subcategory: data.subcategory,
         },
       });
 
@@ -301,6 +308,61 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
                     Maximum 22 characters. This is how charges will appear on your customers' bank statements.
                   </p>
                 </div>
+                
+                {/* Internal Use Fields */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Internal Use Only</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="data_source_system">Data Source System (Municipal IT System)</Label>
+                      <Input
+                        id="data_source_system"
+                        placeholder="Enter data source system"
+                        {...step1Form.register('data_source_system')}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="category">Category</Label>
+                        <Select onValueChange={(value) => {
+                          step1Form.setValue('category', value);
+                          step1Form.setValue('subcategory', ''); // Reset subcategory when category changes
+                        }}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORY_OPTIONS.map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="subcategory">Subcategory</Label>
+                        <Select 
+                          onValueChange={(value) => step1Form.setValue('subcategory', value)}
+                          disabled={!step1Form.watch('category')}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select subcategory" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {step1Form.watch('category') && MERCHANT_CATEGORIES[step1Form.watch('category') as keyof typeof MERCHANT_CATEGORIES]?.map((subcategory) => (
+                              <SelectItem key={subcategory} value={subcategory}>
+                                {subcategory}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -478,7 +540,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
               </CardContent>
             </Card>
 
-            {/* Merchant Information Card */}
+             {/* Merchant Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium">Merchant Information</CardTitle>
@@ -504,6 +566,39 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
                     {step1Data?.finix_identity_id}
                   </div>
                 </div>
+                {(step1Data?.data_source_system || step1Data?.category || step1Data?.subcategory) && (
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-3">Internal Information</h4>
+                    <div className="space-y-3">
+                      {step1Data?.data_source_system && (
+                        <div>
+                          <Label className="text-sm text-muted-foreground">Data Source System</Label>
+                          <div className="p-2 bg-muted rounded text-sm">
+                            {step1Data.data_source_system}
+                          </div>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-4">
+                        {step1Data?.category && (
+                          <div>
+                            <Label className="text-sm text-muted-foreground">Category</Label>
+                            <div className="p-2 bg-muted rounded text-sm">
+                              {step1Data.category}
+                            </div>
+                          </div>
+                        )}
+                        {step1Data?.subcategory && (
+                          <div>
+                            <Label className="text-sm text-muted-foreground">Subcategory</Label>
+                            <div className="p-2 bg-muted rounded text-sm">
+                              {step1Data.subcategory}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

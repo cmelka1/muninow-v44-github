@@ -548,6 +548,7 @@ export type Database = {
           business_type: string
           business_website: string | null
           card_present_percentage: number
+          category: string | null
           created_at: string
           credit_check_consent: boolean
           credit_check_ip_address: string | null
@@ -563,6 +564,7 @@ export type Database = {
           customer_state: string
           customer_street_address: string
           customer_zip_code: string
+          data_source_system: string | null
           doing_business_as: string
           ecommerce_percentage: number
           finix_application_id: string | null
@@ -611,6 +613,7 @@ export type Database = {
           refund_policy: string
           settlement_enabled: boolean | null
           statement_descriptor: string
+          subcategory: string | null
           submission_metadata: Json | null
           updated_at: string
           user_id: string
@@ -641,6 +644,7 @@ export type Database = {
           business_type: string
           business_website?: string | null
           card_present_percentage?: number
+          category?: string | null
           created_at?: string
           credit_check_consent?: boolean
           credit_check_ip_address?: string | null
@@ -656,6 +660,7 @@ export type Database = {
           customer_state: string
           customer_street_address: string
           customer_zip_code: string
+          data_source_system?: string | null
           doing_business_as: string
           ecommerce_percentage?: number
           finix_application_id?: string | null
@@ -704,6 +709,7 @@ export type Database = {
           refund_policy: string
           settlement_enabled?: boolean | null
           statement_descriptor: string
+          subcategory?: string | null
           submission_metadata?: Json | null
           updated_at?: string
           user_id: string
@@ -734,6 +740,7 @@ export type Database = {
           business_type?: string
           business_website?: string | null
           card_present_percentage?: number
+          category?: string | null
           created_at?: string
           credit_check_consent?: boolean
           credit_check_ip_address?: string | null
@@ -749,6 +756,7 @@ export type Database = {
           customer_state?: string
           customer_street_address?: string
           customer_zip_code?: string
+          data_source_system?: string | null
           doing_business_as?: string
           ecommerce_percentage?: number
           finix_application_id?: string | null
@@ -797,6 +805,7 @@ export type Database = {
           refund_policy?: string
           settlement_enabled?: boolean | null
           statement_descriptor?: string
+          subcategory?: string | null
           submission_metadata?: Json | null
           updated_at?: string
           user_id?: string
