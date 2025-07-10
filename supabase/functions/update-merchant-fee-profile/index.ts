@@ -22,9 +22,10 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
+    // Create client for user authentication with user's token
+    const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      supabaseServiceKey,
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
           headers: { Authorization: req.headers.get('Authorization')! },
@@ -32,8 +33,14 @@ serve(async (req) => {
       }
     );
 
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Create service role client for database operations (bypasses RLS)
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      supabaseServiceKey
+    );
+
+    // Verify user is authenticated using auth client
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -41,8 +48,8 @@ serve(async (req) => {
       );
     }
 
-    // Check if user has superAdmin role
-    const { data: userRoles, error: roleError } = await supabaseClient.rpc('get_user_roles', {
+    // Check if user has superAdmin role using auth client
+    const { data: userRoles, error: roleError } = await authClient.rpc('get_user_roles', {
       _user_id: user.id
     });
 
