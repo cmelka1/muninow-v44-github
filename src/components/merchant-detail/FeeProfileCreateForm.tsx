@@ -77,24 +77,6 @@ const FeeProfileCreateForm: React.FC<FeeProfileCreateFormProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ach_basis_points_fee_limit">ACH Basis Points Fee Limit</Label>
-                <Input
-                  id="ach_basis_points_fee_limit"
-                  type="text"
-                  inputMode="numeric"
-                  {...register('ach_basis_points_fee_limit', { 
-                    valueAsNumber: true,
-                    min: { value: 0, message: 'Must be 0 or greater' }
-                  })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <p className="text-xs text-muted-foreground">Maximum fee in cents (optional)</p>
-                {errors.ach_basis_points_fee_limit && (
-                  <p className="text-sm text-destructive">{errors.ach_basis_points_fee_limit.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="ach_fixed_fee">ACH Fixed Fee</Label>
                 <Input
                   id="ach_fixed_fee"
@@ -110,6 +92,24 @@ const FeeProfileCreateForm: React.FC<FeeProfileCreateFormProps> = ({
                 <p className="text-xs text-muted-foreground">Fixed fee in cents</p>
                 {errors.ach_fixed_fee && (
                   <p className="text-sm text-destructive">{errors.ach_fixed_fee.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ach_basis_points_fee_limit">ACH Basis Points Fee Limit</Label>
+                <Input
+                  id="ach_basis_points_fee_limit"
+                  type="text"
+                  inputMode="numeric"
+                  {...register('ach_basis_points_fee_limit', { 
+                    valueAsNumber: true,
+                    min: { value: 0, message: 'Must be 0 or greater' }
+                  })}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <p className="text-xs text-muted-foreground">Maximum fee in cents (optional)</p>
+                {errors.ach_basis_points_fee_limit && (
+                  <p className="text-sm text-destructive">{errors.ach_basis_points_fee_limit.message}</p>
                 )}
               </div>
             </div>

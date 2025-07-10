@@ -86,16 +86,16 @@ const FeeProfileConfirmForm: React.FC<FeeProfileConfirmFormProps> = ({
                   <span className="text-sm text-muted-foreground">ACH Basis Points:</span>
                   <span className="font-medium">{formatBasisPoints(formData.ach_basis_points)}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">ACH Fixed Fee:</span>
+                  <span className="font-medium">{formatCurrency(formData.ach_fixed_fee)}</span>
+                </div>
                 {formData.ach_basis_points_fee_limit && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">ACH Basis Points Fee Limit:</span>
                     <span className="font-medium">{formatCurrency(formData.ach_basis_points_fee_limit)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">ACH Fixed Fee:</span>
-                  <span className="font-medium">{formatCurrency(formData.ach_fixed_fee)}</span>
-                </div>
               </div>
             </div>
 
