@@ -204,10 +204,11 @@ serve(async (req) => {
     }
 
     // Get Finix credentials
+    const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");
     const finixApiSecret = Deno.env.get("FINIX_API_SECRET");
     const finixEnvironment = Deno.env.get("FINIX_ENVIRONMENT") || "sandbox";
     
-    if (!finixApiSecret) {
+    if (!finixApplicationId || !finixApiSecret) {
       throw new Error("Finix API credentials not configured");
     }
 
@@ -222,7 +223,7 @@ serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         "Finix-Version": "2022-02-01",
-        "Authorization": `Basic ${btoa(finixApiSecret + ":")}`
+        "Authorization": `Basic ${btoa(finixApplicationId + ":" + finixApiSecret)}`
       },
       body: JSON.stringify(finixRequest)
     });
