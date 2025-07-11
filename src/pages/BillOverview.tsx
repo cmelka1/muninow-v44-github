@@ -245,14 +245,9 @@ const BillOverview = () => {
                   
                   <div className="flex justify-between items-center py-2">
                     <span className="text-base">Service Fee</span>
-                    <span className="text-base font-medium">
+                    <span className="text-base font-medium text-right">
                       {serviceFee ? (
-                        <span className="space-y-1">
-                          <div>{formatCurrency(serviceFee.totalFee)}</div>
-                          <div className="text-xs text-muted-foreground">
-                            ({(serviceFee.basisPoints / 100).toFixed(2)}% + {formatCurrency(serviceFee.fixedFee)})
-                          </div>
-                        </span>
+                        formatCurrency(serviceFee.totalFee)
                       ) : selectedPaymentMethod ? (
                         formatCurrency(0)
                       ) : (
