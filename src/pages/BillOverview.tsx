@@ -64,7 +64,7 @@ const BillOverview = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header with back button */}
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => navigate('/dashboard')}>
@@ -74,116 +74,141 @@ const BillOverview = () => {
           <h1 className="text-2xl font-bold">Bill Details</h1>
         </div>
 
-        {/* Bill Overview Tile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Bill Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Merchant Name</label>
-                <p className="text-base">{bill.merchant_name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">System Account Number</label>
-                <p className="text-base">{bill.external_account_number || 'N/A'}</p>
-              </div>
-              {bill.external_bill_number && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">System Bill Number</label>
-                  <p className="text-base">{bill.external_bill_number}</p>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Left Column - Existing Tiles */}
+          <div className="xl:col-span-2 space-y-6">
+            {/* Bill Overview Tile */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Bill Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Merchant Name</label>
+                    <p className="text-base">{bill.merchant_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">System Account Number</label>
+                    <p className="text-base">{bill.external_account_number || 'N/A'}</p>
+                  </div>
+                  {bill.external_bill_number && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">System Bill Number</label>
+                      <p className="text-base">{bill.external_bill_number}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Category</label>
+                    <p className="text-base">{bill.category || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Issue Date</label>
+                    <p className="text-base">{formatDate(bill.issue_date)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
+                    <p className="text-base">{bill.subcategory || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Due Date</label>
+                    <p className="text-base">{formatDate(bill.due_date)}</p>
+                  </div>
                 </div>
-              )}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Category</label>
-                <p className="text-base">{bill.category || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Issue Date</label>
-                <p className="text-base">{formatDate(bill.issue_date)}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
-                <p className="text-base">{bill.subcategory || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Due Date</label>
-                <p className="text-base">{formatDate(bill.due_date)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Customer Address Tile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Address</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <p className="text-base">{bill.external_customer_address_line1 || 'N/A'}</p>
-              {bill.external_customer_address_line2 && (
-                <p className="text-base">{bill.external_customer_address_line2}</p>
-              )}
-              <p className="text-base">
-                {bill.external_customer_city && bill.external_customer_state && bill.external_customer_zip_code
-                  ? `${bill.external_customer_city}, ${bill.external_customer_state} ${bill.external_customer_zip_code}`
-                  : 'N/A'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Customer Address Tile */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Address</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div>
+                  <p className="text-base">{bill.external_customer_address_line1 || 'N/A'}</p>
+                  {bill.external_customer_address_line2 && (
+                    <p className="text-base">{bill.external_customer_address_line2}</p>
+                  )}
+                  <p className="text-base">
+                    {bill.external_customer_city && bill.external_customer_state && bill.external_customer_zip_code
+                      ? `${bill.external_customer_city}, ${bill.external_customer_state} ${bill.external_customer_zip_code}`
+                      : 'N/A'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Payment Details Tile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              {/* Line Items */}
-              <div className="flex justify-between items-center py-2">
-                <span className="text-base">Amount Due</span>
-                <span className="text-base font-medium">{formatCurrency(bill.total_amount_cents)}</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2">
-                <span className="text-base">Service Fee</span>
-                <span className="text-base font-medium">—</span>
-              </div>
-              
-              {/* Separator */}
-              <div className="border-t border-border my-3"></div>
-              
-              {/* Total */}
-              <div className="flex justify-between items-center py-2 bg-muted/30 px-3 rounded">
-                <span className="text-base font-semibold">Total Amount Due</span>
-                <span className="text-lg font-bold">{formatCurrency(bill.total_amount_cents)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Payment Details Tile */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {/* Line Items */}
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-base">Amount Due</span>
+                    <span className="text-base font-medium">{formatCurrency(bill.total_amount_cents)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-base">Service Fee</span>
+                    <span className="text-base font-medium">—</span>
+                  </div>
+                  
+                  {/* Separator */}
+                  <div className="border-t border-border my-3"></div>
+                  
+                  {/* Total */}
+                  <div className="flex justify-between items-center py-2 bg-muted/30 px-3 rounded">
+                    <span className="text-base font-semibold">Total Amount Due</span>
+                    <span className="text-lg font-bold">{formatCurrency(bill.total_amount_cents)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Check Out Tile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Check Out</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Coming soon...</p>
-          </CardContent>
-        </Card>
+            {/* Notification History Tile */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Notification History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Coming soon...</p>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Notification History Tile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notification History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Coming soon...</p>
-          </CardContent>
-        </Card>
+          {/* Right Column - Check Out Tile */}
+          <div className="xl:col-span-1">
+            <Card className="h-fit">
+              <CardHeader>
+                <CardTitle>Check Out</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Bill Summary Section */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Bill Summary</h3>
+                  <div className="space-y-2">
+                    <p className="text-base font-medium">{bill.merchant_name || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{bill.category || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{formatDate(bill.due_date)}</p>
+                  </div>
+                </div>
+
+                {/* Separator */}
+                <div className="border-t border-border"></div>
+
+                {/* Check Out Process Section */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Check Out Process</h3>
+                  <p className="text-muted-foreground">Coming soon...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
