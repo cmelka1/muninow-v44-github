@@ -11,8 +11,7 @@ import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
-import GooglePayButton from '@/components/GooglePayButton';
-import ApplePayButton from '@/components/ApplePayButton';
+import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
 
 const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
@@ -769,21 +768,14 @@ const BillOverview = () => {
 
                         {/* Payment Options - Side by Side */}
                         {bill?.finix_merchant_id && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <GooglePayButton
-                              onPayment={handleGooglePayment}
-                              bill={bill}
-                              totalAmount={totalWithFee}
-                              merchantId={bill.finix_merchant_id}
-                              isDisabled={isProcessingPayment}
-                            />
-                            <ApplePayButton
-                              onPayment={handleApplePayment}
-                              bill={bill}
-                              totalAmount={totalWithFee}
-                              isDisabled={isProcessingPayment}
-                            />
-                          </div>
+                          <PaymentButtonsContainer
+                            bill={bill}
+                            totalAmount={totalWithFee}
+                            merchantId={bill.finix_merchant_id}
+                            isDisabled={isProcessingPayment}
+                            onGooglePayment={handleGooglePayment}
+                            onApplePayment={handleApplePayment}
+                          />
                         )}
                  </div>
 
