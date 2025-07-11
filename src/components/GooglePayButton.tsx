@@ -39,11 +39,13 @@ export const GooglePayButton: React.FC<GooglePayButtonProps> = ({
           'VISA'
         ];
 
-        // Base payment method configuration (no authentication methods)
+        // Base payment method configuration with authentication methods
+        const allowedCardAuthMethods = ["PAN_ONLY", "CRYPTOGRAM_3DS"];
         const baseCardPaymentMethod = {
           type: 'CARD' as const,
           parameters: {
             allowedCardNetworks: allowedCardNetworks,
+            allowedCardAuthMethods: allowedCardAuthMethods,
           },
         };
 
