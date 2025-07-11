@@ -27,7 +27,7 @@ const BillOverview = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-24" />
@@ -44,7 +44,7 @@ const BillOverview = () => {
 
   if (error || !bill) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Button variant="outline" onClick={() => navigate('/dashboard')}>
@@ -63,7 +63,7 @@ const BillOverview = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header with back button */}
         <div className="flex items-center gap-4">
