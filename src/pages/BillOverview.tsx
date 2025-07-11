@@ -492,14 +492,16 @@ const BillOverview = () => {
                      </div>
                    )}
 
-                   {/* Google Pay Button */}
-                   {bill?.finix_merchant_id && (
-                     <GooglePayButton
-                       merchantId={bill.finix_merchant_id}
-                       isDisabled={true}
-                       onClick={() => console.log("Google Pay clicked - Coming soon!")}
-                     />
-                   )}
+                    {/* Google Pay Button */}
+                    {bill?.finix_merchant_id && (
+                      <GooglePayButton
+                        merchantId={bill.finix_merchant_id}
+                        billAmount={totalWithFee}
+                        merchantName={bill.merchant_name || bill.business_legal_name || 'Merchant'}
+                        isDisabled={true}
+                        onClick={() => console.log("Google Pay clicked - Coming soon!")}
+                      />
+                    )}
                  </div>
 
                  {/* Separator */}

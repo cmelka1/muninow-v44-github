@@ -4,12 +4,18 @@ import type { PaymentsClient, IsReadyToPayRequest, PaymentMethod } from '@/types
 
 interface GooglePayButtonProps {
   merchantId: string;
+  billAmount: number;
+  merchantName: string;
+  googlePayMerchantId?: string;
   isDisabled?: boolean;
   onClick?: () => void;
 }
 
 const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   merchantId,
+  billAmount,
+  merchantName,
+  googlePayMerchantId,
   isDisabled = true,
   onClick
 }) => {
@@ -66,6 +72,22 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
           tokenizationSpecification: tokenizationSpecification,
         };
 
+        // Step 8: Create a Payment Data Request
+        const paymentDataRequest = {
+          ...baseRequest,
+          allowedPaymentMethods: [cardPaymentMethod],
+          transactionInfo: {
+            countryCode: 'US',
+            currencyCode: 'USD',
+            totalPrice: (billAmount / 100).toFixed(2),
+            totalPriceStatus: 'FINAL' as const,
+          },
+          merchantInfo: {
+            merchantId: googlePayMerchantId || '12345678901234567890', // TEST merchant ID
+            merchantName: merchantName,
+          },
+        };
+
         // Step 6: Check Readiness to Pay with Google Pay
         const isReadyToPayRequest: IsReadyToPayRequest = {
           ...baseRequest,
@@ -85,6 +107,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
                   onClick();
                 } else {
                   console.log("Google Pay button clicked - Coming soon!");
+                  console.log("Payment Data Request:", paymentDataRequest);
                 }
               },
               allowedPaymentMethods: [cardPaymentMethod],
@@ -106,7 +129,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
 
     // Initialize Google Pay when component mounts
     initializeGooglePay();
-  }, [merchantId, onClick, isDisabled]);
+  }, [merchantId, billAmount, merchantName, googlePayMerchantId, onClick, isDisabled]);
 
   if (isLoading) {
     return (

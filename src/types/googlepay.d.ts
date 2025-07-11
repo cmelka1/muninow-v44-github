@@ -60,11 +60,13 @@ export interface PaymentDataRequest {
   apiVersionMinor: number;
   allowedPaymentMethods: PaymentMethod[];
   transactionInfo: {
-    totalPriceStatus: 'FINAL' | 'ESTIMATED';
-    totalPrice: string;
+    countryCode: string;
     currencyCode: string;
+    totalPrice: string;
+    totalPriceStatus: 'FINAL' | 'ESTIMATED';
   };
   merchantInfo: {
+    merchantId?: string;
     merchantName: string;
   };
 }
