@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ interface BillsTableProps {
 }
 
 const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   
@@ -82,6 +84,10 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
 
   const handleNextPage = () => {
     setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  const handleRowClick = (billId: string) => {
+    navigate(`/bill/${billId}`);
   };
 
   if (isLoading) {
@@ -147,7 +153,11 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
             </TableHeader>
             <TableBody>
               {bills.map((bill) => (
-                <TableRow key={bill.bill_id} className="h-12">
+                <TableRow 
+                  key={bill.bill_id} 
+                  className="h-12 cursor-pointer hover:bg-muted/50" 
+                  onClick={() => handleRowClick(bill.bill_id)}
+                >
                   <TableCell className="hidden sm:table-cell py-2">
                     <span className="truncate">{formatDate(bill.due_date)}</span>
                   </TableCell>
@@ -168,7 +178,14 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
                     {formatAmount(Number(bill.amount_due_cents) / 100)}
                   </TableCell>
                   <TableCell className="text-center py-2">
-                    <Button size="sm" className="w-full h-8">
+                    <Button 
+                      size="sm" 
+                      className="w-full h-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle pay action - will be implemented later
+                      }}
+                    >
                       Pay
                     </Button>
                   </TableCell>
