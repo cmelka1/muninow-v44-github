@@ -54,14 +54,32 @@ const BillOverview = () => {
     .slice(0, 3);
 
   const calculateServiceFee = () => {
-    if (!selectedPaymentMethod || !bill) return null;
+    if (!bill) return null;
+    
+    // Handle Google Pay as a special case - always use card fees
+    if (selectedPaymentMethod === 'google-pay') {
+      const basisPoints = bill.basis_points || 250;
+      const fixedFee = bill.fixed_fee || 50;
+      const percentageFee = Math.round((bill.total_amount_cents * basisPoints) / 10000);
+      const totalFee = percentageFee + fixedFee;
+
+      return {
+        totalFee,
+        percentageFee,
+        fixedFee,
+        basisPoints,
+        isCard: true
+      };
+    }
+    
+    if (!selectedPaymentMethod) return null;
     
     const selectedInstrument = topPaymentMethods.find(instrument => instrument.id === selectedPaymentMethod);
     if (!selectedInstrument) return null;
 
     const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
-    const basisPoints = isCard ? (bill.basis_points || 250) : (bill.ach_basis_points || 20); // Default values if not set
-    const fixedFee = isCard ? (bill.fixed_fee || 50) : (bill.ach_fixed_fee || 50); // In cents
+    const basisPoints = isCard ? (bill.basis_points || 250) : (bill.ach_basis_points || 20);
+    const fixedFee = isCard ? (bill.fixed_fee || 50) : (bill.ach_fixed_fee || 50);
 
     const percentageFee = Math.round((bill.total_amount_cents * basisPoints) / 10000);
     const totalFee = percentageFee + fixedFee;
@@ -177,11 +195,6 @@ const BillOverview = () => {
         variant: "destructive",
       });
       return;
-    }
-
-    // Handle Google Pay separately
-    if (selectedPaymentMethod === 'google-pay') {
-      return handleGooglePayment();
     }
 
     // Handle regular payment methods
@@ -604,29 +617,31 @@ const BillOverview = () => {
                      </div>
                    )}
 
-                     {/* Google Pay Option */}
-                     {bill?.finix_merchant_id && (
-                       <GooglePayButton
-                         isSelected={selectedPaymentMethod === 'google-pay'}
-                         onSelect={() => setSelectedPaymentMethod('google-pay')}
-                         isDisabled={false}
-                       />
-                     )}
+                      {/* Google Pay Option */}
+                      {bill?.finix_merchant_id && (
+                        <GooglePayButton
+                          onPayment={handleGooglePayment}
+                          bill={bill}
+                          totalAmount={totalWithFee}
+                          merchantId={bill.finix_merchant_id}
+                          isDisabled={isProcessingPayment}
+                        />
+                      )}
                  </div>
 
                  {/* Separator */}
                  <div className="border-t border-border"></div>
 
-                 {/* Pay Now Section */}
-                <div className="space-y-3">
-                   <Button 
-                     className="w-full" 
-                     size="lg"
-                     disabled={!selectedPaymentMethod || isProcessingPayment}
-                     onClick={handlePayment}
-                   >
-                    {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee)}`}
-                  </Button>
+                  {/* Pay Now Section */}
+                 <div className="space-y-3">
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      disabled={!selectedPaymentMethod || isProcessingPayment || selectedPaymentMethod === 'google-pay'}
+                      onClick={handlePayment}
+                    >
+                     {isProcessingPayment ? 'Processing...' : selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : `Pay ${formatCurrency(totalWithFee)}`}
+                   </Button>
                   
                   <Button 
                     variant="outline" 
