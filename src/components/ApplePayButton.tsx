@@ -196,7 +196,7 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
         <img 
           src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/apple-pay-logo/Apple_Pay-White-Logo.png"
           alt="Apple Pay"
-          className="h-6 w-auto object-contain"
+          className="h-8 w-auto object-contain"
         />
         {isProcessing && <span className="ml-2 text-sm">Processing...</span>}
       </div>
