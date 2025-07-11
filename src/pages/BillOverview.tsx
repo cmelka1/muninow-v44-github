@@ -11,7 +11,6 @@ import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
-import { GooglePayButton } from '@/components/GooglePayButton';
 
 const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
@@ -490,15 +489,6 @@ const BillOverview = () => {
                         Add Payment Method
                       </Button>
                     </div>
-                  )}
-
-                  {/* Google Pay Button */}
-                  {bill?.finix_merchant_id && totalWithFee && (
-                    <GooglePayButton 
-                      merchantId={bill.finix_merchant_id}
-                      amount={totalWithFee}
-                      disabled={true}
-                    />
                   )}
                 </div>
 
