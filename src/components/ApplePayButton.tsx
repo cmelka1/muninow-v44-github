@@ -184,7 +184,7 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
 
   return (
     <div
-      className={`border rounded-lg p-3 cursor-pointer transition-all bg-card hover:bg-accent ${
+      className={`border rounded-lg p-3 cursor-pointer transition-all bg-black hover:bg-black/80 ${
         isDisabled || isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50'
       }`}
       onClick={handleClick}
