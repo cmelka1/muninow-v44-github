@@ -22,7 +22,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
     >
       <div className="flex items-center space-x-3">
         <img 
-          src="/google-pay-logo.png"
+          src="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/google-pay-button/Google_Pay_Logo.png"
           alt="Google Pay"
           className="h-6 w-6 object-contain"
         />
