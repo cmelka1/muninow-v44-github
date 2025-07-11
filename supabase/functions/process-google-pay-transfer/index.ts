@@ -183,6 +183,13 @@ serve(async (req) => {
     // Get Finix merchant ID from the bill's merchant
     const finixMerchantId = bill.merchants?.finix_merchant_id;
     const merchantIdentityId = bill.merchants?.finix_identity_id;
+    
+    console.log("Merchant configuration:", { 
+      finixMerchantId, 
+      merchantIdentityId,
+      merchantName: bill.merchants?.merchant_name 
+    });
+    
     if (!finixMerchantId || !merchantIdentityId) {
       throw new Error("Merchant not configured with Finix");
     }
@@ -210,10 +217,16 @@ serve(async (req) => {
     // Step 1: Create Finix Payment Instrument from Google Pay token
     const paymentInstrumentRequest: FinixPaymentInstrumentRequest = {
       identity: userIdentity.finix_identity_id,
-      merchant_identity: merchantIdentityId,
+      merchant_identity: finixMerchantId, // Use finix_merchant_id, not finix_identity_id
       third_party_token: google_pay_token,
       type: "GOOGLE_PAY"
     };
+    
+    console.log("Creating payment instrument with:", {
+      user_identity: userIdentity.finix_identity_id,
+      merchant_identity: finixMerchantId,
+      has_token: !!google_pay_token
+    });
 
     // Add billing info if available
     if (billing_address?.name) {

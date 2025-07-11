@@ -310,7 +310,6 @@ const BillOverview = () => {
           totalPriceStatus: 'FINAL' as const,
         },
         merchantInfo: {
-          merchantId: 'BCR2DN6T2TX3W7ZW', // Default test merchant ID
           merchantName: bill.merchant_name || bill.business_legal_name || 'Merchant',
         },
       };
