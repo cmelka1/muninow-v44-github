@@ -115,7 +115,13 @@ const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
       )}
       {isApplePayReady && (
         <ApplePayButton
-          onPayment={onApplePayment}
+          onPaymentComplete={(success, error) => {
+            if (success) {
+              onApplePayment();
+            } else if (error && !error.includes('cancelled')) {
+              console.error('Apple Pay payment failed:', error);
+            }
+          }}
           bill={bill}
           totalAmount={totalAmount}
           isDisabled={isDisabled}

@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ApplePayButtonProps {
-  onPayment: () => Promise<void>;
   bill: any;
   totalAmount: number;
   isDisabled?: boolean;
+  onPaymentComplete: (success: boolean, error?: string) => void;
 }
 
 const ApplePayButton: React.FC<ApplePayButtonProps> = ({
-  onPayment,
   bill,
   totalAmount,
-  isDisabled = false
+  isDisabled = false,
+  onPaymentComplete
 }) => {
   const [isApplePayReady, setIsApplePayReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,15 +47,109 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     checkApplePayAvailability();
   }, []);
 
+  const createAndStartApplePaySession = (description: string, amount: string) => {
+    const paymentRequest = {
+      countryCode: "US",
+      currencyCode: "USD",
+      merchantCapabilities: ["supports3DS"],
+      supportedNetworks: ["visa", "masterCard", "amex", "discover"],
+      total: { 
+        label: description, 
+        amount: amount 
+      },
+      requiredBillingContactFields: ["postalAddress"]
+    };
+
+    const applePaySession = new window.ApplePaySession(6, paymentRequest);
+
+    // Handle merchant validation
+    applePaySession.onvalidatemerchant = async (event) => {
+      try {
+        const merchantSession = {
+          merchantSessionIdentifier: 'merchant_session_id',
+          nonce: 'nonce',
+          merchantIdentifier: 'merchant.com.muninow',
+          domainName: window.location.hostname,
+          displayName: 'MuniNow',
+          signature: 'signature'
+        };
+        applePaySession.completeMerchantValidation(merchantSession);
+      } catch (error) {
+        console.error('Merchant validation failed:', error);
+        applePaySession.abort();
+        onPaymentComplete(false, 'Merchant validation failed');
+      }
+    };
+
+    // Handle payment authorization
+    applePaySession.onpaymentauthorized = async (event) => {
+      try {
+        const paymentToken = JSON.stringify(event.payment.token);
+        const billingContact = event.payment.billingContact;
+
+        // Generate idempotency ID
+        const idempotencyId = `applepay_${bill.bill_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Import supabase client
+        const { supabase } = await import('@/integrations/supabase/client');
+
+        // Call our edge function to process the payment
+        const { data, error } = await supabase.functions.invoke('process-apple-pay-transfer', {
+          body: {
+            bill_id: bill.bill_id,
+            apple_pay_token: paymentToken,
+            total_amount_cents: totalAmount,
+            idempotency_id: idempotencyId,
+            billing_contact: billingContact ? {
+              givenName: billingContact.givenName,
+              familyName: billingContact.familyName,
+              addressLines: billingContact.addressLines,
+              locality: billingContact.locality,
+              administrativeArea: billingContact.administrativeArea,
+              postalCode: billingContact.postalCode,
+              countryCode: billingContact.countryCode
+            } : undefined
+          }
+        });
+
+        if (error || !data?.success) {
+          applePaySession.completePayment(window.ApplePaySession.STATUS_FAILURE);
+          onPaymentComplete(false, data?.error || error?.message || 'Payment failed');
+          return;
+        }
+
+        applePaySession.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+        onPaymentComplete(true);
+        setIsProcessing(false);
+
+      } catch (error) {
+        console.error('Apple Pay payment processing error:', error);
+        applePaySession.completePayment(window.ApplePaySession.STATUS_FAILURE);
+        onPaymentComplete(false, error instanceof Error ? error.message : 'Payment failed');
+      }
+    };
+
+    // Handle payment cancellation
+    applePaySession.oncancel = () => {
+      console.log('Apple Pay cancelled by user');
+      setIsProcessing(false);
+      onPaymentComplete(false, 'Payment cancelled by user');
+    };
+
+    applePaySession.begin();
+  };
+
   const handleClick = async () => {
     if (isDisabled || isProcessing || !isApplePayReady) return;
 
     try {
       setIsProcessing(true);
-      await onPayment();
+      const description = bill.merchant_name || bill.business_legal_name || 'Payment';
+      const amount = (totalAmount / 100).toFixed(2);
+      createAndStartApplePaySession(description, amount);
     } catch (error) {
       console.error('Apple Pay payment error:', error);
-    } finally {
+      onPaymentComplete(false, error instanceof Error ? error.message : 'Payment failed');
       setIsProcessing(false);
     }
   };
