@@ -170,10 +170,25 @@ const BillOverview = () => {
   };
 
   const handlePayment = async () => {
-    if (!selectedPaymentMethod || !bill || !serviceFee) {
+    if (!selectedPaymentMethod || !bill) {
       toast({
         title: "Error",
         description: "Please select a payment method and ensure bill details are loaded.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Handle Google Pay separately
+    if (selectedPaymentMethod === 'google-pay') {
+      return handleGooglePayment();
+    }
+
+    // Handle regular payment methods
+    if (!serviceFee) {
+      toast({
+        title: "Error",
+        description: "Service fee calculation failed. Please try again.",
         variant: "destructive",
       });
       return;
@@ -238,6 +253,103 @@ const BillOverview = () => {
       toast({
         title: "Payment Failed",
         description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleGooglePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      // Check if Google Pay is available
+      if (!window.googlePayClient) {
+        throw new Error('Google Pay is not available');
+      }
+
+      // Define payment request
+      const allowedAuthMethods: string[] = ["PAN_ONLY", "CRYPTOGRAM_3DS"];
+      const allowedCardNetworks: string[] = ["AMEX", "DISCOVER", "INTERAC", "JCB", "MASTERCARD", "VISA"];
+      
+      const paymentDataRequest = {
+        apiVersion: 2,
+        apiVersionMinor: 0,
+        allowedPaymentMethods: [{
+          type: "CARD" as const,
+          parameters: {
+            allowedAuthMethods,
+            allowedCardNetworks,
+          },
+          tokenizationSpecification: {
+            type: "PAYMENT_GATEWAY" as const,
+            parameters: {
+              gateway: "finix" as const,
+              gatewayMerchantId: bill.finix_merchant_id,
+            },
+          },
+        }],
+        transactionInfo: {
+          countryCode: 'US' as const,
+          currencyCode: 'USD' as const,
+          totalPrice: (totalWithFee / 100).toFixed(2),
+          totalPriceStatus: 'FINAL' as const,
+        },
+        merchantInfo: {
+          merchantId: 'BCR2DN6T2TX3W7ZW', // Default test merchant ID
+          merchantName: bill.merchant_name || bill.business_legal_name || 'Merchant',
+        },
+      };
+
+      // Load payment data from Google Pay
+      const paymentData = await window.googlePayClient.loadPaymentData(paymentDataRequest);
+      
+      console.log('Google Pay payment data received:', paymentData);
+
+      // Extract token and billing info
+      const paymentToken = paymentData.paymentMethodData.tokenizationData.token;
+      const billingAddress = paymentData.paymentMethodData.info?.billingAddress;
+
+      // Generate idempotency ID
+      const idempotencyId = `googlepay_${bill.bill_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Call our edge function to process the payment
+      const { data, error } = await supabase.functions.invoke('process-google-pay-transfer', {
+        body: {
+          bill_id: bill.bill_id,
+          google_pay_token: paymentToken,
+          total_amount_cents: totalWithFee,
+          idempotency_id: idempotencyId,
+          billing_address: billingAddress ? {
+            name: billingAddress.name,
+            postal_code: billingAddress.postalCode,
+            country: billingAddress.countryCode
+          } : undefined
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.success) {
+        toast({
+          title: "Payment Successful",
+          description: "Your Google Pay payment has been processed successfully.",
+        });
+        if (data.redirect_url) {
+          navigate(data.redirect_url);
+        }
+      } else {
+        throw new Error(data?.error || 'Payment failed');
+      }
+
+    } catch (error) {
+      console.error('Google Pay payment error:', error);
+      toast({
+        title: "Payment Failed",
+        description: error.message || 'Google Pay payment failed. Please try again.',
         variant: "destructive",
       });
     } finally {
@@ -492,16 +604,14 @@ const BillOverview = () => {
                      </div>
                    )}
 
-                    {/* Google Pay Button */}
-                    {bill?.finix_merchant_id && (
-                      <GooglePayButton
-                        merchantId={bill.finix_merchant_id}
-                        billId={bill.bill_id}
-                        billAmount={totalWithFee}
-                        merchantName={bill.merchant_name || bill.business_legal_name || 'Merchant'}
-                        isDisabled={false}
-                      />
-                    )}
+                     {/* Google Pay Option */}
+                     {bill?.finix_merchant_id && (
+                       <GooglePayButton
+                         isSelected={selectedPaymentMethod === 'google-pay'}
+                         onSelect={() => setSelectedPaymentMethod('google-pay')}
+                         isDisabled={false}
+                       />
+                     )}
                  </div>
 
                  {/* Separator */}
@@ -509,12 +619,12 @@ const BillOverview = () => {
 
                  {/* Pay Now Section */}
                 <div className="space-y-3">
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    disabled={!selectedPaymentMethod || topPaymentMethods.length === 0 || isProcessingPayment}
-                    onClick={handlePayment}
-                  >
+                   <Button 
+                     className="w-full" 
+                     size="lg"
+                     disabled={!selectedPaymentMethod || isProcessingPayment}
+                     onClick={handlePayment}
+                   >
                     {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee)}`}
                   </Button>
                   
