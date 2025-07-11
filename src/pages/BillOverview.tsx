@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Building, Star, Settings } from 'lucide-react';
@@ -67,6 +67,16 @@ const BillOverview = () => {
 
   const serviceFee = calculateServiceFee();
   const totalWithFee = bill ? bill.total_amount_cents + (serviceFee?.totalFee || 0) : 0;
+
+  // Auto-select default payment method when payment methods load
+  useEffect(() => {
+    if (!selectedPaymentMethod && topPaymentMethods.length > 0) {
+      const defaultMethod = topPaymentMethods.find(method => method.is_default);
+      if (defaultMethod) {
+        setSelectedPaymentMethod(defaultMethod.id);
+      }
+    }
+  }, [topPaymentMethods, selectedPaymentMethod]);
 
   const getCardBrandIcon = (cardBrand: string) => {
     const brandMap: { [key: string]: string } = {
