@@ -33,6 +33,31 @@ const BillOverview = () => {
     }).format(cents / 100);
   };
 
+  const calculateServiceFee = () => {
+    if (!selectedPaymentMethod || !bill) return null;
+    
+    const selectedInstrument = topPaymentMethods.find(instrument => instrument.id === selectedPaymentMethod);
+    if (!selectedInstrument) return null;
+
+    const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
+    const basisPoints = isCard ? (bill.basis_points || 250) : (bill.ach_basis_points || 20); // Default values if not set
+    const fixedFee = isCard ? (bill.fixed_fee || 50) : (bill.ach_fixed_fee || 50); // In cents
+
+    const percentageFee = Math.round((bill.total_amount_cents * basisPoints) / 10000);
+    const totalFee = percentageFee + fixedFee;
+
+    return {
+      totalFee,
+      percentageFee,
+      fixedFee,
+      basisPoints,
+      isCard
+    };
+  };
+
+  const serviceFee = calculateServiceFee();
+  const totalWithFee = bill ? bill.total_amount_cents + (serviceFee?.totalFee || 0) : 0;
+
   const getCardBrandIcon = (cardBrand: string) => {
     const brandMap: { [key: string]: string } = {
       'visa': 'visa-brandmark-blue-1960x622.webp',
@@ -209,7 +234,20 @@ const BillOverview = () => {
                   
                   <div className="flex justify-between items-center py-2">
                     <span className="text-base">Service Fee</span>
-                    <span className="text-base font-medium">—</span>
+                    <span className="text-base font-medium">
+                      {serviceFee ? (
+                        <span className="space-y-1">
+                          <div>{formatCurrency(serviceFee.totalFee)}</div>
+                          <div className="text-xs text-muted-foreground">
+                            ({(serviceFee.basisPoints / 100).toFixed(2)}% + {formatCurrency(serviceFee.fixedFee)})
+                          </div>
+                        </span>
+                      ) : selectedPaymentMethod ? (
+                        formatCurrency(0)
+                      ) : (
+                        "Select payment method"
+                      )}
+                    </span>
                   </div>
                   
                   {/* Separator */}
@@ -218,7 +256,7 @@ const BillOverview = () => {
                   {/* Total */}
                   <div className="flex justify-between items-center py-2 bg-muted/30 px-3 rounded">
                     <span className="text-base font-semibold">Total Amount Due</span>
-                    <span className="text-lg font-bold">{formatCurrency(bill.total_amount_cents)}</span>
+                    <span className="text-lg font-bold">{formatCurrency(totalWithFee)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -338,7 +376,7 @@ const BillOverview = () => {
                     size="lg"
                     disabled={!selectedPaymentMethod || topPaymentMethods.length === 0}
                   >
-                    Pay {formatCurrency(bill.total_amount_cents)}
+                    Pay {formatCurrency(totalWithFee)}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     Your payment will be processed securely
