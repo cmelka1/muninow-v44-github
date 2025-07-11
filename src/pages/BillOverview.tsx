@@ -19,6 +19,8 @@ const BillOverview = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [finixAuth, setFinixAuth] = useState<any>(null);
+  const [fraudSessionId, setFraudSessionId] = useState<string | null>(null);
   
   const { data: bill, isLoading, error } = useBill(billId!);
   const { 
@@ -85,6 +87,50 @@ const BillOverview = () => {
     }
   }, [topPaymentMethods, selectedPaymentMethod]);
 
+  // Initialize Finix Auth for fraud detection
+  useEffect(() => {
+    const initializeFinixAuth = () => {
+      // Check if Finix library is loaded and bill data is available
+      if (typeof window !== 'undefined' && window.Finix && bill?.finix_merchant_id) {
+        try {
+          console.log('Initializing Finix Auth with merchant ID:', bill.finix_merchant_id);
+          
+          const auth = window.Finix.Auth(
+            "sandbox", // Environment
+            bill.finix_merchant_id, // Merchant ID from bill data
+            (sessionKey: string) => {
+              console.log('Finix Auth initialized with session key:', sessionKey);
+              setFraudSessionId(sessionKey);
+            }
+          );
+          
+          setFinixAuth(auth);
+          
+          // Also get session key immediately if available
+          try {
+            const immediateSessionKey = auth.getSessionKey();
+            if (immediateSessionKey) {
+              setFraudSessionId(immediateSessionKey);
+            }
+          } catch (error) {
+            console.log('Session key not immediately available, will wait for callback');
+          }
+        } catch (error) {
+          console.error('Error initializing Finix Auth:', error);
+        }
+      }
+    };
+
+    // Try to initialize immediately
+    initializeFinixAuth();
+
+    // If Finix library is not loaded yet, retry after a short delay
+    if (!window.Finix) {
+      const retryTimeout = setTimeout(initializeFinixAuth, 1000);
+      return () => clearTimeout(retryTimeout);
+    }
+  }, [bill?.finix_merchant_id]);
+
   const getCardBrandIcon = (cardBrand: string) => {
     const brandMap: { [key: string]: string } = {
       'visa': 'visa-brandmark-blue-1960x622.webp',
@@ -138,13 +184,26 @@ const BillOverview = () => {
       // Generate idempotency ID
       const idempotencyId = `${bill.bill_id}-${selectedPaymentMethod}-${Date.now()}`;
 
+      // Get current fraud session ID
+      let currentFraudSessionId = fraudSessionId;
+      if (finixAuth && !currentFraudSessionId) {
+        try {
+          currentFraudSessionId = finixAuth.getSessionKey();
+          setFraudSessionId(currentFraudSessionId);
+        } catch (error) {
+          console.warn('Could not get fraud session ID:', error);
+        }
+      }
+
+      console.log('Processing payment with fraud session ID:', currentFraudSessionId);
+
       const { data, error } = await supabase.functions.invoke('process-finix-transfer', {
         body: {
           bill_id: bill.bill_id,
           payment_instrument_id: selectedPaymentMethod,
           total_amount_cents: totalWithFee,
           idempotency_id: idempotencyId,
-          fraud_session_id: undefined // To be implemented later
+          fraud_session_id: currentFraudSessionId
         }
       });
 
