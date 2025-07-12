@@ -809,14 +809,15 @@ const BillOverview = () => {
 
                          {/* Payment Options - Side by Side */}
                          {bill?.merchant_finix_identity_id && googlePayMerchantId && (
-                           <PaymentButtonsContainer
-                             bill={bill}
-                             totalAmount={totalWithFee}
-                             merchantId={googlePayMerchantId}
-                             isDisabled={isProcessingPayment}
-                             onGooglePayment={handleGooglePayment}
-                             onApplePayment={handleApplePayment}
-                           />
+                            <PaymentButtonsContainer
+                              bill={bill}
+                              totalAmount={totalWithFee}
+                              merchantFinixIdentityId={bill.merchant_finix_identity_id || ''}
+                              googlePayMerchantId={googlePayMerchantId}
+                              isDisabled={isProcessingPayment}
+                              onGooglePayment={handleGooglePayment}
+                              onApplePayment={handleApplePayment}
+                            />
                          )}
                          
                          {/* Show message when Google Pay is not available */}

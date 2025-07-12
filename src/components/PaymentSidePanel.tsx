@@ -49,6 +49,7 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   const [serviceFee, setServiceFee] = useState<{ totalFee: number } | null>(null);
   const [finixAuth, setFinixAuth] = useState<any>(null);
   const [fraudSessionId, setFraudSessionId] = useState<string | null>(null);
+  const [googlePayMerchantId, setGooglePayMerchantId] = useState<string | null>(null);
 
   const topPaymentMethods = paymentInstruments.slice(0, 2);
 
@@ -106,6 +107,22 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   const paymentUnavailableReason = !bill?.finix_merchant_id ? 
     "Payment processing is not available for this bill. The merchant account may not be fully configured." : 
     null;
+
+  // Fetch Google Pay merchant ID
+  useEffect(() => {
+    const fetchGooglePayMerchantId = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        if (!error && data?.merchantId) {
+          setGooglePayMerchantId(data.merchantId);
+        }
+      } catch (error) {
+        console.error('Failed to fetch Google Pay merchant ID:', error);
+      }
+    };
+
+    fetchGooglePayMerchantId();
+  }, []);
 
   // Reset selected payment method when panel opens
   useEffect(() => {
@@ -262,7 +279,7 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   };
 
   const handleGooglePayment = async (paymentData: any) => {
-    if (!bill) return;
+    if (!bill || !paymentData) return;
 
     setIsProcessingPayment(true);
     try {
@@ -272,7 +289,8 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
       console.log('Processing Google Pay with parameters:', {
         bill_id: bill.bill_id,
         total_amount_cents: totalWithFeeCents,
-        idempotency_id: idempotencyId
+        idempotency_id: idempotencyId,
+        payment_data: paymentData
       });
 
       const { data, error } = await supabase.functions.invoke('process-google-pay-transfer', {
@@ -510,11 +528,12 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
                 {isPaymentAvailable && (
                   <PaymentButtonsContainer
                     bill={bill}
-                    totalAmount={totalWithFee}
-                    merchantId={bill.finix_merchant_id}
-                    isDisabled={isProcessingPayment}
-                    onGooglePayment={() => handleGooglePayment({})}
-                    onApplePayment={() => handleApplePayment({})}
+                    totalAmount={totalWithFeeCents / 100}
+                    merchantFinixIdentityId={bill.merchant_finix_identity_id || ''}
+                    googlePayMerchantId={googlePayMerchantId || ''}
+                    isDisabled={!isPaymentAvailable || isProcessingPayment || !bill.merchant_finix_identity_id || !googlePayMerchantId}
+                    onGooglePayment={handleGooglePayment}
+                    onApplePayment={handleApplePayment}
                   />
                 )}
 
