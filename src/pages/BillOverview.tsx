@@ -22,6 +22,7 @@ const BillOverview = () => {
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   const [finixAuth, setFinixAuth] = useState<any>(null);
   const [fraudSessionId, setFraudSessionId] = useState<string | null>(null);
+  const [googlePayMerchantId, setGooglePayMerchantId] = useState<string | null>(null);
   
   const { data: bill, isLoading, error } = useBill(billId!);
   const { 
@@ -149,6 +150,31 @@ const BillOverview = () => {
       return () => clearTimeout(retryTimeout);
     }
   }, [bill?.finix_merchant_id]);
+
+  // Fetch Google Pay merchant ID
+  useEffect(() => {
+    const fetchGooglePayMerchantId = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        
+        if (error) {
+          console.error('Error fetching Google Pay merchant ID:', error);
+          return;
+        }
+        
+        if (data?.merchant_id) {
+          setGooglePayMerchantId(data.merchant_id);
+          console.log('Google Pay merchant ID fetched:', data.merchant_id);
+        } else {
+          console.warn('Google Pay merchant ID not configured');
+        }
+      } catch (error) {
+        console.error('Failed to fetch Google Pay merchant ID:', error);
+      }
+    };
+
+    fetchGooglePayMerchantId();
+  }, []);
 
   const getCardBrandIcon = (cardBrand: string) => {
     const brandMap: { [key: string]: string } = {
@@ -282,6 +308,20 @@ const BillOverview = () => {
         throw new Error('Google Pay is not available');
       }
 
+      // Validate required merchant IDs
+      if (!bill.merchant_finix_identity_id) {
+        throw new Error('Merchant identity ID not available for this bill');
+      }
+
+      if (!googlePayMerchantId) {
+        throw new Error('Google Pay merchant ID not configured');
+      }
+
+      console.log('Google Pay configuration:', {
+        gatewayMerchantId: bill.merchant_finix_identity_id,
+        merchantId: googlePayMerchantId
+      });
+
       // Define payment request
       const allowedAuthMethods: string[] = ["PAN_ONLY", "CRYPTOGRAM_3DS"];
       const allowedCardNetworks: string[] = ["AMEX", "DISCOVER", "INTERAC", "JCB", "MASTERCARD", "VISA"];
@@ -299,7 +339,7 @@ const BillOverview = () => {
             type: "PAYMENT_GATEWAY" as const,
             parameters: {
               gateway: "finix" as const,
-              gatewayMerchantId: bill.finix_merchant_id,
+              gatewayMerchantId: bill.merchant_finix_identity_id, // Use merchant_finix_identity_id
             },
           },
         }],
@@ -310,6 +350,7 @@ const BillOverview = () => {
           totalPriceStatus: 'FINAL' as const,
         },
         merchantInfo: {
+          merchantId: googlePayMerchantId, // Use Google Pay merchant ID
           merchantName: bill.merchant_name || bill.business_legal_name || 'Merchant',
         },
       };
@@ -766,17 +807,24 @@ const BillOverview = () => {
                      </div>
                    )}
 
-                        {/* Payment Options - Side by Side */}
-                        {bill?.finix_merchant_id && (
-                          <PaymentButtonsContainer
-                            bill={bill}
-                            totalAmount={totalWithFee}
-                            merchantId={bill.finix_merchant_id}
-                            isDisabled={isProcessingPayment}
-                            onGooglePayment={handleGooglePayment}
-                            onApplePayment={handleApplePayment}
-                          />
-                        )}
+                         {/* Payment Options - Side by Side */}
+                         {bill?.merchant_finix_identity_id && googlePayMerchantId && (
+                           <PaymentButtonsContainer
+                             bill={bill}
+                             totalAmount={totalWithFee}
+                             merchantId={googlePayMerchantId}
+                             isDisabled={isProcessingPayment}
+                             onGooglePayment={handleGooglePayment}
+                             onApplePayment={handleApplePayment}
+                           />
+                         )}
+                         
+                         {/* Show message when Google Pay is not available */}
+                         {bill && (!bill.merchant_finix_identity_id || !googlePayMerchantId) && (
+                           <div className="text-sm text-muted-foreground text-center py-2">
+                             Alternative payment methods are not available for this bill.
+                           </div>
+                         )}
                  </div>
 
                  {/* Separator */}
