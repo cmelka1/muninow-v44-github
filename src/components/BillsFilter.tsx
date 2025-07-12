@@ -110,15 +110,15 @@ const BillsFilter: React.FC<BillsFilterProps> = ({ filters, onFiltersChange }) =
             </Select>
           </div>
 
-          {/* Vendor - Hidden on mobile (Priority 2) */}
+          {/* Merchant - Hidden on mobile (Priority 2) */}
           <div className="hidden sm:block space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Vendor</label>
+            <label className="text-sm font-medium text-muted-foreground">Merchant</label>
             <Select value={filters.vendor || 'all'} onValueChange={(value) => updateFilter('vendor', value)}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Vendor" />
+                <SelectValue placeholder="Merchant" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Vendors</SelectItem>
+                <SelectItem value="all">All Merchants</SelectItem>
                 {vendorsLoading ? (
                   <SelectItem value="loading" disabled>Loading...</SelectItem>
                 ) : (
