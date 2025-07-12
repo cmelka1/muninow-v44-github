@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import PaymentHistoryTable from '@/components/PaymentHistoryTable';
+import PaymentHistoryFilter, { PaymentHistoryFilters } from '@/components/PaymentHistoryFilter';
 
 const PaymentHistory = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const [filters, setFilters] = useState<PaymentHistoryFilters>({});
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -44,7 +46,8 @@ const PaymentHistory = () => {
               </h1>
             </div>
 
-            <PaymentHistoryTable />
+            <PaymentHistoryFilter filters={filters} onFiltersChange={setFilters} />
+            <PaymentHistoryTable filters={filters} />
           </div>
         </SidebarInset>
       </div>

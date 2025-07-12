@@ -14,14 +14,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePaymentHistory } from '@/hooks/usePaymentHistory';
+import { PaymentHistoryFilters } from './PaymentHistoryFilter';
 
-const PaymentHistoryTable: React.FC = () => {
+interface PaymentHistoryTableProps {
+  filters?: PaymentHistoryFilters;
+}
+
+const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({ filters = {} }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   
   const { data: paymentData, isLoading, error } = usePaymentHistory({ 
     page: currentPage, 
-    pageSize
+    pageSize,
+    filters
   });
 
   const payments = paymentData?.data || [];
