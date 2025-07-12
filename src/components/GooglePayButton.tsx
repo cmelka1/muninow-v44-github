@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface GooglePayButtonProps {
-  onPayment: (paymentData: any) => Promise<void>;
+  onPayment: () => Promise<void>;
   bill: any;
   totalAmount: number;
-  merchantFinixIdentityId?: string;
-  googlePayMerchantId?: string;
+  merchantId?: string;
   isDisabled?: boolean;
 }
 
@@ -14,8 +13,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   onPayment,
   bill,
   totalAmount,
-  merchantFinixIdentityId,
-  googlePayMerchantId,
+  merchantId,
   isDisabled = false
 }) => {
   const [isGooglePayReady, setIsGooglePayReady] = useState(false);
@@ -63,46 +61,11 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   }, []);
 
   const handleClick = async () => {
-    if (isDisabled || isProcessing || !isGooglePayReady || !merchantFinixIdentityId || !googlePayMerchantId) return;
+    if (isDisabled || isProcessing || !isGooglePayReady) return;
 
     try {
       setIsProcessing(true);
-
-      const tokenizationSpecification = {
-        type: 'PAYMENT_GATEWAY' as const,
-        parameters: {
-          gateway: 'finix' as const,
-          gatewayMerchantId: merchantFinixIdentityId,
-        },
-      };
-
-      const paymentDataRequest = {
-        apiVersion: 2,
-        apiVersionMinor: 0,
-        allowedPaymentMethods: [
-          {
-            type: 'CARD' as const,
-            parameters: {
-              allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-              allowedCardNetworks: ['AMEX', 'DISCOVER', 'INTERAC', 'JCB', 'MASTERCARD', 'VISA']
-            },
-            tokenizationSpecification: tokenizationSpecification,
-          },
-        ],
-        transactionInfo: {
-          totalPriceStatus: 'FINAL' as const,
-          totalPrice: totalAmount.toString(),
-          currencyCode: 'USD',
-          countryCode: 'US',
-        },
-        merchantInfo: {
-          merchantId: googlePayMerchantId,
-          merchantName: bill.merchant_name || 'Merchant',
-        },
-      };
-
-      const paymentData = await window.googlePayClient.loadPaymentData(paymentDataRequest);
-      await onPayment(paymentData);
+      await onPayment();
     } catch (error) {
       console.error('Google Pay payment error:', error);
     } finally {

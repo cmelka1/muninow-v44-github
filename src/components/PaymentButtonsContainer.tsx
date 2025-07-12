@@ -5,18 +5,16 @@ import ApplePayButton from './ApplePayButton';
 interface PaymentButtonsContainerProps {
   bill: any;
   totalAmount: number;
-  merchantFinixIdentityId: string;
-  googlePayMerchantId: string;
+  merchantId: string;
   isDisabled?: boolean;
-  onGooglePayment: (paymentData: any) => Promise<void>;
-  onApplePayment: (payment: any) => Promise<void>;
+  onGooglePayment: () => Promise<void>;
+  onApplePayment: () => Promise<void>;
 }
 
 const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
   bill,
   totalAmount,
-  merchantFinixIdentityId,
-  googlePayMerchantId,
+  merchantId,
   isDisabled = false,
   onGooglePayment,
   onApplePayment
@@ -111,8 +109,7 @@ const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
           onPayment={onGooglePayment}
           bill={bill}
           totalAmount={totalAmount}
-          merchantFinixIdentityId={merchantFinixIdentityId}
-          googlePayMerchantId={googlePayMerchantId}
+          merchantId={merchantId}
           isDisabled={isDisabled}
         />
       )}
@@ -120,7 +117,7 @@ const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
         <ApplePayButton
           onPaymentComplete={(success, error) => {
             if (success) {
-              onApplePayment({});
+              onApplePayment();
             } else if (error && !error.includes('cancelled')) {
               console.error('Apple Pay payment failed:', error);
             }
