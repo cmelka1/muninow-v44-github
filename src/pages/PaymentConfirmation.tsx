@@ -223,10 +223,14 @@ const PaymentConfirmation = () => {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Top Navigation */}
-        <div className="flex justify-start mb-4">
+        <div className="flex justify-between mb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
+          </Button>
+          <Button onClick={handleDownloadPDF}>
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
           </Button>
         </div>
         
@@ -334,17 +338,6 @@ const PaymentConfirmation = () => {
           </CardContent>
         </Card>
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="outline" onClick={handleDownloadPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
-          <Button onClick={() => window.print()}>
-            <Receipt className="h-4 w-4 mr-2" />
-            Print Receipt
-          </Button>
-        </div>
       </div>
     </div>
   );
