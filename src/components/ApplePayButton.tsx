@@ -185,16 +185,16 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
 
   return (
     <div
-      className={`border rounded-lg p-3 cursor-pointer transition-all bg-black hover:bg-black/80 h-6 ${
+      className={`border rounded-lg p-3 cursor-pointer transition-all bg-black hover:bg-black/80 ${
         isDisabled || isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50'
       }`}
       onClick={handleClick}
     >
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center">
         <img 
           src={applePayLogo}
           alt="Apple Pay"
-          className="h-full w-auto object-contain"
+          className="h-6 w-auto object-contain"
         />
       </div>
     </div>
