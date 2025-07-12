@@ -1221,6 +1221,8 @@ export type Database = {
         Row: {
           amount_cents: number
           bill_id: string
+          card_brand: string | null
+          card_last_four: string | null
           created_at: string
           currency: string
           failure_code: string | null
@@ -1244,6 +1246,8 @@ export type Database = {
         Insert: {
           amount_cents: number
           bill_id: string
+          card_brand?: string | null
+          card_last_four?: string | null
           created_at?: string
           currency?: string
           failure_code?: string | null
@@ -1267,6 +1271,8 @@ export type Database = {
         Update: {
           amount_cents?: number
           bill_id?: string
+          card_brand?: string | null
+          card_last_four?: string | null
           created_at?: string
           currency?: string
           failure_code?: string | null

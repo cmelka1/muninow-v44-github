@@ -258,7 +258,11 @@ serve(async (req) => {
 
     console.log("Payment instrument created:", piData.id);
 
-    // Create payment history record
+    // Extract card details from Finix payment instrument response
+    const cardBrand = piData.card?.brand || null;
+    const cardLastFour = piData.card?.last_four || null;
+
+    // Create payment history record with card details
     const { data: paymentHistory, error: phError } = await supabaseService
       .from("payment_history")
       .insert({
@@ -273,7 +277,9 @@ serve(async (req) => {
         payment_type: 'Apple Pay',
         idempotency_id: idempotency_id,
         fraud_session_id: fraud_session_id,
-        transfer_state: 'PENDING'
+        transfer_state: 'PENDING',
+        card_brand: cardBrand,
+        card_last_four: cardLastFour
       })
       .select()
       .single();
