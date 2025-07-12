@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { X } from 'lucide-react';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import PaymentSummary from '@/components/PaymentSummary';
+import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
 
 interface PaymentSidePanelProps {
   open: boolean;
@@ -44,6 +45,9 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
     topPaymentMethods,
     paymentMethodsLoading,
     handlePayment,
+    googlePayMerchantId,
+    handleGooglePayment,
+    handleApplePayment,
   } = usePaymentMethods(bill);
 
   // Check if payment is available for this bill
@@ -71,6 +75,20 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   const handlePayOnFullPage = () => {
     onOpenChange(false);
     navigate(`/bill/${billId}`);
+  };
+
+  const handleGooglePaySuccess = async () => {
+    const result = await handleGooglePayment();
+    if (result) {
+      await handlePaymentSuccess(result);
+    }
+  };
+
+  const handleApplePaySuccess = async () => {
+    const result = await handleApplePayment();
+    if (result) {
+      await handlePaymentSuccess(result);
+    }
   };
 
   if (billLoading || !bill) {
@@ -155,6 +173,29 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
                 isLoading={paymentMethodsLoading}
                 maxMethods={2}
               />
+              
+              {/* Google Pay and Apple Pay buttons */}
+              {bill?.merchant_finix_identity_id && googlePayMerchantId && (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or pay with</span>
+                    </div>
+                  </div>
+                  
+                  <PaymentButtonsContainer
+                    bill={bill}
+                    totalAmount={totalWithFee}
+                    merchantId={googlePayMerchantId}
+                    isDisabled={isProcessingPayment || !isPaymentAvailable}
+                    onGooglePayment={handleGooglePaySuccess}
+                    onApplePayment={handleApplePaySuccess}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
