@@ -5,11 +5,14 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import BillsTable from '@/components/BillsTable';
 import BillsFilter, { BillFilters } from '@/components/BillsFilter';
+import PaymentSidePanel from '@/components/PaymentSidePanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
   const [filters, setFilters] = useState<BillFilters>({});
+  const [selectedBillId, setSelectedBillId] = useState<string>('');
+  const [isPaymentPanelOpen, setIsPaymentPanelOpen] = useState(false);
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -47,10 +50,22 @@ const Dashboard = () => {
             </div>
 
             <BillsFilter filters={filters} onFiltersChange={setFilters} />
-            <BillsTable filters={filters} />
+            <BillsTable 
+              filters={filters} 
+              onPayClick={(billId) => {
+                setSelectedBillId(billId);
+                setIsPaymentPanelOpen(true);
+              }}
+            />
           </div>
         </SidebarInset>
       </div>
+      
+      <PaymentSidePanel
+        open={isPaymentPanelOpen}
+        onOpenChange={setIsPaymentPanelOpen}
+        billId={selectedBillId}
+      />
     </SidebarProvider>
   );
 };

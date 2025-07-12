@@ -27,9 +27,10 @@ interface BillFilters {
 
 interface BillsTableProps {
   filters?: BillFilters;
+  onPayClick?: (billId: string) => void;
 }
 
-const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
+const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -88,6 +89,11 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
 
   const handleRowClick = (billId: string) => {
     navigate(`/bill/${billId}`);
+  };
+
+  const handlePayClick = (e: React.MouseEvent, billId: string) => {
+    e.stopPropagation(); // Prevent row click navigation
+    onPayClick?.(billId);
   };
 
   if (isLoading) {
@@ -181,10 +187,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
                     <Button 
                       size="sm" 
                       className="w-full h-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle pay action - will be implemented later
-                      }}
+                      onClick={(e) => handlePayClick(e, bill.bill_id)}
                     >
                       Pay
                     </Button>
