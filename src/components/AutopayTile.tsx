@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBills } from '@/hooks/useBills';
+import { useToast } from '@/hooks/use-toast';
 
 const AutopayTile: React.FC = () => {
+  const { toast } = useToast();
+  const [autopaySettings, setAutopaySettings] = useState<Record<string, boolean>>({});
   const { data: billsData, isLoading, error } = useBills({ pageSize: 1000 }); // Get all bills to extract unique merchants
   
   // Extract unique merchants from bills
@@ -20,6 +23,18 @@ const AutopayTile: React.FC = () => {
     
     return Array.from(merchantSet).sort();
   }, [billsData?.data]);
+
+  const handleAutopayToggle = (merchant: string, enabled: boolean) => {
+    setAutopaySettings(prev => ({
+      ...prev,
+      [merchant]: enabled
+    }));
+    
+    toast({
+      title: `Autopay ${enabled ? 'enabled' : 'disabled'}`,
+      description: `Autopay for ${merchant} has been ${enabled ? 'enabled' : 'disabled'}.`,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -81,7 +96,10 @@ const AutopayTile: React.FC = () => {
           {uniqueMerchants.map((merchant) => (
             <div key={merchant} className="flex items-center justify-between py-1">
               <span className="font-medium text-sm">{merchant}</span>
-              <Switch disabled className="opacity-50" />
+              <Switch 
+                checked={autopaySettings[merchant] || false}
+                onCheckedChange={(checked) => handleAutopayToggle(merchant, checked)}
+              />
             </div>
           ))}
         </div>
