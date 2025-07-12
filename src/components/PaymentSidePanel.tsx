@@ -130,24 +130,15 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   };
 
   const handleGooglePayment = async (paymentData: any) => {
-    if (!bill || !paymentData?.paymentMethodData?.tokenizationData?.token) {
-      console.error('Missing Google Pay token');
-      toast({
-        title: "Payment Failed",
-        description: "Google Pay token not received",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!bill) return;
 
     setIsProcessingPayment(true);
     try {
       const { data, error } = await supabase.functions.invoke('process-google-pay-transfer', {
         body: {
-          bill_id: bill.bill_id,
-          google_pay_token: paymentData.paymentMethodData.tokenizationData.token,
-          total_amount_cents: Math.round(totalWithFee * 100),
-          idempotency_id: crypto.randomUUID(),
+          billId: bill.bill_id,
+          paymentData,
+          amount: Math.round(totalWithFee * 100),
         },
       });
 
@@ -362,8 +353,8 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
                     totalAmount={totalWithFee}
                     merchantId={bill.finix_merchant_id}
                     isDisabled={isProcessingPayment}
-                    onGooglePayment={handleGooglePayment}
-                    onApplePayment={handleApplePayment}
+                    onGooglePayment={() => handleGooglePayment({})}
+                    onApplePayment={() => handleApplePayment({})}
                   />
                 )}
 

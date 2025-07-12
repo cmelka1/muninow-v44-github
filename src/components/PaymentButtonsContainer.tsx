@@ -7,8 +7,8 @@ interface PaymentButtonsContainerProps {
   totalAmount: number;
   merchantId: string;
   isDisabled?: boolean;
-  onGooglePayment: (paymentData: any) => Promise<void>;
-  onApplePayment: (paymentData: any) => Promise<void>;
+  onGooglePayment: () => Promise<void>;
+  onApplePayment: () => Promise<void>;
 }
 
 const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
@@ -117,8 +117,7 @@ const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
         <ApplePayButton
           onPaymentComplete={(success, error) => {
             if (success) {
-              // For now, pass an empty object - Apple Pay implementation needs to be updated later
-              onApplePayment({});
+              onApplePayment();
             } else if (error && !error.includes('cancelled')) {
               console.error('Apple Pay payment failed:', error);
             }

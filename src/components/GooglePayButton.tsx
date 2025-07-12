@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface GooglePayButtonProps {
-  onPayment: (paymentData: any) => Promise<void>;
+  onPayment: () => Promise<void>;
   bill: any;
   totalAmount: number;
   merchantId?: string;
@@ -61,49 +61,13 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   }, []);
 
   const handleClick = async () => {
-    if (isDisabled || isProcessing || !isGooglePayReady || !window.googlePayClient) return;
+    if (isDisabled || isProcessing || !isGooglePayReady) return;
 
     try {
       setIsProcessing(true);
-      
-      // Create payment data request for Google Pay
-      const paymentDataRequest = {
-        apiVersion: 2,
-        apiVersionMinor: 0,
-        allowedPaymentMethods: [{
-          type: 'CARD' as const,
-          parameters: {
-            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-            allowedCardNetworks: ['AMEX', 'DISCOVER', 'INTERAC', 'JCB', 'MASTERCARD', 'VISA']
-          },
-          tokenizationSpecification: {
-            type: 'PAYMENT_GATEWAY' as const,
-            parameters: {
-              gateway: 'finix' as const,
-              gatewayMerchantId: merchantId || 'default'
-            }
-          }
-        }],
-        transactionInfo: {
-          totalPriceStatus: 'FINAL' as const,
-          totalPrice: totalAmount.toFixed(2),
-          currencyCode: 'USD',
-          countryCode: 'US'
-        },
-        merchantInfo: {
-          merchantName: bill?.merchant_name || 'Merchant',
-          merchantId: merchantId || '12345678901234567890'
-        }
-      };
-
-      // Request payment data from Google Pay
-      const googlePayData = await window.googlePayClient.loadPaymentData(paymentDataRequest);
-      
-      // Call the onPayment callback with the actual payment data
-      await onPayment(googlePayData);
+      await onPayment();
     } catch (error) {
       console.error('Google Pay payment error:', error);
-      // Don't re-throw the error as it's handled in the parent component
     } finally {
       setIsProcessing(false);
     }
