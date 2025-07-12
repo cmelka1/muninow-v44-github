@@ -885,6 +885,7 @@ export type Database = {
           customer_country: string
           customer_email: string
           customer_first_name: string
+          customer_id: string
           customer_last_name: string
           customer_phone: string
           customer_state: string
@@ -981,6 +982,7 @@ export type Database = {
           customer_country?: string
           customer_email: string
           customer_first_name: string
+          customer_id: string
           customer_last_name: string
           customer_phone: string
           customer_state: string
@@ -1077,6 +1079,7 @@ export type Database = {
           customer_country?: string
           customer_email?: string
           customer_first_name?: string
+          customer_id?: string
           customer_last_name?: string
           customer_phone?: string
           customer_state?: string
@@ -1137,7 +1140,15 @@ export type Database = {
           user_id?: string
           verification_status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "merchants_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+        ]
       }
       municipal_team_members: {
         Row: {
