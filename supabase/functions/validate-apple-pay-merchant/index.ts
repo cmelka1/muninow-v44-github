@@ -78,13 +78,14 @@ Deno.serve(async (req) => {
 
     const finixBaseUrl = finixEnvironment === 'production' 
       ? 'https://finix.com' 
-      : 'https://finix-sandbox-reporting.finix.com';
+      : 'https://finix-sandbox-dashboard.finix.com';
 
     // Prepare the Finix Apple Pay session request
     const finixPayload = {
+      provider: "APPLE_PAY",
       display_name: applePayDisplayName,
-      domain: applePayDomainName,
-      merchant_identity: merchant.finix_identity_id,
+      domain_name: applePayDomainName,
+      merchant_identifier: merchant.finix_identity_id,
       validation_url: validation_url
     };
 
@@ -94,7 +95,7 @@ Deno.serve(async (req) => {
     const finixResponse = await fetch(`${finixBaseUrl}/apple_pay_sessions`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/vnd.json+api',
+        'Content-Type': 'application/json',
         'Authorization': `Basic ${btoa(finixApiSecret + ':')}`
       },
       body: JSON.stringify(finixPayload)
