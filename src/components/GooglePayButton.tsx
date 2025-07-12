@@ -99,7 +99,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
         <img 
           src="/lovable-uploads/c2b3d2f7-9a1c-480f-9b7f-eca749490b01.png"
           alt="Google Pay"
-          className="h-6 w-auto object-contain"
+          className="h-7 w-auto object-contain"
         />
       </div>
     </div>
