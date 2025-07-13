@@ -9,6 +9,7 @@ import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocompl
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { toast } from '@/hooks/use-toast';
 
 interface Customer {
@@ -23,12 +24,18 @@ const MunicipalSignup = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedMunicipality, setSelectedMunicipality] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = normalizePhoneInput(e.target.value);
+    setPhone(formatted);
+  };
 
   // Redirect authenticated users
   useEffect(() => {
@@ -161,6 +168,22 @@ const MunicipalSignup = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium text-foreground">
+                    Phone Number *
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    required
+                    className="h-11"
+                    maxLength={14}
                   />
                 </div>
 
