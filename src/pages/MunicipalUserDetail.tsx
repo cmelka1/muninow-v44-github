@@ -3,15 +3,25 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Mail, Phone, MapPin, User } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, User, AlertCircle } from 'lucide-react';
 import UserBillsTable from '@/components/UserBillsTable';
 import UserPaymentHistoryTable from '@/components/UserPaymentHistoryTable';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useMunicipalUserProfile } from '@/hooks/useMunicipalUserProfile';
+import { useBillBasedUserInfo } from '@/hooks/useBillBasedUserInfo';
 
 const MunicipalUserDetail = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { data: userProfile, isLoading, error } = useUserProfile(userId);
+  
+  // Try to get profile via municipal security function first
+  const { data: municipalProfile, isLoading: profileLoading, error: profileError } = useMunicipalUserProfile(userId);
+  
+  // Fallback to bill-based user info if profile access is denied
+  const { data: billBasedInfo, isLoading: billLoading, error: billError } = useBillBasedUserInfo(userId);
+  
+  const isLoading = profileLoading || billLoading;
+  const userInfo = municipalProfile || billBasedInfo;
+  const hasProfileAccess = !!municipalProfile;
 
   if (isLoading) {
     return (
@@ -28,7 +38,7 @@ const MunicipalUserDetail = () => {
     );
   }
 
-  if (error || !userProfile) {
+  if (!userInfo) {
     return (
       <div className="p-8">
         <div className="flex items-center gap-4 mb-6">
@@ -39,7 +49,7 @@ const MunicipalUserDetail = () => {
         </div>
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-destructive">User not found or access denied.</p>
+            <p className="text-destructive">User not found or no bills exist for this municipality.</p>
           </CardContent>
         </Card>
       </div>
@@ -85,6 +95,12 @@ const MunicipalUserDetail = () => {
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             User Information
+            {!hasProfileAccess && (
+              <Badge variant="secondary" className="ml-2">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                Bill Data Only
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -93,36 +109,49 @@ const MunicipalUserDetail = () => {
               <div>
                 <h3 className="font-medium text-gray-900 mb-1">Name</h3>
                 <p className="text-gray-600">
-                  {userProfile.first_name} {userProfile.last_name}
+                  {userInfo.first_name && userInfo.last_name 
+                    ? `${userInfo.first_name} ${userInfo.last_name}`
+                    : ('external_customer_name' in userInfo ? userInfo.external_customer_name : null) || 'Name not available'
+                  }
                 </p>
               </div>
               <div>
                 <h3 className="font-medium text-gray-900 mb-1">Account Type</h3>
-                {getAccountTypeBadge(userProfile.account_type)}
+                {userInfo.account_type ? getAccountTypeBadge(userInfo.account_type) : <Badge variant="outline">Unknown</Badge>}
               </div>
-              {userProfile.business_legal_name && (
+              {(userInfo.business_legal_name || ('external_business_name' in userInfo ? userInfo.external_business_name : null)) && (
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Business Name</h3>
-                  <p className="text-gray-600">{userProfile.business_legal_name}</p>
+                  <p className="text-gray-600">
+                    {userInfo.business_legal_name || ('external_business_name' in userInfo ? userInfo.external_business_name : null)}
+                  </p>
                 </div>
               )}
             </div>
             
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-400" />
-                <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Email</h3>
-                  <p className="text-gray-600">{userProfile.email}</p>
+              {userInfo.email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-1">Email</h3>
+                    <p className="text-gray-600">{userInfo.email}</p>
+                  </div>
                 </div>
-              </div>
-              {userProfile.phone && (
+              )}
+              {('phone' in userInfo ? userInfo.phone : null) && (
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-400" />
                   <div>
                     <h3 className="font-medium text-gray-900 mb-1">Phone</h3>
-                    <p className="text-gray-600">{userProfile.phone}</p>
+                    <p className="text-gray-600">{'phone' in userInfo ? userInfo.phone : ''}</p>
                   </div>
+                </div>
+              )}
+              {'bill_count' in userInfo && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-1">Bills Count</h3>
+                  <p className="text-gray-600">{userInfo.bill_count} bills</p>
                 </div>
               )}
             </div>
@@ -133,12 +162,27 @@ const MunicipalUserDetail = () => {
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Address</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    {formatAddress(userProfile)}
+                    {formatAddress(userInfo)}
                   </p>
                 </div>
               </div>
+              {'total_amount_due' in userInfo && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-1">Total Amount Due</h3>
+                  <p className="text-gray-600">${(userInfo.total_amount_due / 100).toFixed(2)}</p>
+                </div>
+              )}
             </div>
           </div>
+          
+          {!hasProfileAccess && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                <AlertCircle className="h-4 w-4 inline mr-1" />
+                Showing limited information from bill data. Full profile access may be restricted.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
