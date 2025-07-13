@@ -59,15 +59,12 @@ export const MunicipalInviteMemberDialog: React.FC<MunicipalInviteMemberDialogPr
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value: 'admin' | 'user') => setRole(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="p-3 bg-muted rounded-md">
+              <p className="text-sm font-medium">User</p>
+              <p className="text-xs text-muted-foreground">
+                New team members will be added as users. Only one admin is allowed per municipality.
+              </p>
+            </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
