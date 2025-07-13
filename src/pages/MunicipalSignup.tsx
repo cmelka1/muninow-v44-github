@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
-import { Eye, EyeOff } from 'lucide-react';
+import { MFAVerificationStep } from '@/components/auth/MFAVerificationStep';
+import { Eye, EyeOff, Check, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { toast } from '@/hooks/use-toast';
@@ -25,6 +27,7 @@ interface Customer {
 const MunicipalSignup = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -37,6 +40,7 @@ const MunicipalSignup = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedMunicipality, setSelectedMunicipality] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = normalizePhoneInput(e.target.value);
@@ -51,7 +55,7 @@ const MunicipalSignup = () => {
   }, [user, navigate]);
 
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedCustomerId) {
@@ -107,22 +111,64 @@ const MunicipalSignup = () => {
         return;
       }
 
-      // TODO: Implement municipal signup logic
-      // This is a placeholder for the actual signup implementation
-      toast({
-        title: "Coming Soon",
-        description: "Municipal signup functionality will be implemented in the next step.",
-        variant: "default"
-      });
-
+      // Move to MFA step
+      setCurrentStep(2);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "An error occurred during signup.",
+        description: error.message || "An error occurred during validation.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const completeMunicipalSignup = async () => {
+    setIsCreatingAccount(true);
+
+    try {
+      // Create Supabase auth account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/municipal/dashboard`,
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            phone: phone,
+            account_type: 'municipal',
+            role: 'admin',
+            customer_id: selectedCustomerId
+          }
+        }
+      });
+
+      if (authError) {
+        throw new Error(`Account creation failed: ${authError.message}`);
+      }
+
+      toast({
+        title: "Account Created Successfully!",
+        description: "Your municipal administrator account has been created. Please check your email to verify your account.",
+      });
+
+      setCurrentStep(3);
+    } catch (error: any) {
+      toast({
+        title: "Account Creation Failed",
+        description: error.message || "Failed to create account. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
+  const goBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -135,10 +181,10 @@ const MunicipalSignup = () => {
     <div className="flex flex-col min-h-screen">
       <PreloginHeader />
       <main className="flex-1 gradient-bg flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-2xl">
           <Card className="signin-card card-entrance border-0 bg-card/95">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-3xl font-bold gradient-text mb-1">
+            <CardHeader className="text-center pb-6">
+              <CardTitle className="text-3xl font-bold gradient-text mb-2">
                 Municipal Signup
               </CardTitle>
               <CardDescription className="text-muted-foreground text-base">
@@ -146,7 +192,23 @@ const MunicipalSignup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="px-8 pb-8">
-              <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Progress Indicator */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                  <span>Step {currentStep} of 3</span>
+                  <span>
+                    {currentStep === 1 && "Information"}
+                    {currentStep === 2 && "Security Setup"}
+                    {currentStep === 3 && "Complete"}
+                  </span>
+                </div>
+                <Progress value={(currentStep / 3) * 100} className="h-2" />
+              </div>
+
+              {/* Step 1: Form Collection */}
+              {currentStep === 1 && (
+                <>
+                  <form onSubmit={handleFormSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="municipality" className="text-sm font-medium text-foreground">
                     Municipality *
@@ -312,27 +374,78 @@ const MunicipalSignup = () => {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-colors"
-                >
-                  {isLoading ? 'Creating Account...' : 'Create Municipal Account'}
-                </Button>
-              </form>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => navigate('/auth')}
-                    className="text-primary hover:text-primary/80 font-medium transition-colors"
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-colors"
                   >
-                    Sign in here
-                  </button>
-                </p>
-              </div>
+                    {isLoading ? 'Validating...' : 'Continue to Security Setup'}
+                  </Button>
+                </form>
+
+                <div className="mt-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => navigate('/auth')}
+                      className="text-primary hover:text-primary/80 font-medium transition-colors"
+                    >
+                      Sign in here
+                    </button>
+                  </p>
+                </div>
+                </>
+              )}
+
+              {/* Step 2: MFA Verification */}
+              {currentStep === 2 && (
+                <MFAVerificationStep
+                  defaultEmail={email}
+                  defaultPhone={phone}
+                  onVerificationComplete={completeMunicipalSignup}
+                  onBack={goBack}
+                />
+              )}
+
+              {/* Step 3: Success */}
+              {currentStep === 3 && (
+                <div className="text-center space-y-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <Check className="h-8 w-8 text-green-600" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-foreground">
+                      Account Created Successfully!
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Your municipal administrator account has been created for{' '}
+                      <span className="font-medium text-foreground">
+                        {selectedMunicipality?.legal_entity_name}
+                      </span>.
+                    </p>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Next steps:</strong>
+                    </p>
+                    <ul className="text-sm text-muted-foreground space-y-1 text-left">
+                      <li>• Check your email to verify your account</li>
+                      <li>• Complete your payment setup</li>
+                      <li>• Configure your municipality settings</li>
+                    </ul>
+                  </div>
+
+                  <Button
+                    onClick={() => navigate('/auth')}
+                    className="w-full h-11"
+                  >
+                    Go to Sign In
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
