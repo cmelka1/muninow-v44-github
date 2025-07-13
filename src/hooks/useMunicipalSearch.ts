@@ -93,17 +93,7 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
       // Apply search term if provided
       if (searchTerm.trim()) {
         const searchPattern = `%${searchTerm.trim()}%`;
-        query = query.or(`
-          first_name.ilike.${searchPattern},
-          last_name.ilike.${searchPattern},
-          business_legal_name.ilike.${searchPattern},
-          external_customer_name.ilike.${searchPattern},
-          external_business_name.ilike.${searchPattern},
-          street_address.ilike.${searchPattern},
-          external_customer_address_line1.ilike.${searchPattern},
-          apt_number.ilike.${searchPattern},
-          email.ilike.${searchPattern}
-        `);
+        query = query.or(`first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},business_legal_name.ilike.${searchPattern},external_customer_name.ilike.${searchPattern},external_business_name.ilike.${searchPattern},street_address.ilike.${searchPattern},external_customer_address_line1.ilike.${searchPattern},apt_number.ilike.${searchPattern},email.ilike.${searchPattern}`);
       }
 
       // Apply filters
