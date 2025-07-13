@@ -11,7 +11,7 @@ export const MunicipalLayout: React.FC<MunicipalLayoutProps> = ({ children }) =>
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <MunicipalSidebar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gray-100">
           {children}
         </main>
       </div>
