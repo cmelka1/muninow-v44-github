@@ -28,7 +28,7 @@ const MunicipalUserDetail = () => {
     );
   }
 
-  if (error) {
+  if (error || !userProfile) {
     return (
       <div className="p-8">
         <div className="flex items-center gap-4 mb-6">
@@ -39,34 +39,9 @@ const MunicipalUserDetail = () => {
         </div>
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-destructive">Error loading user profile: {error.message}</p>
+            <p className="text-destructive">User not found or access denied.</p>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  if (!userProfile) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/municipal/search')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Search
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">User profile not found, but you can still view their bills and payment history below.</p>
-          </CardContent>
-        </Card>
-        {/* Still show bills and payment history */}
-        <div className="mt-6">
-          <UserBillsTable userId={userId!} />
-        </div>
-        <div className="mt-6">
-          <UserPaymentHistoryTable userId={userId!} />
-        </div>
       </div>
     );
   }
