@@ -101,24 +101,11 @@ export const useMerchants = () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       
-      // First get the customer to get the user_id
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('user_id')
-        .eq('customer_id', customerId)
-        .single();
-
-      if (customerError) throw customerError;
-
-      if (!customerData) {
-        return { data: [], count: 0 };
-      }
-
-      // Then fetch merchants for that user
+      // Directly fetch merchants by customer_id
       const { data, error, count } = await supabase
         .from('merchants')
         .select('*', { count: 'exact' })
-        .eq('user_id', customerData.user_id)
+        .eq('customer_id', customerId)
         .order('created_at', { ascending: false })
         .range(from, to);
 
