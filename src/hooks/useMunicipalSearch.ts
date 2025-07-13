@@ -227,26 +227,21 @@ export const useMunicipalSearchFilterOptions = () => {
         return { categories: [], billStatuses: [] };
       }
 
-      const [categoriesRes, statusRes] = await Promise.all([
-        supabase
-          .from('master_bills')
-          .select('category')
-          .eq('customer_id', profile.customer_id)
-          .not('category', 'is', null),
-        supabase
-          .from('master_bills')
-          .select('bill_status')
-          .eq('customer_id', profile.customer_id)
-          .not('bill_status', 'is', null)
-      ]);
+      // Fetch categories from database but use static bill statuses
+      const categoriesRes = await supabase
+        .from('master_bills')
+        .select('category')
+        .eq('customer_id', profile.customer_id)
+        .not('category', 'is', null);
 
-      if (categoriesRes.error || statusRes.error) {
-        console.error('Error fetching filter options:', categoriesRes.error || statusRes.error);
-        throw categoriesRes.error || statusRes.error;
+      if (categoriesRes.error) {
+        console.error('Error fetching filter options:', categoriesRes.error);
+        throw categoriesRes.error;
       }
 
       const categories = [...new Set(categoriesRes.data.map(item => item.category))].sort();
-      const billStatuses = [...new Set(statusRes.data.map(item => item.bill_status))].sort();
+      // Return fixed set of bill statuses regardless of what exists in database
+      const billStatuses = ['paid', 'unpaid', 'overdue'];
 
       return { categories, billStatuses };
     },

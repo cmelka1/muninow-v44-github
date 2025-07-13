@@ -143,7 +143,9 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
           <CardTitle>Search Results</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No users found matching your search criteria.</p>
+          <p className="text-muted-foreground">
+            No users found matching your search criteria. Try adjusting your filters or search terms.
+          </p>
         </CardContent>
       </Card>
     );
