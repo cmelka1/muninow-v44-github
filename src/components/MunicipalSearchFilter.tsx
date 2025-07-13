@@ -98,7 +98,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
                 {isLoading ? (
                   <SelectItem value="loading" disabled>Loading...</SelectItem>
                 ) : (
-                  filterOptions?.billStatuses.map((status) => (
+                  (filterOptions?.billStatuses || []).map((status) => (
                     <SelectItem key={status} value={status}>
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </SelectItem>
@@ -138,7 +138,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
                 {isLoading ? (
                   <SelectItem value="loading" disabled>Loading...</SelectItem>
                 ) : (
-                  filterOptions?.categories.map((category) => (
+                  (filterOptions?.categories || []).map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
