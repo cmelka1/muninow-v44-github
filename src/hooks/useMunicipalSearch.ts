@@ -240,8 +240,8 @@ export const useMunicipalSearchFilterOptions = () => {
       }
 
       const categories = [...new Set(categoriesRes.data.map(item => item.category))].sort();
-      // Return fixed set of bill statuses regardless of what exists in database
-      const billStatuses = ['paid', 'unpaid', 'overdue'];
+      // Return all possible bill statuses from the database enum
+      const billStatuses = ['unpaid', 'overdue', 'delinquent', 'paid', 'cancelled', 'disputed', 'refunded'];
 
       return { categories, billStatuses };
     },
