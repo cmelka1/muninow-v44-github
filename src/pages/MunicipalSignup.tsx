@@ -42,6 +42,11 @@ const MunicipalSignup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
+  // Scroll to top utility function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = normalizePhoneInput(e.target.value);
     setPhone(formatted);
@@ -113,6 +118,7 @@ const MunicipalSignup = () => {
 
       // Move to MFA step
       setCurrentStep(2);
+      scrollToTop();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -155,6 +161,7 @@ const MunicipalSignup = () => {
       });
 
       setCurrentStep(3);
+      scrollToTop();
     } catch (error: any) {
       toast({
         title: "Account Creation Failed",
@@ -169,6 +176,7 @@ const MunicipalSignup = () => {
   const goBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      scrollToTop();
     }
   };
 
