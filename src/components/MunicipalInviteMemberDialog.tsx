@@ -61,9 +61,6 @@ export const MunicipalInviteMemberDialog: React.FC<MunicipalInviteMemberDialogPr
             <Label htmlFor="role">Role</Label>
             <div className="p-3 bg-muted rounded-md">
               <p className="text-sm font-medium">User</p>
-              <p className="text-xs text-muted-foreground">
-                New team members will be added as users. Only one admin is allowed per municipality.
-              </p>
             </div>
           </div>
           <div className="flex justify-end gap-2">
