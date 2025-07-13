@@ -8,13 +8,12 @@ export const useUserProfile = (userId?: string) => {
   return useQuery({
     queryKey: ['user-profile', userId],
     queryFn: async () => {
-      if (!userId || !profile?.customer_id) return null;
+      if (!userId) return null;
 
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .eq('customer_id', profile.customer_id)
         .single();
 
       if (error) {
@@ -24,6 +23,6 @@ export const useUserProfile = (userId?: string) => {
 
       return data;
     },
-    enabled: !!(userId && profile?.customer_id && profile?.account_type === 'municipal'),
+    enabled: !!(userId && profile?.account_type === 'municipal'),
   });
 };
