@@ -113,7 +113,7 @@ export const PreloginFooter = () => {
             <ul className="space-y-3">
               <li>
                 <Link
-                  to="/municipal-login"
+                  to="/signin"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Municipal Login
