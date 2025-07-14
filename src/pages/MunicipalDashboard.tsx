@@ -2,8 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import ReportBuilder from '@/components/ReportBuilder';
 import { 
   DollarSign, 
   FileText, 
@@ -17,7 +19,8 @@ import {
   Calendar,
   CheckCircle,
   XCircle,
-  Timer
+  Timer,
+  FileBarChart
 } from 'lucide-react';
 
 // Dummy data for the dashboard
@@ -83,6 +86,12 @@ const MunicipalDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
         </div>
+        <ReportBuilder>
+          <Button variant="outline" className="flex items-center gap-2">
+            <FileBarChart className="h-4 w-4" />
+            Create Report
+          </Button>
+        </ReportBuilder>
       </div>
 
       {/* KPI Cards */}
