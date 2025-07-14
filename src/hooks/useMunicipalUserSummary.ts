@@ -17,7 +17,7 @@ export interface MunicipalUserSummary {
   business_legal_name: string | null;
   created_at: string;
   updated_at: string;
-  bill_count: number;
+  unpaid_bill_count: number;
   total_amount_due_cents: number;
   has_bills: boolean;
 }

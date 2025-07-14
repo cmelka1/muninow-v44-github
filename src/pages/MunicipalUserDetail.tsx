@@ -174,8 +174,8 @@ const MunicipalUserDetail = () => {
               )}
               {userSummary && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Bills Count</label>
-                  <p className="text-base">{userSummary.bill_count} bills</p>
+                  <label className="text-sm font-medium text-muted-foreground">Unpaid Bills</label>
+                  <p className="text-base">{userSummary.unpaid_bill_count} bills</p>
                 </div>
               )}
               {userSummary && (
