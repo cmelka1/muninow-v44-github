@@ -92,7 +92,13 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
         }
       });
 
+      console.log('Refund function response:', { data, error });
+      console.log('Data type:', typeof data);
+      console.log('Data success:', data?.success);
+      console.log('Data refund status:', data?.refund?.refund_status);
+
       if (error) {
+        console.error('Supabase function error:', error);
         throw error;
       }
 

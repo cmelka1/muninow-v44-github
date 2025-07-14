@@ -1657,6 +1657,7 @@ export type Database = {
           card_last_four: string | null
           category: string | null
           created_at: string
+          customer_id: string
           external_account_number: string | null
           external_bill_number: string | null
           finix_merchant_id: string | null
@@ -1687,6 +1688,7 @@ export type Database = {
           card_last_four?: string | null
           category?: string | null
           created_at?: string
+          customer_id: string
           external_account_number?: string | null
           external_bill_number?: string | null
           finix_merchant_id?: string | null
@@ -1717,6 +1719,7 @@ export type Database = {
           card_last_four?: string | null
           category?: string | null
           created_at?: string
+          customer_id?: string
           external_account_number?: string | null
           external_bill_number?: string | null
           finix_merchant_id?: string | null

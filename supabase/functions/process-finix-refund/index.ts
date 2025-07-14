@@ -185,6 +185,7 @@ Deno.serve(async (req) => {
       .insert({
         bill_id: paymentHistory.bill_id,
         user_id: paymentHistory.user_id,
+        customer_id: paymentHistory.customer_id,
         municipal_user_id: user.id,
         payment_history_id: payment_history_id,
         finix_transfer_id: paymentHistory.finix_transfer_id,
