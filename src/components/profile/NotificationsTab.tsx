@@ -33,7 +33,7 @@ const initialPreferences: NotificationPreferences = {
 };
 
 export const NotificationsTab = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [preferences, setPreferences] = useState<NotificationPreferences>(initialPreferences);
   const [originalPreferences, setOriginalPreferences] = useState<NotificationPreferences>(initialPreferences);
@@ -101,6 +101,22 @@ export const NotificationsTab = () => {
     setPreferences(prev => ({
       ...prev,
       paperlessBilling: value
+    }));
+  };
+
+  // Handler for municipal users - single toggle controls all email notifications
+  const handleMunicipalNotificationChange = (value: boolean) => {
+    setPreferences(prev => ({
+      ...prev,
+      email: {
+        billPosting: value,
+        paymentConfirmations: value,
+      },
+      sms: {
+        billPosting: false,
+        paymentConfirmations: false,
+      },
+      paperlessBilling: false,
     }));
   };
 
@@ -186,6 +202,73 @@ export const NotificationsTab = () => {
     );
   }
 
+  // Municipal users see simplified interface
+  if (profile?.account_type === 'municipal') {
+    return (
+      <div className="space-y-6">
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                Notification Preferences
+              </CardTitle>
+              {!isEditing ? (
+                <Button type="button" onClick={() => setIsEditing(true)} variant="outline">
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit Preferences
+                </Button>
+              ) : (
+                <div className="flex space-x-2">
+                  <Button type="button" onClick={savePreferences} size="sm" disabled={isLoading}>
+                    {isLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Save Changes
+                  </Button>
+                  <Button type="button" onClick={handleCancel} variant="outline" size="sm" disabled={isLoading}>
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="bg-primary/10 p-2 rounded-lg mt-1">
+                  <Mail className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-slate-800">User Notifications</h4>
+                  <p className="text-sm text-slate-600 mb-3">
+                    Email notifications for municipal activities and updates
+                  </p>
+                  
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-slate-500" />
+                      <Label className="text-sm font-medium">Email Notifications</Label>
+                    </div>
+                    <Switch
+                      checked={preferences.email.billPosting && preferences.email.paymentConfirmations}
+                      onCheckedChange={handleMunicipalNotificationChange}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Non-municipal users see the full interface
   return (
     <div className="space-y-6">
       {/* Notification Preferences */}
