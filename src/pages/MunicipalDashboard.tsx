@@ -82,10 +82,6 @@ const MunicipalDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
-          <p className="text-muted-foreground mt-1">City of Springfield - Financial Overview</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary">Last Updated: Jan 16, 2024</Badge>
         </div>
       </div>
 
