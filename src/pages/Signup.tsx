@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
@@ -9,29 +8,13 @@ import { PreloginFooter } from '@/components/layout/PreloginFooter';
 const Signup = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isSessionCleared, setIsSessionCleared] = useState(false);
-
-  // Force fresh authentication by clearing existing sessions
-  useEffect(() => {
-    const clearExistingSession = async () => {
-      if (!isSessionCleared) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          await supabase.auth.signOut();
-        }
-        setIsSessionCleared(true);
-      }
-    };
-    
-    clearExistingSession();
-  }, [isSessionCleared]);
 
   // Redirect authenticated users
   useEffect(() => {
-    if (user && isSessionCleared) {
+    if (user) {
       navigate('/dashboard');
     }
-  }, [user, navigate, isSessionCleared]);
+  }, [user, navigate]);
 
   const handleBackToSignIn = () => {
     navigate('/signin');

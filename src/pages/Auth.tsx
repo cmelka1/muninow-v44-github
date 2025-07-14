@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,7 +17,6 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isSessionCleared, setIsSessionCleared] = useState(false);
   const navigate = useNavigate();
   
   const { 
@@ -32,24 +30,9 @@ const Auth = () => {
     clearError 
   } = useAuth();
 
-  // Force fresh authentication by clearing existing sessions
-  useEffect(() => {
-    const clearExistingSession = async () => {
-      if (!isSessionCleared) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          await supabase.auth.signOut();
-        }
-        setIsSessionCleared(true);
-      }
-    };
-    
-    clearExistingSession();
-  }, [isSessionCleared]);
-
   // Dynamic navigation based on user type
   useEffect(() => {
-    if (user && !isLoading && profile && isSessionCleared) {
+    if (user && !isLoading && profile) {
       if (profile.account_type === 'municipal') {
         navigate('/municipal/dashboard');
       } else if (profile.account_type === 'business' && profile.role === 'superAdmin') {
@@ -58,7 +41,7 @@ const Auth = () => {
         navigate('/dashboard');
       }
     }
-  }, [user, profile, isLoading, navigate, isSessionCleared]);
+  }, [user, profile, isLoading, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
