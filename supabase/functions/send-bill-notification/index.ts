@@ -16,7 +16,14 @@ interface NotificationRequest {
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+  {
+    global: {
+      headers: {
+        Authorization: `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+      },
+    },
+  }
 );
 
 serve(async (req: Request) => {
@@ -26,26 +33,39 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Get the JWT token from the request header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
     }
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
+    // Create a new supabase client with the user's JWT token for RLS
+    const userSupabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
     );
 
+    const { billId, deliveryMethod, messageSubject, messageBody, visitNotes }: NotificationRequest = await req.json();
+
+    console.log('Processing notification request:', { billId, deliveryMethod });
+
+    // Get current user info (for logging purposes)
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
     if (authError || !user) {
       throw new Error('Unauthorized');
     }
 
-    const { billId, deliveryMethod, messageSubject, messageBody, visitNotes }: NotificationRequest = await req.json();
+    console.log('Authenticated user:', user.id);
 
-    console.log('Processing notification request:', { billId, deliveryMethod, user: user.id });
-
-    // Get bill details and verify municipal user access
-    const { data: bill, error: billError } = await supabase
+    // Get bill details - RLS will automatically filter based on municipal user's access
+    const { data: bill, error: billError } = await userSupabase
       .from('master_bills')
       .select(`
         *,
@@ -57,11 +77,12 @@ serve(async (req: Request) => {
       .single();
 
     if (billError || !bill) {
-      throw new Error('Bill not found');
+      console.error('Bill query error:', billError);
+      throw new Error('Bill not found or access denied');
     }
 
     // Get municipal user profile
-    const { data: municipalProfile, error: profileError } = await supabase
+    const { data: municipalProfile, error: profileError } = await userSupabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
@@ -69,12 +90,8 @@ serve(async (req: Request) => {
       .single();
 
     if (profileError || !municipalProfile) {
+      console.error('Municipal profile error:', profileError);
       throw new Error('Municipal user not found');
-    }
-
-    // Verify municipal user has access to this customer's bills
-    if (municipalProfile.customer_id !== bill.customer_id) {
-      throw new Error('Access denied to this bill');
     }
 
     // Create notification record
@@ -94,7 +111,7 @@ serve(async (req: Request) => {
       sent_at: deliveryMethod === 'in_person_visit' ? new Date().toISOString() : null,
     };
 
-    const { data: notification, error: notificationError } = await supabase
+    const { data: notification, error: notificationError } = await userSupabase
       .from('bill_notifications')
       .insert(notificationData)
       .select()
@@ -241,7 +258,7 @@ serve(async (req: Request) => {
       errorMessage = errors.join('; ');
     }
 
-    await supabase
+    await userSupabase
       .from('bill_notifications')
       .update({
         delivery_status: finalStatus,
