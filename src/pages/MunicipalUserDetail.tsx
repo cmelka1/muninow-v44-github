@@ -178,16 +178,16 @@ const MunicipalUserDetail = () => {
                   <p className="text-base">{userSummary.bill_count} bills</p>
                 </div>
               )}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Address</label>
-                <p className="text-base">{formatAddress(userInfo)}</p>
-              </div>
               {userSummary && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Total Amount Due</label>
                   <p className="text-base">{formatCurrency(userSummary.total_amount_due_cents)}</p>
                 </div>
               )}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Address</label>
+                <p className="text-base">{formatAddress(userInfo)}</p>
+              </div>
             </div>
             
             {!hasProfileAccess && (
