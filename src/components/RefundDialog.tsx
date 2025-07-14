@@ -92,22 +92,28 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
         }
       });
 
-      console.log('Refund function response:', { data, error });
-      console.log('Data type:', typeof data);
-      console.log('Data success:', data?.success);
-      console.log('Data refund status:', data?.refund?.refund_status);
-
       if (error) {
         console.error('Supabase function error:', error);
         throw error;
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Refund processing failed');
+      // Parse the response if it's a string
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+        } catch (parseError) {
+          console.error('Failed to parse response:', parseError);
+          throw new Error('Invalid response format');
+        }
+      }
+
+      if (!parsedData.success) {
+        throw new Error(parsedData.error || 'Refund processing failed');
       }
 
       // Handle different refund statuses
-      const status = data.refund?.refund_status || 'unknown';
+      const status = parsedData.refund?.refund_status || 'unknown';
       
       if (status === 'pending') {
         toast({
@@ -124,7 +130,7 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
       } else {
         toast({
           title: "Refund Initiated",
-          description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been processed: ${data.message}`,
+          description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been processed: ${parsedData.message}`,
           variant: "default"
         });
       }
