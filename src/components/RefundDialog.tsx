@@ -1,0 +1,205 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { AlertTriangle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+
+interface RefundDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  paymentDetails: {
+    id: string;
+    bill_id: string;
+    amount_cents: number;
+    total_amount_cents: number;
+    finix_transfer_id: string;
+    user_id: string;
+    master_bills: {
+      external_bill_number: string;
+    };
+  };
+  onRefundCreated: () => void;
+}
+
+const REFUND_REASONS = [
+  'Duplicate Payment',
+  'Overpayment',
+  'Service Not Provided',
+  'Bill Error',
+  'Customer Request',
+  'System Error',
+  'Other'
+];
+
+export const RefundDialog: React.FC<RefundDialogProps> = ({
+  open,
+  onOpenChange,
+  paymentDetails,
+  onRefundCreated
+}) => {
+  const { user } = useAuth();
+  const [selectedReason, setSelectedReason] = useState('');
+  const [customReason, setCustomReason] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!selectedReason) {
+      toast({
+        title: "Error",
+        description: "Please select a refund reason",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (selectedReason === 'Other' && !customReason.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a custom reason",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const finalReason = selectedReason === 'Other' ? customReason : selectedReason;
+
+      const { error } = await supabase
+        .from('refunds')
+        .insert({
+          bill_id: paymentDetails.bill_id,
+          payment_history_id: paymentDetails.id,
+          user_id: paymentDetails.user_id,
+          municipal_user_id: user?.id,
+          finix_transfer_id: paymentDetails.finix_transfer_id,
+          original_amount_cents: paymentDetails.amount_cents,
+          refund_amount_cents: paymentDetails.total_amount_cents,
+          reason: finalReason,
+          refund_status: 'pending'
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Refund Initiated",
+        description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been submitted.`
+      });
+
+      onRefundCreated();
+      onOpenChange(false);
+      
+      // Reset form
+      setSelectedReason('');
+      setCustomReason('');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create refund request",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(cents / 100);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            Process Refund
+          </DialogTitle>
+          <DialogDescription>
+            Create a refund request for bill {paymentDetails.master_bills.external_bill_number}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          {/* Refund Amount Display */}
+          <div className="bg-muted p-3 rounded-lg">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Refund Amount</span>
+              <span className="text-lg font-bold">
+                {formatCurrency(paymentDetails.total_amount_cents)}
+              </span>
+            </div>
+          </div>
+
+          {/* Reason Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="reason">Refund Reason</Label>
+            <Select value={selectedReason} onValueChange={setSelectedReason}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a reason" />
+              </SelectTrigger>
+              <SelectContent>
+                {REFUND_REASONS.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Custom Reason Input */}
+          {selectedReason === 'Other' && (
+            <div className="space-y-2">
+              <Label htmlFor="customReason">Custom Reason</Label>
+              <Textarea
+                id="customReason"
+                placeholder="Please explain the reason for this refund..."
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            variant="destructive"
+          >
+            {isSubmitting ? 'Processing...' : 'Process Refund'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CheckCircle, ArrowLeft, Receipt, Download } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Receipt, Download, RotateCcw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
+import { RefundDialog } from '@/components/RefundDialog';
 
 interface PaymentHistoryDetails {
   id: string;
@@ -17,6 +21,8 @@ interface PaymentHistoryDetails {
   payment_type: string;
   transfer_state: string;
   created_at: string;
+  user_id: string;
+  customer_id?: string;
   card_brand?: string;
   card_last_four?: string;
   bank_last_four?: string;
@@ -31,9 +37,13 @@ interface PaymentHistoryDetails {
 const PaymentConfirmation = () => {
   const { paymentHistoryId } = useParams<{ paymentHistoryId: string }>();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { hasRole, isLoading: rolesLoading } = useUserRole();
   const [paymentDetails, setPaymentDetails] = useState<PaymentHistoryDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [hasExistingRefund, setHasExistingRefund] = useState(false);
 
   useEffect(() => {
     const fetchPaymentDetails = async () => {
@@ -65,6 +75,17 @@ const PaymentConfirmation = () => {
         }
 
         setPaymentDetails(data);
+
+        // Check for existing refunds if user is municipal
+        if (profile?.account_type === 'municipal') {
+          const { data: refundData } = await supabase
+            .from('refunds')
+            .select('id')
+            .eq('payment_history_id', paymentHistoryId)
+            .limit(1);
+          
+          setHasExistingRefund(refundData && refundData.length > 0);
+        }
       } catch (err) {
         console.error('Error:', err);
         setError('Failed to load payment details');
@@ -74,7 +95,7 @@ const PaymentConfirmation = () => {
     };
 
     fetchPaymentDetails();
-  }, [paymentHistoryId]);
+  }, [paymentHistoryId, profile]);
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -188,7 +209,14 @@ const PaymentConfirmation = () => {
     };
   };
 
-  if (isLoading) {
+  const handleRefundCreated = () => {
+    setHasExistingRefund(true);
+  };
+
+  const isMunicipalUser = profile?.account_type === 'municipal';
+  const canProcessRefund = isMunicipalUser && paymentDetails?.transfer_state === 'SUCCEEDED' && !hasExistingRefund;
+
+  if (isLoading || rolesLoading) {
     return (
       <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-2xl mx-auto space-y-6">
@@ -224,14 +252,20 @@ const PaymentConfirmation = () => {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Top Navigation */}
         <div className="flex justify-between mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(isMunicipalUser ? '/municipal/dashboard' : '/dashboard')}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          <Button onClick={handleDownloadPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleDownloadPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          </div>
         </div>
         
         {/* Header */}
@@ -255,6 +289,51 @@ const PaymentConfirmation = () => {
             }
           </p>
         </div>
+
+        {/* Municipal Actions */}
+        {isMunicipalUser && (
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="text-primary flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                Municipal Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Refund Management</p>
+                  {hasExistingRefund ? (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">Refund Requested</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        A refund has already been processed for this payment
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-sm">
+                      {canProcessRefund 
+                        ? 'Process a refund for this successful payment'
+                        : paymentDetails.transfer_state !== 'SUCCEEDED' 
+                          ? 'Refunds can only be processed for successful payments'
+                          : 'Refund options available'
+                      }
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setRefundDialogOpen(true)}
+                  disabled={!canProcessRefund}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Process Refund
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment Details */}
         <Card>
@@ -287,6 +366,12 @@ const PaymentConfirmation = () => {
                 <label className="text-sm font-medium text-muted-foreground">Transaction ID</label>
                 <p className="text-base font-mono text-xs">{paymentDetails.finix_transfer_id}</p>
               </div>
+              {isMunicipalUser && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Customer ID</label>
+                  <p className="text-base font-mono text-xs">{paymentDetails.user_id}</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -324,11 +409,14 @@ const PaymentConfirmation = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Status</label>
-                <p className={`text-base font-medium ${
-                  isSuccessful ? 'text-green-600' : 'text-yellow-600'
-                }`}>
-                  {paymentDetails.transfer_state}
-                </p>
+                <div className="flex items-center gap-2">
+                  <Badge variant={isSuccessful ? "default" : "secondary"}>
+                    {paymentDetails.transfer_state}
+                  </Badge>
+                  {hasExistingRefund && (
+                    <Badge variant="destructive">Refund Requested</Badge>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Processed At</label>
@@ -337,6 +425,16 @@ const PaymentConfirmation = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Refund Dialog */}
+        {paymentDetails && (
+          <RefundDialog
+            open={refundDialogOpen}
+            onOpenChange={setRefundDialogOpen}
+            paymentDetails={paymentDetails}
+            onRefundCreated={handleRefundCreated}
+          />
+        )}
 
       </div>
     </div>
