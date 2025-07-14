@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Mail, Phone, MapPin, User, AlertCircle } from 'lucide-react';
 import UserBillsTable from '@/components/UserBillsTable';
+import UserPaymentHistoryTable from '@/components/UserPaymentHistoryTable';
 
 import { useMunicipalUserSummary } from '@/hooks/useMunicipalUserSummary';
 
@@ -204,6 +205,11 @@ const MunicipalUserDetail = () => {
         {/* User Bills Section */}
         <div>
           <UserBillsTable userId={userId!} />
+        </div>
+
+        {/* MuniNow Payment History Section */}
+        <div>
+          <UserPaymentHistoryTable userId={userId!} />
         </div>
 
       </div>
