@@ -60,21 +60,34 @@ serve(async (req: Request) => {
       throw new Error('Unauthorized - not a municipal user');
     }
 
-    // Get bill details
+    // Get bill details first
     const { data: bill, error: billError } = await supabase
       .from('master_bills')
-      .select(`
-        *,
-        profiles!user_id(
-          id, first_name, last_name, email, phone
-        )
-      `)
+      .select('*')
       .eq('bill_id', billId)
       .single();
 
     if (billError || !bill) {
       console.error('Bill query error:', billError);
       throw new Error('Bill not found');
+    }
+
+    // Get user profile separately using profile_id
+    let userProfile = null;
+    if (bill.profile_id) {
+      const { data: profile, error: userProfileError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, phone')
+        .eq('id', bill.profile_id)
+        .single();
+
+      if (!userProfileError && profile) {
+        userProfile = profile;
+      } else {
+        console.log('User profile not found for profile_id:', bill.profile_id);
+      }
+    } else {
+      console.log('No profile_id associated with bill');
     }
 
     // Verify municipal user has access to this customer's bills
@@ -127,7 +140,6 @@ serve(async (req: Request) => {
     }
 
     // For electronic notifications, prepare the message
-    const userProfile = bill.profiles;
     if (!userProfile) {
       throw new Error('User profile not found for notification');
     }
