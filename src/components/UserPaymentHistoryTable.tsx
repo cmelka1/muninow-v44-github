@@ -83,7 +83,7 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
+          <CardTitle>MuniNow Payment History</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -100,7 +100,7 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
+          <CardTitle>MuniNow Payment History</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-destructive">Error loading payment history. Please try again.</p>
@@ -113,7 +113,7 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
+          <CardTitle>MuniNow Payment History</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">No payment history found for this user.</p>
@@ -125,7 +125,7 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payment History</CardTitle>
+        <CardTitle>MuniNow Payment History</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
