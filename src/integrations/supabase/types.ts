@@ -44,6 +44,95 @@ export type Database = {
         }
         Relationships: []
       }
+      bill_notifications: {
+        Row: {
+          bill_id: string
+          created_at: string
+          customer_id: string
+          delivery_method: string
+          delivery_status: string
+          error_message: string | null
+          id: string
+          merchant_id: string | null
+          message_body: string | null
+          message_subject: string | null
+          municipal_employee_name: string | null
+          municipal_user_id: string
+          notification_type: string
+          sent_at: string | null
+          updated_at: string
+          user_id: string | null
+          visit_notes: string | null
+        }
+        Insert: {
+          bill_id: string
+          created_at?: string
+          customer_id: string
+          delivery_method: string
+          delivery_status?: string
+          error_message?: string | null
+          id?: string
+          merchant_id?: string | null
+          message_body?: string | null
+          message_subject?: string | null
+          municipal_employee_name?: string | null
+          municipal_user_id: string
+          notification_type: string
+          sent_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          visit_notes?: string | null
+        }
+        Update: {
+          bill_id?: string
+          created_at?: string
+          customer_id?: string
+          delivery_method?: string
+          delivery_status?: string
+          error_message?: string | null
+          id?: string
+          merchant_id?: string | null
+          message_body?: string | null
+          message_subject?: string | null
+          municipal_employee_name?: string | null
+          municipal_user_id?: string
+          notification_type?: string
+          sent_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          visit_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_bill_notifications_bill_id"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "master_bills"
+            referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "fk_bill_notifications_customer_id"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "fk_bill_notifications_municipal_user_id"
+            columns: ["municipal_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bill_notifications_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bill_processing_failures: {
         Row: {
           bill_id: string | null

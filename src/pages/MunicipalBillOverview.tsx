@@ -8,13 +8,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBill } from '@/hooks/useBill';
 import PaymentSummary from '@/components/PaymentSummary';
+import { BillNotificationDialog } from '@/components/BillNotificationDialog';
+import { NotificationHistory } from '@/components/NotificationHistory';
 
 const MunicipalBillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
+  const [notificationKey, setNotificationKey] = useState(0);
   
   const { data: bill, isLoading, error } = useBill(billId!);
+
+  const handleNotificationSent = () => {
+    setNotificationKey(prev => prev + 1); // Force refresh of notification history
+  };
 
   const formatDate = (date: string | null) => {
     if (!date) return 'N/A';
@@ -78,7 +86,7 @@ const MunicipalBillOverview = () => {
             </Button>
             <h1 className="text-2xl font-bold">Bill Details</h1>
           </div>
-          <Button>
+          <Button onClick={() => setNotificationDialogOpen(true)}>
             Notify
           </Button>
         </div>
@@ -163,14 +171,7 @@ const MunicipalBillOverview = () => {
             </Card>
 
             {/* Notification History Tile */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Notification History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Coming soon...</p>
-              </CardContent>
-            </Card>
+            <NotificationHistory key={notificationKey} billId={billId!} />
           </div>
 
           {/* Right Column - Simplified Check Out Tile */}
@@ -220,6 +221,16 @@ const MunicipalBillOverview = () => {
             </Card>
           </div>
         </div>
+
+        {/* Notification Dialog */}
+        {bill && (
+          <BillNotificationDialog
+            open={notificationDialogOpen}
+            onOpenChange={setNotificationDialogOpen}
+            bill={bill}
+            onNotificationSent={handleNotificationSent}
+          />
+        )}
       </div>
     </div>
   );
