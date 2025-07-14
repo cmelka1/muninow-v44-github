@@ -81,6 +81,26 @@ const MunicipalUserDetail = () => {
     }
   };
 
+  const formatPhoneNumber = (phone: string | null) => {
+    if (!phone) return 'N/A';
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+    // Format as (xxx) xxx-xxxx
+    if (digits.length === 10) {
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+    // Return original if not 10 digits
+    return phone;
+  };
+
+  const formatCurrency = (cents: number | null) => {
+    if (cents === null || cents === undefined) return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(cents / 100);
+  };
+
   const formatAddress = (profile: any) => {
     const parts = [
       profile.street_address,
@@ -149,7 +169,7 @@ const MunicipalUserDetail = () => {
               {userInfo.phone && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                  <p className="text-base">{userInfo.phone}</p>
+                  <p className="text-base">{formatPhoneNumber(userInfo.phone)}</p>
                 </div>
               )}
               <div>
@@ -164,7 +184,7 @@ const MunicipalUserDetail = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Total Amount Due</label>
-                    <p className="text-base">${(userSummary.total_amount_due_cents / 100).toFixed(2)}</p>
+                    <p className="text-base">{formatCurrency(userSummary.total_amount_due_cents)}</p>
                   </div>
                 </>
               )}
