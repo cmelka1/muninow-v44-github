@@ -125,7 +125,7 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payment History ({totalCount})</CardTitle>
+        <CardTitle>Payment History</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
