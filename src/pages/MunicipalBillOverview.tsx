@@ -70,12 +70,17 @@ const MunicipalBillOverview = () => {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header with back button */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-2xl font-bold">Bill Details</h1>
+          </div>
+          <Button>
+            Notify
           </Button>
-          <h1 className="text-2xl font-bold">Bill Details</h1>
         </div>
 
         {/* Two Column Layout */}
