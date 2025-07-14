@@ -94,7 +94,7 @@ export function BillNotificationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Send Bill Notification</DialogTitle>
           <DialogDescription>
@@ -102,9 +102,9 @@ export function BillNotificationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Bill Details Preview */}
-          <div className="bg-muted/50 p-4 rounded-lg">
+          <div className="bg-muted/50 p-3 rounded-lg">
             <h4 className="font-medium mb-2">Bill Details</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
@@ -127,7 +127,7 @@ export function BillNotificationDialog({
           </div>
 
           {/* Delivery Method Selection */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Label className="text-base font-medium">Delivery Method</Label>
             <RadioGroup value={deliveryMethod} onValueChange={setDeliveryMethod}>
               <div className="flex items-center space-x-2">
@@ -170,11 +170,11 @@ export function BillNotificationDialog({
                 placeholder="Enter notes about the in-person visit..."
                 value={visitNotes}
                 onChange={(e) => setVisitNotes(e.target.value)}
-                className="min-h-[100px]"
+                className="min-h-[80px]"
               />
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject (Optional)</Label>
                 <Input
@@ -191,7 +191,7 @@ export function BillNotificationDialog({
                   placeholder="Enter a custom message or leave blank for default bill notification..."
                   value={messageBody}
                   onChange={(e) => setMessageBody(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[80px]"
                 />
               </div>
             </div>
