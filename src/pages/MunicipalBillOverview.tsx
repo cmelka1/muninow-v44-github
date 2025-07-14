@@ -202,11 +202,14 @@ const MunicipalBillOverview = () => {
                   </Select>
                 </div>
 
-                {/* Info Note */}
-                <div className="bg-muted/50 p-3 rounded-md">
-                  <p className="text-xs text-muted-foreground text-center">
-                    This is an administrative view. Payment processing is handled through the customer portal.
-                  </p>
+                {/* Pay Button */}
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                  >
+                    Pay {formatCurrency(bill.total_amount_cents)}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
