@@ -9,31 +9,44 @@ const MunicipalMerchantDetail = () => {
   const { merchantId } = useParams<{ merchantId: string }>();
   const navigate = useNavigate();
   
-  const { fetchMerchantById, isLoading, error } = useMerchants();
+  const { fetchMerchantById } = useMerchants();
   const [merchant, setMerchant] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const loadMerchant = async () => {
       if (!merchantId) {
         console.log('No merchantId provided');
+        setLoading(false);
         return;
       }
       
       console.log('Loading merchant with ID:', merchantId);
+      setLoading(true);
+      setError(null);
       
       try {
         const result = await fetchMerchantById(merchantId);
         console.log('Received merchant result:', result);
-        setMerchant(result);
-      } catch (err) {
+        
+        if (result) {
+          setMerchant(result);
+        } else {
+          setError('Merchant not found');
+        }
+      } catch (err: any) {
         console.error('Error loading merchant:', err);
+        setError(err.message || 'Failed to load merchant');
+      } finally {
+        setLoading(false);
       }
     };
 
     loadMerchant();
-  }, [merchantId, fetchMerchantById]);
+  }, [merchantId]); // Removed fetchMerchantById from dependencies to prevent re-renders
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -49,7 +62,7 @@ const MunicipalMerchantDetail = () => {
     );
   }
 
-  if (!merchant) {
+  if (error || !merchant) {
     return (
       <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-7xl mx-auto">
@@ -60,8 +73,17 @@ const MunicipalMerchantDetail = () => {
             </Button>
           </div>
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-destructive">Merchant not found.</p>
+            <CardContent className="py-12 text-center space-y-4">
+              <p className="text-destructive">
+                {error || 'Merchant not found'}
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.reload()}
+                className="mt-4"
+              >
+                Try Again
+              </Button>
             </CardContent>
           </Card>
         </div>
