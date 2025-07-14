@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
+import { useCrossTabSession } from '@/hooks/useCrossTabSession';
 import { SessionWarningDialog } from '@/components/SessionWarningDialog';
 
 interface Profile {
@@ -66,6 +67,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [resetSent, setResetSent] = useState(false);
   const [isSessionWarningOpen, setIsSessionWarningOpen] = useState(false);
   const [logoutReason, setLogoutReason] = useState<'user' | 'external' | 'timeout' | null>(null);
+
+  // Cross-tab session management
+  const { clearSession } = useCrossTabSession({
+    onExternalSessionChange: (newSessionId) => {
+      if (newSessionId && user) {
+        // Another tab has an active session, log out this tab
+        setLogoutReason('external');
+        toast({
+          title: "Signed out",
+          description: "You've been signed out because another user logged in.",
+          variant: "destructive"
+        });
+        signOut('external');
+      }
+    }
+  });
 
   // Load user profile with timeout protection
   const loadProfile = async (userId: string) => {
@@ -269,6 +286,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setProfile(null);
       setUser(null);
       setSession(null);
+      clearSession();
       localStorage.clear();
       sessionStorage.clear();
       
@@ -288,6 +306,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           window.location.href = '/signin';
         }
       } else {
+        clearSession();
         toast({
           title: "Error",
           description: "There was an issue signing out. Please try again.",
