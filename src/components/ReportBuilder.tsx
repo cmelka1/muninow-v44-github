@@ -7,6 +7,13 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from '@/components/ui/sheet';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +28,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { 
   FileBarChart, 
   Calendar, 
@@ -43,6 +58,7 @@ const ReportBuilder = ({ children }: ReportBuilderProps) => {
   const [frequency, setFrequency] = useState('monthly');
   const [recipients, setRecipients] = useState<string[]>(['mayor@city.gov']);
   const [newRecipient, setNewRecipient] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
 
   const reportMetrics = [
     { id: 'total-revenue', label: 'Total Revenue', category: 'Revenue Metrics' },
@@ -92,6 +108,174 @@ const ReportBuilder = ({ children }: ReportBuilderProps) => {
 
   const removeRecipient = (email: string) => {
     setRecipients(recipients.filter(r => r !== email));
+  };
+
+  const generateDummyData = (metricId: string) => {
+    const timeLabels = {
+      '1week': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      '1month': ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+      '3months': ['Month 1', 'Month 2', 'Month 3'],
+      '1year': ['Q1', 'Q2', 'Q3', 'Q4']
+    };
+
+    switch (metricId) {
+      case 'total-revenue':
+        return {
+          title: 'Total Revenue',
+          type: 'table',
+          data: timeLabels[timePeriod as keyof typeof timeLabels].map((period, i) => ({
+            period,
+            revenue: `$${(15000 + i * 2000).toLocaleString()}`,
+            change: i > 0 ? `+${(5 + i * 2)}%` : '-'
+          }))
+        };
+      case 'collection-rate':
+        return {
+          title: 'Collection Rate',
+          type: 'table',
+          data: timeLabels[timePeriod as keyof typeof timeLabels].map((period, i) => ({
+            period,
+            rate: `${85 + i * 2}%`,
+            collected: `$${(12000 + i * 1500).toLocaleString()}`,
+            outstanding: `$${(3000 - i * 200).toLocaleString()}`
+          }))
+        };
+      case 'outstanding-bills':
+        return {
+          title: 'Outstanding Bills',
+          type: 'table',
+          data: [
+            { department: 'Utilities', count: 156, amount: '$45,230' },
+            { department: 'Property Tax', count: 89, amount: '$125,400' },
+            { department: 'Permits', count: 34, amount: '$8,750' },
+            { department: 'Parking', count: 203, amount: '$15,600' }
+          ]
+        };
+      case 'bills-by-status':
+        return {
+          title: 'Bills by Status',
+          type: 'table',
+          data: [
+            { status: 'Paid', count: 1250, percentage: '78%' },
+            { status: 'Pending', count: 234, percentage: '15%' },
+            { status: 'Overdue', count: 89, percentage: '5%' },
+            { status: 'Disputed', count: 32, percentage: '2%' }
+          ]
+        };
+      case 'payment-methods':
+        return {
+          title: 'Payment Methods',
+          type: 'table',
+          data: [
+            { method: 'ACH/Bank Transfer', count: 856, percentage: '65%' },
+            { method: 'Credit Card', count: 324, percentage: '25%' },
+            { method: 'Check', count: 89, percentage: '7%' },
+            { method: 'Cash', count: 45, percentage: '3%' }
+          ]
+        };
+      case 'department-performance':
+        return {
+          title: 'Department Performance',
+          type: 'table',
+          data: [
+            { department: 'Utilities', revenue: '$125,400', growth: '+8%' },
+            { department: 'Property Tax', revenue: '$89,200', growth: '+5%' },
+            { department: 'Permits', revenue: '$45,600', growth: '+12%' },
+            { department: 'Parking', revenue: '$23,800', growth: '+3%' }
+          ]
+        };
+      case 'monthly-trends':
+        return {
+          title: 'Monthly Revenue Trends',
+          type: 'table',
+          data: timeLabels[timePeriod as keyof typeof timeLabels].map((period, i) => ({
+            period,
+            revenue: `$${(25000 + i * 3000).toLocaleString()}`,
+            transactions: (450 + i * 50).toString(),
+            avgTransaction: `$${(55 + i * 5).toFixed(2)}`
+          }))
+        };
+      case 'processing-times':
+        return {
+          title: 'Processing Times',
+          type: 'table',
+          data: [
+            { metric: 'Average Payment Processing', time: '2.3 minutes' },
+            { metric: 'Bill Generation Time', time: '45 seconds' },
+            { metric: 'Dispute Resolution', time: '3.2 days' },
+            { metric: 'Refund Processing', time: '1.8 days' }
+          ]
+        };
+      default:
+        return {
+          title: reportMetrics.find(m => m.id === metricId)?.label || 'Unknown Metric',
+          type: 'table',
+          data: [
+            { item: 'Sample Data 1', value: '100' },
+            { item: 'Sample Data 2', value: '200' },
+            { item: 'Sample Data 3', value: '150' }
+          ]
+        };
+    }
+  };
+
+  const generatePreviewContent = () => {
+    if (selectedMetrics.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <FileBarChart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Metrics Selected</h3>
+          <p className="text-muted-foreground">Select some metrics to preview your report</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="text-center border-b pb-4">
+          <h2 className="text-2xl font-bold">Municipal Financial Report</h2>
+          <p className="text-muted-foreground">
+            Period: {timePeriod === '1week' ? 'Last 7 Days' : 
+                     timePeriod === '1month' ? 'Last 30 Days' :
+                     timePeriod === '3months' ? 'Last 3 Months' : 'Last 12 Months'}
+          </p>
+          <p className="text-sm text-muted-foreground">Generated on {new Date().toLocaleDateString()}</p>
+        </div>
+
+        {selectedMetrics.map((metricId) => {
+          const data = generateDummyData(metricId);
+          return (
+            <Card key={metricId}>
+              <CardHeader>
+                <CardTitle className="text-lg">{data.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {Object.keys(data.data[0] || {}).map((key) => (
+                        <TableHead key={key} className="capitalize">
+                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.data.map((row, index) => (
+                      <TableRow key={index}>
+                        {Object.values(row).map((value, cellIndex) => (
+                          <TableCell key={cellIndex}>{value as string}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -327,7 +511,12 @@ const ReportBuilder = ({ children }: ReportBuilderProps) => {
               Generate Report ({selectedMetrics.length} metrics)
             </Button>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowPreview(true)}
+                disabled={selectedMetrics.length === 0}
+              >
                 Preview Report
               </Button>
               <Button variant="outline" size="sm">
@@ -337,6 +526,19 @@ const ReportBuilder = ({ children }: ReportBuilderProps) => {
           </div>
         </div>
       </SheetContent>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Report Preview</DialogTitle>
+            <DialogDescription>
+              Preview of your custom report with {selectedMetrics.length} selected metrics
+            </DialogDescription>
+          </DialogHeader>
+          {generatePreviewContent()}
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 };
