@@ -1649,6 +1649,99 @@ export type Database = {
           },
         ]
       }
+      refunds: {
+        Row: {
+          bank_last_four: string | null
+          bill_id: string
+          card_brand: string | null
+          card_last_four: string | null
+          category: string | null
+          created_at: string
+          external_account_number: string | null
+          external_bill_number: string | null
+          finix_merchant_id: string | null
+          finix_payment_instrument_id: string | null
+          finix_raw_response: Json | null
+          finix_reversal_id: string | null
+          finix_transfer_id: string
+          id: string
+          merchant_name: string | null
+          municipal_user_id: string
+          original_amount_cents: number
+          original_due_date: string | null
+          original_issue_date: string | null
+          payment_history_id: string
+          payment_type: string | null
+          processed_at: string | null
+          reason: string
+          refund_amount_cents: number
+          refund_status: string
+          subcategory: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_last_four?: string | null
+          bill_id: string
+          card_brand?: string | null
+          card_last_four?: string | null
+          category?: string | null
+          created_at?: string
+          external_account_number?: string | null
+          external_bill_number?: string | null
+          finix_merchant_id?: string | null
+          finix_payment_instrument_id?: string | null
+          finix_raw_response?: Json | null
+          finix_reversal_id?: string | null
+          finix_transfer_id: string
+          id?: string
+          merchant_name?: string | null
+          municipal_user_id: string
+          original_amount_cents: number
+          original_due_date?: string | null
+          original_issue_date?: string | null
+          payment_history_id: string
+          payment_type?: string | null
+          processed_at?: string | null
+          reason: string
+          refund_amount_cents: number
+          refund_status?: string
+          subcategory?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_last_four?: string | null
+          bill_id?: string
+          card_brand?: string | null
+          card_last_four?: string | null
+          category?: string | null
+          created_at?: string
+          external_account_number?: string | null
+          external_bill_number?: string | null
+          finix_merchant_id?: string | null
+          finix_payment_instrument_id?: string | null
+          finix_raw_response?: Json | null
+          finix_reversal_id?: string | null
+          finix_transfer_id?: string
+          id?: string
+          merchant_name?: string | null
+          municipal_user_id?: string
+          original_amount_cents?: number
+          original_due_date?: string | null
+          original_issue_date?: string | null
+          payment_history_id?: string
+          payment_type?: string | null
+          processed_at?: string | null
+          reason?: string
+          refund_amount_cents?: number
+          refund_status?: string
+          subcategory?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           created_at: string
