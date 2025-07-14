@@ -206,9 +206,9 @@ serve(async (req: Request) => {
       try {
         const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
         const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-        const twilioFromNumber = Deno.env.get('TWILIO_FROM_NUMBER');
+        const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER') || '+18333691461';
 
-        if (!twilioAccountSid || !twilioAuthToken || !twilioFromNumber) {
+        if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
           throw new Error('Twilio credentials not configured');
         }
 
@@ -225,7 +225,7 @@ serve(async (req: Request) => {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-              From: twilioFromNumber,
+              From: twilioPhoneNumber,
               To: userProfile.phone,
               Body: `${defaultSubject}\n\n${defaultMessage}`,
             }),
