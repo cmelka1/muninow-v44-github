@@ -84,27 +84,25 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
     try {
       const finalReason = selectedReason === 'Other' ? customReason : selectedReason;
 
-      const { error } = await supabase
-        .from('refunds')
-        .insert({
-          bill_id: paymentDetails.bill_id,
+      const { data, error } = await supabase.functions.invoke('process-finix-refund', {
+        body: {
           payment_history_id: paymentDetails.id,
-          user_id: paymentDetails.user_id,
-          municipal_user_id: user?.id,
-          finix_transfer_id: paymentDetails.finix_transfer_id,
-          original_amount_cents: paymentDetails.amount_cents,
-          refund_amount_cents: paymentDetails.total_amount_cents,
           reason: finalReason,
-          refund_status: 'pending'
-        });
+          refund_amount_cents: paymentDetails.total_amount_cents
+        }
+      });
 
       if (error) {
         throw error;
       }
 
+      if (!data.success) {
+        throw new Error(data.error || 'Refund processing failed');
+      }
+
       toast({
         title: "Refund Initiated",
-        description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been submitted.`
+        description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been processed: ${data.message}`
       });
 
       onRefundCreated();
