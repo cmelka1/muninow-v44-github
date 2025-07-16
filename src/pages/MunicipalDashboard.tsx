@@ -4,9 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer as RechartsResponsiveContainer, Area, AreaChart } from 'recharts';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import ReportBuilder from '@/components/ReportBuilder';
-import { useResponsiveNavigation } from '@/hooks/useResponsiveNavigation';
 import { 
   DollarSign, 
   FileText, 
@@ -97,36 +96,23 @@ const chartConfig = {
 };
 
 const MunicipalDashboard = () => {
-  const { isMobile } = useResponsiveNavigation();
-  
-  // Simplified responsive dimensions
-  const chartHeight = 'h-[350px]';
-  const chartContentHeight = 'h-[280px]';
-  const pieRadius = isMobile ? 60 : 80;
-  
-  // Simplified grid configurations
-  const kpiGridCols = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
-  const mainChartCols = 'grid-cols-1 xl:grid-cols-2';
-  const secondaryChartCols = 'grid-cols-1 lg:grid-cols-2';
-  
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-7xl">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Municipal Dashboard</h1>
+          <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
         </div>
         <ReportBuilder>
           <Button variant="outline" className="flex items-center gap-2">
             <FileBarChart className="h-4 w-4" />
-            {!isMobile ? 'Create Report' : 'Report'}
+            Create Report
           </Button>
         </ReportBuilder>
       </div>
 
       {/* KPI Cards */}
-      <div className={`grid ${kpiGridCols} gap-4`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -148,7 +134,9 @@ const MunicipalDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">73,500</div>
-            <p className="text-xs text-muted-foreground">+2,100 this month</p>
+            <p className="text-xs text-muted-foreground">
+              +2,100 this month
+            </p>
           </CardContent>
         </Card>
 
@@ -159,7 +147,9 @@ const MunicipalDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">92.8%</div>
-            <p className="text-xs text-muted-foreground">+1.2% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              +1.2% from last month
+            </p>
           </CardContent>
         </Card>
 
@@ -179,22 +169,19 @@ const MunicipalDashboard = () => {
       </div>
 
       {/* Charts Section */}
-      <div className={`grid ${mainChartCols} gap-4`}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Actual vs Budget Revenue */}
-        <Card className={chartHeight}>
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Actual vs Budget Revenue</CardTitle>
+            <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
-          <CardContent className={chartContentHeight}>
-            <ChartContainer config={chartConfig} className="h-full">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <BarChart data={actualVsBudget}>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={actualVsBudget} barCategoryGap="20%">
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" fontSize={12} />
-                  <YAxis 
-                    tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
-                    fontSize={12}
-                  />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
                   <ChartTooltip 
                     content={<ChartTooltipContent />}
                     formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`]}
@@ -212,26 +199,23 @@ const MunicipalDashboard = () => {
                     name="Budget Revenue"
                   />
                 </BarChart>
-              </RechartsResponsiveContainer>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
 
         {/* Revenue Trend */}
-        <Card className={chartHeight}>
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Monthly Revenue Trend</CardTitle>
+            <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
-          <CardContent className={chartContentHeight}>
-            <ChartContainer config={chartConfig} className="h-full">
-              <RechartsResponsiveContainer width="100%" height="100%">
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" fontSize={12} />
-                  <YAxis 
-                    tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
-                    fontSize={12}
-                  />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
                   <ChartTooltip 
                     content={<ChartTooltipContent />}
                     formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`, 'Revenue']}
@@ -244,31 +228,30 @@ const MunicipalDashboard = () => {
                     fillOpacity={0.3}
                   />
                 </AreaChart>
-              </RechartsResponsiveContainer>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Revenue Category and Additional Metrics */}
-      <div className={`grid ${secondaryChartCols} gap-4`}>
+      {/* Additional Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by Category */}
-        <Card className={chartHeight}>
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Revenue by Category</CardTitle>
+            <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
-          <CardContent className={chartContentHeight}>
-            <ChartContainer config={chartConfig} className="h-full">
-              <RechartsResponsiveContainer width="100%" height="100%">
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={revenueByCategory}
                     cx="50%"
                     cy="50%"
-                    outerRadius={pieRadius}
+                    outerRadius={80}
                     dataKey="revenue"
-                    label={!isMobile ? ({ category, percentage }) => `${category}: ${percentage}%` : false}
-                    labelLine={!isMobile}
+                    label={({ category, percentage }) => `${category}: ${percentage}%`}
                   >
                     {revenueByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -279,17 +262,20 @@ const MunicipalDashboard = () => {
                     formatter={(value) => [`$${(Number(value) / 1000000).toFixed(1)}M`, 'Revenue']}
                   />
                 </PieChart>
-              </RechartsResponsiveContainer>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Additional Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Payment Methods */}
-        <Card className={chartHeight}>
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Payment Methods</CardTitle>
+            <CardTitle>Payment Methods</CardTitle>
           </CardHeader>
-          <CardContent className={`${chartContentHeight} space-y-4 overflow-y-auto`}>
+          <CardContent className="space-y-4">
             {paymentMethods.map((method) => (
               <div key={method.method} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -304,134 +290,109 @@ const MunicipalDashboard = () => {
             ))}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Top Departments */}
-      <Card className={chartHeight}>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Top Revenue Departments</CardTitle>
-        </CardHeader>
-        <CardContent className={`${chartContentHeight} space-y-4 overflow-y-auto`}>
-          {topDepartments.map((dept) => (
-            <div key={dept.department} className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">{dept.department}</p>
-                <p className="text-xs text-muted-foreground">
-                  ${(dept.revenue / 1000000).toFixed(1)}M
-                </p>
+        {/* Top Departments */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Revenue Departments</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topDepartments.map((dept) => (
+              <div key={dept.department} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{dept.department}</p>
+                  <p className="text-xs text-muted-foreground">
+                    ${(dept.revenue / 1000000).toFixed(1)}M
+                  </p>
+                </div>
+                <Badge variant={dept.growth > 0 ? "default" : "destructive"}>
+                  {dept.growth > 0 ? '+' : ''}{dept.growth}%
+                </Badge>
               </div>
-              <Badge variant={dept.growth > 0 ? "default" : "destructive"}>
-                {dept.growth > 0 ? '+' : ''}{dept.growth}%
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* System Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>System Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Payment Processing</span>
+              <Badge variant="default">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Online
               </Badge>
             </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* System Status */}
-      <Card className="h-auto">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">System Status</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Payment Processing</span>
-            <Badge variant="default">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Online
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Bill Generation</span>
-            <Badge variant="default">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Active
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Notification Service</span>
-            <Badge variant="secondary">
-              <Timer className="h-3 w-3 mr-1" />
-              Maintenance
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Data Sync</span>
-            <Badge variant="default">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Synced
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Bill Generation</span>
+              <Badge variant="default">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Active
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Notification Service</span>
+              <Badge variant="secondary">
+                <Timer className="h-3 w-3 mr-1" />
+                Maintenance
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Data Sync</span>
+              <Badge variant="default">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Synced
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Recent Activity Table */}
-      <Card className="h-auto">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Recent Bills Activity</CardTitle>
+          <CardTitle>Recent Bills Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          {isMobile ? (
-            // Mobile Card Layout
-            <div className="space-y-4">
-              {recentBills.map((bill) => (
-                <div key={bill.id} className="p-4 border rounded-lg space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium">{bill.id}</p>
-                      <p className="text-xs text-muted-foreground">{bill.type}</p>
-                    </div>
-                    <Badge variant={
-                      bill.status === 'Paid' ? 'default' : 
-                      bill.status === 'Overdue' ? 'destructive' : 'secondary'
-                    }>
-                      {bill.status}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">${bill.amount}</span>
-                    <span className="text-xs text-muted-foreground">{bill.date}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            // Desktop Table Layout
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2 font-medium">Bill ID</th>
-                    <th className="text-left p-2 font-medium">Type</th>
-                    <th className="text-left p-2 font-medium">Amount</th>
-                    <th className="text-left p-2 font-medium">Status</th>
-                    <th className="text-left p-2 font-medium">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentBills.map((bill) => (
-                    <tr key={bill.id} className="border-b hover:bg-muted/50">
-                      <td className="p-2 font-medium">{bill.id}</td>
-                      <td className="p-2">{bill.type}</td>
-                      <td className="p-2">${bill.amount}</td>
-                      <td className="p-2">
-                        <Badge variant={
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">Bill ID</th>
+                  <th className="text-left py-2">Type</th>
+                  <th className="text-left py-2">Amount</th>
+                  <th className="text-left py-2">Status</th>
+                  <th className="text-left py-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentBills.map((bill) => (
+                  <tr key={bill.id} className="border-b">
+                    <td className="py-2 font-mono text-sm">{bill.id}</td>
+                    <td className="py-2">{bill.type}</td>
+                    <td className="py-2">${bill.amount}</td>
+                    <td className="py-2">
+                      <Badge 
+                        variant={
                           bill.status === 'Paid' ? 'default' : 
-                          bill.status === 'Overdue' ? 'destructive' : 'secondary'
-                        }>
-                          {bill.status}
-                        </Badge>
-                      </td>
-                      <td className="p-2">{bill.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                          bill.status === 'Overdue' ? 'destructive' : 
+                          'secondary'
+                        }
+                      >
+                        {bill.status}
+                      </Badge>
+                    </td>
+                    <td className="py-2 text-sm text-muted-foreground">{bill.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
-      </div>
     </div>
   );
 };
