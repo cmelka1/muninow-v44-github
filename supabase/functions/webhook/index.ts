@@ -29,18 +29,18 @@ async function verifyFinixSignature(rawBody: string, signature: string | null): 
 function mapFinixStatus(finixState: string): { verification_status: string; processing_status: string } {
   switch (finixState?.toUpperCase()) {
     case 'PROVISIONING':
-      return { verification_status: 'pending', processing_status: 'pending' };
+      return { verification_status: 'Pending', processing_status: 'pending' };
     case 'APPROVED':
-      return { verification_status: 'approved', processing_status: 'merchant_created' };
+      return { verification_status: 'Approved', processing_status: 'merchant_created' };
     case 'ENABLED':
-      return { verification_status: 'approved', processing_status: 'processing_enabled' };
+      return { verification_status: 'Approved', processing_status: 'processing_enabled' };
     case 'REJECTED':
-      return { verification_status: 'rejected', processing_status: 'rejected' };
+      return { verification_status: 'Rejected', processing_status: 'rejected' };
     case 'DISABLED':
-      return { verification_status: 'approved', processing_status: 'disabled' };
+      return { verification_status: 'Approved', processing_status: 'disabled' };
     default:
       console.log(`⚠️ Unknown Finix state: ${finixState}`);
-      return { verification_status: 'pending', processing_status: 'pending' };
+      return { verification_status: 'Pending', processing_status: 'pending' };
   }
 }
 
