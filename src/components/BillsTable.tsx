@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { formatAmount, getStatusBadge, responsiveColumns, tableStyles } from '@/utils/tableUtils';
+import ResponsiveContainer from '@/components/ui/responsive-container';
 import {
   Table,
   TableBody,
@@ -50,7 +52,8 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
   const totalCount = billsData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  const getStatusBadge = (status: string) => {
+  const getLocalStatusBadge = (status: string) => {
+    const statusBadge = getStatusBadge(status);
     switch (status) {
       case 'unpaid':
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Unpaid</Badge>;
@@ -59,15 +62,8 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
       case 'delinquent':
         return <Badge variant="destructive">Delinquent</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant={statusBadge.variant}>{status}</Badge>;
     }
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   const formatDate = (date: string) => {
@@ -144,59 +140,61 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
       <CardHeader>
         <CardTitle>Outstanding Bills</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="hidden sm:table-cell">Due Date</TableHead>
-                <TableHead>Merchant</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
-                <TableHead className="text-center">Amount</TableHead>
-                <TableHead className="w-[120px] text-center">Pay</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bills.map((bill) => (
-                <TableRow 
-                  key={bill.bill_id} 
-                  className="h-12 cursor-pointer hover:bg-muted/50" 
-                  onClick={() => handleRowClick(bill.bill_id)}
-                >
-                  <TableCell className="hidden sm:table-cell py-2">
-                    <span className="truncate">{formatDate(bill.due_date)}</span>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className="truncate block max-w-[200px]" title={bill.merchant_name}>
-                      {bill.merchant_name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate block max-w-[150px]" title={bill.category}>
-                      {bill.category}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell py-2 text-center">
-                    {getStatusBadge(bill.payment_status || 'unpaid')}
-                  </TableCell>
-                  <TableCell className="text-center font-medium py-2">
-                    {formatAmount(Number(bill.amount_due_cents) / 100)}
-                  </TableCell>
-                  <TableCell className="text-center py-2">
-                    <Button 
-                      size="sm" 
-                      className="w-full h-8"
-                      onClick={(e) => handlePayClick(e, bill.bill_id)}
-                    >
-                      Pay
-                    </Button>
-                  </TableCell>
+      <CardContent className={tableStyles.card}>
+        <ResponsiveContainer variant="card" maxWidth="full">
+          <div className={tableStyles.container}>
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className={`${responsiveColumns.mobile.secondary} text-center`}>Due Date</TableHead>
+                  <TableHead className="text-left">Merchant</TableHead>
+                  <TableHead className={`${responsiveColumns.mobile.tertiary} text-center`}>Category</TableHead>
+                  <TableHead className={`${responsiveColumns.mobile.optional} text-center`}>Status</TableHead>
+                  <TableHead className="text-center">Amount</TableHead>
+                  <TableHead className="w-[120px] text-center">Pay</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {bills.map((bill) => (
+                  <TableRow 
+                    key={bill.bill_id} 
+                    className={`${tableStyles.row} cursor-pointer`}
+                    onClick={() => handleRowClick(bill.bill_id)}
+                  >
+                    <TableCell className={`${responsiveColumns.mobile.secondary} text-center`}>
+                      <span className="truncate">{formatDate(bill.due_date)}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="truncate block max-w-[200px]" title={bill.merchant_name}>
+                        {bill.merchant_name}
+                      </span>
+                    </TableCell>
+                    <TableCell className={`${responsiveColumns.mobile.tertiary} text-center`}>
+                      <span className="truncate block max-w-[150px]" title={bill.category}>
+                        {bill.category}
+                      </span>
+                    </TableCell>
+                    <TableCell className={`${responsiveColumns.mobile.optional} text-center`}>
+                      {getLocalStatusBadge(bill.payment_status || 'unpaid')}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {formatAmount(Number(bill.amount_due_cents))}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button 
+                        size="sm" 
+                        className="w-full h-8"
+                        onClick={(e) => handlePayClick(e, bill.bill_id)}
+                      >
+                        Pay
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </ResponsiveContainer>
         
         {/* Pagination Controls */}
         <div className="flex items-center justify-between px-6 py-4 border-t">

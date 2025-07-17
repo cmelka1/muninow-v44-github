@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import ReportBuilder from '@/components/ReportBuilder';
@@ -356,40 +357,46 @@ const MunicipalDashboard = () => {
         <CardHeader>
           <CardTitle>Recent Bills Activity</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2">Bill ID</th>
-                  <th className="text-left py-2">Type</th>
-                  <th className="text-left py-2">Amount</th>
-                  <th className="text-left py-2">Status</th>
-                  <th className="text-left py-2">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentBills.map((bill) => (
-                  <tr key={bill.id} className="border-b">
-                    <td className="py-2 font-mono text-sm">{bill.id}</td>
-                    <td className="py-2">{bill.type}</td>
-                    <td className="py-2">${bill.amount}</td>
-                    <td className="py-2">
-                      <Badge 
-                        variant={
-                          bill.status === 'Paid' ? 'default' : 
-                          bill.status === 'Overdue' ? 'destructive' : 
-                          'secondary'
-                        }
-                      >
-                        {bill.status}
-                      </Badge>
-                    </td>
-                    <td className="py-2 text-sm text-muted-foreground">{bill.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <CardContent className="p-0">
+          <div className="p-4">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-left">Bill ID</TableHead>
+                    <TableHead className="hidden sm:table-cell text-left">Type</TableHead>
+                    <TableHead className="text-center">Amount</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="hidden md:table-cell text-center">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentBills.map((bill) => (
+                    <TableRow key={bill.id} className="h-12">
+                      <TableCell className="font-mono text-sm">{bill.id}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{bill.type}</TableCell>
+                      <TableCell className="text-center font-medium">
+                        ${bill.amount}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          variant={
+                            bill.status === 'Paid' ? 'default' : 
+                            bill.status === 'Overdue' ? 'destructive' : 
+                            'secondary'
+                          }
+                        >
+                          {bill.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-center text-sm text-muted-foreground">
+                        {bill.date}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>
