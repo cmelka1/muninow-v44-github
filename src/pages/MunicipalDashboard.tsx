@@ -186,8 +186,8 @@ const MunicipalDashboard = () => {
             <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={actualVsBudget} barCategoryGap="20%">
+            <ChartContainer config={chartConfig} className="h-[350px] md:h-[400px] lg:h-[450px] w-full">
+              <BarChart data={actualVsBudget} barCategoryGap="20%" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
@@ -218,8 +218,8 @@ const MunicipalDashboard = () => {
             <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <AreaChart data={monthlyRevenue}>
+            <ChartContainer config={chartConfig} className="h-[350px] md:h-[400px] lg:h-[450px] w-full">
+              <AreaChart data={monthlyRevenue} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
@@ -245,13 +245,13 @@ const MunicipalDashboard = () => {
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <PieChart>
+            <ChartContainer config={chartConfig} className="h-[350px] md:h-[400px] lg:h-[450px] w-full">
+              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <Pie
                   data={revenueByCategory}
                   cx="50%"
                   cy="50%"
-                  outerRadius="70%"
+                  outerRadius="85%"
                   dataKey="revenue"
                   label={({ category, percentage }) => `${category}: ${percentage}%`}
                 >
