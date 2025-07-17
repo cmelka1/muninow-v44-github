@@ -186,7 +186,7 @@ const MunicipalDashboard = () => {
             <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] md:h-[400px] lg:h-[450px] w-full">
+            <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
               <BarChart data={actualVsBudget} barCategoryGap="20%" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
@@ -218,7 +218,7 @@ const MunicipalDashboard = () => {
             <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] md:h-[400px] lg:h-[450px] w-full">
+            <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
               <AreaChart data={monthlyRevenue} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
@@ -245,7 +245,7 @@ const MunicipalDashboard = () => {
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] md:h-[400px] lg:h-[450px] w-full">
+            <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
               <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <Pie
                   data={revenueByCategory}
