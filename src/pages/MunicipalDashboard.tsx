@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { 
   Table, 
@@ -105,20 +106,67 @@ const chartConfig = {
 };
 
 const MunicipalDashboard = () => {
+  const [timeRange, setTimeRange] = useState("30d");
+
+  const timeRangeOptions = [
+    { value: "7d", label: "Last 7 days" },
+    { value: "30d", label: "Last 30 days" },
+    { value: "3m", label: "Last 3 months" },
+    { value: "6m", label: "Last 6 months" },
+    { value: "1y", label: "Last year" },
+  ];
+
+  // Filter data based on selected time range
+  const filteredData = useMemo(() => {
+    // For demo purposes, we'll adjust the data based on time range
+    // In a real app, this would filter actual data from the database
+    const dataMultiplier = timeRange === "7d" ? 0.3 : timeRange === "3m" ? 1.5 : timeRange === "6m" ? 2 : timeRange === "1y" ? 3 : 1;
+
+    return {
+      monthlyRevenue: monthlyRevenue.map(item => ({
+        ...item,
+        revenue: Math.round(item.revenue * dataMultiplier)
+      })),
+      actualVsBudget: actualVsBudget.map(item => ({
+        ...item,
+        actual: Math.round(item.actual * dataMultiplier),
+        budget: Math.round(item.budget * dataMultiplier)
+      })),
+      revenueByCategory: revenueByCategory.map(item => ({
+        ...item,
+        revenue: Math.round(item.revenue * dataMultiplier)
+      }))
+    };
+  }, [timeRange]);
+
   return (
     <ResponsiveContainer maxWidth="6xl">
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
         </div>
-        <ReportBuilder>
-          <Button variant="outline" className="flex items-center gap-2">
-            <FileBarChart className="h-4 w-4" />
-            Create Report
-          </Button>
-        </ReportBuilder>
+        <div className="flex items-center gap-4">
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              {timeRangeOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <ReportBuilder>
+            <Button variant="outline" className="flex items-center gap-2">
+              <FileBarChart className="h-4 w-4" />
+              Create Report
+            </Button>
+          </ReportBuilder>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -187,7 +235,7 @@ const MunicipalDashboard = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
-              <BarChart data={actualVsBudget} barCategoryGap="20%" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <BarChart data={filteredData.actualVsBudget} barCategoryGap="20%" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
@@ -219,7 +267,7 @@ const MunicipalDashboard = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
-              <AreaChart data={monthlyRevenue} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <AreaChart data={filteredData.monthlyRevenue} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
@@ -248,14 +296,14 @@ const MunicipalDashboard = () => {
             <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
               <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <Pie
-                  data={revenueByCategory}
+                  data={filteredData.revenueByCategory}
                   cx="50%"
                   cy="50%"
                   outerRadius="85%"
                   dataKey="revenue"
                   label={({ category, percentage }) => `${category}: ${percentage}%`}
                 >
-                  {revenueByCategory.map((entry, index) => (
+                  {filteredData.revenueByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
