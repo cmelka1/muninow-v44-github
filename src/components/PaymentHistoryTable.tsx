@@ -136,7 +136,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({ filters = {} 
                 <TableHead className="hidden sm:table-cell">Paid Date</TableHead>
                 <TableHead>Merchant</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="text-right">Amount Paid</TableHead>
+                <TableHead className="text-center">Amount Paid</TableHead>
                 <TableHead className="hidden md:table-cell">Payment Method</TableHead>
               </TableRow>
             </TableHeader>
@@ -160,7 +160,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({ filters = {} 
                       {payment.category || '-'}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right font-medium py-2">
+                  <TableCell className="text-center font-medium py-2">
                     {formatAmount(payment.total_amount_cents)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
