@@ -93,18 +93,18 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
     navigate(`/superadmin/customers/${customer.customer_id}/merchants/${merchantId}`);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadgeVariant = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">{status}</Badge>;
+        return 'secondary';
       case 'approved':
       case 'verified':
-        return <Badge className="bg-green-100 text-green-800 border-green-200">{status}</Badge>;
+        return 'default';
       case 'rejected':
       case 'failed':
-        return <Badge className="bg-red-100 text-red-800 border-red-200">{status}</Badge>;
+        return 'destructive';
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return 'outline';
     }
   };
 
@@ -134,7 +134,7 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Merchant Name</TableHead>
-                  <TableHead className="hidden md:table-cell text-center">Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Status</TableHead>
                   <TableHead className="hidden lg:table-cell">Processing Type</TableHead>
                   <TableHead className="hidden sm:table-cell text-center">Created</TableHead>
                 </TableRow>
@@ -170,8 +170,10 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
                       <TableCell className="font-medium">
                         {merchant.merchant_name}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-center">
-                        {getStatusBadge(merchant.verification_status)}
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant={getStatusBadgeVariant(merchant.verification_status)}>
+                          {merchant.verification_status}
+                        </Badge>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {merchant.processing_enabled ? 'Enabled' : 'Disabled'}

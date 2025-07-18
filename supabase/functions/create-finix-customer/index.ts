@@ -203,7 +203,6 @@ serve(async (req) => {
       .from('merchants')
       .insert({
         user_id: customer.user_id,
-        customer_id: customer_id,
         finix_identity_id: finixData.id,
         finix_application_id: finixData.application,
         merchant_name: merchant_name,

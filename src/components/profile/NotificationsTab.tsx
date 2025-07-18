@@ -104,22 +104,6 @@ export const NotificationsTab = () => {
     }));
   };
 
-  // Handler for municipal users - single toggle controls all email notifications
-  const handleMunicipalNotificationChange = (value: boolean) => {
-    setPreferences(prev => ({
-      ...prev,
-      email: {
-        billPosting: value,
-        paymentConfirmations: value,
-      },
-      sms: {
-        billPosting: false,
-        paymentConfirmations: false,
-      },
-      paperlessBilling: false,
-    }));
-  };
-
   const handleCancel = () => {
     setPreferences(originalPreferences);
     setIsEditing(false);
@@ -202,73 +186,9 @@ export const NotificationsTab = () => {
     );
   }
 
-  // Municipal users see simplified interface
-  if (profile?.account_type === 'municipal') {
-    return (
-      <div className="space-y-6">
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <Bell className="h-5 w-5 text-primary" />
-                Notification Preferences
-              </CardTitle>
-              {!isEditing ? (
-                <Button type="button" onClick={() => setIsEditing(true)} variant="outline">
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Edit Preferences
-                </Button>
-              ) : (
-                <div className="flex space-x-2">
-                  <Button type="button" onClick={savePreferences} size="sm" disabled={isLoading}>
-                    {isLoading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    Save Changes
-                  </Button>
-                  <Button type="button" onClick={handleCancel} variant="outline" size="sm" disabled={isLoading}>
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <div className="bg-primary/10 p-2 rounded-lg mt-1">
-                  <Mail className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-slate-800">User Notifications</h4>
-                  <p className="text-sm text-slate-600 mb-3">
-                    Email notifications for municipal activities and updates
-                  </p>
-                  
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-slate-500" />
-                      <Label className="text-sm font-medium">Email Notifications</Label>
-                    </div>
-                    <Switch
-                      checked={preferences.email.billPosting && preferences.email.paymentConfirmations}
-                      onCheckedChange={handleMunicipalNotificationChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Check if user is municipal
+  const isMunicipalUser = profile?.account_type === 'municipal';
 
-  // Non-municipal users see the full interface
   return (
     <div className="space-y-6">
       {/* Notification Preferences */}
@@ -303,108 +223,141 @@ export const NotificationsTab = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {notificationCategories.map((category) => {
-            const IconComponent = category.icon;
-            return (
-              <div key={category.key} className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <div className="bg-primary/10 p-2 rounded-lg mt-1">
-                    <IconComponent className="h-4 w-4 text-primary" />
+          {isMunicipalUser ? (
+            // Simplified interface for municipal users
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="bg-primary/10 p-2 rounded-lg mt-1">
+                  <Bell className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-slate-800">User Notifications</h4>
+                  <p className="text-sm text-slate-600 mb-3">Receive notifications about important updates and system messages</p>
+                  
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-slate-500" />
+                      <Label className="text-sm font-medium">Email Notifications</Label>
+                    </div>
+                    <Switch
+                      checked={preferences.email.billPosting}
+                      onCheckedChange={(value) => {
+                        handlePreferenceChange('email', 'billPosting', value);
+                        handlePreferenceChange('email', 'paymentConfirmations', value);
+                      }}
+                      disabled={!isEditing}
+                    />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-slate-800">{category.title}</h4>
-                    <p className="text-sm text-slate-600 mb-3">{category.description}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {category.userControlled ? (
-                        <>
-                          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                              <Mail className="h-4 w-4 text-slate-500" />
-                              <Label className="text-sm font-medium">Email</Label>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Full interface for non-municipal users
+            notificationCategories.map((category) => {
+              const IconComponent = category.icon;
+              return (
+                <div key={category.key} className="space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="bg-primary/10 p-2 rounded-lg mt-1">
+                      <IconComponent className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-slate-800">{category.title}</h4>
+                      <p className="text-sm text-slate-600 mb-3">{category.description}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {category.userControlled ? (
+                          <>
+                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                              <div className="flex items-center space-x-2">
+                                <Mail className="h-4 w-4 text-slate-500" />
+                                <Label className="text-sm font-medium">Email</Label>
+                              </div>
+                              <Switch
+                                checked={preferences.email[category.key as keyof NotificationPreferences['email']]}
+                                onCheckedChange={(value) => handlePreferenceChange('email', category.key as keyof NotificationPreferences['email'], value)}
+                                disabled={!isEditing}
+                              />
                             </div>
-                            <Switch
-                              checked={preferences.email[category.key as keyof NotificationPreferences['email']]}
-                              onCheckedChange={(value) => handlePreferenceChange('email', category.key as keyof NotificationPreferences['email'], value)}
-                              disabled={!isEditing}
-                            />
+                            
+                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                              <div className="flex items-center space-x-2">
+                                <Smartphone className="h-4 w-4 text-slate-500" />
+                                <Label className="text-sm font-medium">SMS</Label>
+                              </div>
+                              <Switch
+                                checked={preferences.sms[category.key as keyof NotificationPreferences['sms']]}
+                                onCheckedChange={(value) => handlePreferenceChange('sms', category.key as keyof NotificationPreferences['sms'], value)}
+                                disabled={!isEditing}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="col-span-full">
+                            <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                              <div className="flex items-center space-x-2">
+                                <Shield className="h-4 w-4 text-amber-600" />
+                                <Label className="text-sm font-medium text-amber-900">Municipality Controlled</Label>
+                              </div>
+                              <div className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                                Always Enabled
+                              </div>
+                            </div>
+                            <p className="text-xs text-amber-600 mt-2">
+                              These notifications are controlled by your municipality and will always be sent for account security and compliance.
+                            </p>
                           </div>
-                          
-                          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                              <Smartphone className="h-4 w-4 text-slate-500" />
-                              <Label className="text-sm font-medium">SMS</Label>
-                            </div>
-                            <Switch
-                              checked={preferences.sms[category.key as keyof NotificationPreferences['sms']]}
-                              onCheckedChange={(value) => handlePreferenceChange('sms', category.key as keyof NotificationPreferences['sms'], value)}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="col-span-full">
-                          <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                              <Shield className="h-4 w-4 text-amber-600" />
-                              <Label className="text-sm font-medium text-amber-900">Municipality Controlled</Label>
-                            </div>
-                            <div className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded">
-                              Always Enabled
-                            </div>
-                          </div>
-                          <p className="text-xs text-amber-600 mt-2">
-                            These notifications are controlled by your municipality and will always be sent for account security and compliance.
-                          </p>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {/* Paperless Billing */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Paperless Billing
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-slate-800">Enable Paperless Billing</h4>
-              <p className="text-sm text-slate-600">
-                Receive all bills and statements electronically instead of by mail
-              </p>
-            </div>
-            <Switch
-              checked={preferences.paperlessBilling}
-              onCheckedChange={handlePaperlessChange}
-              disabled={!isEditing}
-            />
-          </div>
-          
-          {preferences.paperlessBilling && (
-            <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <FileText className="h-5 w-5 text-green-600 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-green-900">Paperless Billing Enabled</h4>
-                  <p className="text-sm text-green-700 mt-1">
-                    You'll receive all bills and statements via email. Paper statements will no longer be mailed.
-                  </p>
-                </div>
-              </div>
-            </div>
+              );
+            })
           )}
         </CardContent>
       </Card>
+
+      {/* Paperless Billing - Hidden for municipal users */}
+      {!isMunicipalUser && (
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Paperless Billing
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-slate-800">Enable Paperless Billing</h4>
+                <p className="text-sm text-slate-600">
+                  Receive all bills and statements electronically instead of by mail
+                </p>
+              </div>
+              <Switch
+                checked={preferences.paperlessBilling}
+                onCheckedChange={handlePaperlessChange}
+                disabled={!isEditing}
+              />
+            </div>
+            
+            {preferences.paperlessBilling && (
+              <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <FileText className="h-5 w-5 text-green-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-green-900">Paperless Billing Enabled</h4>
+                    <p className="text-sm text-green-700 mt-1">
+                      You'll receive all bills and statements via email. Paper statements will no longer be mailed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -1,21 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import ReportBuilder from '@/components/ReportBuilder';
-import ResponsiveContainer from '@/components/ui/responsive-container';
 import { 
   DollarSign, 
   FileText, 
@@ -106,67 +96,19 @@ const chartConfig = {
 };
 
 const MunicipalDashboard = () => {
-  const [timeRange, setTimeRange] = useState("30d");
-
-  const timeRangeOptions = [
-    { value: "7d", label: "Last 7 days" },
-    { value: "30d", label: "Last 30 days" },
-    { value: "3m", label: "Last 3 months" },
-    { value: "6m", label: "Last 6 months" },
-    { value: "1y", label: "Last year" },
-  ];
-
-  // Filter data based on selected time range
-  const filteredData = useMemo(() => {
-    // For demo purposes, we'll adjust the data based on time range
-    // In a real app, this would filter actual data from the database
-    const dataMultiplier = timeRange === "7d" ? 0.3 : timeRange === "3m" ? 1.5 : timeRange === "6m" ? 2 : timeRange === "1y" ? 3 : 1;
-
-    return {
-      monthlyRevenue: monthlyRevenue.map(item => ({
-        ...item,
-        revenue: Math.round(item.revenue * dataMultiplier)
-      })),
-      actualVsBudget: actualVsBudget.map(item => ({
-        ...item,
-        actual: Math.round(item.actual * dataMultiplier),
-        budget: Math.round(item.budget * dataMultiplier)
-      })),
-      revenueByCategory: revenueByCategory.map(item => ({
-        ...item,
-        revenue: Math.round(item.revenue * dataMultiplier)
-      }))
-    };
-  }, [timeRange]);
-
   return (
-    <ResponsiveContainer maxWidth="6xl">
-      <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeRangeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <ReportBuilder>
-            <Button variant="outline" className="flex items-center gap-2">
-              <FileBarChart className="h-4 w-4" />
-              Create Report
-            </Button>
-          </ReportBuilder>
-        </div>
+        <ReportBuilder>
+          <Button variant="outline" className="flex items-center gap-2">
+            <FileBarChart className="h-4 w-4" />
+            Create Report
+          </Button>
+        </ReportBuilder>
       </div>
 
       {/* KPI Cards */}
@@ -227,35 +169,37 @@ const MunicipalDashboard = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Actual vs Budget Revenue */}
         <Card>
           <CardHeader>
             <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
-              <BarChart data={filteredData.actualVsBudget} barCategoryGap="20%" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`]}
-                />
-                <Bar 
-                  dataKey="actual" 
-                  fill="hsl(var(--primary))" 
-                  radius={[2, 2, 0, 0]}
-                  name="Actual Revenue"
-                />
-                <Bar 
-                  dataKey="budget" 
-                  fill="hsl(var(--muted-foreground))" 
-                  radius={[2, 2, 0, 0]}
-                  name="Budget Revenue"
-                />
-              </BarChart>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={actualVsBudget} barCategoryGap="20%">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`]}
+                  />
+                  <Bar 
+                    dataKey="actual" 
+                    fill="hsl(var(--primary))" 
+                    radius={[2, 2, 0, 0]}
+                    name="Actual Revenue"
+                  />
+                  <Bar 
+                    dataKey="budget" 
+                    fill="hsl(var(--muted-foreground))" 
+                    radius={[2, 2, 0, 0]}
+                    name="Budget Revenue"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -266,52 +210,59 @@ const MunicipalDashboard = () => {
             <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
-              <AreaChart data={filteredData.monthlyRevenue} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`, 'Revenue']}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="hsl(var(--primary))" 
-                  fill="hsl(var(--primary))" 
-                  fillOpacity={0.3}
-                />
-              </AreaChart>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`, 'Revenue']}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="hsl(var(--primary))" 
+                    fill="hsl(var(--primary))" 
+                    fillOpacity={0.3}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Additional Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by Category */}
         <Card>
           <CardHeader>
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[280px] md:h-[320px] lg:h-[350px] w-full">
-              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <Pie
-                  data={filteredData.revenueByCategory}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="85%"
-                  dataKey="revenue"
-                  label={({ category, percentage }) => `${category}: ${percentage}%`}
-                >
-                  {filteredData.revenueByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  formatter={(value) => [`$${(Number(value) / 1000000).toFixed(1)}M`, 'Revenue']}
-                />
-              </PieChart>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={revenueByCategory}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="revenue"
+                    label={({ category, percentage }) => `${category}: ${percentage}%`}
+                  >
+                    {revenueByCategory.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(1)}M`, 'Revenue']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -405,51 +356,44 @@ const MunicipalDashboard = () => {
         <CardHeader>
           <CardTitle>Recent Bills Activity</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="p-4">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-left">Bill ID</TableHead>
-                    <TableHead className="hidden sm:table-cell text-left">Type</TableHead>
-                    <TableHead className="text-center">Amount</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="hidden md:table-cell text-center">Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentBills.map((bill) => (
-                    <TableRow key={bill.id} className="h-12">
-                      <TableCell className="font-mono text-sm">{bill.id}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{bill.type}</TableCell>
-                      <TableCell className="text-center font-medium">
-                        ${bill.amount}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge 
-                          variant={
-                            bill.status === 'Paid' ? 'default' : 
-                            bill.status === 'Overdue' ? 'destructive' : 
-                            'secondary'
-                          }
-                        >
-                          {bill.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-center text-sm text-muted-foreground">
-                        {bill.date}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">Bill ID</th>
+                  <th className="text-left py-2">Type</th>
+                  <th className="text-left py-2">Amount</th>
+                  <th className="text-left py-2">Status</th>
+                  <th className="text-left py-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentBills.map((bill) => (
+                  <tr key={bill.id} className="border-b">
+                    <td className="py-2 font-mono text-sm">{bill.id}</td>
+                    <td className="py-2">{bill.type}</td>
+                    <td className="py-2">${bill.amount}</td>
+                    <td className="py-2">
+                      <Badge 
+                        variant={
+                          bill.status === 'Paid' ? 'default' : 
+                          bill.status === 'Overdue' ? 'destructive' : 
+                          'secondary'
+                        }
+                      >
+                        {bill.status}
+                      </Badge>
+                    </td>
+                    <td className="py-2 text-sm text-muted-foreground">{bill.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
-      </div>
-    </ResponsiveContainer>
+    </div>
   );
 };
 
