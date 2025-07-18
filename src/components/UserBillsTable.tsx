@@ -140,9 +140,9 @@ const UserBillsTable: React.FC<UserBillsTableProps> = ({ userId }) => {
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Due Date</TableHead>
                 <TableHead>Merchant</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Category</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-center">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -160,15 +160,15 @@ const UserBillsTable: React.FC<UserBillsTableProps> = ({ userId }) => {
                       {bill.merchant_name}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px]" title={bill.category}>
+                  <TableCell className="hidden md:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={bill.category}>
                       {bill.category}
                     </span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell py-2 text-center">
                     {getStatusBadge(bill.payment_status || 'unpaid')}
                   </TableCell>
-                  <TableCell className="text-right font-medium py-2">
+                  <TableCell className="text-center font-medium py-2">
                     {formatAmount(Number(bill.amount_due_cents) / 100)}
                   </TableCell>
                 </TableRow>
