@@ -156,7 +156,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({ filters = {} 
                     </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2 text-center">
-                    <span className="truncate block max-w-[150px] mx-auto" title={payment.category}>
+                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={payment.category}>
                       {payment.category || '-'}
                     </span>
                   </TableCell>
