@@ -239,14 +239,15 @@ const MunicipalDashboard = () => {
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="w-full aspect-[4/3]">
+            <ChartContainer config={chartConfig} className="w-full aspect-[5/2]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={revenueByCategory}
                     cx="50%"
                     cy="50%"
-                    outerRadius="50%"
+                    outerRadius="75%"
+                    innerRadius="25%"
                     dataKey="revenue"
                     label={({ category, percentage }) => `${category}: ${percentage}%`}
                     labelLine={false}
