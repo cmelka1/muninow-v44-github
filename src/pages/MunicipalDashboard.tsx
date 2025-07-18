@@ -176,7 +176,7 @@ const MunicipalDashboard = () => {
             <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="w-full aspect-[2/1]">
+            <ChartContainer config={chartConfig} className="w-full aspect-[5/2]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={actualVsBudget} barCategoryGap="20%">
                   <CartesianGrid strokeDasharray="3 3" />
@@ -210,7 +210,7 @@ const MunicipalDashboard = () => {
             <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="w-full aspect-[2/1]">
+            <ChartContainer config={chartConfig} className="w-full aspect-[5/2]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -239,7 +239,7 @@ const MunicipalDashboard = () => {
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="w-full aspect-[2/1]">
+            <ChartContainer config={chartConfig} className="w-full aspect-[5/2]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
