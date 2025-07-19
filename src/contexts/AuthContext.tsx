@@ -159,11 +159,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Clear profile and state when user signs out
           setProfile(null);
           setIsLoading(false);
-          
-          // Redirect to signin page if not already there
-          if (!window.location.pathname.includes('/signin') && !window.location.pathname.includes('/auth')) {
-            window.location.href = '/signin';
-          }
+          // Don't automatically redirect - let individual routes handle protection
         }
       }
     );
@@ -185,26 +181,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, []);
 
-  // Redirect users based on account type after profile loads
-  useEffect(() => {
-    if (!isLoading && user && profile) {
-      const currentPath = window.location.pathname;
-      
-      // Don't redirect if already on correct path or on auth/signup pages
-      if (currentPath.includes('/auth') || currentPath.includes('/signup') || currentPath.includes('/reset-password')) {
-        return;
-      }
-
-      // Redirect based on account type
-      if (profile.account_type === 'municipal' && !currentPath.startsWith('/municipal')) {
-        window.location.href = '/municipal/dashboard';
-      } else if (profile.account_type === 'superAdmin' && !currentPath.startsWith('/superadmin')) {
-        // Keep existing super admin redirect logic if needed
-      } else if (['resident', 'business'].includes(profile.account_type) && currentPath.startsWith('/municipal')) {
-        window.location.href = '/dashboard';
-      }
-    }
-  }, [user, profile, isLoading]);
+  // Don't automatically redirect based on profile - let Auth.tsx handle successful login redirects
+  // Individual protected routes will handle their own authentication checks
 
   const signIn = async (email: string, password: string) => {
     setIsSubmitting(true);
@@ -302,7 +280,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(null);
         localStorage.clear();
         sessionStorage.clear();
-        if (!window.location.pathname.includes('/signin')) {
+        // Only redirect to signin if user manually signed out, not for automatic timeouts
+        if (reason === 'user' && !window.location.pathname.includes('/signin')) {
           window.location.href = '/signin';
         }
       } else {

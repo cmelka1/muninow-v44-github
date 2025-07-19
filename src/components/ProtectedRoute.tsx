@@ -29,7 +29,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user || !hasRole(requiredRole)) {
-    return <Navigate to={redirectTo} replace />;
+    return <Navigate to="/signin" replace />;
   }
 
   return <>{children}</>;
