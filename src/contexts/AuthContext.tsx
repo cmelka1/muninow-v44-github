@@ -67,33 +67,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [resetSent, setResetSent] = useState(false);
   const [isSessionWarningOpen, setIsSessionWarningOpen] = useState(false);
   const [logoutReason, setLogoutReason] = useState<'user' | 'external' | 'timeout' | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
 
-  // Cross-tab session management with error handling
+  // Cross-tab session management
   const { clearSession } = useCrossTabSession({
     onExternalSessionChange: (newSessionId) => {
-      try {
-        if (newSessionId && user) {
-          setLogoutReason('external');
-          toast({
-            title: "Signed out",
-            description: "You've been signed out because another user logged in.",
-            variant: "destructive"
-          });
-          signOut('external');
-        }
-      } catch (error) {
-        console.error('Error handling external session change:', error);
+      if (newSessionId && user) {
+        // Another tab has an active session, log out this tab
+        setLogoutReason('external');
+        toast({
+          title: "Signed out",
+          description: "You've been signed out because another user logged in.",
+          variant: "destructive"
+        });
+        signOut('external');
       }
     }
   });
 
-  // Load user profile with enhanced error handling
+  // Load user profile with timeout protection
   const loadProfile = async (userId: string) => {
     const timeoutId = setTimeout(() => {
-      console.warn('Profile loading timed out after 10 seconds');
       setIsLoading(false);
-    }, 10000);
+    }, 10000); // 10 second timeout
 
     try {
       const { data, error } = await supabase
@@ -105,7 +100,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       clearTimeout(timeoutId);
 
       if (error) {
-        console.error('Profile loading error:', error);
         setIsLoading(false);
         return;
       }
@@ -117,102 +111,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error('Unexpected error loading profile:', error);
       setIsLoading(false);
     }
   };
 
-  // Initialize authentication state with comprehensive error handling
+  // Initialize authentication state
   useEffect(() => {
     let currentUserId: string | null = null;
-    let subscription: any = null;
     
-    const initializeAuth = async () => {
-      try {
-        // Set up auth state listener FIRST
-        const authListener = supabase.auth.onAuthStateChange(
-          (event, session) => {
-            try {
-              const newUserId = session?.user?.id || null;
-              
-              // Detect if a different user has logged in elsewhere
-              if (currentUserId && newUserId && currentUserId !== newUserId) {
-                setLogoutReason('external');
-                toast({
-                  title: "Signed out",
-                  description: "You've been signed out because another user logged in.",
-                  variant: "destructive"
-                });
-              } else if (event === 'SIGNED_OUT' && logoutReason === 'timeout') {
-                // Don't show additional toast for timeout logouts
-              } else if (event === 'SIGNED_OUT' && currentUserId && !newUserId) {
-                // This is likely an external logout or session invalidation
-                if (logoutReason !== 'user' && logoutReason !== 'timeout') {
-                  setLogoutReason('external');
-                  toast({
-                    title: "Session ended",
-                    description: "Your session has been ended from another location.",
-                    variant: "destructive"
-                  });
-                }
-              }
-              
-              currentUserId = newUserId;
-              setSession(session);
-              setUser(session?.user ?? null);
-              
-              if (session?.user) {
-                // Load profile for authenticated user
-                setTimeout(() => {
-                  loadProfile(session.user.id);
-                }, 0);
-              } else {
-                // Clear profile and state when user signs out
-                setProfile(null);
-                setIsLoading(false);
-                // Don't automatically redirect - let individual routes handle protection
-              }
-            } catch (error) {
-              console.error('Error in auth state change handler:', error);
-              setAuthError('Authentication error occurred');
-              setIsLoading(false);
-            }
-          }
-        );
-
-        subscription = authListener.data.subscription;
-
-        // THEN check for existing session
-        const { data: { session }, error } = await supabase.auth.getSession();
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        const newUserId = session?.user?.id || null;
         
-        if (error) {
-          console.error('Error getting session:', error);
-          setAuthError('Failed to get session');
-          setIsLoading(false);
-          return;
+        // Detect if a different user has logged in elsewhere
+        if (currentUserId && newUserId && currentUserId !== newUserId) {
+          setLogoutReason('external');
+          toast({
+            title: "Signed out",
+            description: "You've been signed out because another user logged in.",
+            variant: "destructive"
+          });
+        } else if (event === 'SIGNED_OUT' && logoutReason === 'timeout') {
+          // Don't show additional toast for timeout logouts
+        } else if (event === 'SIGNED_OUT' && currentUserId && !newUserId) {
+          // This is likely an external logout or session invalidation
+          if (logoutReason !== 'user' && logoutReason !== 'timeout') {
+            setLogoutReason('external');
+            toast({
+              title: "Session ended",
+              description: "Your session has been ended from another location.",
+              variant: "destructive"
+            });
+          }
         }
-
+        
+        currentUserId = newUserId;
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          loadProfile(session.user.id);
+          // Load profile for authenticated user with timeout protection
+          setTimeout(() => {
+            loadProfile(session.user.id);
+          }, 0);
         } else {
+          // Clear profile and state when user signs out
+          setProfile(null);
           setIsLoading(false);
+          // Don't automatically redirect - let individual routes handle protection
         }
-      } catch (error) {
-        console.error('Failed to initialize authentication:', error);
-        setAuthError('Failed to initialize authentication');
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
         setIsLoading(false);
       }
-    };
-
-    initializeAuth();
+    });
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -236,8 +201,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return { error: null };
     } catch (error: any) {
-      console.error('Sign in error:', error);
-      setLoginError(error.message || 'An unexpected error occurred');
+      setLoginError(error.message);
       return { error };
     } finally {
       setIsSubmitting(false);
@@ -271,8 +235,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       return { error: null };
     } catch (error: any) {
-      console.error('Sign up error:', error);
-      setLoginError(error.message || 'An unexpected error occurred');
+      setLoginError(error.message);
       return { error };
     } finally {
       setIsSubmitting(false);
@@ -305,12 +268,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.clear();
       sessionStorage.clear();
       
-      // Only redirect to signin if user manually signed out, not for automatic timeouts
-      if (reason === 'user' && !window.location.pathname.includes('/signin')) {
+      // Redirect to signin page if not already there
+      if (!window.location.pathname.includes('/signin')) {
         window.location.href = '/signin';
       }
     } catch (error: any) {
-      console.error('Sign out error:', error);
       // Don't show error for session not found - just clean up and redirect
       if (error.message.includes('session not found') || error.message.includes('session missing')) {
         setProfile(null);
@@ -404,7 +366,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const clearError = () => {
     setLoginError(null);
-    setAuthError(null);
   };
 
   const handleSessionTimeout = () => {
@@ -425,7 +386,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Timer will be reset automatically by activity detection
   };
 
-  // Session timeout hook with error handling
+  // Session timeout hook
   useSessionTimeout({
     timeoutMinutes: 10,
     warningMinutes: 1,
@@ -433,31 +394,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     onWarning: handleSessionWarning,
     isAuthenticated: !!user
   });
-
-  // If there's a critical auth error, show error state
-  if (authError) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">
-            Authentication Error
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            {authError}
-          </p>
-          <button
-            onClick={() => {
-              setAuthError(null);
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const value: AuthContextType = {
     user,
