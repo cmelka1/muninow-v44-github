@@ -1,63 +1,12 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MuniNow – Streamlining Municipal Payments</title>
-    <meta name="description" content="MuniNow simplifies local government payments with a fast, secure, and unified platform" />
-    <meta name="author" content="MuniNow" />
-
-    <!-- Standard favicon -->
-    <link rel="icon" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png" type="image/png">
-    <link rel="icon" sizes="32x32" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png" type="image/png">
-    <link rel="icon" sizes="16x16" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png" type="image/png">
-    <link rel="shortcut icon" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png" type="image/png">
-    
-    <!-- Apple Touch Icons for iOS devices and text message previews -->
-    <link rel="apple-touch-icon" sizes="180x180" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png">
-    <link rel="apple-touch-icon-precomposed" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png">
-    
-    <!-- Safari Pinned Tab -->
-    <link rel="mask-icon" href="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png" color="#3b82f6">
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <!-- Google Maps API now loaded securely via useGoogleMapsLoader hook -->
-    
-    <!-- Finix JavaScript Library for fraud detection -->
-    <script
-      type="text/javascript"
-      src="https://js.finix.com/v/1/finix.js"
-      async
-    ></script>
-
-    <!-- Google Pay JavaScript Library -->
-    <script async src="https://pay.google.com/gp/p/js/pay.js" onload="onGooglePayLoaded()"></script>
-    <script>
-      function onGooglePayLoaded() {
-        window.googlePayClient = new google.payments.api.PaymentsClient({
-          environment: "TEST"
-        });
-      }
-    </script>
-
-    <!-- Apple Pay JavaScript Library -->
-    <script src="https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js"></script>
-
-    <meta property="og:title" content="MuniNow – Streamlining Municipal Payments" />
-    <meta property="og:description" content="Simplify local government payments. MuniNow offers a unified platform for residents, businesses, and municipalities" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://muninow.com/" />
-    <meta property="og:image" content="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@muninow" />
-    <meta name="twitter:title" content="MuniNow – Streamlining Municipal Payments" />
-    <meta name="twitter:description" content="Simplify local government payments. MuniNow offers a unified platform for residents, businesses, and municipalities" />
-    <meta name="twitter:image" content="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/muninow-icon/MuniNow_Icon_Blue.png" />
+    <title>MuniNow</title>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
