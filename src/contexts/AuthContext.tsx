@@ -2,9 +2,6 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useSessionTimeout } from '@/hooks/useSessionTimeout';
-import { useCrossTabSession } from '@/hooks/useCrossTabSession';
-import { SessionWarningDialog } from '@/components/SessionWarningDialog';
 
 interface Profile {
   id: string;
@@ -31,15 +28,13 @@ interface AuthContextType {
   loginError: string | null;
   isForgotPasswordOpen: boolean;
   resetSent: boolean;
-  isSessionWarningOpen: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
-  signOut: (reason?: 'user' | 'timeout' | 'external') => Promise<void>;
+  signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (password: string) => Promise<{ error: any }>;
   setForgotPasswordOpen: (open: boolean) => void;
   clearError: () => void;
-  extendSession: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,31 +60,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetSent, setResetSent] = useState(false);
-  const [isSessionWarningOpen, setIsSessionWarningOpen] = useState(false);
-  const [logoutReason, setLogoutReason] = useState<'user' | 'external' | 'timeout' | null>(null);
 
-  // Cross-tab session management
-  const { clearSession } = useCrossTabSession({
-    onExternalSessionChange: (newSessionId) => {
-      if (newSessionId && user) {
-        // Another tab has an active session, log out this tab
-        setLogoutReason('external');
-        toast({
-          title: "Signed out",
-          description: "You've been signed out because another user logged in.",
-          variant: "destructive"
-        });
-        signOut('external');
-      }
-    }
-  });
-
-  // Load user profile with timeout protection
+  // Load user profile
   const loadProfile = async (userId: string) => {
-    const timeoutId = setTimeout(() => {
-      setIsLoading(false);
-    }, 10000); // 10 second timeout
-
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -97,9 +70,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .eq('id', userId)
         .maybeSingle();
 
-      clearTimeout(timeoutId);
-
       if (error) {
+        console.error('Profile loading error:', error);
         setIsLoading(false);
         return;
       }
@@ -110,61 +82,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setIsLoading(false);
     } catch (error) {
-      clearTimeout(timeoutId);
+      console.error('Profile loading error:', error);
       setIsLoading(false);
     }
   };
 
   // Initialize authentication state
   useEffect(() => {
-    let currentUserId: string | null = null;
-    
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        const newUserId = session?.user?.id || null;
-        
-        // Detect if a different user has logged in elsewhere
-        if (currentUserId && newUserId && currentUserId !== newUserId) {
-          setLogoutReason('external');
-          toast({
-            title: "Signed out",
-            description: "You've been signed out because another user logged in.",
-            variant: "destructive"
-          });
-        } else if (event === 'SIGNED_OUT' && logoutReason === 'timeout') {
-          // Don't show additional toast for timeout logouts
-        } else if (event === 'SIGNED_OUT' && currentUserId && !newUserId) {
-          // This is likely an external logout or session invalidation
-          if (logoutReason !== 'user' && logoutReason !== 'timeout') {
-            setLogoutReason('external');
-            toast({
-              title: "Session ended",
-              description: "Your session has been ended from another location.",
-              variant: "destructive"
-            });
-          }
-        }
-        
-        currentUserId = newUserId;
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Load profile for authenticated user with timeout protection
-          setTimeout(() => {
-            loadProfile(session.user.id);
-          }, 0);
+          loadProfile(session.user.id);
         } else {
-          // Clear profile and state when user signs out
           setProfile(null);
           setIsLoading(false);
-          // Don't automatically redirect - let individual routes handle protection
         }
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -242,56 +182,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signOut = async (reason: 'user' | 'timeout' | 'external' = 'user') => {
+  const signOut = async () => {
     try {
-      // Set logout reason to prevent duplicate toast messages
-      setLogoutReason(reason);
-      
-      // Clear session warning dialog
-      setIsSessionWarningOpen(false);
-      
-      // Check if session exists before attempting logout
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (currentSession) {
-        const { error } = await supabase.auth.signOut();
-        if (error && !error.message.includes('session not found')) {
-          console.warn('Logout error:', error.message);
-        }
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.warn('Logout error:', error.message);
       }
       
-      // Always clear local state and storage regardless of Supabase call success
+      // Clear local state
       setProfile(null);
       setUser(null);
       setSession(null);
-      clearSession();
-      localStorage.clear();
-      sessionStorage.clear();
       
-      // Redirect to signin page if not already there
-      if (!window.location.pathname.includes('/signin')) {
-        window.location.href = '/signin';
-      }
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out."
+      });
     } catch (error: any) {
-      // Don't show error for session not found - just clean up and redirect
-      if (error.message.includes('session not found') || error.message.includes('session missing')) {
-        setProfile(null);
-        setUser(null);
-        setSession(null);
-        localStorage.clear();
-        sessionStorage.clear();
-        // Only redirect to signin if user manually signed out, not for automatic timeouts
-        if (reason === 'user' && !window.location.pathname.includes('/signin')) {
-          window.location.href = '/signin';
-        }
-      } else {
-        clearSession();
-        toast({
-          title: "Error",
-          description: "There was an issue signing out. Please try again.",
-          variant: "destructive"
-        });
-      }
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "There was an issue signing out. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -368,33 +281,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoginError(null);
   };
 
-  const handleSessionTimeout = () => {
-    toast({
-      title: "Session Expired",
-      description: "You have been signed out due to inactivity.",
-      variant: "destructive"
-    });
-    signOut('timeout');
-  };
-
-  const handleSessionWarning = () => {
-    setIsSessionWarningOpen(true);
-  };
-
-  const extendSession = () => {
-    setIsSessionWarningOpen(false);
-    // Timer will be reset automatically by activity detection
-  };
-
-  // Session timeout hook
-  useSessionTimeout({
-    timeoutMinutes: 10,
-    warningMinutes: 1,
-    onTimeout: handleSessionTimeout,
-    onWarning: handleSessionWarning,
-    isAuthenticated: !!user
-  });
-
   const value: AuthContextType = {
     user,
     session,
@@ -404,26 +290,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loginError,
     isForgotPasswordOpen,
     resetSent,
-    isSessionWarningOpen,
     signIn,
     signUp,
     signOut,
     resetPassword,
     updatePassword,
     setForgotPasswordOpen,
-    clearError,
-    extendSession
+    clearError
   };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
-      <SessionWarningDialog
-        isOpen={isSessionWarningOpen}
-        onExtendSession={extendSession}
-        onSignOut={signOut}
-        warningSeconds={60}
-      />
     </AuthContext.Provider>
   );
 };
