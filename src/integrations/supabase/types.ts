@@ -1572,6 +1572,218 @@ export type Database = {
           },
         ]
       }
+      permit_applications: {
+        Row: {
+          ach_basis_points: number | null
+          ach_fixed_fee: number | null
+          applicant_address: string | null
+          applicant_email: string | null
+          applicant_name: string | null
+          applicant_phone: string | null
+          application_status: Database["public"]["Enums"]["permit_status_enum"]
+          basis_points: number | null
+          created_at: string
+          customer_id: string
+          estimated_construction_value_cents: number
+          finix_identity_id: string | null
+          finix_merchant_id: string | null
+          finix_payout_profile_id: string | null
+          fixed_fee: number | null
+          fraud_session_id: string | null
+          idempotency_id: string | null
+          in_robbins_park_historical_district: boolean
+          is_older_than_50_years: boolean
+          issued_at: string | null
+          listed_in_hod: boolean
+          merchant_fee_profile_id: string | null
+          merchant_finix_identity_id: string | null
+          merchant_id: string | null
+          merchant_name: string | null
+          owner_address: string | null
+          owner_email: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          permit_id: string
+          permit_number: string | null
+          permit_type: string
+          profile_id: string | null
+          project_description: string | null
+          property_address: string
+          property_pin: string | null
+          reviewed_at: string | null
+          same_as_applicant: boolean
+          scope_of_work: string
+          submitted_at: string | null
+          updated_at: string
+          use_personal_info: boolean
+          user_id: string
+        }
+        Insert: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          applicant_address?: string | null
+          applicant_email?: string | null
+          applicant_name?: string | null
+          applicant_phone?: string | null
+          application_status?: Database["public"]["Enums"]["permit_status_enum"]
+          basis_points?: number | null
+          created_at?: string
+          customer_id: string
+          estimated_construction_value_cents?: number
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_payout_profile_id?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          idempotency_id?: string | null
+          in_robbins_park_historical_district?: boolean
+          is_older_than_50_years?: boolean
+          issued_at?: string | null
+          listed_in_hod?: boolean
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          owner_address?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          permit_id?: string
+          permit_number?: string | null
+          permit_type: string
+          profile_id?: string | null
+          project_description?: string | null
+          property_address: string
+          property_pin?: string | null
+          reviewed_at?: string | null
+          same_as_applicant?: boolean
+          scope_of_work: string
+          submitted_at?: string | null
+          updated_at?: string
+          use_personal_info?: boolean
+          user_id: string
+        }
+        Update: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          applicant_address?: string | null
+          applicant_email?: string | null
+          applicant_name?: string | null
+          applicant_phone?: string | null
+          application_status?: Database["public"]["Enums"]["permit_status_enum"]
+          basis_points?: number | null
+          created_at?: string
+          customer_id?: string
+          estimated_construction_value_cents?: number
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_payout_profile_id?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          idempotency_id?: string | null
+          in_robbins_park_historical_district?: boolean
+          is_older_than_50_years?: boolean
+          issued_at?: string | null
+          listed_in_hod?: boolean
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          owner_address?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          permit_id?: string
+          permit_number?: string | null
+          permit_type?: string
+          profile_id?: string | null
+          project_description?: string | null
+          property_address?: string
+          property_pin?: string | null
+          reviewed_at?: string | null
+          same_as_applicant?: boolean
+          scope_of_work?: string
+          submitted_at?: string | null
+          updated_at?: string
+          use_personal_info?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      permit_contractors: {
+        Row: {
+          contractor_address: string | null
+          contractor_email: string | null
+          contractor_phone: string | null
+          contractor_type: string
+          created_at: string
+          id: string
+          permit_id: string
+        }
+        Insert: {
+          contractor_address?: string | null
+          contractor_email?: string | null
+          contractor_phone?: string | null
+          contractor_type: string
+          created_at?: string
+          id?: string
+          permit_id: string
+        }
+        Update: {
+          contractor_address?: string | null
+          contractor_email?: string | null
+          contractor_phone?: string | null
+          contractor_type?: string
+          created_at?: string
+          id?: string
+          permit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permit_contractors_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+        ]
+      }
+      permit_types: {
+        Row: {
+          base_fee_cents: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          processing_days: number
+          requires_inspection: boolean
+          updated_at: string
+        }
+        Insert: {
+          base_fee_cents?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          processing_days?: number
+          requires_inspection?: boolean
+          updated_at?: string
+        }
+        Update: {
+          base_fee_cents?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          processing_days?: number
+          requires_inspection?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: string
@@ -2137,6 +2349,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      generate_permit_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_available_vehicles: {
         Args: { user_id: string }
         Returns: {
@@ -2390,6 +2606,14 @@ export type Database = {
       payout_frequency: "DAILY" | "MONTHLY" | "CONTINUOUS"
       payout_rail: "NEXT_DAY_ACH" | "SAME_DAY_ACH"
       payout_type: "GROSS" | "NET"
+      permit_status_enum:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "issued"
+        | "expired"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -2551,6 +2775,15 @@ export const Constants = {
       payout_frequency: ["DAILY", "MONTHLY", "CONTINUOUS"],
       payout_rail: ["NEXT_DAY_ACH", "SAME_DAY_ACH"],
       payout_type: ["GROSS", "NET"],
+      permit_status_enum: [
+        "draft",
+        "submitted",
+        "under_review",
+        "approved",
+        "rejected",
+        "issued",
+        "expired",
+      ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
     },
