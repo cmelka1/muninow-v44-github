@@ -11,7 +11,7 @@ export const MERCHANT_CATEGORIES = {
     "Property Taxes",
     "Special Assessments",
     "Lien Payments",
-    "Permit Fees", 
+    "Building Permits", 
     "Zoning & Planning Fees",
     "Code Violation Fines",
     "HOA Dues"
