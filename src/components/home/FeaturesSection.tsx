@@ -88,8 +88,8 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile }) => {
             <OptimizedImage
               src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
               alt="Municipal Payment Dashboard showing analytics and payment management features"
-              width={600}
-              height={400}
+              width={800}
+              height={550}
               className="w-full rounded-lg shadow-md"
               quality="medium"
               loading="lazy"

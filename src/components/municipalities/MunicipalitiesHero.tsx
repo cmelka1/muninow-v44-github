@@ -31,8 +31,8 @@ const MunicipalitiesHero: React.FC = () => {
               <OptimizedImage
                 src="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e"
                 alt="Municipal City Hall Building"
-                width={600}
-                height={400}
+                width={800}
+                height={550}
                 className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-105"
                 priority={true}
                 quality="high"
