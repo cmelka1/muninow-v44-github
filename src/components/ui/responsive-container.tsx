@@ -7,7 +7,7 @@ interface ResponsiveContainerProps {
   variant?: 'section' | 'container' | 'card' | 'hero';
   children: React.ReactNode;
   className?: string;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
 }
 
 const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
