@@ -27,13 +27,13 @@ const MunicipalitiesHero: React.FC = () => {
               </Link>
             </div>
           </div>
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-[400px] lg:h-[500px] flex items-center justify-center">
             <div className="w-full h-full rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
               <OptimizedImage
                 src={municipalBuilding}
                 alt="Municipal City Hall Building"
                 width={800}
-                height={550}
+                height={500}
                 className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-105"
                 priority={true}
                 quality="high"
