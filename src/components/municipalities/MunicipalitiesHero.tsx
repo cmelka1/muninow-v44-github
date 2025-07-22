@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import ResponsiveTypography from '@/components/ui/responsive-typography';
 import ResponsiveContainer from '@/components/ui/responsive-container';
 import OptimizedImage from '@/components/ui/optimized-image';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 const MunicipalitiesHero: React.FC = () => {
   const cityHallImageUrl = "https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/city-hall/CIty%20Hall%20Stock%20Image_v1.jpg";
@@ -28,20 +29,20 @@ const MunicipalitiesHero: React.FC = () => {
               </Link>
             </div>
           </div>
-          <div className="relative w-full h-[400px] lg:h-[500px] flex items-center justify-center">
-            <div className="w-full h-full rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
+          <div className="w-full">
+            <AspectRatio ratio={4/3} className="rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
               <OptimizedImage
                 src={cityHallImageUrl}
                 alt="City Hall Stock Image"
                 width={800}
-                height={500}
+                height={600}
                 className="w-full h-full object-cover rounded-lg"
                 priority={true}
                 quality="high"
                 loading="eager"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
               />
-            </div>
+            </AspectRatio>
           </div>
         </div>
       </ResponsiveContainer>
