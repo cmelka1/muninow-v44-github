@@ -7,7 +7,7 @@ import ResponsiveContainer from '@/components/ui/responsive-container';
 import OptimizedImage from '@/components/ui/optimized-image';
 
 const MunicipalitiesHero: React.FC = () => {
-  const cityHallImageUrl = "https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/city-hall/CIty%20Hall%20Stock%20Image.jpg";
+  const cityHallImageUrl = "https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/city-hall/CIty%20Hall%20Stock%20Image_v1.jpg";
 
   return (
     <section className="bg-gradient-to-b from-primary/10 to-white">
