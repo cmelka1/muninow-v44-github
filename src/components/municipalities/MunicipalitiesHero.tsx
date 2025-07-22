@@ -34,7 +34,7 @@ const MunicipalitiesHero: React.FC = () => {
                 alt="Municipal City Hall Building"
                 width={800}
                 height={500}
-                className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-105"
+                className="w-full h-full object-cover rounded-lg"
                 priority={true}
                 quality="high"
                 loading="eager"
