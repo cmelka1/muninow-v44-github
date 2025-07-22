@@ -11,7 +11,7 @@ interface HowItWorksSectionProps {
 const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ isMobile }) => {
   return (
     <section id="how-it-works" className="bg-background">
-      <ResponsiveContainer variant="section" maxWidth="6xl">
+      <ResponsiveContainer variant="section" maxWidth="4xl">
         <header className="text-center mb-10">
           <ResponsiveTypography variant="h2" className="mb-3">
             How MuniNow Works

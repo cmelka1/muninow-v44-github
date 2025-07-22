@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useResponsiveNavigation } from '@/hooks/useResponsiveNavigation';
 import { contentSpacing } from '@/utils/responsiveTokens';
@@ -13,7 +14,7 @@ const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   variant = 'container',
   children,
   className = '',
-  maxWidth = '6xl'
+  maxWidth = '4xl'
 }) => {
   const { isMobile } = useResponsiveNavigation();
   

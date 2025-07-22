@@ -12,7 +12,7 @@ interface FeaturesSectionProps {
 const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile }) => {
   return (
     <section className="bg-muted/30">
-      <ResponsiveContainer variant="section" maxWidth="6xl">
+      <ResponsiveContainer variant="section" maxWidth="4xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
             <Badge variant="outline" className="mb-3 py-1 px-3 text-primary border-primary/30 bg-primary/5">
