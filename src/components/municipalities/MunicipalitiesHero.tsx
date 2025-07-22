@@ -30,7 +30,7 @@ const MunicipalitiesHero: React.FC = () => {
             </div>
           </div>
           <div className="w-full">
-            <AspectRatio ratio={4/3} className="rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
+            <AspectRatio ratio={16/10} className="rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
               <OptimizedImage
                 src={cityHallImageUrl}
                 alt="City Hall Stock Image"
