@@ -11,7 +11,7 @@ const MunicipalitiesHero: React.FC = () => {
   return (
     <section className="bg-gradient-to-b from-primary/10 to-white">
       <ResponsiveContainer variant="hero" maxWidth="6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[400px] lg:min-h-[480px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[300px] lg:min-h-[360px]">
           <div>
             <ResponsiveTypography variant="h1" className="mb-6">
               Streamline Municipal Bill Collection
