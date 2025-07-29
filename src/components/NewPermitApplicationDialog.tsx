@@ -1037,22 +1037,175 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       case 3:
         return (
           <div className="space-y-6">
+            {/* Review Basic Information */}
             <Card className="animate-fade-in">
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Basic Information
+                </CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentStep(1)}
+                  className="text-xs"
+                >
+                  Edit
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Municipality</Label>
+                    <p className="text-sm font-medium">{selectedMunicipality?.merchant_name || 'Not selected'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Permit Type</Label>
+                    <p className="text-sm font-medium">{selectedPermitType?.name || 'Not selected'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Property Address</Label>
+                    <p className="text-sm font-medium">{propertyInfo.address || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Estimated Value</Label>
+                    <p className="text-sm font-medium">
+                      {propertyInfo.estimatedValue ? formatCurrency(propertyInfo.estimatedValue / 100) : 'Not provided'}
+                    </p>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Applicant</Label>
+                    <p className="text-sm font-medium">{applicantInfo.nameOrCompany || 'Not provided'}</p>
+                    <p className="text-xs text-muted-foreground">{applicantInfo.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Property Owner</Label>
+                    <p className="text-sm font-medium">{propertyOwnerInfo.nameOrCompany || 'Not provided'}</p>
+                    <p className="text-xs text-muted-foreground">{propertyOwnerInfo.email}</p>
+                  </div>
+                </div>
+
+                {municipalQuestions && municipalQuestions.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Additional Questions</Label>
+                      <div className="space-y-2 mt-2">
+                        {municipalQuestions.map((question) => (
+                          <div key={question.id} className="flex justify-between">
+                            <span className="text-sm">{question.question_text}</span>
+                            <span className="text-sm font-medium">
+                              {questionResponses[question.id]?.toString() || 'Not answered'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Review Project Details */}
+            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Project Details
+                </CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentStep(2)}
+                  className="text-xs"
+                >
+                  Edit
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Contractors ({contractors.length})</Label>
+                  <div className="space-y-2 mt-2">
+                    {contractors.map((contractor, index) => (
+                      <div key={contractor.id} className="p-3 bg-muted/30 rounded-lg">
+                        <p className="text-sm font-medium">
+                          {contractor.contractor_name || `Contractor ${index + 1}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {contractor.contractor_type} • {contractor.email}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <Label className="text-xs text-muted-foreground">Scope of Work</Label>
+                  <p className="text-sm mt-1">{scopeOfWork || 'Not provided'}</p>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <Label className="text-xs text-muted-foreground">Documents ({uploadedDocuments.length})</Label>
+                  {uploadedDocuments.length > 0 ? (
+                    <div className="space-y-2 mt-2">
+                      {uploadedDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center gap-3 p-2 bg-muted/30 rounded">
+                          {getFileIcon(doc.type)}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{doc.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {doc.documentType} • {formatFileSize(doc.size)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-1">No documents uploaded</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Summary */}
+            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  Review & Submit
+                  Application Summary
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <div className="text-2xl">✅</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Base Fee</p>
+                    <p className="text-lg font-semibold">
+                      {selectedPermitType ? formatCurrency(selectedPermitType.base_fee_cents / 100) : '$0.00'}
+                    </p>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
-                  <p className="text-muted-foreground max-w-sm mx-auto">
-                    Final permit application review, payment processing, and submission will be handled here.
-                  </p>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Processing Time</p>
+                    <p className="text-lg font-semibold">
+                      {selectedPermitType ? `${selectedPermitType.processing_days} days` : 'N/A'}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Inspection Required</p>
+                    <p className="text-lg font-semibold">
+                      {selectedPermitType ? (selectedPermitType.requires_inspection ? 'Yes' : 'No') : 'N/A'}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
