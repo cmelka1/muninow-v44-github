@@ -591,10 +591,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       <SelectContent>
                         {permitTypes?.map((permitType) => (
                           <SelectItem key={permitType.id} value={permitType.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{permitType.name}</span>
-                              <span className="text-xs text-muted-foreground">{permitType.description}</span>
-                            </div>
+                            {permitType.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
