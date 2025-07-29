@@ -8,7 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
+import { formatCurrency } from '@/lib/formatters';
 
 interface NewPermitApplicationDialogProps {
   open: boolean;
@@ -32,6 +35,12 @@ interface SelectedPermitType {
   requires_inspection: boolean;
 }
 
+interface PropertyInformation {
+  address: string;
+  pinNumber: string;
+  estimatedValue: number;
+}
+
 export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProps> = ({
   open,
   onOpenChange
@@ -39,6 +48,11 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
   const [selectedPermitType, setSelectedPermitType] = useState<SelectedPermitType | null>(null);
+  const [propertyInfo, setPropertyInfo] = useState<PropertyInformation>({
+    address: '',
+    pinNumber: '',
+    estimatedValue: 0
+  });
   
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
 
@@ -61,6 +75,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setCurrentStep(1);
     setSelectedMunicipality(null);
     setSelectedPermitType(null);
+    setPropertyInfo({ address: '', pinNumber: '', estimatedValue: 0 });
     onOpenChange(false);
   };
 
@@ -80,6 +95,29 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         requires_inspection: permitType.requires_inspection,
       });
     }
+  };
+
+  const handleAddressSelect = (addressComponents: any) => {
+    const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
+    setPropertyInfo(prev => ({ ...prev, address: fullAddress }));
+  };
+
+  const handlePinNumberChange = (value: string) => {
+    setPropertyInfo(prev => ({ ...prev, pinNumber: value }));
+  };
+
+  const formatCurrencyInput = (value: string) => {
+    // Remove all non-numeric characters
+    const numericValue = value.replace(/[^\d]/g, '');
+    // Convert to number and format as currency
+    const number = parseInt(numericValue) || 0;
+    return number.toLocaleString('en-US');
+  };
+
+  const handleEstimatedValueChange = (value: string) => {
+    // Remove all non-numeric characters and convert to number
+    const numericValue = parseInt(value.replace(/[^\d]/g, '')) || 0;
+    setPropertyInfo(prev => ({ ...prev, estimatedValue: numericValue }));
   };
 
   const renderStepContent = () => {
@@ -162,19 +200,64 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
             <Card className="animate-fade-in">
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  Project Details
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Property Information
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <div className="text-2xl">📋</div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="property-address" className="text-sm font-medium text-foreground">
+                      Property Address *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the address where the work will be performed
+                    </p>
+                    <RestPlacesAutocomplete
+                      placeholder="Start typing the property address..."
+                      onAddressSelect={handleAddressSelect}
+                      value={propertyInfo.address}
+                      onChange={(value) => setPropertyInfo(prev => ({ ...prev, address: value }))}
+                      className="mt-1"
+                    />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
-                  <p className="text-muted-foreground max-w-sm mx-auto">
-                    Additional permit information including project details, timeline, and documentation requirements will be collected here.
-                  </p>
+                  
+                  <div>
+                    <Label htmlFor="pin-number" className="text-sm font-medium text-foreground">
+                      PIN Number <span className="text-muted-foreground">(Optional)</span>
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Property Identification Number if available
+                    </p>
+                    <Input
+                      id="pin-number"
+                      placeholder="Enter PIN number"
+                      value={propertyInfo.pinNumber}
+                      onChange={(e) => handlePinNumberChange(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="estimated-value" className="text-sm font-medium text-foreground">
+                      Estimated Construction Value *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the estimated cost of construction work
+                    </p>
+                    <div className="relative mt-1">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                        $
+                      </span>
+                      <Input
+                        id="estimated-value"
+                        placeholder="00,000"
+                        value={formatCurrencyInput(propertyInfo.estimatedValue.toString())}
+                        onChange={(e) => handleEstimatedValueChange(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -249,7 +332,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                 <div className="hidden sm:block">
                   <span className="text-sm font-medium">
                     {step === 1 && 'Basic Info'}
-                    {step === 2 && 'Project Details'}
+                    {step === 2 && 'Property Info'}
                     {step === 3 && 'Review & Submit'}
                   </span>
                 </div>
