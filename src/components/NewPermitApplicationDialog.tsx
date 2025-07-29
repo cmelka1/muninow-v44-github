@@ -51,6 +51,13 @@ interface ApplicantInformation {
   address: string;
 }
 
+interface PropertyOwnerInformation {
+  nameOrCompany: string;
+  phoneNumber: string;
+  email: string;
+  address: string;
+}
+
 export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProps> = ({
   open,
   onOpenChange
@@ -70,6 +77,13 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     address: ''
   });
   const [useProfileInfo, setUseProfileInfo] = useState(false);
+  const [propertyOwnerInfo, setPropertyOwnerInfo] = useState<PropertyOwnerInformation>({
+    nameOrCompany: '',
+    phoneNumber: '',
+    email: '',
+    address: ''
+  });
+  const [sameAsApplicant, setSameAsApplicant] = useState(false);
   
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
   const { profile } = useAuth();
@@ -96,6 +110,8 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setPropertyInfo({ address: '', pinNumber: '', estimatedValue: 0 });
     setApplicantInfo({ nameOrCompany: '', phoneNumber: '', email: '', address: '' });
     setUseProfileInfo(false);
+    setPropertyOwnerInfo({ nameOrCompany: '', phoneNumber: '', email: '', address: '' });
+    setSameAsApplicant(false);
     onOpenChange(false);
   };
 
@@ -158,6 +174,16 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         email: profile.email || '',
         address: fullAddress
       });
+      
+      // Update property owner info if "same as applicant" is enabled
+      if (sameAsApplicant) {
+        setPropertyOwnerInfo({
+          nameOrCompany: fullName,
+          phoneNumber: profile.phone ? normalizePhoneInput(profile.phone) : '',
+          email: profile.email || '',
+          address: fullAddress
+        });
+      }
     } else if (!checked) {
       // Clear applicant info when toggled off
       setApplicantInfo({
@@ -166,12 +192,52 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         email: '',
         address: ''
       });
+      
+      // Clear property owner info if "same as applicant" is enabled
+      if (sameAsApplicant) {
+        setPropertyOwnerInfo({
+          nameOrCompany: '',
+          phoneNumber: '',
+          email: '',
+          address: ''
+        });
+      }
     }
   };
 
   const handleApplicantAddressSelect = (addressComponents: any) => {
     const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
     setApplicantInfo(prev => ({ ...prev, address: fullAddress }));
+    // Update property owner info if "same as applicant" is enabled
+    if (sameAsApplicant) {
+      setPropertyOwnerInfo(prev => ({ ...prev, address: fullAddress }));
+    }
+  };
+
+  const handleSameAsApplicantToggle = (checked: boolean) => {
+    setSameAsApplicant(checked);
+    if (checked) {
+      // Copy all applicant information to property owner fields
+      setPropertyOwnerInfo({
+        nameOrCompany: applicantInfo.nameOrCompany,
+        phoneNumber: applicantInfo.phoneNumber,
+        email: applicantInfo.email,
+        address: applicantInfo.address
+      });
+    } else {
+      // Clear property owner info when toggled off
+      setPropertyOwnerInfo({
+        nameOrCompany: '',
+        phoneNumber: '',
+        email: '',
+        address: ''
+      });
+    }
+  };
+
+  const handlePropertyOwnerAddressSelect = (addressComponents: any) => {
+    const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
+    setPropertyOwnerInfo(prev => ({ ...prev, address: fullAddress }));
   };
 
   const renderStepContent = () => {
@@ -381,6 +447,99 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       value={applicantInfo.address}
                       onChange={useProfileInfo ? () => {} : (value) => setApplicantInfo(prev => ({ ...prev, address: value }))}
                       className={`mt-1 ${useProfileInfo ? 'opacity-50 pointer-events-none' : ''}`}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Property Owner
+                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="same-as-applicant" className="text-sm text-muted-foreground">
+                    Same as Applicant
+                  </Label>
+                  <Switch
+                    id="same-as-applicant"
+                    checked={sameAsApplicant}
+                    onCheckedChange={handleSameAsApplicantToggle}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="owner-name" className="text-sm font-medium text-foreground">
+                      Name/Company *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter property owner's full name or company name
+                    </p>
+                    <Input
+                      id="owner-name"
+                      placeholder="Enter name or company"
+                      value={propertyOwnerInfo.nameOrCompany}
+                      onChange={(e) => setPropertyOwnerInfo(prev => ({ ...prev, nameOrCompany: e.target.value }))}
+                      className="mt-1"
+                      disabled={sameAsApplicant}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="owner-phone" className="text-sm font-medium text-foreground">
+                      Phone Number *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter property owner's contact phone number
+                    </p>
+                    <Input
+                      id="owner-phone"
+                      placeholder="(xxx) xxx-xxxx"
+                      value={propertyOwnerInfo.phoneNumber}
+                      onChange={(e) => {
+                        const normalized = normalizePhoneInput(e.target.value);
+                        setPropertyOwnerInfo(prev => ({ ...prev, phoneNumber: normalized }));
+                      }}
+                      className="mt-1"
+                      disabled={sameAsApplicant}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="owner-email" className="text-sm font-medium text-foreground">
+                      Email *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter property owner's email address
+                    </p>
+                    <Input
+                      id="owner-email"
+                      type="email"
+                      placeholder="Enter email address"
+                      value={propertyOwnerInfo.email}
+                      onChange={(e) => setPropertyOwnerInfo(prev => ({ ...prev, email: e.target.value }))}
+                      className="mt-1"
+                      disabled={sameAsApplicant}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="owner-address" className="text-sm font-medium text-foreground">
+                      Address *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter property owner's mailing address
+                    </p>
+                    <RestPlacesAutocomplete
+                      placeholder="Start typing the address..."
+                      onAddressSelect={sameAsApplicant ? () => {} : handlePropertyOwnerAddressSelect}
+                      value={propertyOwnerInfo.address}
+                      onChange={sameAsApplicant ? () => {} : (value) => setPropertyOwnerInfo(prev => ({ ...prev, address: value }))}
+                      className={`mt-1 ${sameAsApplicant ? 'opacity-50 pointer-events-none' : ''}`}
                     />
                   </div>
                 </div>
