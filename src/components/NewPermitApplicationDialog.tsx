@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
+import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { formatCurrency } from '@/lib/formatters';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -84,8 +85,13 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     address: ''
   });
   const [sameAsApplicant, setSameAsApplicant] = useState(false);
+  const [questionResponses, setQuestionResponses] = useState<Record<string, string | boolean>>({});
   
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
+  const { data: municipalQuestions, isLoading: isLoadingQuestions } = useMunicipalPermitQuestions(
+    selectedMunicipality?.id,
+    selectedMunicipality?.id
+  );
   const { profile } = useAuth();
 
   const totalSteps = 3;
@@ -112,11 +118,14 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setUseProfileInfo(false);
     setPropertyOwnerInfo({ nameOrCompany: '', phoneNumber: '', email: '', address: '' });
     setSameAsApplicant(false);
+    setQuestionResponses({});
     onOpenChange(false);
   };
 
   const handleMunicipalitySelect = (municipality: SelectedMunicipality) => {
     setSelectedMunicipality(municipality);
+    // Reset question responses when municipality changes
+    setQuestionResponses({});
   };
 
   const handlePermitTypeSelect = (permitTypeId: string) => {
@@ -240,6 +249,74 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setPropertyOwnerInfo(prev => ({ ...prev, address: fullAddress }));
   };
 
+  const handleQuestionResponse = (questionId: string, value: string | boolean) => {
+    setQuestionResponses(prev => ({
+      ...prev,
+      [questionId]: value
+    }));
+  };
+
+  const renderMunicipalQuestions = () => {
+    if (!selectedMunicipality || !municipalQuestions || municipalQuestions.length === 0) {
+      return null;
+    }
+
+    const sortedQuestions = [...municipalQuestions].sort((a, b) => a.display_order - b.display_order);
+
+    return (
+      <div className="space-y-4 mt-6 pt-6 border-t">
+        <h4 className="text-sm font-medium text-foreground mb-4">Additional Questions</h4>
+        {sortedQuestions.map((question) => (
+          <div key={question.id} className="space-y-2">
+            <Label className="text-sm font-medium text-foreground">
+              {question.question_text} {question.is_required && <span className="text-destructive">*</span>}
+            </Label>
+            {question.help_text && (
+              <p className="text-xs text-muted-foreground">{question.help_text}</p>
+            )}
+            
+            {question.question_type === 'text' && (
+              <Input
+                placeholder="Enter your response"
+                value={(questionResponses[question.id] as string) || ''}
+                onChange={(e) => handleQuestionResponse(question.id, e.target.value)}
+                className="mt-1"
+              />
+            )}
+            
+            {question.question_type === 'checkbox' && (
+              <div className="flex items-center space-x-2 mt-1">
+                <Switch
+                  id={`question-${question.id}`}
+                  checked={(questionResponses[question.id] as boolean) || false}
+                  onCheckedChange={(checked) => handleQuestionResponse(question.id, checked)}
+                />
+                <Label htmlFor={`question-${question.id}`} className="text-sm text-muted-foreground">
+                  Yes
+                </Label>
+              </div>
+            )}
+            
+            {question.question_type === 'select' && question.question_options && (
+              <Select onValueChange={(value) => handleQuestionResponse(question.id, value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(question.question_options) && question.question_options.map((option: string, index: number) => (
+                    <SelectItem key={index} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -356,6 +433,9 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       />
                     </div>
                   </div>
+                  
+                  {/* Municipal Questions */}
+                  {renderMunicipalQuestions()}
                 </div>
               </CardContent>
             </Card>
