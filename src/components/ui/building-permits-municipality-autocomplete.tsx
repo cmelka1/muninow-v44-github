@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronDown } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useBuildingPermitsMerchants } from '@/hooks/useBuildingPermitsMerchants';
 import { cn } from '@/lib/utils';
 
@@ -130,10 +130,8 @@ export const BuildingPermitsMunicipalityAutocomplete: React.FC<BuildingPermitsMu
           autoComplete="off"
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          {isLoading ? (
+          {isLoading && (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
       </div>
