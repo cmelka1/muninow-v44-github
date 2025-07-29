@@ -264,7 +264,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           owner_address: propertyOwnerInfo.address,
           scope_of_work: scopeOfWork || null,
           municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
-          application_status: 'submitted',
+          application_status: 'submitted' as const,
           submitted_at: new Date().toISOString()
         })
         .select()

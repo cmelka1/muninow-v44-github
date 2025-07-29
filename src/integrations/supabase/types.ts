@@ -1699,11 +1699,16 @@ export type Database = {
           applicant_full_name: string | null
           applicant_phone: string | null
           application_status: Database["public"]["Enums"]["permit_status_enum"]
+          approved_at: string | null
           assigned_reviewer_id: string | null
           basis_points: number | null
           created_at: string
           customer_id: string
+          denial_reason: string | null
+          denied_at: string | null
           estimated_construction_value_cents: number
+          expiration_date: string | null
+          expired_at: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_payout_profile_id: string | null
@@ -1712,6 +1717,7 @@ export type Database = {
           fraud_session_id: string | null
           idempotency_id: string | null
           in_robbins_park_historical_district: boolean
+          information_requested_at: string | null
           is_older_than_50_years: boolean
           issued_at: string | null
           listed_in_hod: boolean
@@ -1738,6 +1744,7 @@ export type Database = {
           project_description: string | null
           property_address: string
           property_pin: string | null
+          resubmitted_at: string | null
           review_completed_at: string | null
           review_notes: string | null
           review_started_at: string | null
@@ -1748,9 +1755,12 @@ export type Database = {
           service_fee_cents: number | null
           submitted_at: string | null
           total_amount_cents: number | null
+          under_review_at: string | null
           updated_at: string
           use_personal_info: boolean
           user_id: string
+          withdrawal_reason: string | null
+          withdrawn_at: string | null
         }
         Insert: {
           ach_basis_points?: number | null
@@ -1760,11 +1770,16 @@ export type Database = {
           applicant_full_name?: string | null
           applicant_phone?: string | null
           application_status?: Database["public"]["Enums"]["permit_status_enum"]
+          approved_at?: string | null
           assigned_reviewer_id?: string | null
           basis_points?: number | null
           created_at?: string
           customer_id: string
+          denial_reason?: string | null
+          denied_at?: string | null
           estimated_construction_value_cents?: number
+          expiration_date?: string | null
+          expired_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
@@ -1773,6 +1788,7 @@ export type Database = {
           fraud_session_id?: string | null
           idempotency_id?: string | null
           in_robbins_park_historical_district?: boolean
+          information_requested_at?: string | null
           is_older_than_50_years?: boolean
           issued_at?: string | null
           listed_in_hod?: boolean
@@ -1799,6 +1815,7 @@ export type Database = {
           project_description?: string | null
           property_address: string
           property_pin?: string | null
+          resubmitted_at?: string | null
           review_completed_at?: string | null
           review_notes?: string | null
           review_started_at?: string | null
@@ -1809,9 +1826,12 @@ export type Database = {
           service_fee_cents?: number | null
           submitted_at?: string | null
           total_amount_cents?: number | null
+          under_review_at?: string | null
           updated_at?: string
           use_personal_info?: boolean
           user_id: string
+          withdrawal_reason?: string | null
+          withdrawn_at?: string | null
         }
         Update: {
           ach_basis_points?: number | null
@@ -1821,11 +1841,16 @@ export type Database = {
           applicant_full_name?: string | null
           applicant_phone?: string | null
           application_status?: Database["public"]["Enums"]["permit_status_enum"]
+          approved_at?: string | null
           assigned_reviewer_id?: string | null
           basis_points?: number | null
           created_at?: string
           customer_id?: string
+          denial_reason?: string | null
+          denied_at?: string | null
           estimated_construction_value_cents?: number
+          expiration_date?: string | null
+          expired_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
@@ -1834,6 +1859,7 @@ export type Database = {
           fraud_session_id?: string | null
           idempotency_id?: string | null
           in_robbins_park_historical_district?: boolean
+          information_requested_at?: string | null
           is_older_than_50_years?: boolean
           issued_at?: string | null
           listed_in_hod?: boolean
@@ -1860,6 +1886,7 @@ export type Database = {
           project_description?: string | null
           property_address?: string
           property_pin?: string | null
+          resubmitted_at?: string | null
           review_completed_at?: string | null
           review_notes?: string | null
           review_started_at?: string | null
@@ -1870,9 +1897,12 @@ export type Database = {
           service_fee_cents?: number | null
           submitted_at?: string | null
           total_amount_cents?: number | null
+          under_review_at?: string | null
           updated_at?: string
           use_personal_info?: boolean
           user_id?: string
+          withdrawal_reason?: string | null
+          withdrawn_at?: string | null
         }
         Relationships: [
           {
@@ -1991,6 +2021,57 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "permit_applications"
             referencedColumns: ["permit_id"]
+          },
+        ]
+      }
+      permit_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          notification_type: string
+          permit_id: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          notification_type: string
+          permit_id: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          notification_type?: string
+          permit_id?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_notifications_permit"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_notifications_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2992,6 +3073,10 @@ export type Database = {
         | "rejected"
         | "issued"
         | "expired"
+        | "information_requested"
+        | "resubmitted"
+        | "denied"
+        | "withdrawn"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -3161,6 +3246,10 @@ export const Constants = {
         "rejected",
         "issued",
         "expired",
+        "information_requested",
+        "resubmitted",
+        "denied",
+        "withdrawn",
       ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
