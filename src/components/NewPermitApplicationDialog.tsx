@@ -124,7 +124,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <Card className="animate-fade-in">
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -174,8 +174,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                 </div>
               </CardContent>
             </Card>
-
-            <Separator className="my-6" />
 
             <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <CardHeader className="pb-4">
