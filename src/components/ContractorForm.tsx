@@ -58,7 +58,8 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
   };
 
   const handleAddressSelect = (addressComponents: any) => {
-    onUpdate(contractor.id, 'street_address', addressComponents.streetAddress);
+    const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
+    onUpdate(contractor.id, 'street_address', fullAddress);
     onUpdate(contractor.id, 'city', addressComponents.city);
     onUpdate(contractor.id, 'state', addressComponents.state);
     onUpdate(contractor.id, 'zip_code', addressComponents.zipCode);
@@ -158,11 +159,6 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
           onChange={(value) => onUpdate(contractor.id, 'street_address', value)}
           className="mt-1"
         />
-        {contractor.city && contractor.state && (
-          <div className="text-sm text-muted-foreground">
-            {contractor.city}, {contractor.state} {contractor.zip_code}
-          </div>
-        )}
       </div>
     </div>
   );
