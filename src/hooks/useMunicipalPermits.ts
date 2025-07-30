@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { PermitStatus } from './usePermitWorkflow';
 
-export interface Permit {
+export interface MunicipalPermit {
   permit_id: string;
   permit_number: string;
   permit_type: string;
@@ -19,7 +19,7 @@ export interface Permit {
   user_id: string;
 }
 
-interface UsePermitsParams {
+interface UseMunicipalPermitsParams {
   filters?: {
     permitType?: string;
     status?: string;
@@ -31,17 +31,17 @@ interface UsePermitsParams {
   pageSize?: number;
 }
 
-export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermitsParams = {}) => {
+export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: UseMunicipalPermitsParams = {}) => {
   const { profile } = useAuth();
 
   return useQuery({
-    queryKey: ['resident-permits', filters, page, pageSize, profile?.id, profile?.account_type],
+    queryKey: ['municipal-permits', filters, page, pageSize, profile?.customer_id, profile?.account_type],
     queryFn: async () => {
       if (!profile) throw new Error('User profile not available');
       
-      // Ensure this is only used by non-municipal users
-      if (profile.account_type === 'municipal') {
-        throw new Error('Access denied: Use useMunicipalPermits for municipal users');
+      // Ensure this is only used by municipal users
+      if (profile.account_type !== 'municipal') {
+        throw new Error('Access denied: Municipal users only');
       }
 
       // Start building the query
@@ -63,8 +63,8 @@ export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermits
           user_id
         `, { count: 'exact' });
 
-      // Only show permits for this specific user
-      query = query.eq('user_id', profile.id);
+      // Only show permits for this municipal customer
+      query = query.eq('customer_id', profile.customer_id);
 
       // Apply filters
       if (filters.permitType) {
@@ -129,18 +129,18 @@ export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermits
       const { data, error, count } = await query;
 
       if (error) {
-        console.error('Error fetching permits:', error);
+        console.error('Error fetching municipal permits:', error);
         throw error;
       }
 
       return {
-        permits: data as Permit[],
+        permits: data as MunicipalPermit[],
         totalCount: count || 0,
         totalPages: Math.ceil((count || 0) / pageSize),
         currentPage: page,
         pageSize
       };
     },
-    enabled: !!profile && profile.account_type !== 'municipal'
+    enabled: !!profile && profile.account_type === 'municipal'
   });
 };

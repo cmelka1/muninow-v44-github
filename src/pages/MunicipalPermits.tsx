@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import PermitsFilter, { PermitFilters } from '@/components/PermitsFilter';
-import PermitsTable from '@/components/PermitsTable';
+import MunicipalPermitsTable from '@/components/MunicipalPermitsTable';
 
 const MunicipalPermits = () => {
+  const { profile } = useAuth();
   const [filters, setFilters] = useState<PermitFilters>({});
+
+  // Guard against non-municipal users
+  if (profile && profile.account_type !== 'municipal') {
+    return (
+      <div className="p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
+          <p className="text-muted-foreground mt-2">This page is only accessible to municipal users.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -17,7 +31,7 @@ const MunicipalPermits = () => {
       </div>
 
       <PermitsFilter filters={filters} onFiltersChange={setFilters} />
-      <PermitsTable 
+      <MunicipalPermitsTable 
         filters={filters} 
         onViewClick={(permitId) => {
           window.location.href = `/municipal/permit/${permitId}`;

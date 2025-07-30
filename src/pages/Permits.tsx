@@ -8,15 +8,17 @@ import PermitsTable from '@/components/PermitsTable';
 
 const Permits = () => {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const [filters, setFilters] = useState<PermitFilters>({});
 
-  // Redirect unauthenticated users
+  // Redirect unauthenticated users or municipal users
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/signin');
+    } else if (!isLoading && profile && profile.account_type === 'municipal') {
+      navigate('/municipal/permits');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, profile, isLoading, navigate]);
 
   if (isLoading) {
     return (
@@ -31,6 +33,11 @@ const Permits = () => {
 
   if (!user) {
     return null;
+  }
+
+  // Guard against municipal users
+  if (profile && profile.account_type === 'municipal') {
+    return null; // Will redirect via useEffect
   }
 
   return (
@@ -49,7 +56,7 @@ const Permits = () => {
             <PermitsTable 
               filters={filters} 
               onViewClick={(permitId) => {
-                console.log('View permit:', permitId);
+                navigate(`/permit/${permitId}`);
               }}
             />
           </div>
