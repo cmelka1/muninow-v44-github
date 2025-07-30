@@ -19,20 +19,26 @@ interface PermitsFilterProps {
 
 const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange }) => {
   const permitTypeOptions = [
-    { value: 'building', label: 'Building' },
-    { value: 'electrical', label: 'Electrical' },
-    { value: 'plumbing', label: 'Plumbing' },
-    { value: 'fire', label: 'Fire Safety' },
-    { value: 'zoning', label: 'Zoning' },
-    { value: 'business', label: 'Business License' },
+    { value: 'Building', label: 'Building' },
+    { value: 'Electrical', label: 'Electrical' },
+    { value: 'Plumbing', label: 'Plumbing' },
+    { value: 'HVAC', label: 'HVAC' },
+    { value: 'Zoning', label: 'Zoning' },
+    { value: 'Business', label: 'Business License' },
   ];
 
   const statusOptions = [
-    { value: 'pending', label: 'Pending' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'submitted', label: 'Submitted' },
     { value: 'under_review', label: 'Under Review' },
+    { value: 'information_requested', label: 'Info Requested' },
+    { value: 'resubmitted', label: 'Resubmitted' },
     { value: 'approved', label: 'Approved' },
-    { value: 'rejected', label: 'Rejected' },
+    { value: 'denied', label: 'Denied' },
+    { value: 'withdrawn', label: 'Withdrawn' },
     { value: 'expired', label: 'Expired' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'issued', label: 'Issued' },
   ];
 
   const dateRangeOptions = [
