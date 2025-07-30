@@ -238,44 +238,18 @@ const MunicipalPermitDetail = () => {
                   Municipal Questions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 {questions.map((question) => {
                   const response = permit.municipal_questions_responses?.[question.id];
                   const hasResponse = response !== undefined && response !== null;
+                  const isYes = hasResponse && (response === true || response === 'yes');
                   
                   return (
-                    <div key={question.id} className="space-y-2 p-4 border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <Label className="text-sm font-medium">
-                            {question.question_text}
-                            {question.is_required && <span className="text-destructive ml-1">*</span>}
-                          </Label>
-                          {question.help_text && (
-                            <p className="text-xs text-muted-foreground mt-1">{question.help_text}</p>
-                          )}
-                        </div>
-                        {question.is_required && (
-                          <Badge variant={hasResponse ? "default" : "destructive"} className="text-xs">
-                            {question.is_required ? "Required" : "Optional"}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="mt-2">
-                        {hasResponse ? (
-                          <div className="flex items-center gap-2">
-                            <Badge variant={response === true || response === 'yes' ? "default" : "secondary"}>
-                              {response === true || response === 'yes' ? "Yes" : 
-                               response === false || response === 'no' ? "No" : 
-                               formatMunicipalQuestionResponse(question.id, response)}
-                            </Badge>
-                          </div>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
-                            Not Answered
-                          </Badge>
-                        )}
-                      </div>
+                    <div key={question.id} className="flex items-center justify-between py-2">
+                      <span className="text-sm">{question.question_text}</span>
+                      <Badge variant={isYes ? "default" : "secondary"}>
+                        {isYes ? "Yes" : "No"}
+                      </Badge>
                     </div>
                   );
                 })}
