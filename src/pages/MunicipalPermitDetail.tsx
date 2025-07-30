@@ -29,6 +29,7 @@ import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
+import { toast } from '@/hooks/use-toast';
 
 const MunicipalPermitDetail = () => {
   const { permitId } = useParams<{ permitId: string }>();
@@ -289,11 +290,33 @@ const MunicipalPermitDetail = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => {
-                            const { data } = supabase.storage
-                              .from('permit-documents')
-                              .getPublicUrl(doc.storage_path);
-                            window.open(data.publicUrl, '_blank');
+                          onClick={async () => {
+                            try {
+                              const { data, error } = await supabase.storage
+                                .from('permit-documents')
+                                .createSignedUrl(doc.storage_path, 3600); // 1 hour expiry
+                              
+                              if (error) {
+                                console.error('Error creating signed URL:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to preview document",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              
+                              if (data?.signedUrl) {
+                                window.open(data.signedUrl, '_blank');
+                              }
+                            } catch (error) {
+                              console.error('Error previewing document:', error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to preview document",
+                                variant: "destructive"
+                              });
+                            }
                           }}
                         >
                           <Eye className="h-4 w-4" />
@@ -302,19 +325,42 @@ const MunicipalPermitDetail = () => {
                           variant="ghost" 
                           size="sm"
                           onClick={async () => {
-                            const { data } = await supabase.storage
-                              .from('permit-documents')
-                              .download(doc.storage_path);
-                            
-                            if (data) {
-                              const url = URL.createObjectURL(data);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              a.download = doc.file_name;
-                              document.body.appendChild(a);
-                              a.click();
-                              document.body.removeChild(a);
-                              URL.revokeObjectURL(url);
+                            try {
+                              const { data, error } = await supabase.storage
+                                .from('permit-documents')
+                                .download(doc.storage_path);
+                              
+                              if (error) {
+                                console.error('Error downloading document:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to download document",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              
+                              if (data) {
+                                const url = URL.createObjectURL(data);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = doc.file_name;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                                toast({
+                                  title: "Success",
+                                  description: "Document downloaded successfully"
+                                });
+                              }
+                            } catch (error) {
+                              console.error('Error downloading document:', error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to download document",
+                                variant: "destructive"
+                              });
                             }
                           }}
                         >
