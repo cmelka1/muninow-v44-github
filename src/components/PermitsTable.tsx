@@ -111,7 +111,7 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
 
   const handleViewClick = (e: React.MouseEvent, permitId: string) => {
     e.stopPropagation(); // Prevent row click navigation
-    onViewClick?.(permitId);
+    navigate(`/permit/${permitId}`);
   };
 
   if (error) {
