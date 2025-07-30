@@ -173,11 +173,11 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead className="hidden sm:table-cell">Permit #</TableHead>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
+                <TableHead className="hidden md:table-cell">Permit #</TableHead>
                 <TableHead>Applicant</TableHead>
-                <TableHead className="hidden md:table-cell text-center">Type</TableHead>
-                <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
-                <TableHead className="text-center">Fee</TableHead>
+                <TableHead className="hidden lg:table-cell text-center">Type</TableHead>
+                <TableHead className="text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -188,6 +188,11 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
                   onClick={() => handleRowClick(permit.permit_id)}
                 >
                   <TableCell className="hidden sm:table-cell py-2">
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(permit.created_at)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell py-2">
                     <span className="truncate font-mono text-sm">{permit.permit_number}</span>
                   </TableCell>
                   <TableCell className="py-2">
@@ -200,16 +205,13 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-2 text-center">
+                  <TableCell className="hidden lg:table-cell py-2 text-center">
                     <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={getPermitTypeLabel(permit.permit_type)}>
                       {getPermitTypeLabel(permit.permit_type)}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell py-2 text-center">
+                  <TableCell className="text-center py-2">
                     {getStatusBadge(permit.application_status)}
-                  </TableCell>
-                  <TableCell className="text-center font-medium py-2">
-                    {formatAmount(Number(permit.total_amount_cents) / 100)}
                   </TableCell>
                 </TableRow>
               ))}
