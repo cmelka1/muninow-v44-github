@@ -247,7 +247,7 @@ const MunicipalPermitDetail = () => {
                   return (
                     <div key={question.id} className="flex items-center justify-between py-2">
                       <span className="text-sm">{question.question_text}</span>
-                      <Badge variant={isYes ? "default" : "secondary"}>
+                      <Badge variant={isYes ? "default" : "outline"}>
                         {isYes ? "Yes" : "No"}
                       </Badge>
                     </div>
