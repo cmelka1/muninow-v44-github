@@ -122,6 +122,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const dialogContentRef = useRef<HTMLDivElement>(null);
   
@@ -137,20 +138,20 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const progress = (currentStep / totalSteps) * 100;
 
   const validateStep1Fields = () => {
-    const errors: string[] = [];
+    const errors: Record<string, string> = {};
 
-    if (!selectedMunicipality) errors.push('Municipality is required');
-    if (!selectedPermitType) errors.push('Permit type is required');
-    if (!propertyInfo.address) errors.push('Property address is required');
-    if (!propertyInfo.estimatedValue || propertyInfo.estimatedValue <= 0) errors.push('Estimated construction value is required');
-    if (!applicantInfo.nameOrCompany) errors.push('Applicant name/company is required');
-    if (!applicantInfo.phoneNumber) errors.push('Applicant phone number is required');
-    if (!applicantInfo.email) errors.push('Applicant email is required');
-    if (!applicantInfo.address) errors.push('Applicant address is required');
-    if (!propertyOwnerInfo.nameOrCompany) errors.push('Property owner name/company is required');
-    if (!propertyOwnerInfo.phoneNumber) errors.push('Property owner phone number is required');
-    if (!propertyOwnerInfo.email) errors.push('Property owner email is required');
-    if (!propertyOwnerInfo.address) errors.push('Property owner address is required');
+    if (!selectedMunicipality) errors.municipality = 'Municipality is required';
+    if (!selectedPermitType) errors.permitType = 'Permit type is required';
+    if (!propertyInfo.address) errors.propertyAddress = 'Property address is required';
+    if (!propertyInfo.estimatedValue || propertyInfo.estimatedValue <= 0) errors.estimatedValue = 'Estimated construction value is required';
+    if (!applicantInfo.nameOrCompany) errors.applicantName = 'Applicant name/company is required';
+    if (!applicantInfo.phoneNumber) errors.applicantPhone = 'Applicant phone number is required';
+    if (!applicantInfo.email) errors.applicantEmail = 'Applicant email is required';
+    if (!applicantInfo.address) errors.applicantAddress = 'Applicant address is required';
+    if (!propertyOwnerInfo.nameOrCompany) errors.ownerName = 'Property owner name/company is required';
+    if (!propertyOwnerInfo.phoneNumber) errors.ownerPhone = 'Property owner phone number is required';
+    if (!propertyOwnerInfo.email) errors.ownerEmail = 'Property owner email is required';
+    if (!propertyOwnerInfo.address) errors.ownerAddress = 'Property owner address is required';
 
     return errors;
   };
@@ -158,14 +159,17 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const handleNext = () => {
     if (currentStep === 1) {
       // Validate step 1 mandatory fields before proceeding
-      const validationErrors = validateStep1Fields();
-      if (validationErrors.length > 0) {
-        toast({
-          title: "Required fields missing",
-          description: validationErrors.join(', '),
-          variant: "destructive",
-        });
+      const errors = validateStep1Fields();
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        // Scroll to first error field
+        const firstErrorField = document.querySelector(`[data-error="true"]`);
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         return;
+      } else {
+        setValidationErrors({});
       }
     }
 
@@ -185,6 +189,16 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       if (dialogContentRef.current) {
         dialogContentRef.current.scrollTop = 0;
       }
+    }
+  };
+
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
     }
   };
 
@@ -213,32 +227,32 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setUploadedDocuments([]);
     setDragActive(false);
     setIsSubmitting(false);
+    setValidationErrors({});
     onOpenChange(false);
   };
 
   // Validation functions
   const validateRequiredFields = () => {
-    const errors: string[] = [];
+    const errors: Record<string, string> = {};
 
-    if (!selectedMunicipality) errors.push('Municipality is required');
-    if (!selectedPermitType) errors.push('Permit type is required');
-    if (!propertyInfo.address) errors.push('Property address is required');
-    if (!propertyInfo.estimatedValue || propertyInfo.estimatedValue <= 0) errors.push('Estimated construction value is required');
-    if (!applicantInfo.nameOrCompany) errors.push('Applicant name/company is required');
-    if (!applicantInfo.phoneNumber) errors.push('Applicant phone number is required');
-    if (!applicantInfo.email) errors.push('Applicant email is required');
-    if (!applicantInfo.address) errors.push('Applicant address is required');
-    if (!propertyOwnerInfo.nameOrCompany) errors.push('Property owner name/company is required');
-    if (!propertyOwnerInfo.phoneNumber) errors.push('Property owner phone number is required');
-    if (!propertyOwnerInfo.email) errors.push('Property owner email is required');
-    if (!propertyOwnerInfo.address) errors.push('Property owner address is required');
-
+    if (!selectedMunicipality) errors.municipality = 'Municipality is required';
+    if (!selectedPermitType) errors.permitType = 'Permit type is required';
+    if (!propertyInfo.address) errors.propertyAddress = 'Property address is required';
+    if (!propertyInfo.estimatedValue || propertyInfo.estimatedValue <= 0) errors.estimatedValue = 'Estimated construction value is required';
+    if (!applicantInfo.nameOrCompany) errors.applicantName = 'Applicant name/company is required';
+    if (!applicantInfo.phoneNumber) errors.applicantPhone = 'Applicant phone number is required';
+    if (!applicantInfo.email) errors.applicantEmail = 'Applicant email is required';
+    if (!applicantInfo.address) errors.applicantAddress = 'Applicant address is required';
+    if (!propertyOwnerInfo.nameOrCompany) errors.ownerName = 'Property owner name/company is required';
+    if (!propertyOwnerInfo.phoneNumber) errors.ownerPhone = 'Property owner phone number is required';
+    if (!propertyOwnerInfo.email) errors.ownerEmail = 'Property owner email is required';
+    if (!propertyOwnerInfo.address) errors.ownerAddress = 'Property owner address is required';
 
     // Check required municipal questions
     if (municipalQuestions) {
       for (const question of municipalQuestions) {
         if (question.is_required && !questionResponses[question.id]) {
-          errors.push(`Required question "${question.question_text}" must be answered`);
+          errors[`question_${question.id}`] = `Required question "${question.question_text}" must be answered`;
         }
       }
     }
@@ -257,11 +271,13 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     }
 
     // Validate required fields
-    const validationErrors = validateRequiredFields();
-    if (validationErrors.length > 0) {
+    const errors = validateRequiredFields();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      // Show toast only for critical errors
       toast({
-        title: "Validation errors",
-        description: validationErrors.join(', '),
+        title: "Please complete all required fields",
+        description: "Check the highlighted fields below and try again.",
         variant: "destructive",
       });
       return;
@@ -754,9 +770,16 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     </p>
                     <BuildingPermitsMunicipalityAutocomplete
                       placeholder="Search for your municipality..."
-                      onSelect={handleMunicipalitySelect}
-                      className="mt-1"
+                      onSelect={(municipality) => {
+                        handleMunicipalitySelect(municipality);
+                        clearFieldError('municipality');
+                      }}
+                      className={`mt-1 ${validationErrors.municipality ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.municipality}
                     />
+                    {validationErrors.municipality && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.municipality}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -766,8 +789,11 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     <p className="text-xs text-muted-foreground mb-2">
                       Select the type of permit you need
                     </p>
-                    <Select onValueChange={handlePermitTypeSelect} disabled={isLoadingPermitTypes}>
-                      <SelectTrigger className="mt-1">
+                    <Select onValueChange={(value) => {
+                      handlePermitTypeSelect(value);
+                      clearFieldError('permitType');
+                    }} disabled={isLoadingPermitTypes}>
+                      <SelectTrigger className={`mt-1 ${validationErrors.permitType ? 'ring-2 ring-destructive border-destructive' : ''}`} data-error={!!validationErrors.permitType}>
                         <SelectValue placeholder={isLoadingPermitTypes ? "Loading permit types..." : "Select a permit type"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -778,6 +804,9 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                         ))}
                       </SelectContent>
                     </Select>
+                    {validationErrors.permitType && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.permitType}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -801,11 +830,21 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     </p>
                     <RestPlacesAutocomplete
                       placeholder="Start typing the property address..."
-                      onAddressSelect={handleAddressSelect}
+                      onAddressSelect={(addressComponents) => {
+                        handleAddressSelect(addressComponents);
+                        clearFieldError('propertyAddress');
+                      }}
                       value={propertyInfo.address}
-                      onChange={(value) => setPropertyInfo(prev => ({ ...prev, address: value }))}
-                      className="mt-1"
+                      onChange={(value) => {
+                        setPropertyInfo(prev => ({ ...prev, address: value }));
+                        if (value) clearFieldError('propertyAddress');
+                      }}
+                      className={`mt-1 ${validationErrors.propertyAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.propertyAddress}
                     />
+                    {validationErrors.propertyAddress && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.propertyAddress}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -839,10 +878,17 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                         id="estimated-value"
                         placeholder="00,000"
                         value={formatCurrencyInput(propertyInfo.estimatedValue.toString())}
-                        onChange={(e) => handleEstimatedValueChange(e.target.value)}
-                        className="pl-8"
+                        onChange={(e) => {
+                          handleEstimatedValueChange(e.target.value);
+                          if (e.target.value) clearFieldError('estimatedValue');
+                        }}
+                        className={`pl-8 ${validationErrors.estimatedValue ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                        data-error={!!validationErrors.estimatedValue}
                       />
                     </div>
+                    {validationErrors.estimatedValue && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.estimatedValue}</p>
+                    )}
                   </div>
                   
                   {/* Municipal Questions */}
@@ -881,10 +927,17 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       id="applicant-name"
                       placeholder="Enter name or company"
                       value={applicantInfo.nameOrCompany}
-                      onChange={(e) => setApplicantInfo(prev => ({ ...prev, nameOrCompany: e.target.value }))}
-                      className="mt-1"
+                      onChange={(e) => {
+                        setApplicantInfo(prev => ({ ...prev, nameOrCompany: e.target.value }));
+                        if (e.target.value) clearFieldError('applicantName');
+                      }}
+                      className={`mt-1 ${validationErrors.applicantName ? 'ring-2 ring-destructive border-destructive' : ''}`}
                       disabled={useProfileInfo}
+                      data-error={!!validationErrors.applicantName}
                     />
+                    {validationErrors.applicantName && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.applicantName}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -901,10 +954,15 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       onChange={(e) => {
                         const normalized = normalizePhoneInput(e.target.value);
                         setApplicantInfo(prev => ({ ...prev, phoneNumber: normalized }));
+                        if (normalized) clearFieldError('applicantPhone');
                       }}
-                      className="mt-1"
+                      className={`mt-1 ${validationErrors.applicantPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
                       disabled={useProfileInfo}
+                      data-error={!!validationErrors.applicantPhone}
                     />
+                    {validationErrors.applicantPhone && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.applicantPhone}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -919,10 +977,17 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       type="email"
                       placeholder="Enter email address"
                       value={applicantInfo.email}
-                      onChange={(e) => setApplicantInfo(prev => ({ ...prev, email: e.target.value }))}
-                      className="mt-1"
+                      onChange={(e) => {
+                        setApplicantInfo(prev => ({ ...prev, email: e.target.value }));
+                        if (e.target.value) clearFieldError('applicantEmail');
+                      }}
+                      className={`mt-1 ${validationErrors.applicantEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
                       disabled={useProfileInfo}
+                      data-error={!!validationErrors.applicantEmail}
                     />
+                    {validationErrors.applicantEmail && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.applicantEmail}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -934,11 +999,21 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     </p>
                     <RestPlacesAutocomplete
                       placeholder="Start typing your address..."
-                      onAddressSelect={useProfileInfo ? () => {} : handleApplicantAddressSelect}
+                      onAddressSelect={useProfileInfo ? () => {} : (addressComponents) => {
+                        handleApplicantAddressSelect(addressComponents);
+                        clearFieldError('applicantAddress');
+                      }}
                       value={applicantInfo.address}
-                      onChange={useProfileInfo ? () => {} : (value) => setApplicantInfo(prev => ({ ...prev, address: value }))}
-                      className={`mt-1 ${useProfileInfo ? 'opacity-50 pointer-events-none' : ''}`}
+                      onChange={useProfileInfo ? () => {} : (value) => {
+                        setApplicantInfo(prev => ({ ...prev, address: value }));
+                        if (value) clearFieldError('applicantAddress');
+                      }}
+                      className={`mt-1 ${useProfileInfo ? 'opacity-50 pointer-events-none' : ''} ${validationErrors.applicantAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.applicantAddress}
                     />
+                    {validationErrors.applicantAddress && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.applicantAddress}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -974,10 +1049,17 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       id="owner-name"
                       placeholder="Enter name or company"
                       value={propertyOwnerInfo.nameOrCompany}
-                      onChange={(e) => setPropertyOwnerInfo(prev => ({ ...prev, nameOrCompany: e.target.value }))}
-                      className="mt-1"
+                      onChange={(e) => {
+                        setPropertyOwnerInfo(prev => ({ ...prev, nameOrCompany: e.target.value }));
+                        if (e.target.value) clearFieldError('ownerName');
+                      }}
+                      className={`mt-1 ${validationErrors.ownerName ? 'ring-2 ring-destructive border-destructive' : ''}`}
                       disabled={sameAsApplicant}
+                      data-error={!!validationErrors.ownerName}
                     />
+                    {validationErrors.ownerName && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.ownerName}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -994,10 +1076,15 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       onChange={(e) => {
                         const normalized = normalizePhoneInput(e.target.value);
                         setPropertyOwnerInfo(prev => ({ ...prev, phoneNumber: normalized }));
+                        if (normalized) clearFieldError('ownerPhone');
                       }}
-                      className="mt-1"
+                      className={`mt-1 ${validationErrors.ownerPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
                       disabled={sameAsApplicant}
+                      data-error={!!validationErrors.ownerPhone}
                     />
+                    {validationErrors.ownerPhone && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.ownerPhone}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -1012,10 +1099,17 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       type="email"
                       placeholder="Enter email address"
                       value={propertyOwnerInfo.email}
-                      onChange={(e) => setPropertyOwnerInfo(prev => ({ ...prev, email: e.target.value }))}
-                      className="mt-1"
+                      onChange={(e) => {
+                        setPropertyOwnerInfo(prev => ({ ...prev, email: e.target.value }));
+                        if (e.target.value) clearFieldError('ownerEmail');
+                      }}
+                      className={`mt-1 ${validationErrors.ownerEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.ownerEmail}
                       disabled={sameAsApplicant}
                     />
+                    {validationErrors.ownerEmail && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.ownerEmail}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -1027,11 +1121,21 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     </p>
                     <RestPlacesAutocomplete
                       placeholder="Start typing the address..."
-                      onAddressSelect={sameAsApplicant ? () => {} : handlePropertyOwnerAddressSelect}
+                      onAddressSelect={sameAsApplicant ? () => {} : (addressComponents) => {
+                        handlePropertyOwnerAddressSelect(addressComponents);
+                        clearFieldError('ownerAddress');
+                      }}
                       value={propertyOwnerInfo.address}
-                      onChange={sameAsApplicant ? () => {} : (value) => setPropertyOwnerInfo(prev => ({ ...prev, address: value }))}
-                      className={`mt-1 ${sameAsApplicant ? 'opacity-50 pointer-events-none' : ''}`}
+                      onChange={sameAsApplicant ? () => {} : (value) => {
+                        setPropertyOwnerInfo(prev => ({ ...prev, address: value }));
+                        if (value) clearFieldError('ownerAddress');
+                      }}
+                      className={`mt-1 ${sameAsApplicant ? 'opacity-50 pointer-events-none' : ''} ${validationErrors.ownerAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.ownerAddress}
                     />
+                    {validationErrors.ownerAddress && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.ownerAddress}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
