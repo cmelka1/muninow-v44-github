@@ -26,16 +26,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      BulletList.configure({
-        HTMLAttributes: {
-          class: 'list-disc list-inside',
-        },
-      }),
-      OrderedList.configure({
-        HTMLAttributes: {
-          class: 'list-decimal list-inside',
-        },
-      }),
+      BulletList,
+      OrderedList,
       ListItem,
     ],
     content,
