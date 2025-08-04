@@ -163,11 +163,6 @@ const MunicipalPermitDetail = () => {
             <p className="text-muted-foreground">{permit.permit_number}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleStatusChange}>
-            Update Status
-          </Button>
-        </div>
       </div>
 
       {/* Two Column Layout */}
