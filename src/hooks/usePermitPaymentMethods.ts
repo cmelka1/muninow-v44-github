@@ -111,7 +111,7 @@ export const usePermitPaymentMethods = (permit: any) => {
   };
 
   const serviceFee = calculateServiceFee();
-  const totalWithFee = serviceFee?.totalAmountToCharge || (permit?.payment_amount_cents || permit?.total_amount_cents) || 0;
+  const totalWithFee = serviceFee?.totalAmountToCharge || (permit?.base_fee_cents || permit?.total_amount_cents) || 0;
 
   // Auto-select default payment method when payment methods load
   useEffect(() => {
