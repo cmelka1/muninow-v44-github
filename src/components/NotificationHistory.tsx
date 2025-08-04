@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, MessageSquare, Users, UserCheck, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Mail, MessageSquare, Users, UserCheck, Clock, CheckCircle, XCircle, Bell } from "lucide-react";
 
 interface Notification {
   id: string;
@@ -132,7 +132,10 @@ export function NotificationHistory({ billId }: NotificationHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notification History</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          Notification History
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {notifications.length === 0 ? (
