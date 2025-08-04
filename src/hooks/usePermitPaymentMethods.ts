@@ -36,7 +36,7 @@ export const usePermitPaymentMethods = (permit: any) => {
   const calculateServiceFee = (): ServiceFee | null => {
     if (!permit) return null;
     
-    const permitAmount = permit.payment_amount_cents || permit.total_amount_cents || 0; // A = original permit amount
+    const permitAmount = permit.base_fee_cents || permit.total_amount_cents || 0; // A = original permit amount
     
     // Get merchant fee profile from permit
     const merchant = permit.municipal_permit_merchants?.merchants;
