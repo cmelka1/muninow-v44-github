@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePermit } from '@/hooks/usePermit';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
+import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
@@ -18,9 +19,10 @@ import { supabase } from '@/integrations/supabase/client';
 const PermitDetail = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
+  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
-  const { data: documents = [], isLoading: documentsLoading } = usePermitDocuments(permitId!);
+  const { data: documents = [], isLoading: documentsLoading, refetch: refetchDocuments } = usePermitDocuments(permitId!);
   const { data: questions } = useMunicipalPermitQuestions(
     permit?.customer_id,
     permit?.merchant_id
@@ -252,10 +254,21 @@ const PermitDetail = () => {
           {/* Documents Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Documents ({documents?.length || 0})
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Documents ({documents?.length || 0})
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddDocumentOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Document
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {documentsLoading ? (
@@ -425,6 +438,17 @@ const PermitDetail = () => {
           </Card>
         </div>
       </div>
+
+      {/* Add Document Dialog */}
+      <AddPermitDocumentDialog
+        open={addDocumentOpen}
+        onOpenChange={setAddDocumentOpen}
+        permitId={permitId!}
+        customerId={permit.customer_id}
+        merchantId={permit.merchant_id}
+        merchantName={permit.merchant_name}
+        onSuccess={() => refetchDocuments()}
+      />
     </div>
   );
 };
