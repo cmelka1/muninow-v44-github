@@ -207,7 +207,7 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <span className="text-sm font-medium">
-                          {displayName} - {format(new Date(comment.created_at), 'PPP')}
+                          {displayName} - {format(new Date(comment.created_at), 'MM/dd/yyyy')}
                         </span>
                       </div>
                     </div>
