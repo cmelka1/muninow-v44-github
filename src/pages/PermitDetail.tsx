@@ -388,9 +388,6 @@ const PermitDetail = () => {
                     <span className="text-sm font-medium text-orange-700">Info Requested</span>
                     <span className="text-xs text-orange-600">{formatDate(permit.information_requested_at)}</span>
                   </div>
-                  {permit.review_notes && (
-                    <p className="text-xs text-orange-600 italic">"{permit.review_notes}"</p>
-                  )}
                 </div>
               )}
               {permit.approved_at && (
