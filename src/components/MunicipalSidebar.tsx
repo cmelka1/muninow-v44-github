@@ -9,10 +9,11 @@ import {
   SidebarFooter,
   SidebarGroup
 } from '@/components/ui/sidebar';
-import { Home, Search, Users, User, LogOut, Building2, FileText } from 'lucide-react';
+import { Home, Search, Users, User, Bell, LogOut, Building2, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomer } from '@/hooks/useCustomer';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
 
 const navigationItems = [
   {
@@ -39,6 +40,11 @@ const navigationItems = [
     title: 'Team Members',
     icon: Users,
     url: '/municipal/members'
+  },
+  {
+    title: 'Notifications',
+    icon: Bell,
+    url: '/municipal/notifications'
   },
   {
     title: 'Profile',
@@ -76,14 +82,17 @@ export function MunicipalSidebar() {
     <Sidebar className="w-64 bg-background border-r border-border">
       {/* Header */}
       <SidebarHeader className="px-6 py-8">
-        <NavLink to="/municipal/dashboard" className="block hover:opacity-80 transition-opacity">
-          <img 
-            src={logoUrl} 
-            alt="MuniNow" 
-            className="h-10 w-auto object-contain"
-            style={{ imageRendering: 'crisp-edges' }}
-          />
-        </NavLink>
+        <div className="flex items-center justify-between">
+          <NavLink to="/municipal/dashboard" className="block hover:opacity-80 transition-opacity">
+            <img 
+              src={logoUrl} 
+              alt="MuniNow" 
+              className="h-10 w-auto object-contain"
+              style={{ imageRendering: 'crisp-edges' }}
+            />
+          </NavLink>
+          <NotificationDropdown />
+        </div>
       </SidebarHeader>
 
       {/* Navigation */}

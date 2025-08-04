@@ -9,9 +9,10 @@ import {
   SidebarFooter,
   SidebarGroup
 } from '@/components/ui/sidebar';
-import { Home, Users, User, LogOut } from 'lucide-react';
+import { Home, Users, User, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
 
 const navigationItems = [
   {
@@ -23,6 +24,11 @@ const navigationItems = [
     title: 'Customers',
     icon: Users,
     url: '/superadmin/customers'
+  },
+  {
+    title: 'Notifications',
+    icon: Bell,
+    url: '/superadmin/notifications'
   },
   {
     title: 'Profile',
@@ -59,14 +65,17 @@ export function SuperAdminSidebar() {
     <Sidebar className="w-64 bg-background border-r border-border">
       {/* Header */}
       <SidebarHeader className="px-6 py-8">
-        <NavLink to="/superadmin/dashboard" className="block hover:opacity-80 transition-opacity">
-          <img 
-            src={logoUrl} 
-            alt="MuniNow SuperAdmin" 
-            className="h-10 w-auto object-contain"
-            style={{ imageRendering: 'crisp-edges' }}
-          />
-        </NavLink>
+        <div className="flex items-center justify-between">
+          <NavLink to="/superadmin/dashboard" className="block hover:opacity-80 transition-opacity">
+            <img 
+              src={logoUrl} 
+              alt="MuniNow SuperAdmin" 
+              className="h-10 w-auto object-contain"
+              style={{ imageRendering: 'crisp-edges' }}
+            />
+          </NavLink>
+          <NotificationDropdown />
+        </div>
       </SidebarHeader>
 
       {/* Navigation */}

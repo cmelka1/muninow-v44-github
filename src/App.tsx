@@ -96,6 +96,11 @@ const App = () => (
                     <SuperAdminProfile />
                   </ProtectedRoute>
                 } />
+                <Route path="/superadmin/notifications" element={
+                  <ProtectedRoute requiredRole="superAdmin">
+                    <Notifications />
+                  </ProtectedRoute>
+                } />
                 <Route path="/superadmin/customers" element={
                   <ProtectedRoute requiredRole="superAdmin">
                     <SuperAdminCustomers />
@@ -172,6 +177,13 @@ const App = () => (
                   <MunicipalProtectedRoute>
                     <MunicipalLayout>
                       <MunicipalProfile />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/notifications" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <Notifications />
                     </MunicipalLayout>
                   </MunicipalProtectedRoute>
                 } />
