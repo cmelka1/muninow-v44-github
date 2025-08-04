@@ -318,6 +318,37 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       // Calculate payment amount from permit type
       const paymentAmountCents = selectedPermitType!.base_fee_cents;
 
+      // Comprehensive debug logging for UUID validation
+      console.log('=== PERMIT APPLICATION DEBUG ===');
+      console.log('user_id (profile.id):', profile.id, 'Type:', typeof profile.id);
+      console.log('customer_id:', selectedMunicipality!.customer_id, 'Type:', typeof selectedMunicipality!.customer_id);
+      console.log('merchant_id (selectedMunicipality.id):', selectedMunicipality!.id, 'Type:', typeof selectedMunicipality!.id);
+      console.log('finix_merchant_id:', merchantData.finix_merchant_id, 'Type:', typeof merchantData.finix_merchant_id);
+      console.log('merchant_finix_identity_id:', merchantData.finix_identity_id, 'Type:', typeof merchantData.finix_identity_id);
+      console.log('Full selectedMunicipality object:', selectedMunicipality);
+      console.log('Full merchantData object:', merchantData);
+      console.log('===========================');
+
+      // Validate UUID fields before insertion
+      const isValidUUID = (str: string) => {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(str);
+      };
+
+      // Check all UUID fields
+      const uuidFields = [
+        { name: 'user_id', value: profile.id },
+        { name: 'customer_id', value: selectedMunicipality!.customer_id },
+        { name: 'merchant_id', value: selectedMunicipality!.id }
+      ];
+
+      for (const field of uuidFields) {
+        if (!isValidUUID(field.value)) {
+          console.error(`Invalid ${field.name} UUID:`, field.value);
+          throw new Error(`Invalid ${field.name} UUID format: ${field.value}`);
+        }
+      }
+
       // Create the main permit application with complete merchant and payment data
       const { data: permitApplication, error: permitError } = await supabase
         .from('permit_applications')
