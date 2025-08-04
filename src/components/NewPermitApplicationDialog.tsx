@@ -287,7 +287,34 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setIsSubmitting(true);
 
     try {
-      // Create the main permit application
+      // Fetch merchant and fee profile data
+      const { data: merchantData, error: merchantError } = await supabase
+        .from('merchants')
+        .select(`
+          *,
+          merchant_fee_profiles (
+            finix_fee_profile_id,
+            basis_points,
+            fixed_fee,
+            ach_basis_points,
+            ach_fixed_fee
+          )
+        `)
+        .eq('id', selectedMunicipality!.id)
+        .single();
+
+      if (merchantError) throw merchantError;
+
+      const feeProfile = merchantData.merchant_fee_profiles?.[0];
+      
+      // Generate payment identifiers
+      const idempotencyId = crypto.randomUUID();
+      const fraudSessionId = crypto.randomUUID();
+      
+      // Calculate payment amount from permit type
+      const paymentAmountCents = selectedPermitType!.base_fee_cents;
+
+      // Create the main permit application with complete merchant and payment data
       const { data: permitApplication, error: permitError } = await supabase
         .from('permit_applications')
         .insert({
@@ -309,7 +336,21 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           scope_of_work: scopeOfWork || null,
           municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
           application_status: 'submitted' as const,
-          submitted_at: new Date().toISOString()
+          submitted_at: new Date().toISOString(),
+          // Merchant data
+          merchant_name: merchantData.merchant_name,
+          finix_merchant_id: merchantData.finix_merchant_id,
+          merchant_finix_identity_id: merchantData.finix_identity_id,
+          // Fee profile data
+          merchant_fee_profile_id: feeProfile?.finix_fee_profile_id,
+          basis_points: feeProfile?.basis_points,
+          fixed_fee: feeProfile?.fixed_fee,
+          ach_basis_points: feeProfile?.ach_basis_points,
+          ach_fixed_fee: feeProfile?.ach_fixed_fee,
+          // Payment data
+          payment_amount_cents: paymentAmountCents,
+          idempotency_id: idempotencyId,
+          fraud_session_id: fraudSessionId
         })
         .select()
         .single();
