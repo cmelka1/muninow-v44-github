@@ -372,6 +372,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       
       while (retries > 0) {
         try {
+          console.log(`Attempt ${4 - retries}: Inserting permit application with number:`, permitNumber);
           const { data, error: permitError } = await supabase
             .from('permit_applications')
             .insert({
@@ -414,6 +415,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
             .single();
 
           if (permitError) {
+            console.error(`Permit insertion error on attempt ${4 - retries}:`, permitError);
             // Check if it's a duplicate permit number error
             if (permitError.message?.includes('permit_applications_permit_number_key')) {
               console.log(`Permit number ${permitNumber} already exists, retrying with new number...`);
@@ -421,24 +423,35 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
               const { data: newPermitNumberData, error: newPermitNumberError } = await supabase
                 .rpc('generate_permit_number');
               
-              if (newPermitNumberError) throw newPermitNumberError;
+              if (newPermitNumberError) {
+                console.error('Error generating new permit number:', newPermitNumberError);
+                throw newPermitNumberError;
+              }
               permitNumber = newPermitNumberData;
+              console.log('New permit number generated:', permitNumber);
               retries--;
               continue;
             }
             throw permitError;
           }
 
+          console.log('Permit application created successfully:', data);
           permitApplication = data;
           break;
         } catch (error) {
-          if (retries === 1) throw error;
+          console.error(`Error on attempt ${4 - retries}:`, error);
           retries--;
+          if (retries === 0) {
+            console.error('All retry attempts failed');
+            throw error;
+          }
+          console.log(`Retrying... ${retries} attempts remaining`);
         }
       }
 
       // Ensure we have a valid permit application
       if (!permitApplication) {
+        console.error('permitApplication is still null after retry loop');
         throw new Error('Failed to create permit application after retries');
       }
 
