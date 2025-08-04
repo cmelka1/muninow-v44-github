@@ -31,7 +31,7 @@ import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
 import { RequestInformationDialog } from '@/components/RequestInformationDialog';
-import { PermitCommunication } from '@/components/PermitCommunication';
+
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
@@ -564,18 +564,6 @@ const MunicipalPermitDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Communication Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Communication & Updates
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PermitCommunication permitId={permitId!} isMunicipalUser={true} />
-            </CardContent>
-          </Card>
         </div>
       </div>
 
