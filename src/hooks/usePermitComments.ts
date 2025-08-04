@@ -32,18 +32,18 @@ export const usePermitComments = (permitId: string) => {
 
       if (commentsError) throw commentsError;
 
-      // Get reviewer profiles for each comment
+      // Get reviewer profiles for each comment using maybeSingle to handle missing profiles
       const commentsWithReviewers = await Promise.all(
         comments?.map(async (comment) => {
           const { data: reviewer } = await supabase
             .from('profiles')
             .select('first_name, last_name, email, account_type')
             .eq('id', comment.reviewer_id)
-            .single();
+            .maybeSingle();
 
           return {
             ...comment,
-            reviewer
+            reviewer: reviewer || undefined // Handle null reviewers gracefully
           };
         }) || []
       );

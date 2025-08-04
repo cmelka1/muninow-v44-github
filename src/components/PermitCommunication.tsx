@@ -199,7 +199,7 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
                   ? 'You' 
                   : comment.reviewer 
                     ? `${comment.reviewer.first_name} ${comment.reviewer.last_name}`
-                    : 'Unknown User';
+                    : 'Municipal Staff';
                 
                 return (
                   <div key={comment.id} className={`border rounded-lg p-4 space-y-2 ${commentBgClass}`}>
