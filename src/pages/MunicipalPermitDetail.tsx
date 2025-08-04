@@ -44,6 +44,7 @@ const MunicipalPermitDetail = () => {
   const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   const { data: questions } = useMunicipalPermitQuestions(
@@ -52,9 +53,45 @@ const MunicipalPermitDetail = () => {
   );
   const { data: documents } = usePermitDocuments(permitId!);
 
-  const handleSaveNotes = () => {
-    // TODO: Implement saving review notes
-    console.log('Saving notes:', reviewNotes);
+  const handleSaveNotes = async () => {
+    if (!permitId || !reviewNotes.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter review notes before saving",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSavingNotes(true);
+    try {
+      const { error } = await supabase
+        .from('permit_applications')
+        .update({ review_notes: reviewNotes.trim() })
+        .eq('permit_id', permitId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Review notes saved successfully"
+      });
+
+      // Clear the textarea after successful save
+      setReviewNotes('');
+      
+      // Refresh the permit data to show updated notes
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving review notes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save review notes. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingNotes(false);
+    }
   };
 
   const handleStatusChange = () => {
@@ -457,8 +494,12 @@ const MunicipalPermitDetail = () => {
                   className="mt-1 min-h-[100px]"
                 />
               </div>
-              <Button onClick={handleSaveNotes} className="w-full">
-                Save Notes
+              <Button 
+                onClick={handleSaveNotes} 
+                className="w-full" 
+                disabled={isSavingNotes || !reviewNotes.trim()}
+              >
+                {isSavingNotes ? "Saving..." : "Save Notes"}
               </Button>
               
               {permit.review_notes && (
