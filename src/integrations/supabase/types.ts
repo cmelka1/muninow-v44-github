@@ -2838,6 +2838,10 @@ export type Database = {
         Args: { _user_id: string; _role_name: string; _entity_id?: string }
         Returns: boolean
       }
+      can_view_profile_for_permits: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       check_address_duplicate: {
         Args: {
           street_input: string
