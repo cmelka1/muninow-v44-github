@@ -206,10 +206,10 @@ const MunicipalPermitDetail = () => {
                   <Label className="text-sm font-medium text-muted-foreground">Construction Value</Label>
                   <p className="text-base">{formatCurrency(permit.estimated_construction_value_cents / 100)}</p>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
-                  <p className="text-base">{formatCurrency(permit.total_amount_cents / 100)}</p>
-                </div>
+                 <div>
+                   <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
+                   <p className="text-base">{formatCurrency((permit.base_fee_cents || 0) / 100)}</p>
+                 </div>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Status Description</Label>
