@@ -331,10 +331,20 @@ const PermitDetail = () => {
                   <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
                   <p className="text-lg font-semibold">{formatCurrency((permit.base_fee_cents || permit.total_amount_cents || 0) / 100)}</p>
                 </div>
-                <div>
+                <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
-                  <Badge variant={permit.payment_status === 'paid' ? 'default' : 'secondary'}>
-                    {permit.payment_status || 'Pending'}
+                  <Badge 
+                    variant={permit.payment_status === 'paid' ? 'default' : 'outline'}
+                    className={
+                      permit.payment_status === 'paid' 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                        : permit.payment_status === 'processing'
+                        ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200'
+                        : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                    }
+                  >
+                    {permit.payment_status === 'paid' ? 'Paid' : 
+                     permit.payment_status === 'processing' ? 'Processing' : 'Pending'}
                   </Badge>
                 </div>
               </div>
