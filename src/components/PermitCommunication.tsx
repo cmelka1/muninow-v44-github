@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MessageSquare, Clock, User, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { MessageSquare, Clock, User, Calendar, CheckCircle, AlertCircle, Bell } from 'lucide-react';
 import { usePermitComments, useCreateComment } from '@/hooks/usePermitComments';
 import { usePermitRequests } from '@/hooks/usePermitRequests';
 import { usePermitInspections } from '@/hooks/usePermitInspections';
@@ -98,7 +98,7 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+            <Bell className="h-5 w-5" />
             Communication History
           </CardTitle>
         </CardHeader>
