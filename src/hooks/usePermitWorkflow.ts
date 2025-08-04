@@ -107,6 +107,9 @@ export const usePermitWorkflow = () => {
       if (newStatus === 'withdrawn' && reason) {
         updateData.withdrawal_reason = reason;
       }
+      if (newStatus === 'information_requested' && reason) {
+        updateData.information_request_reason = reason;
+      }
 
       const { error } = await supabase
         .from('permit_applications')

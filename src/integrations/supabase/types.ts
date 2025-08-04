@@ -1717,6 +1717,7 @@ export type Database = {
           fraud_session_id: string | null
           idempotency_id: string | null
           in_robbins_park_historical_district: boolean
+          information_request_reason: string | null
           information_requested_at: string | null
           is_older_than_50_years: boolean
           issued_at: string | null
@@ -1788,6 +1789,7 @@ export type Database = {
           fraud_session_id?: string | null
           idempotency_id?: string | null
           in_robbins_park_historical_district?: boolean
+          information_request_reason?: string | null
           information_requested_at?: string | null
           is_older_than_50_years?: boolean
           issued_at?: string | null
@@ -1859,6 +1861,7 @@ export type Database = {
           fraud_session_id?: string | null
           idempotency_id?: string | null
           in_robbins_park_historical_district?: boolean
+          information_request_reason?: string | null
           information_requested_at?: string | null
           is_older_than_50_years?: boolean
           issued_at?: string | null
