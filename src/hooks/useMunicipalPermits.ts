@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryPerformance, performanceUtils } from './useQueryPerformance';
 import type { PermitStatus } from './usePermitWorkflow';
 
 export interface MunicipalPermit {
@@ -33,10 +34,18 @@ interface UseMunicipalPermitsParams {
 
 export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: UseMunicipalPermitsParams = {}) => {
   const { profile } = useAuth();
+  const performance = useQueryPerformance();
 
   return useQuery({
     queryKey: ['municipal-permits', filters, page, pageSize, profile?.customer_id, profile?.account_type],
     queryFn: async () => {
+      const queryStart = performanceUtils.startQuery('municipal-permits', {
+        filters,
+        page,
+        pageSize,
+        customerType: profile?.account_type,
+        customerId: profile?.customer_id
+      });
       if (!profile) throw new Error('User profile not available');
       
       // Ensure this is only used by municipal users
@@ -138,16 +147,35 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
 
       if (error) {
         console.error('Error fetching municipal permits:', error);
+        performanceUtils.endQuery('municipal-permits', queryStart, 0, error.message);
+        performance.error('Municipal permits query failed', {
+          error: error.message,
+          filters,
+          page,
+          pageSize
+        });
         throw error;
       }
 
-      return {
+      const result = {
         permits: data as MunicipalPermit[],
         totalCount: count || 0,
         totalPages: Math.ceil((count || 0) / pageSize),
         currentPage: page,
         pageSize
       };
+
+      performanceUtils.endQuery('municipal-permits', queryStart, data?.length || 0);
+      performance.log('Municipal permits query completed', {
+        resultCount: data?.length || 0,
+        totalCount: count || 0,
+        filters,
+        page,
+        pageSize,
+        duration: `${(window.performance.now() - queryStart).toFixed(2)}ms`
+      });
+
+      return result;
     },
     enabled: !!profile && profile.account_type === 'municipal'
   });

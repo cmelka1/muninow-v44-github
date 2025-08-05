@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import {
   Table,
@@ -18,6 +18,7 @@ import { PermitFilters } from './PermitsFilter';
 import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDialog';
 import { useMunicipalPermits } from '@/hooks/useMunicipalPermits';
 import { getStatusDisplayName, type PermitStatus } from '@/hooks/usePermitWorkflow';
+import { useQueryPerformance } from '@/hooks/useQueryPerformance';
 
 interface MunicipalPermitsTableProps {
   filters?: PermitFilters;
@@ -28,6 +29,9 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [isNewPermitDialogOpen, setIsNewPermitDialogOpen] = useState(false);
+  const performance = useQueryPerformance();
+  const componentMountTime = useRef<number>(window.performance.now());
+  const renderCount = useRef<number>(0);
 
   // Fetch municipal permits from Supabase
   const { data, isLoading, error } = useMunicipalPermits({
@@ -44,6 +48,48 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
   React.useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
+
+  // Performance monitoring
+  useEffect(() => {
+    renderCount.current += 1;
+    const renderTime = window.performance.now() - componentMountTime.current;
+    
+    performance.log('MunicipalPermitsTable render', {
+      renderCount: renderCount.current,
+      renderTime: `${renderTime.toFixed(2)}ms`,
+      filters,
+      currentPage,
+      pageSize,
+      permitsCount: permits.length,
+      isLoading,
+      hasError: !!error
+    });
+
+    // Track component lifecycle
+    if (renderCount.current === 1) {
+      performance.log('MunicipalPermitsTable first render', {
+        mountTime: `${renderTime.toFixed(2)}ms`
+      });
+    }
+
+    // Warn about excessive re-renders
+    if (renderCount.current > 10) {
+      performance.warn('MunicipalPermitsTable excessive re-renders detected', {
+        renderCount: renderCount.current,
+        filters,
+        currentPage,
+        pageSize
+      });
+    }
+  });
+
+  // Track filter changes
+  useEffect(() => {
+    performance.log('Filters changed', {
+      newFilters: filters,
+      resetToPage: 1
+    });
+  }, [filters, performance]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
