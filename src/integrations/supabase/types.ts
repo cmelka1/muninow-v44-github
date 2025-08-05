@@ -1716,12 +1716,9 @@ export type Database = {
           fixed_fee: number | null
           fraud_session_id: string | null
           idempotency_id: string | null
-          in_robbins_park_historical_district: boolean
           information_request_reason: string | null
           information_requested_at: string | null
-          is_older_than_50_years: boolean
           issued_at: string | null
-          listed_in_hod: boolean
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
           merchant_id: string | null
@@ -1742,7 +1739,6 @@ export type Database = {
           permit_number: string | null
           permit_type: string
           profile_id: string | null
-          project_description: string | null
           property_address: string
           property_pin: string | null
           resubmitted_at: string | null
@@ -1788,12 +1784,9 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           idempotency_id?: string | null
-          in_robbins_park_historical_district?: boolean
           information_request_reason?: string | null
           information_requested_at?: string | null
-          is_older_than_50_years?: boolean
           issued_at?: string | null
-          listed_in_hod?: boolean
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -1814,7 +1807,6 @@ export type Database = {
           permit_number?: string | null
           permit_type: string
           profile_id?: string | null
-          project_description?: string | null
           property_address: string
           property_pin?: string | null
           resubmitted_at?: string | null
@@ -1860,12 +1852,9 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           idempotency_id?: string | null
-          in_robbins_park_historical_district?: boolean
           information_request_reason?: string | null
           information_requested_at?: string | null
-          is_older_than_50_years?: boolean
           issued_at?: string | null
-          listed_in_hod?: boolean
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -1886,7 +1875,6 @@ export type Database = {
           permit_number?: string | null
           permit_type?: string
           profile_id?: string | null
-          project_description?: string | null
           property_address?: string
           property_pin?: string | null
           resubmitted_at?: string | null
