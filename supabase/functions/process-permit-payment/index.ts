@@ -140,15 +140,17 @@ serve(async (req) => {
       throw new Error("Payment instrument not found or access denied");
     }
 
-    // Calculate service fee based on payment instrument type
+    // Calculate service fee based on payment instrument type using grossed-up method
     const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
     const basisPoints = isCard ? (permit.basis_points || 250) : (permit.ach_basis_points || 20);
     const fixedFee = isCard ? (permit.fixed_fee || 50) : (permit.ach_fixed_fee || 50);
     
     const baseAmount = permit.payment_amount_cents || permit.total_amount_cents || 0;
-    const percentageFee = Math.round((baseAmount * basisPoints) / 10000);
-    const calculatedServiceFee = percentageFee + fixedFee;
-    const expectedTotal = baseAmount + calculatedServiceFee;
+    
+    // Use grossed-up calculation to match frontend
+    const percentageDecimal = basisPoints / 10000;
+    const expectedTotal = Math.round((baseAmount + fixedFee) / (1 - percentageDecimal));
+    const calculatedServiceFee = expectedTotal - baseAmount;
 
     // Validate total amount matches calculation
     if (Math.abs(total_amount_cents - expectedTotal) > 1) { // Allow 1 cent rounding difference
