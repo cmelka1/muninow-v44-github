@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { TaxFilters } from './TaxesFilter';
+import { PayTaxDialog } from './PayTaxDialog';
 
 interface Tax {
   tax_id: string;
@@ -279,6 +280,11 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
           </div>
         )}
       </CardContent>
+
+      <PayTaxDialog
+        open={isPayTaxDialogOpen}
+        onOpenChange={setIsPayTaxDialogOpen}
+      />
     </Card>
   );
 };
