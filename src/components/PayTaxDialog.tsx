@@ -2,14 +2,17 @@ import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
+import { ChevronLeft, ChevronRight, Building2, FileText, Calculator, CheckCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { formatCurrency } from '@/lib/formatters';
 import { useToast } from '@/hooks/use-toast';
+import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface PayTaxDialogProps {
@@ -19,66 +22,64 @@ interface PayTaxDialogProps {
 
 interface SelectedMunicipality {
   id: string;
-  merchant_name: string;
-  business_name: string;
-  customer_city: string;
-  customer_state: string;
-  customer_id: string;
+  name: string;
+  city: string;
+  state: string;
 }
 
 interface TaxType {
   id: string;
   name: string;
   description: string;
-  calculationMethod: 'gross_receipts' | 'per_room' | 'percentage_base';
+  rate: number;
+  calculationMethod: string;
 }
 
 interface BusinessInformation {
   businessName: string;
+  federalTaxId: string;
   businessAddress: string;
   contactPerson: string;
   phoneNumber: string;
   email: string;
-  federalTaxId: string;
 }
 
 interface TaxCalculationData {
-  // Food & Beverage specific
   grossReceipts?: number;
-  taxPeriodStart?: string;
-  taxPeriodEnd?: string;
-  
-  // Hotel & Motels specific
-  numberOfRooms?: number;
-  averageRate?: number;
-  occupancyRate?: number;
-  
-  // Amusement specific
-  admissionFees?: number;
-  otherRevenue?: number;
-  
-  // Common fields
-  totalTaxDue?: number;
+  totalRooms?: number;
+  occupiedNights?: number;
+  admissionReceipts?: number;
 }
 
+// Mock data for municipalities
+const mockMunicipalities: SelectedMunicipality[] = [
+  { id: '1', name: 'City of Springfield', city: 'Springfield', state: 'IL' },
+  { id: '2', name: 'City of Shelbyville', city: 'Shelbyville', state: 'IL' },
+  { id: '3', name: 'City of Capital City', city: 'Capital City', state: 'IL' },
+];
+
+// Tax types with updated structure
 const taxTypes: TaxType[] = [
   {
-    id: 'food_beverage',
+    id: 'food-beverage',
     name: 'Food & Beverage',
-    description: 'Tax on food and beverage sales',
-    calculationMethod: 'gross_receipts'
+    description: 'Tax on gross receipts from food and beverage sales including restaurants, bars, and catering services.',
+    rate: 3,
+    calculationMethod: 'Based on gross receipts from food and beverage sales at 3% rate'
   },
   {
     id: 'amusement',
     name: 'Amusement',
-    description: 'Tax on amusement and entertainment services',
-    calculationMethod: 'percentage_base'
+    description: 'Tax on admission receipts from entertainment venues, theaters, sporting events, and recreational facilities.',
+    rate: 5,
+    calculationMethod: 'Based on admission receipts and entertainment revenue at 5% rate'
   },
   {
-    id: 'hotel_motels',
+    id: 'hotel-motels',
     name: 'Hotel & Motels',
-    description: 'Tax on hotel and motel accommodations',
-    calculationMethod: 'per_room'
+    description: 'Tax on accommodations including hotels, motels, bed & breakfasts, and short-term rental properties.',
+    rate: 2,
+    calculationMethod: 'Based on occupied room nights at $2 per night rate'
   }
 ];
 
@@ -91,12 +92,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
   const [selectedTaxType, setSelectedTaxType] = useState<TaxType | null>(null);
   const [businessInfo, setBusinessInfo] = useState<BusinessInformation>({
     businessName: '',
+    federalTaxId: '',
     businessAddress: '',
     contactPerson: '',
     phoneNumber: '',
-    email: '',
-    federalTaxId: ''
+    email: ''
   });
+  const [useProfileInfo, setUseProfileInfo] = useState(false);
   const [taxCalculationData, setTaxCalculationData] = useState<TaxCalculationData>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -118,58 +120,72 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
   const validateStep2 = () => {
     const errors: Record<string, string> = {};
     if (!businessInfo.businessName) errors.businessName = 'Business name is required';
+    if (!businessInfo.federalTaxId) errors.federalTaxId = 'Federal Tax ID is required';
     if (!businessInfo.businessAddress) errors.businessAddress = 'Business address is required';
     if (!businessInfo.contactPerson) errors.contactPerson = 'Contact person is required';
     if (!businessInfo.phoneNumber) errors.phoneNumber = 'Phone number is required';
-    if (!businessInfo.email) errors.email = 'Email is required';
-    if (!businessInfo.federalTaxId) errors.federalTaxId = 'Federal Tax ID is required';
+    if (!businessInfo.email) errors.email = 'Email address is required';
     return errors;
   };
 
   const validateStep3 = () => {
     const errors: Record<string, string> = {};
     
-    if (selectedTaxType?.calculationMethod === 'gross_receipts') {
+    if (selectedTaxType?.id === 'food-beverage') {
       if (!taxCalculationData.grossReceipts || taxCalculationData.grossReceipts <= 0) {
         errors.grossReceipts = 'Gross receipts amount is required';
       }
-      if (!taxCalculationData.taxPeriodStart) errors.taxPeriodStart = 'Tax period start date is required';
-      if (!taxCalculationData.taxPeriodEnd) errors.taxPeriodEnd = 'Tax period end date is required';
     }
     
-    if (selectedTaxType?.calculationMethod === 'per_room') {
-      if (!taxCalculationData.numberOfRooms || taxCalculationData.numberOfRooms <= 0) {
-        errors.numberOfRooms = 'Number of rooms is required';
+    if (selectedTaxType?.id === 'hotel-motels') {
+      if (!taxCalculationData.totalRooms || taxCalculationData.totalRooms <= 0) {
+        errors.totalRooms = 'Total rooms is required';
       }
-      if (!taxCalculationData.averageRate || taxCalculationData.averageRate <= 0) {
-        errors.averageRate = 'Average room rate is required';
-      }
-      if (!taxCalculationData.occupancyRate || taxCalculationData.occupancyRate <= 0) {
-        errors.occupancyRate = 'Occupancy rate is required';
+      if (!taxCalculationData.occupiedNights || taxCalculationData.occupiedNights <= 0) {
+        errors.occupiedNights = 'Occupied nights is required';
       }
     }
     
-    if (selectedTaxType?.calculationMethod === 'percentage_base') {
-      if (!taxCalculationData.admissionFees || taxCalculationData.admissionFees <= 0) {
-        errors.admissionFees = 'Admission fees amount is required';
+    if (selectedTaxType?.id === 'amusement') {
+      if (!taxCalculationData.admissionReceipts || taxCalculationData.admissionReceipts <= 0) {
+        errors.admissionReceipts = 'Admission receipts amount is required';
       }
     }
     
     return errors;
   };
 
-  const handleNext = () => {
-    let errors: Record<string, string> = {};
-    
-    if (currentStep === 1) {
-      errors = validateStep1();
-    } else if (currentStep === 2) {
-      errors = validateStep2();
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
     }
-    
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
-      return;
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      const errors = validateStep1();
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        const firstErrorField = document.querySelector(`[data-error="true"]`);
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+    } else if (currentStep === 2) {
+      const errors = validateStep2();
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        const firstErrorField = document.querySelector(`[data-error="true"]`);
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
     }
     
     setValidationErrors({});
@@ -190,22 +206,35 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
     }
   };
 
+  const handleClose = () => {
+    setCurrentStep(1);
+    setSelectedMunicipality(null);
+    setSelectedTaxType(null);
+    setBusinessInfo({
+      businessName: '',
+      federalTaxId: '',
+      businessAddress: '',
+      contactPerson: '',
+      phoneNumber: '',
+      email: ''
+    });
+    setUseProfileInfo(false);
+    setTaxCalculationData({});
+    setIsSubmitting(false);
+    setValidationErrors({});
+    onOpenChange(false);
+  };
+
   const calculateTax = () => {
     if (!selectedTaxType) return 0;
     
-    switch (selectedTaxType.calculationMethod) {
-      case 'gross_receipts':
-        // Food & Beverage: 3% of gross receipts
-        return (taxCalculationData.grossReceipts || 0) * 0.03;
-      case 'per_room':
-        // Hotel & Motels: $2 per room per night based on occupancy
-        const { numberOfRooms = 0, occupancyRate = 0 } = taxCalculationData;
-        const occupiedRoomNights = numberOfRooms * (occupancyRate / 100) * 30; // Assuming monthly
-        return occupiedRoomNights * 2;
-      case 'percentage_base':
-        // Amusement: 5% of admission fees and other revenue
-        const { admissionFees = 0, otherRevenue = 0 } = taxCalculationData;
-        return (admissionFees + otherRevenue) * 0.05;
+    switch (selectedTaxType.id) {
+      case 'food-beverage':
+        return (taxCalculationData.grossReceipts || 0) * (selectedTaxType.rate / 100);
+      case 'hotel-motels':
+        return (taxCalculationData.occupiedNights || 0) * selectedTaxType.rate;
+      case 'amusement':
+        return (taxCalculationData.admissionReceipts || 0) * (selectedTaxType.rate / 100);
       default:
         return 0;
     }
@@ -232,12 +261,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
     try {
       const calculatedTax = calculateTax();
       
-      // Here you would implement the actual tax submission logic
-      // For now, we'll just show a success message
-      
       toast({
         title: "Tax calculation completed!",
-        description: `Tax due: $${calculatedTax.toFixed(2)}. Payment processing will be implemented soon.`,
+        description: `Tax due: ${formatCurrency(calculatedTax)}. Payment processing will be implemented soon.`,
       });
 
       handleClose();
@@ -253,75 +279,104 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
     }
   };
 
-  const handleClose = () => {
-    setCurrentStep(1);
-    setSelectedMunicipality(null);
-    setSelectedTaxType(null);
-    setBusinessInfo({
-      businessName: '',
-      businessAddress: '',
-      contactPerson: '',
-      phoneNumber: '',
-      email: '',
-      federalTaxId: ''
-    });
-    setTaxCalculationData({});
-    setIsSubmitting(false);
-    setValidationErrors({});
-    onOpenChange(false);
-  };
-
-  const clearFieldError = (fieldName: string) => {
-    if (validationErrors[fieldName]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[fieldName];
-        return newErrors;
-      });
-    }
-  };
-
   const renderStep1 = () => (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Municipality and Tax Type</CardTitle>
+      {/* Municipality Selection */}
+      <Card className="animate-fade-in">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-2">
+            <Building2 className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Municipality Selection</CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="municipality">Municipality *</Label>
-            <BuildingPermitsMunicipalityAutocomplete
-              onSelect={(municipality) => {
-                setSelectedMunicipality(municipality);
+            <Label htmlFor="municipality" className="text-sm font-medium">
+              Select Municipality *
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Choose the municipality where your business operates and owes taxes
+            </p>
+            <Select 
+              onValueChange={(value) => {
+                const municipality = mockMunicipalities.find(m => m.id === value);
+                setSelectedMunicipality(municipality || null);
                 clearFieldError('municipality');
               }}
-              placeholder="Search for your municipality..."
-              className={validationErrors.municipality ? 'border-destructive' : ''}
-            />
+              value={selectedMunicipality?.id || ''}
+            >
+              <SelectTrigger 
+                className={validationErrors.municipality ? 'border-destructive' : ''}
+                data-error={!!validationErrors.municipality}
+              >
+                <SelectValue placeholder="Choose your municipality" />
+              </SelectTrigger>
+              <SelectContent>
+                {mockMunicipalities.map((municipality) => (
+                  <SelectItem key={municipality.id} value={municipality.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{municipality.name}</span>
+                      <span className="text-xs text-muted-foreground">{municipality.city}, {municipality.state}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {validationErrors.municipality && (
               <p className="text-sm text-destructive mt-1">{validationErrors.municipality}</p>
             )}
           </div>
 
+          {selectedMunicipality && (
+            <div className="animate-fade-in bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <span className="font-medium text-primary">Selected: {selectedMunicipality.name}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                {selectedMunicipality.city}, {selectedMunicipality.state}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Tax Type Selection */}
+      <Card className="animate-fade-in [animation-delay:150ms]">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-2">
+            <FileText className="h-5 w-5 text-secondary" />
+            <CardTitle className="text-lg">Tax Type Selection</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="tax-type">Tax Type *</Label>
+            <Label htmlFor="taxType" className="text-sm font-medium">
+              Tax Type *
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Select the type of business tax you need to pay
+            </p>
             <Select 
-              value={selectedTaxType?.id || ''} 
               onValueChange={(value) => {
                 const taxType = taxTypes.find(t => t.id === value);
                 setSelectedTaxType(taxType || null);
                 clearFieldError('taxType');
               }}
+              value={selectedTaxType?.id || ''}
             >
-              <SelectTrigger className={validationErrors.taxType ? 'border-destructive' : ''}>
+              <SelectTrigger 
+                className={validationErrors.taxType ? 'border-destructive' : ''}
+                data-error={!!validationErrors.taxType}
+              >
                 <SelectValue placeholder="Select tax type" />
               </SelectTrigger>
               <SelectContent>
-                {taxTypes.map((taxType) => (
-                  <SelectItem key={taxType.id} value={taxType.id}>
-                    <div>
-                      <div className="font-medium">{taxType.name}</div>
-                      <div className="text-sm text-muted-foreground">{taxType.description}</div>
+                {taxTypes.map((type) => (
+                  <SelectItem key={type.id} value={type.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{type.name}</span>
+                      <span className="text-xs text-muted-foreground">{type.rate}% rate</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -332,26 +387,21 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
             )}
           </div>
 
-          {selectedMunicipality && (
-            <Card className="bg-muted/50">
-              <CardContent className="pt-4">
-                <h4 className="font-medium text-sm mb-2">Selected Municipality:</h4>
-                <p className="text-sm">{selectedMunicipality.merchant_name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {selectedMunicipality.customer_city}, {selectedMunicipality.customer_state}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
           {selectedTaxType && (
-            <Card className="bg-muted/50">
-              <CardContent className="pt-4">
-                <h4 className="font-medium text-sm mb-2">Selected Tax Type:</h4>
-                <p className="text-sm font-medium">{selectedTaxType.name}</p>
-                <p className="text-sm text-muted-foreground">{selectedTaxType.description}</p>
-              </CardContent>
-            </Card>
+            <div className="animate-fade-in bg-secondary/5 border border-secondary/20 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-secondary">{selectedTaxType.name}</h4>
+                <span className="text-sm font-medium bg-secondary/10 text-secondary px-2 py-1 rounded">
+                  {selectedTaxType.rate}% Rate
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{selectedTaxType.description}</p>
+              <Separator className="my-3" />
+              <div className="text-xs text-muted-foreground">
+                <p className="font-medium mb-1">Calculation Method:</p>
+                <p>{selectedTaxType.calculationMethod}</p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -360,16 +410,59 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
 
   const renderStep2 = () => (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Business Information</CardTitle>
+      {/* Use Profile Information Toggle */}
+      {profile && (
+        <Card className="animate-fade-in">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="use-profile-info"
+                checked={useProfileInfo}
+                onCheckedChange={(checked) => {
+                  setUseProfileInfo(checked);
+                  if (checked && profile) {
+                    setBusinessInfo(prev => ({
+                      ...prev,
+                      contactPerson: '',
+                      email: profile.email || '',
+                      phoneNumber: profile.phone || ''
+                    }));
+                  }
+                }}
+              />
+              <Label htmlFor="use-profile-info" className="text-sm font-medium">
+                Use information from my profile
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Auto-fill contact information from your user profile
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Business Information */}
+      <Card className="animate-fade-in [animation-delay:150ms]">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-2">
+            <Building2 className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Business Information</CardTitle>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Provide your business details for tax filing purposes
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="business-name">Business Name *</Label>
+              <Label htmlFor="businessName" className="text-sm font-medium">
+                Business Name *
+              </Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Legal name as registered with the state
+              </p>
               <Input
-                id="business-name"
+                id="businessName"
                 value={businessInfo.businessName}
                 onChange={(e) => {
                   setBusinessInfo(prev => ({ ...prev, businessName: e.target.value }));
@@ -377,6 +470,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
                 }}
                 placeholder="Enter business name"
                 className={validationErrors.businessName ? 'border-destructive' : ''}
+                data-error={!!validationErrors.businessName}
               />
               {validationErrors.businessName && (
                 <p className="text-sm text-destructive mt-1">{validationErrors.businessName}</p>
@@ -384,9 +478,14 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="federal-tax-id">Federal Tax ID *</Label>
+              <Label htmlFor="federalTaxId" className="text-sm font-medium">
+                Federal Tax ID (EIN) *
+              </Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Your Employer Identification Number (XX-XXXXXXX)
+              </p>
               <Input
-                id="federal-tax-id"
+                id="federalTaxId"
                 value={businessInfo.federalTaxId}
                 onChange={(e) => {
                   setBusinessInfo(prev => ({ ...prev, federalTaxId: e.target.value }));
@@ -394,6 +493,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
                 }}
                 placeholder="XX-XXXXXXX"
                 className={validationErrors.federalTaxId ? 'border-destructive' : ''}
+                data-error={!!validationErrors.federalTaxId}
               />
               {validationErrors.federalTaxId && (
                 <p className="text-sm text-destructive mt-1">{validationErrors.federalTaxId}</p>
@@ -402,34 +502,61 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="business-address">Business Address *</Label>
-            <Input
-              id="business-address"
+            <Label htmlFor="businessAddress" className="text-sm font-medium">
+              Business Address *
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Physical address of your business location
+            </p>
+            <Textarea
+              id="businessAddress"
               value={businessInfo.businessAddress}
               onChange={(e) => {
                 setBusinessInfo(prev => ({ ...prev, businessAddress: e.target.value }));
                 clearFieldError('businessAddress');
               }}
-              placeholder="Enter complete business address"
+              placeholder="Enter complete business address including street, city, state, and ZIP"
+              rows={3}
               className={validationErrors.businessAddress ? 'border-destructive' : ''}
+              data-error={!!validationErrors.businessAddress}
             />
             {validationErrors.businessAddress && (
               <p className="text-sm text-destructive mt-1">{validationErrors.businessAddress}</p>
             )}
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Contact Information */}
+      <Card className="animate-fade-in [animation-delay:300ms]">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-2">
+            <FileText className="h-5 w-5 text-secondary" />
+            <CardTitle className="text-lg">Contact Information</CardTitle>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Primary contact details for tax correspondence
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="contact-person">Contact Person *</Label>
+              <Label htmlFor="contactPerson" className="text-sm font-medium">
+                Contact Person *
+              </Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Primary contact for tax matters
+              </p>
               <Input
-                id="contact-person"
+                id="contactPerson"
                 value={businessInfo.contactPerson}
                 onChange={(e) => {
                   setBusinessInfo(prev => ({ ...prev, contactPerson: e.target.value }));
                   clearFieldError('contactPerson');
                 }}
-                placeholder="Contact person name"
+                placeholder="Full name"
                 className={validationErrors.contactPerson ? 'border-destructive' : ''}
+                data-error={!!validationErrors.contactPerson}
               />
               {validationErrors.contactPerson && (
                 <p className="text-sm text-destructive mt-1">{validationErrors.contactPerson}</p>
@@ -437,39 +564,52 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="phone-number">Phone Number *</Label>
+              <Label htmlFor="phoneNumber" className="text-sm font-medium">
+                Phone Number *
+              </Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Business phone number for contact
+              </p>
               <Input
-                id="phone-number"
+                id="phoneNumber"
                 value={businessInfo.phoneNumber}
                 onChange={(e) => {
-                  setBusinessInfo(prev => ({ ...prev, phoneNumber: e.target.value }));
+                  const formatted = normalizePhoneInput(e.target.value);
+                  setBusinessInfo(prev => ({ ...prev, phoneNumber: formatted }));
                   clearFieldError('phoneNumber');
                 }}
-                placeholder="(XXX) XXX-XXXX"
+                placeholder="(555) 123-4567"
                 className={validationErrors.phoneNumber ? 'border-destructive' : ''}
+                data-error={!!validationErrors.phoneNumber}
               />
               {validationErrors.phoneNumber && (
                 <p className="text-sm text-destructive mt-1">{validationErrors.phoneNumber}</p>
               )}
             </div>
+          </div>
 
-            <div>
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={businessInfo.email}
-                onChange={(e) => {
-                  setBusinessInfo(prev => ({ ...prev, email: e.target.value }));
-                  clearFieldError('email');
-                }}
-                placeholder="business@example.com"
-                className={validationErrors.email ? 'border-destructive' : ''}
-              />
-              {validationErrors.email && (
-                <p className="text-sm text-destructive mt-1">{validationErrors.email}</p>
-              )}
-            </div>
+          <div>
+            <Label htmlFor="email" className="text-sm font-medium">
+              Email Address *
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Business email for tax notifications and receipts
+            </p>
+            <Input
+              id="email"
+              type="email"
+              value={businessInfo.email}
+              onChange={(e) => {
+                setBusinessInfo(prev => ({ ...prev, email: e.target.value }));
+                clearFieldError('email');
+              }}
+              placeholder="business@example.com"
+              className={validationErrors.email ? 'border-destructive' : ''}
+              data-error={!!validationErrors.email}
+            />
+            {validationErrors.email && (
+              <p className="text-sm text-destructive mt-1">{validationErrors.email}</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -477,263 +617,284 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
   );
 
   const renderStep3 = () => {
-    const calculatedTax = calculateTax();
-    
+    if (!selectedTaxType) return null;
+
+    const taxAmount = calculateTax();
+
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tax Calculation - {selectedTaxType?.name}</CardTitle>
+        {/* Tax Type Summary */}
+        <Card className="animate-fade-in">
+          <CardHeader className="pb-4">
+            <div className="flex items-center space-x-2">
+              <Calculator className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Tax Calculation</CardTitle>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Calculate your {selectedTaxType.name} tax based on business activity
+            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {selectedTaxType?.calculationMethod === 'gross_receipts' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="gross-receipts">Gross Receipts ($) *</Label>
-                    <Input
-                      id="gross-receipts"
-                      type="number"
-                      step="0.01"
-                      value={taxCalculationData.grossReceipts || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          grossReceipts: parseFloat(e.target.value) || 0 
-                        }));
-                        clearFieldError('grossReceipts');
-                      }}
-                      placeholder="0.00"
-                      className={validationErrors.grossReceipts ? 'border-destructive' : ''}
-                    />
-                    {validationErrors.grossReceipts && (
-                      <p className="text-sm text-destructive mt-1">{validationErrors.grossReceipts}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="period-start">Tax Period Start *</Label>
-                    <Input
-                      id="period-start"
-                      type="date"
-                      value={taxCalculationData.taxPeriodStart || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          taxPeriodStart: e.target.value 
-                        }));
-                        clearFieldError('taxPeriodStart');
-                      }}
-                      className={validationErrors.taxPeriodStart ? 'border-destructive' : ''}
-                    />
-                    {validationErrors.taxPeriodStart && (
-                      <p className="text-sm text-destructive mt-1">{validationErrors.taxPeriodStart}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="period-end">Tax Period End *</Label>
-                    <Input
-                      id="period-end"
-                      type="date"
-                      value={taxCalculationData.taxPeriodEnd || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          taxPeriodEnd: e.target.value 
-                        }));
-                        clearFieldError('taxPeriodEnd');
-                      }}
-                      className={validationErrors.taxPeriodEnd ? 'border-destructive' : ''}
-                    />
-                    {validationErrors.taxPeriodEnd && (
-                      <p className="text-sm text-destructive mt-1">{validationErrors.taxPeriodEnd}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Tax Rate: 3% of gross receipts</p>
-                </div>
+          <CardContent>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-primary">{selectedTaxType.name}</h4>
+                <span className="text-sm font-medium bg-primary/10 text-primary px-2 py-1 rounded">
+                  {selectedTaxType.rate}% Rate
+                </span>
               </div>
-            )}
-
-            {selectedTaxType?.calculationMethod === 'per_room' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="num-rooms">Number of Rooms *</Label>
-                    <Input
-                      id="num-rooms"
-                      type="number"
-                      value={taxCalculationData.numberOfRooms || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          numberOfRooms: parseInt(e.target.value) || 0 
-                        }));
-                        clearFieldError('numberOfRooms');
-                      }}
-                      placeholder="0"
-                      className={validationErrors.numberOfRooms ? 'border-destructive' : ''}
-                    />
-                    {validationErrors.numberOfRooms && (
-                      <p className="text-sm text-destructive mt-1">{validationErrors.numberOfRooms}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="avg-rate">Average Room Rate ($) *</Label>
-                    <Input
-                      id="avg-rate"
-                      type="number"
-                      step="0.01"
-                      value={taxCalculationData.averageRate || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          averageRate: parseFloat(e.target.value) || 0 
-                        }));
-                        clearFieldError('averageRate');
-                      }}
-                      placeholder="0.00"
-                      className={validationErrors.averageRate ? 'border-destructive' : ''}
-                    />
-                    {validationErrors.averageRate && (
-                      <p className="text-sm text-destructive mt-1">{validationErrors.averageRate}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="occupancy-rate">Occupancy Rate (%) *</Label>
-                    <Input
-                      id="occupancy-rate"
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      value={taxCalculationData.occupancyRate || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          occupancyRate: parseFloat(e.target.value) || 0 
-                        }));
-                        clearFieldError('occupancyRate');
-                      }}
-                      placeholder="0.0"
-                      className={validationErrors.occupancyRate ? 'border-destructive' : ''}
-                    />
-                    {validationErrors.occupancyRate && (
-                      <p className="text-sm text-destructive mt-1">{validationErrors.occupancyRate}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Tax Rate: $2 per occupied room per night (calculated monthly)</p>
-                </div>
+              <p className="text-sm text-muted-foreground mb-3">{selectedTaxType.description}</p>
+              <Separator className="my-3" />
+              <div className="text-xs text-muted-foreground">
+                <p className="font-medium mb-1">Calculation Method:</p>
+                <p>{selectedTaxType.calculationMethod}</p>
               </div>
-            )}
-
-            {selectedTaxType?.calculationMethod === 'percentage_base' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="admission-fees">Admission Fees ($) *</Label>
-                    <Input
-                      id="admission-fees"
-                      type="number"
-                      step="0.01"
-                      value={taxCalculationData.admissionFees || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          admissionFees: parseFloat(e.target.value) || 0 
-                        }));
-                        clearFieldError('admissionFees');
-                      }}
-                      placeholder="0.00"
-                      className={validationErrors.admissionFees ? 'border-destructive' : ''}
-                    />
-                    {validationErrors.admissionFees && (
-                      <p className="text-sm text-destructive mt-1">{validationErrors.admissionFees}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="other-revenue">Other Revenue ($)</Label>
-                    <Input
-                      id="other-revenue"
-                      type="number"
-                      step="0.01"
-                      value={taxCalculationData.otherRevenue || ''}
-                      onChange={(e) => {
-                        setTaxCalculationData(prev => ({ 
-                          ...prev, 
-                          otherRevenue: parseFloat(e.target.value) || 0 
-                        }));
-                      }}
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Tax Rate: 5% of admission fees and other revenue</p>
-                </div>
-              </div>
-            )}
-
-            <Separator />
-
-            <Card className="bg-primary/5">
-              <CardContent className="pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium">Total Tax Due:</span>
-                  <span className="text-2xl font-bold text-primary">
-                    ${calculatedTax.toFixed(2)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            </div>
           </CardContent>
         </Card>
+
+        {/* Tax Calculation Inputs */}
+        <Card className="animate-fade-in [animation-delay:150ms]">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Enter Tax Information</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Provide the required information to calculate your tax liability
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {selectedTaxType.id === 'food-beverage' && (
+              <div>
+                <Label htmlFor="grossReceipts" className="text-sm font-medium">
+                  Gross Receipts ($) *
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Total gross receipts from food and beverage sales for the tax period
+                </p>
+                <Input
+                  id="grossReceipts"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={taxCalculationData.grossReceipts || ''}
+                  onChange={(e) => {
+                    setTaxCalculationData(prev => ({ ...prev, grossReceipts: parseFloat(e.target.value) || 0 }));
+                    clearFieldError('grossReceipts');
+                  }}
+                  placeholder="Enter gross receipts amount"
+                  className={validationErrors.grossReceipts ? 'border-destructive' : ''}
+                  data-error={!!validationErrors.grossReceipts}
+                />
+                {validationErrors.grossReceipts && (
+                  <p className="text-sm text-destructive mt-1">{validationErrors.grossReceipts}</p>
+                )}
+              </div>
+            )}
+
+            {selectedTaxType.id === 'hotel-motels' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="totalRooms" className="text-sm font-medium">
+                    Total Rooms *
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Total number of rooms in your establishment
+                  </p>
+                  <Input
+                    id="totalRooms"
+                    type="number"
+                    min="1"
+                    value={taxCalculationData.totalRooms || ''}
+                    onChange={(e) => {
+                      setTaxCalculationData(prev => ({ ...prev, totalRooms: parseInt(e.target.value) || 0 }));
+                      clearFieldError('totalRooms');
+                    }}
+                    placeholder="Number of rooms"
+                    className={validationErrors.totalRooms ? 'border-destructive' : ''}
+                    data-error={!!validationErrors.totalRooms}
+                  />
+                  {validationErrors.totalRooms && (
+                    <p className="text-sm text-destructive mt-1">{validationErrors.totalRooms}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="occupiedNights" className="text-sm font-medium">
+                    Occupied Room Nights *
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Total occupied room nights for the tax period
+                  </p>
+                  <Input
+                    id="occupiedNights"
+                    type="number"
+                    min="0"
+                    value={taxCalculationData.occupiedNights || ''}
+                    onChange={(e) => {
+                      setTaxCalculationData(prev => ({ ...prev, occupiedNights: parseInt(e.target.value) || 0 }));
+                      clearFieldError('occupiedNights');
+                    }}
+                    placeholder="Total occupied nights"
+                    className={validationErrors.occupiedNights ? 'border-destructive' : ''}
+                    data-error={!!validationErrors.occupiedNights}
+                  />
+                  {validationErrors.occupiedNights && (
+                    <p className="text-sm text-destructive mt-1">{validationErrors.occupiedNights}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {selectedTaxType.id === 'amusement' && (
+              <div>
+                <Label htmlFor="admissionReceipts" className="text-sm font-medium">
+                  Admission Receipts ($) *
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Total admission receipts from amusement activities for the tax period
+                </p>
+                <Input
+                  id="admissionReceipts"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={taxCalculationData.admissionReceipts || ''}
+                  onChange={(e) => {
+                    setTaxCalculationData(prev => ({ ...prev, admissionReceipts: parseFloat(e.target.value) || 0 }));
+                    clearFieldError('admissionReceipts');
+                  }}
+                  placeholder="Enter admission receipts amount"
+                  className={validationErrors.admissionReceipts ? 'border-destructive' : ''}
+                  data-error={!!validationErrors.admissionReceipts}
+                />
+                {validationErrors.admissionReceipts && (
+                  <p className="text-sm text-destructive mt-1">{validationErrors.admissionReceipts}</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tax Calculation Result */}
+        {taxAmount > 0 && (
+          <Card className="animate-fade-in [animation-delay:300ms]">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg">Tax Summary</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Tax Type:</span>
+                    <span className="font-medium">{selectedTaxType.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Tax Rate:</span>
+                    <span className="font-medium">{selectedTaxType.rate}%</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Taxable Base:</span>
+                    <span className="font-medium">
+                      {selectedTaxType.id === 'food-beverage' && formatCurrency(taxCalculationData.grossReceipts || 0)}
+                      {selectedTaxType.id === 'hotel-motels' && `${taxCalculationData.occupiedNights || 0} room nights`}
+                      {selectedTaxType.id === 'amusement' && formatCurrency(taxCalculationData.admissionReceipts || 0)}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold">Total Tax Due:</span>
+                    <span className="text-2xl font-bold text-primary">{formatCurrency(taxAmount)}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Pay Tax - Step {currentStep} of {totalSteps}</DialogTitle>
-          <Progress value={progress} className="w-full" />
+      <DialogContent 
+        className="max-w-4xl max-h-[90vh] overflow-hidden"
+        ref={dialogContentRef}
+      >
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-xl font-semibold">Pay Business Tax</DialogTitle>
+          <div className="mt-4 space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Step {currentStep} of {totalSteps}</span>
+              <span>{Math.round(progress)}% Complete</span>
+            </div>
+            <Progress value={progress} className="w-full h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span className={currentStep >= 1 ? 'text-primary font-medium' : ''}>
+                Tax Selection
+              </span>
+              <span className={currentStep >= 2 ? 'text-primary font-medium' : ''}>
+                Business Info
+              </span>
+              <span className={currentStep >= 3 ? 'text-primary font-medium' : ''}>
+                Calculate & Pay
+              </span>
+            </div>
+          </div>
         </DialogHeader>
-        
-        <div className="flex-1 overflow-auto" ref={dialogContentRef}>
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
+
+        <div 
+          className="flex-1 overflow-y-auto pr-2 max-h-[60vh]"
+          style={{ scrollbarWidth: 'thin' }}
+        >
+          <div className="space-y-6">
+            {currentStep === 1 && renderStep1()}
+            {currentStep === 2 && renderStep2()}
+            {currentStep === 3 && renderStep3()}
+          </div>
         </div>
 
-        <div className="flex justify-between pt-4 border-t">
+        <div className="flex justify-between items-center pt-6 border-t bg-background">
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentStep === 1}
+            className="min-w-[100px]"
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
+            <ChevronLeft className="h-4 w-4 mr-2" />
             Previous
           </Button>
 
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleClose}>
+          <div className="flex space-x-3">
+            <Button 
+              variant="outline" 
+              onClick={handleClose}
+              className="min-w-[80px]"
+            >
               Cancel
             </Button>
             
-            {currentStep < totalSteps ? (
-              <Button onClick={handleNext}>
-                Next
-                <ChevronRight className="w-4 h-4 ml-2" />
+            {currentStep === totalSteps ? (
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isSubmitting || calculateTax() === 0}
+                className="min-w-[120px]"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  `Pay ${formatCurrency(calculateTax())}`
+                )}
               </Button>
             ) : (
               <Button 
-                onClick={handleSubmit}
-                disabled={isSubmitting}
+                onClick={handleNext}
+                className="min-w-[100px]"
               >
-                {isSubmitting ? 'Processing...' : 'Calculate & Proceed to Payment'}
+                Next
+                <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             )}
           </div>
