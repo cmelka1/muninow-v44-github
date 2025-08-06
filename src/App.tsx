@@ -47,7 +47,6 @@ import MunicipalBillOverview from "./pages/MunicipalBillOverview";
 import Permits from "./pages/Permits";
 import PermitOverview from "./pages/PermitOverview";
 import PermitDetail from "./pages/PermitDetail";
-import Taxes from "./pages/Taxes";
 import Notifications from "./pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
@@ -85,7 +84,6 @@ const App = () => (
                 <Route path="/payment-history" element={<PaymentHistory />} />
                 <Route path="/permits" element={<Permits />} />
                 <Route path="/permit/:permitId" element={<PermitDetail />} />
-                <Route path="/taxes" element={<Taxes />} />
                 <Route path="/bill/:billId" element={<BillOverview />} />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
                 <Route path="/members" element={<Members />} />

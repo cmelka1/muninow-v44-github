@@ -97,22 +97,6 @@
     text-decoration-thickness: 1px;
     text-underline-offset: 0.2em;
   }
-
-  /* Animation classes */
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
-  }
-
-  @keyframes fade-in {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 }
 
 /* Enhanced background system */
