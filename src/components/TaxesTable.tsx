@@ -43,7 +43,9 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
 
   const handlePayTaxClick = () => {
     console.log('Pay Tax button clicked');
+    console.log('Current isPayTaxDialogOpen state:', isPayTaxDialogOpen);
     setIsPayTaxDialogOpen(true);
+    console.log('Set isPayTaxDialogOpen to true');
   };
 
   // Mock data for now - replace with actual hook when ready

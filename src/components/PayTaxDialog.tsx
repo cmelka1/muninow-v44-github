@@ -35,7 +35,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
   open,
   onOpenChange
 }) => {
-  console.log('PayTaxDialog: Rendering with open =', open);
+  console.log('PayTaxDialog: Component function called with open =', open);
   
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<TaxFormData>({
