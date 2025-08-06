@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PayTaxDialogProps {
@@ -22,7 +22,7 @@ interface SelectedMunicipality {
 }
 
 interface TaxFormData {
-  municipality: SelectedMunicipality | null;
+  municipality: string;
   taxType: string;
   businessName: string;
   businessAddress: string;
@@ -35,9 +35,11 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
   open,
   onOpenChange
 }) => {
+  console.log('PayTaxDialog: Rendering with open =', open);
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<TaxFormData>({
-    municipality: null,
+    municipality: '',
     taxType: '',
     businessName: '',
     businessAddress: '',
@@ -54,7 +56,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
     console.log('PayTaxDialog: Closing dialog');
     setCurrentStep(1);
     setFormData({
-      municipality: null,
+      municipality: '',
       taxType: '',
       businessName: '',
       businessAddress: '',
@@ -102,8 +104,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
     }
   };
 
-  const handleMunicipalitySelect = (municipality: SelectedMunicipality) => {
-    setFormData(prev => ({ ...prev, municipality }));
+  const handleMunicipalityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, municipality: e.target.value }));
     if (validationErrors.municipality) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -157,10 +159,11 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
                 <Label htmlFor="municipality">
                   Municipality <span className="text-destructive">*</span>
                 </Label>
-                <MunicipalityAutocomplete
-                  value={formData.municipality?.legal_entity_name || ''}
-                  onSelect={handleMunicipalitySelect}
-                  placeholder="Search for your municipality..."
+                <Input
+                  id="municipality"
+                  value={formData.municipality}
+                  onChange={handleMunicipalityChange}
+                  placeholder="Enter municipality name..."
                   className={validationErrors.municipality ? 'border-destructive' : ''}
                 />
                 {validationErrors.municipality && (
@@ -269,7 +272,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
               <div className="space-y-2">
                 <h3 className="font-medium">Review Your Information</h3>
                 <div className="bg-muted p-4 rounded-md space-y-2">
-                  <p><strong>Municipality:</strong> {formData.municipality?.legal_entity_name}</p>
+                  <p><strong>Municipality:</strong> {formData.municipality}</p>
                   <p><strong>Tax Type:</strong> {formData.taxType}</p>
                   <p><strong>Business Name:</strong> {formData.businessName}</p>
                   <p><strong>Contact Person:</strong> {formData.contactPerson}</p>
@@ -287,6 +290,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
         return null;
     }
   };
+
+  console.log('PayTaxDialog: About to render dialog with open =', open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
