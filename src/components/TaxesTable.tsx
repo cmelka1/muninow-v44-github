@@ -14,8 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { TaxFilters } from './TaxesFilter';
+import { PayTaxDialog } from './PayTaxDialog';
 
 interface Tax {
   tax_id: string;
@@ -38,6 +39,12 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [isPayTaxDialogOpen, setIsPayTaxDialogOpen] = useState(false);
+
+  const handlePayTaxClick = () => {
+    console.log('Pay Tax button clicked');
+    setIsPayTaxDialogOpen(true);
+  };
 
   // Mock data for now - replace with actual hook when ready
   const mockTaxes: Tax[] = [];
@@ -141,7 +148,16 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Taxes ({totalCount})</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Taxes ({totalCount})</CardTitle>
+            <Button 
+              onClick={handlePayTaxClick}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Pay Tax</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">No taxes found.</p>
@@ -153,7 +169,16 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Taxes ({totalCount})</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>Taxes ({totalCount})</CardTitle>
+          <Button 
+            onClick={handlePayTaxClick}
+            className="flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Pay Tax</span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
@@ -260,6 +285,12 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
           </div>
         )}
       </CardContent>
+
+      {/* Pay Tax Dialog */}
+      <PayTaxDialog 
+        open={isPayTaxDialogOpen} 
+        onOpenChange={setIsPayTaxDialogOpen} 
+      />
     </Card>
   );
 };
