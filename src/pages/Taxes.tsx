@@ -6,12 +6,14 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import BillsFilter, { BillFilters } from '@/components/BillsFilter';
 import BillsTable from '@/components/BillsTable';
-
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { PayTaxDialog } from '@/components/PayTaxDialog';
 const Taxes = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
   const [filters, setFilters] = useState<BillFilters>({});
-
+  const [isPayTaxOpen, setIsPayTaxOpen] = useState(false);
   // Redirect unauthenticated users or municipal users
   useEffect(() => {
     if (!isLoading && !user) {
@@ -53,8 +55,16 @@ const Taxes = () => {
         <SidebarInset className="flex-1 bg-muted">
           <div className="p-8">
             <header className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">Taxes</h1>
-              <p className="text-muted-foreground">Manage and pay your tax bills</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground mb-2">Taxes</h1>
+                  <p className="text-muted-foreground">Manage and pay your tax bills</p>
+                </div>
+                <Button onClick={() => setIsPayTaxOpen(true)} className="flex items-center space-x-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Pay Tax</span>
+                </Button>
+              </div>
             </header>
 
             <BillsFilter filters={filters} onFiltersChange={setFilters} />
@@ -62,6 +72,8 @@ const Taxes = () => {
               filters={filters}
               onPayClick={(billId) => navigate(`/bill/${billId}`)}
             />
+
+            <PayTaxDialog open={isPayTaxOpen} onOpenChange={setIsPayTaxOpen} />
           </div>
         </SidebarInset>
       </div>
