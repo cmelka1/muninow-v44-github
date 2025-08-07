@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -69,9 +69,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     const e: Record<string, string> = {};
     if (!selectedMunicipality) e.municipality = 'Municipality is required';
     if (!taxType) e.taxType = 'Tax type is required';
-    if (!accountNumber.trim()) e.accountNumber = 'Account or tax number is required';
-    const amt = Number(amount);
-    if (!amount || isNaN(amt) || amt <= 0) e.amount = 'Enter a valid amount greater than 0';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -227,22 +224,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Account / Tax Number</Label>
-                      <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g., Property ID, Tax ID" />
-                      {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Amount (USD)</Label>
-                      <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
-                      {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Memo (optional)</Label>
-                      <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add any notes for this payment" />
-                    </div>
                   </CardContent>
                 </Card>
               )}
