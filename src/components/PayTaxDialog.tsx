@@ -42,7 +42,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const { toast } = useToast();
 
   // Step management
-  const totalSteps = 3;
+  const totalSteps = 2;
   const [currentStep, setCurrentStep] = useState(1);
   const progress = (currentStep / totalSteps) * 100;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -74,12 +74,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     const e: Record<string, string> = {};
     if (!selectedMunicipality) e.municipality = 'Municipality is required';
     if (!taxType) e.taxType = 'Tax type is required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const validateStep2 = () => {
-    const e: Record<string, string> = {};
     if (!payerName.trim()) e.payerName = 'Full name is required';
     if (!payerEmail.trim()) e.payerEmail = 'Email is required';
     if (!payerPhone.trim()) e.payerPhone = 'Phone is required';
@@ -88,9 +82,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     return Object.keys(e).length === 0;
   };
 
+
   const handleNext = () => {
     if (currentStep === 1 && !validateStep1()) return;
-    if (currentStep === 2 && !validateStep2()) return;
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
@@ -146,7 +140,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   };
 
   const handleSubmit = async () => {
-    if (!validateStep1() || !validateStep2()) {
+    if (!validateStep1()) {
       scrollTop();
       return;
     }
@@ -193,7 +187,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           </div>
 
           <div className="flex justify-between py-4">
-            {[1, 2, 3].map((step) => (
+            {[1, 2].map((step) => (
               <div
                 key={step}
                 className={`flex items-center space-x-3 ${
@@ -214,8 +208,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                 <div className="hidden sm:block">
                   <span className="text-sm font-medium">
                     {step === 1 && 'Tax Info'}
-                    {step === 2 && 'Payer Info'}
-                    {step === 3 && 'Review & Confirm'}
+                    {step === 2 && 'Review & Confirm'}
                   </span>
                 </div>
               </div>
