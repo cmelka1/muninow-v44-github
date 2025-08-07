@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PayTaxDialogProps {
   open: boolean;
@@ -154,171 +155,175 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           <DialogDescription>Complete the steps below to submit your tax payment.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Progress value={progress} className="w-full" />
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Step {currentStep} of {totalSteps}</span>
+<div className="space-y-4">
+  <Progress value={progress} className="w-full" />
+  <div className="flex items-center justify-between text-sm text-muted-foreground">
+    <span>Step {currentStep} of {totalSteps}</span>
+  </div>
+</div>
+
+<ScrollArea className="max-h-[60vh] pr-4">
+  <div className="space-y-4">
+    {currentStep === 1 && (
+      <Card>
+        <CardHeader>
+          <CardTitle>Tax Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Municipality</Label>
+            <BuildingPermitsMunicipalityAutocomplete
+              onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
+              placeholder="Search your municipality"
+            />
+            {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
           </div>
 
-          {currentStep === 1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Tax Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Municipality</Label>
-                  <BuildingPermitsMunicipalityAutocomplete
-                    onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
-                    placeholder="Search your municipality"
-                  />
-                  {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
-                </div>
+          <div className="space-y-2">
+            <Label>Tax Type</Label>
+            <Select value={taxType} onValueChange={setTaxType}>
+              <SelectTrigger aria-label="Tax type">
+                <SelectValue placeholder="Select tax type" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-popover">
+                <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
+                <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
+                <SelectItem value="Amusement">Amusement</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
+          </div>
 
-                <div className="space-y-2">
-                  <Label>Tax Type</Label>
-                  <Select value={taxType} onValueChange={setTaxType}>
-                    <SelectTrigger aria-label="Tax type">
-                      <SelectValue placeholder="Select tax type" />
-                    </SelectTrigger>
-                    <SelectContent className="z-50 bg-popover">
-                      <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
-                      <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
-                      <SelectItem value="Amusement">Amusement</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
-                </div>
+          <div className="space-y-2">
+            <Label>Account / Tax Number</Label>
+            <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g., Property ID, Tax ID" />
+            {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
+          </div>
 
-                <div className="space-y-2">
-                  <Label>Account / Tax Number</Label>
-                  <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g., Property ID, Tax ID" />
-                  {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
-                </div>
+          <div className="space-y-2">
+            <Label>Amount (USD)</Label>
+            <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+            {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
+          </div>
 
-                <div className="space-y-2">
-                  <Label>Amount (USD)</Label>
-                  <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
-                  {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
-                </div>
+          <div className="space-y-2">
+            <Label>Memo (optional)</Label>
+            <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add any notes for this payment" />
+          </div>
+        </CardContent>
+      </Card>
+    )}
 
-                <div className="space-y-2">
-                  <Label>Memo (optional)</Label>
-                  <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add any notes for this payment" />
-                </div>
-              </CardContent>
-            </Card>
+    {currentStep === 2 && (
+      <Card>
+        <CardHeader>
+          <CardTitle>Payer Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
+              {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
+              {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
+              {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Address</Label>
+              <RestPlacesAutocomplete
+                onAddressSelect={(address) => setPayerAddress(address)}
+                placeholder="Search address"
+              />
+              {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
+            </div>
+          </div>
+
+          {payerAddress && (
+            <div className="text-sm text-muted-foreground">
+              <span>
+                {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
+              </span>
+            </div>
           )}
+        </CardContent>
+      </Card>
+    )}
 
-          {currentStep === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Payer Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Full Name</Label>
-                    <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
-                    {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
-                    {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
-                  </div>
-                </div>
+    {currentStep === 3 && (
+      <Card>
+        <CardHeader>
+          <CardTitle>Review &amp; Confirm</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-medium">Tax Details</h4>
+            <Separator className="my-2" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Municipality</span>
+                <div>{selectedMunicipality ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}` : '-'}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Tax Type</span>
+                <div>{taxType || '-'}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Account / Tax #</span>
+                <div>{accountNumber || '-'}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Amount</span>
+                <div>{amount ? `$${Number(amount).toFixed(2)}` : '-'}</div>
+              </div>
+              <div className="md:col-span-2">
+                <span className="text-muted-foreground">Memo</span>
+                <div>{memo || '-'}</div>
+              </div>
+            </div>
+          </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
-                    {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Address</Label>
-                    <RestPlacesAutocomplete
-                      onAddressSelect={(address) => setPayerAddress(address)}
-                      placeholder="Search address"
-                    />
-                    {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
-                  </div>
-                </div>
-
-                {payerAddress && (
-                  <div className="text-sm text-muted-foreground">
-                    <span>
-                      {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {currentStep === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Review &amp; Confirm</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-medium">Payer Details</h4>
+            <Separator className="my-2" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Full Name</span>
+                <div>{payerName || '-'}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Email</span>
+                <div>{payerEmail || '-'}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Phone</span>
+                <div>{payerPhone || '-'}</div>
+              </div>
+              <div className="md:col-span-2">
+                <span className="text-muted-foreground">Address</span>
                 <div>
-                  <h4 className="font-medium">Tax Details</h4>
-                  <Separator className="my-2" />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Municipality</span>
-                      <div>{selectedMunicipality ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}` : '-'}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Tax Type</span>
-                      <div>{taxType || '-'}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Account / Tax #</span>
-                      <div>{accountNumber || '-'}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Amount</span>
-                      <div>{amount ? `$${Number(amount).toFixed(2)}` : '-'}</div>
-                    </div>
-                    <div className="md:col-span-2">
-                      <span className="text-muted-foreground">Memo</span>
-                      <div>{memo || '-'}</div>
-                    </div>
-                  </div>
+                  {payerAddress ? (
+                    `${payerAddress.streetAddress}, ${payerAddress.city}, ${payerAddress.state} ${payerAddress.zipCode}`
+                  ) : '-'}
                 </div>
-
-                <div>
-                  <h4 className="font-medium">Payer Details</h4>
-                  <Separator className="my-2" />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Full Name</span>
-                      <div>{payerName || '-'}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Email</span>
-                      <div>{payerEmail || '-'}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Phone</span>
-                      <div>{payerPhone || '-'}</div>
-                    </div>
-                    <div className="md:col-span-2">
-                      <span className="text-muted-foreground">Address</span>
-                      <div>
-                        {payerAddress ? (
-                          `${payerAddress.streetAddress}, ${payerAddress.city}, ${payerAddress.state} ${payerAddress.zipCode}`
-                        ) : '-'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+  </div>
+</ScrollArea>
 
         <DialogFooter className="flex items-center justify-between gap-2">
           <div className="flex gap-2">
