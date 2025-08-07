@@ -12,6 +12,9 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/contexts/AuthContext';
+import { normalizePhoneInput } from '@/lib/phoneUtils';
 
 
 interface PayTaxDialogProps {
@@ -56,6 +59,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [payerEmail, setPayerEmail] = useState('');
   const [payerPhone, setPayerPhone] = useState('');
   const [payerAddress, setPayerAddress] = useState<AddressComponents | null>(null);
+  const [useProfileInfo, setUseProfileInfo] = useState(false);
+  const { profile } = useAuth();
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,8 +115,34 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setPayerEmail('');
     setPayerPhone('');
     setPayerAddress(null);
+    setUseProfileInfo(false);
     setErrors({});
     setIsSubmitting(false);
+  };
+
+  const handleUseProfileInfoToggle = (checked: boolean) => {
+    setUseProfileInfo(checked);
+    if (checked && profile) {
+      const fullName = (profile.first_name && profile.last_name)
+        ? `${profile.first_name} ${profile.last_name}`
+        : (profile.business_legal_name || '');
+      const phone = profile.phone ? normalizePhoneInput(profile.phone) : '';
+      const addressComponents: AddressComponents = {
+        streetAddress: profile.street_address || '',
+        city: profile.city || '',
+        state: profile.state || '',
+        zipCode: profile.zip_code || '',
+      };
+      setPayerName(fullName);
+      setPayerPhone(phone);
+      setPayerEmail(profile.email || '');
+      setPayerAddress(addressComponents);
+    } else if (!checked) {
+      setPayerName('');
+      setPayerPhone('');
+      setPayerEmail('');
+      setPayerAddress(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -230,34 +261,49 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
               {currentStep === 2 && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Payer Information</CardTitle>
-                  </CardHeader>
+                    <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payer Information
+                      </CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor="use-profile-info" className="text-sm text-muted-foreground">
+                          Use Profile Information
+                        </Label>
+                        <Switch
+                          id="use-profile-info"
+                          checked={useProfileInfo}
+                          onCheckedChange={handleUseProfileInfoToggle}
+                        />
+                      </div>
+                    </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Full Name</Label>
-                        <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
+                        <Label>Name/Company</Label>
+                        <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Enter name or company" disabled={useProfileInfo} />
                         {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label>Email</Label>
-                        <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
+                        <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" disabled={useProfileInfo} />
                         {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Phone</Label>
-                        <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
+                        <Label>Phone Number</Label>
+                        <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(normalizePhoneInput(e.target.value))} placeholder="(xxx) xxx-xxxx" disabled={useProfileInfo} />
                         {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label>Address</Label>
                         <RestPlacesAutocomplete
-                          onAddressSelect={(address) => setPayerAddress(address)}
-                          placeholder="Search address"
+                          onAddressSelect={useProfileInfo ? () => {} : (address) => setPayerAddress(address)}
+                          placeholder="Start typing your address..."
+                          value={useProfileInfo ? `${payerAddress?.streetAddress || ''}${payerAddress?.city ? `, ${payerAddress.city}` : ''}${payerAddress?.state ? `, ${payerAddress.state}` : ''}${payerAddress?.zipCode ? ` ${payerAddress.zipCode}` : ''}` : undefined}
+                          className={`${useProfileInfo ? 'opacity-50 pointer-events-none' : ''}`}
                         />
                         {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
                       </div>
