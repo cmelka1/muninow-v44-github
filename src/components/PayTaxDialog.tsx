@@ -15,6 +15,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { FoodBeverageTaxForm } from './tax-forms/FoodBeverageTaxForm';
+import { HotelMotelTaxForm } from './tax-forms/HotelMotelTaxForm';
+import { AmusementTaxForm } from './tax-forms/AmusementTaxForm';
 
 
 interface PayTaxDialogProps {
@@ -63,6 +66,38 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [payerAddress, setPayerAddress] = useState<AddressComponents | null>(null);
   const [payerAddressDisplay, setPayerAddressDisplay] = useState('');
   const [useProfileInfoForPayer, setUseProfileInfoForPayer] = useState(false);
+
+  // Tax Calculation Data
+  const [foodBeverageTaxData, setFoodBeverageTaxData] = useState({
+    grossSales: '',
+    exemptSales: '',
+    deductions: '',
+    taxableReceipts: '0.00',
+    tax: '0.00',
+    penalty: '',
+    interest: '',
+    totalDue: '0.00'
+  });
+
+  const [hotelMotelTaxData, setHotelMotelTaxData] = useState({
+    totalReceipts: '',
+    exemptReceipts: '',
+    netReceipts: '0.00',
+    tax: '0.00',
+    penalty: '',
+    interest: '',
+    totalDue: '0.00'
+  });
+
+  const [amusementTaxData, setAmusementTaxData] = useState({
+    grossReceipts: '',
+    exemptReceipts: '',
+    taxableReceipts: '0.00',
+    tax: '0.00',
+    penalty: '',
+    interest: '',
+    totalDue: '0.00'
+  });
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -172,13 +207,46 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setAccountNumber('');
     setAmount('');
     setMemo('');
-      setPayerName('');
-      setPayerEin('');
-      setPayerEmail('');
-      setPayerPhone('');
-      setPayerAddress(null);
-      setPayerAddressDisplay('');
+    setPayerName('');
+    setPayerEin('');
+    setPayerEmail('');
+    setPayerPhone('');
+    setPayerAddress(null);
+    setPayerAddressDisplay('');
     setUseProfileInfoForPayer(false);
+    
+    // Reset tax calculation data
+    setFoodBeverageTaxData({
+      grossSales: '',
+      exemptSales: '',
+      deductions: '',
+      taxableReceipts: '0.00',
+      tax: '0.00',
+      penalty: '',
+      interest: '',
+      totalDue: '0.00'
+    });
+    
+    setHotelMotelTaxData({
+      totalReceipts: '',
+      exemptReceipts: '',
+      netReceipts: '0.00',
+      tax: '0.00',
+      penalty: '',
+      interest: '',
+      totalDue: '0.00'
+    });
+    
+    setAmusementTaxData({
+      grossReceipts: '',
+      exemptReceipts: '',
+      taxableReceipts: '0.00',
+      tax: '0.00',
+      penalty: '',
+      interest: '',
+      totalDue: '0.00'
+    });
+    
     setErrors({});
     setIsSubmitting(false);
   };
@@ -295,6 +363,31 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         </Select>
                         {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
                       </div>
+
+                      {/* Tax Calculation Forms */}
+                      {taxType === 'Food & Beverage' && (
+                        <FoodBeverageTaxForm
+                          data={foodBeverageTaxData}
+                          onChange={setFoodBeverageTaxData}
+                          disabled={false}
+                        />
+                      )}
+                      
+                      {taxType === 'Hotel & Motel' && (
+                        <HotelMotelTaxForm
+                          data={hotelMotelTaxData}
+                          onChange={setHotelMotelTaxData}
+                          disabled={false}
+                        />
+                      )}
+                      
+                      {taxType === 'Amusement' && (
+                        <AmusementTaxForm
+                          data={amusementTaxData}
+                          onChange={setAmusementTaxData}
+                          disabled={false}
+                        />
+                      )}
                     </CardContent>
                   </Card>
 
@@ -447,19 +540,116 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           <span className="text-muted-foreground">Tax Type</span>
                           <div>{taxType || '-'}</div>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">Account / Tax #</span>
-                          <div>{accountNumber || '-'}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Amount</span>
-                          <div>{amount ? `$${Number(amount).toFixed(2)}` : '-'}</div>
-                        </div>
-                        <div className="md:col-span-2">
-                          <span className="text-muted-foreground">Memo</span>
-                          <div>{memo || '-'}</div>
-                        </div>
                       </div>
+                      
+                      {/* Tax Calculation Summary */}
+                      {taxType && (
+                        <div className="mt-4">
+                          <h5 className="text-sm font-medium mb-2">Tax Calculation Summary</h5>
+                          {taxType === 'Food & Beverage' && (
+                            <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Gross Sales:</span>
+                                <span>${foodBeverageTaxData.grossSales || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Exempt Sales:</span>
+                                <span>${foodBeverageTaxData.exemptSales || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Deductions:</span>
+                                <span>${foodBeverageTaxData.deductions || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Taxable Receipts:</span>
+                                <span>${foodBeverageTaxData.taxableReceipts}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Tax (2%):</span>
+                                <span>${foodBeverageTaxData.tax}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Penalty:</span>
+                                <span>${foodBeverageTaxData.penalty || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Interest:</span>
+                                <span>${foodBeverageTaxData.interest || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold border-t pt-1">
+                                <span>Total Due:</span>
+                                <span>${foodBeverageTaxData.totalDue}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {taxType === 'Hotel & Motel' && (
+                            <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Total Receipts:</span>
+                                <span>${hotelMotelTaxData.totalReceipts || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Exempt Receipts:</span>
+                                <span>${hotelMotelTaxData.exemptReceipts || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Net Receipts:</span>
+                                <span>${hotelMotelTaxData.netReceipts}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Tax (5%):</span>
+                                <span>${hotelMotelTaxData.tax}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Penalty:</span>
+                                <span>${hotelMotelTaxData.penalty || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Interest:</span>
+                                <span>${hotelMotelTaxData.interest || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold border-t pt-1">
+                                <span>Total Due:</span>
+                                <span>${hotelMotelTaxData.totalDue}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {taxType === 'Amusement' && (
+                            <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Gross Receipts:</span>
+                                <span>${amusementTaxData.grossReceipts || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Exempt Receipts:</span>
+                                <span>${amusementTaxData.exemptReceipts || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Taxable Receipts:</span>
+                                <span>${amusementTaxData.taxableReceipts}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Tax (10%):</span>
+                                <span>${amusementTaxData.tax}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Penalty:</span>
+                                <span>${amusementTaxData.penalty || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Interest:</span>
+                                <span>${amusementTaxData.interest || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold border-t pt-1">
+                                <span>Total Due:</span>
+                                <span>${amusementTaxData.totalDue}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div>
