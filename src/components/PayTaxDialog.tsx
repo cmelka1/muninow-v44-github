@@ -320,7 +320,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                 <div className="hidden sm:block">
                   <span className="text-sm font-medium">
                     {step === 1 && 'Tax & Payer Info'}
-                    {step === 2 && 'Review & Confirm'}
+                    {step === 2 && 'Tax Calculation'}
                   </span>
                 </div>
               </div>
@@ -363,31 +363,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         </Select>
                         {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
                       </div>
-
-                      {/* Tax Calculation Forms */}
-                      {taxType === 'Food & Beverage' && (
-                        <FoodBeverageTaxForm
-                          data={foodBeverageTaxData}
-                          onChange={setFoodBeverageTaxData}
-                          disabled={false}
-                        />
-                      )}
-                      
-                      {taxType === 'Hotel & Motel' && (
-                        <HotelMotelTaxForm
-                          data={hotelMotelTaxData}
-                          onChange={setHotelMotelTaxData}
-                          disabled={false}
-                        />
-                      )}
-                      
-                      {taxType === 'Amusement' && (
-                        <AmusementTaxForm
-                          data={amusementTaxData}
-                          onChange={setAmusementTaxData}
-                          disabled={false}
-                        />
-                      )}
                     </CardContent>
                   </Card>
 
@@ -519,167 +494,142 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
               )}
 
               {currentStep === 2 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Review &amp; Confirm</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h4 className="font-medium">Tax Details</h4>
-                      <Separator className="my-2" />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Municipality</span>
-                          <div>
-                            {selectedMunicipality
-                              ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}`
-                              : '-'}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Tax Type</span>
-                          <div>{taxType || '-'}</div>
-                        </div>
-                      </div>
+                <div className="space-y-6">
+                  <Card className="animate-fade-in">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Tax Calculation - {taxType}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Tax Calculation Forms */}
+                      {taxType === 'Food & Beverage' && (
+                        <FoodBeverageTaxForm
+                          data={foodBeverageTaxData}
+                          onChange={setFoodBeverageTaxData}
+                          disabled={false}
+                        />
+                      )}
                       
-                      {/* Tax Calculation Summary */}
-                      {taxType && (
-                        <div className="mt-4">
-                          <h5 className="text-sm font-medium mb-2">Tax Calculation Summary</h5>
-                          {taxType === 'Food & Beverage' && (
-                            <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
-                              <div className="flex justify-between">
-                                <span>Gross Sales:</span>
-                                <span>${foodBeverageTaxData.grossSales || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Exempt Sales:</span>
-                                <span>${foodBeverageTaxData.exemptSales || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Deductions:</span>
-                                <span>${foodBeverageTaxData.deductions || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Taxable Receipts:</span>
-                                <span>${foodBeverageTaxData.taxableReceipts}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Tax (2%):</span>
-                                <span>${foodBeverageTaxData.tax}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Penalty:</span>
-                                <span>${foodBeverageTaxData.penalty || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Interest:</span>
-                                <span>${foodBeverageTaxData.interest || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between font-semibold border-t pt-1">
-                                <span>Total Due:</span>
-                                <span>${foodBeverageTaxData.totalDue}</span>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {taxType === 'Hotel & Motel' && (
-                            <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
-                              <div className="flex justify-between">
-                                <span>Total Receipts:</span>
-                                <span>${hotelMotelTaxData.totalReceipts || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Exempt Receipts:</span>
-                                <span>${hotelMotelTaxData.exemptReceipts || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Net Receipts:</span>
-                                <span>${hotelMotelTaxData.netReceipts}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Tax (5%):</span>
-                                <span>${hotelMotelTaxData.tax}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Penalty:</span>
-                                <span>${hotelMotelTaxData.penalty || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Interest:</span>
-                                <span>${hotelMotelTaxData.interest || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between font-semibold border-t pt-1">
-                                <span>Total Due:</span>
-                                <span>${hotelMotelTaxData.totalDue}</span>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {taxType === 'Amusement' && (
-                            <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
-                              <div className="flex justify-between">
-                                <span>Gross Receipts:</span>
-                                <span>${amusementTaxData.grossReceipts || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Exempt Receipts:</span>
-                                <span>${amusementTaxData.exemptReceipts || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Taxable Receipts:</span>
-                                <span>${amusementTaxData.taxableReceipts}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Tax (10%):</span>
-                                <span>${amusementTaxData.tax}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Penalty:</span>
-                                <span>${amusementTaxData.penalty || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Interest:</span>
-                                <span>${amusementTaxData.interest || '0.00'}</span>
-                              </div>
-                              <div className="flex justify-between font-semibold border-t pt-1">
-                                <span>Total Due:</span>
-                                <span>${amusementTaxData.totalDue}</span>
-                              </div>
-                            </div>
-                          )}
+                      {taxType === 'Hotel & Motel' && (
+                        <HotelMotelTaxForm
+                          data={hotelMotelTaxData}
+                          onChange={setHotelMotelTaxData}
+                          disabled={false}
+                        />
+                      )}
+                      
+                      {taxType === 'Amusement' && (
+                        <AmusementTaxForm
+                          data={amusementTaxData}
+                          onChange={setAmusementTaxData}
+                          disabled={false}
+                        />
+                      )}
+                      
+                      {!taxType && (
+                        <div className="text-center text-muted-foreground py-8">
+                          Please select a tax type in step 1 to continue with the calculation.
                         </div>
                       )}
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium">Payer Details</h4>
-                      <Separator className="my-2" />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Full Name</span>
-                          <div>{payerName || '-'}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Email</span>
-                          <div>{payerEmail || '-'}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Phone</span>
-                          <div>{payerPhone || '-'}</div>
-                        </div>
-                        <div className="md:col-span-2">
-                          <span className="text-muted-foreground">Address</span>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Summary Card */}
+                  {taxType && (
+                    <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          Payment Summary
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
                           <div>
-                            {payerAddress
-                              ? `${payerAddress.streetAddress}, ${payerAddress.city}, ${payerAddress.state} ${payerAddress.zipCode}`
-                              : '-'}
+                            <h4 className="font-medium">Tax Details</h4>
+                            <Separator className="my-2" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Municipality</span>
+                                <div>
+                                  {selectedMunicipality
+                                    ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}`
+                                    : '-'}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Tax Type</span>
+                                <div>{taxType || '-'}</div>
+                              </div>
+                            </div>
+                            
+                            {/* Tax Calculation Summary */}
+                            <div className="mt-4">
+                              <h5 className="text-sm font-medium mb-2">Calculation Summary</h5>
+                              {taxType === 'Food & Beverage' && (
+                                <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+                                  <div className="flex justify-between">
+                                    <span>Total Due:</span>
+                                    <span className="font-semibold">${foodBeverageTaxData.totalDue}</span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {taxType === 'Hotel & Motel' && (
+                                <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+                                  <div className="flex justify-between">
+                                    <span>Total Due:</span>
+                                    <span className="font-semibold">${hotelMotelTaxData.totalDue}</span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {taxType === 'Amusement' && (
+                                <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+                                  <div className="flex justify-between">
+                                    <span>Total Due:</span>
+                                    <span className="font-semibold">${amusementTaxData.totalDue}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <Separator />
+                          
+                          <div>
+                            <h4 className="font-medium">Payer Details</h4>
+                            <Separator className="my-2" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Name/Company</span>
+                                <div>{payerName || '-'}</div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">EIN</span>
+                                <div>{payerEin || '-'}</div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Phone</span>
+                                <div>{payerPhone || '-'}</div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Email</span>
+                                <div>{payerEmail || '-'}</div>
+                              </div>
+                              <div className="md:col-span-2">
+                                <span className="text-muted-foreground">Address</span>
+                                <div>{payerAddressDisplay || '-'}</div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               )}
             </div>
           </div>
