@@ -318,12 +318,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     <CardContent>
                       <div className="space-y-4">
                         <div>
-                          <Label htmlFor="payer-name" className="text-sm font-medium text-foreground">
-                            Name/Company *
-                          </Label>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Enter your full name or company name
-                          </p>
+                           <Label htmlFor="payer-name" className="text-sm font-medium text-foreground">
+                             Name/Company *
+                           </Label>
                           <Input
                             id="payer-name"
                             placeholder="Enter name or company"
@@ -345,9 +342,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                            <Label htmlFor="payer-ein" className="text-sm font-medium text-foreground">
                              Employer Identification Number (EIN)
                            </Label>
-                           <p className="text-xs text-muted-foreground mb-2">
-                             Enter your EIN in XX-XXXXXXX format
-                           </p>
                            <Input
                              id="payer-ein"
                              placeholder="XX-XXXXXXX"
@@ -366,9 +360,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                            <Label htmlFor="payer-phone" className="text-sm font-medium text-foreground">
                              Phone Number *
                            </Label>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Enter your contact phone number
-                          </p>
                           <Input
                             id="payer-phone"
                             placeholder="(xxx) xxx-xxxx"
@@ -391,9 +382,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           <Label htmlFor="payer-email" className="text-sm font-medium text-foreground">
                             Email *
                           </Label>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Enter your email address
-                          </p>
                           <Input
                             id="payer-email"
                             type="email"
@@ -415,10 +403,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         <div>
                           <Label htmlFor="payer-address" className="text-sm font-medium text-foreground">
                             Address *
-                          </Label>
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Enter your mailing address
-                          </p>
+                           </Label>
                           <RestPlacesAutocomplete
                             placeholder="Start typing your address..."
                             onAddressSelect={useProfileInfoForPayer ? () => {} : handlePayerAddressSelect}
