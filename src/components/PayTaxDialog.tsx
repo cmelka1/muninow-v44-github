@@ -18,6 +18,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FoodBeverageTaxForm } from './tax-forms/FoodBeverageTaxForm';
 import { HotelMotelTaxForm } from './tax-forms/HotelMotelTaxForm';
 import { AmusementTaxForm } from './tax-forms/AmusementTaxForm';
+import PaymentSummary from './PaymentSummary';
+import { formatCurrency } from '@/lib/formatters';
 
 
 interface PayTaxDialogProps {
@@ -46,7 +48,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const { profile } = useAuth();
 
   // Step management
-  const totalSteps = 2;
+  const totalSteps = 3;
   const [currentStep, setCurrentStep] = useState(1);
   const progress = (currentStep / totalSteps) * 100;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -100,6 +102,10 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     commission: '0.00',
     totalDue: '0.00'
   });
+
+  // Document upload state
+  const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([]);
+  const [dragActive, setDragActive] = useState(false);
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -216,6 +222,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setPayerAddress(null);
     setPayerAddressDisplay('');
     setUseProfileInfoForPayer(false);
+    setUploadedDocuments([]);
+    setDragActive(false);
     
     // Reset tax calculation data
     setFoodBeverageTaxData({
@@ -303,7 +311,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           </div>
 
           <div className="flex justify-between py-4">
-            {[1, 2].map((step) => (
+            {[1, 2, 3].map((step) => (
               <div
                 key={step}
                 className={`flex items-center space-x-3 ${
@@ -324,7 +332,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                 <div className="hidden sm:block">
                   <span className="text-sm font-medium">
                     {step === 1 && 'Tax & Payer Info'}
-                    {step === 2 && 'Tax Calculation'}
+                    {step === 2 && 'Calculation & Docs'}
+                    {step === 3 && 'Review & Payment'}
                   </span>
                 </div>
               </div>
@@ -540,99 +549,330 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </CardContent>
                   </Card>
                   
-                  {/* Summary Card */}
-                  {taxType && (
-                    <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                  {/* Document Upload Section */}
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Supporting Documents
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          Upload any supporting documents for your tax submission (receipts, reports, etc.)
+                        </p>
+                        
+                        {/* File Upload Zone */}
+                        <div
+                          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                            dragActive 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/25'
+                          }`}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            setDragActive(true);
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            setDragActive(false);
+                          }}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setDragActive(false);
+                            // Handle file drop - simplified for now
+                            const files = Array.from(e.dataTransfer.files);
+                            files.forEach(file => {
+                              const newDoc = {
+                                id: crypto.randomUUID(),
+                                name: file.name,
+                                size: file.size,
+                                type: file.type,
+                                uploadStatus: 'completed'
+                              };
+                              setUploadedDocuments(prev => [...prev, newDoc]);
+                            });
+                          }}
+                        >
+                          <div className="space-y-2">
+                            <div className="text-sm">
+                              <label htmlFor="tax-file-upload" className="text-primary hover:text-primary/80 cursor-pointer font-medium">
+                                Click to upload
+                              </label>
+                              <span className="text-muted-foreground"> or drag and drop</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (max 10MB each)
+                            </p>
+                          </div>
+                          <input
+                            id="tax-file-upload"
+                            type="file"
+                            multiple
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                            className="hidden"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []);
+                              files.forEach(file => {
+                                const newDoc = {
+                                  id: crypto.randomUUID(),
+                                  name: file.name,
+                                  size: file.size,
+                                  type: file.type,
+                                  uploadStatus: 'completed'
+                                };
+                                setUploadedDocuments(prev => [...prev, newDoc]);
+                              });
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Uploaded Files List */}
+                        {uploadedDocuments.length > 0 && (
+                          <div className="space-y-3">
+                            <Label className="text-sm font-medium text-foreground">
+                              Uploaded Files ({uploadedDocuments.length})
+                            </Label>
+                            {uploadedDocuments.map((doc) => (
+                              <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
+                                    <span className="text-xs font-medium text-primary">
+                                      {doc.name.split('.').pop()?.toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">{doc.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {(doc.size / 1024 / 1024).toFixed(1)} MB
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setUploadedDocuments(prev => prev.filter(d => d.id !== doc.id));
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  {/* Tax Details Summary */}
+                  <Card className="animate-fade-in">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Tax Details Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Municipality:</span>
+                          <p className="font-medium">{selectedMunicipality?.merchant_name || 'Not selected'}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Tax Type:</span>
+                          <p className="font-medium">{taxType || 'Not selected'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Tax Calculation Summary */}
+                      {taxType && (
+                        <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+                          <h4 className="font-medium mb-3">Tax Calculation</h4>
+                          {taxType === 'Food & Beverage' && (
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Gross Sales:</span>
+                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.grossSales) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Deductions:</span>
+                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.deductions) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Taxable Receipts:</span>
+                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.taxableReceipts) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between font-medium pt-2 border-t">
+                                <span>Total Tax Due:</span>
+                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.totalDue) || 0)}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {taxType === 'Hotel & Motel' && (
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Monthly Receipts:</span>
+                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line1) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Net Receipts:</span>
+                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line3) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Municipal Tax:</span>
+                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line4) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between font-medium pt-2 border-t">
+                                <span>Total Payment Due:</span>
+                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line8) || 0)}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {taxType === 'Amusement' && (
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Net Receipts:</span>
+                                <span>{formatCurrency(parseFloat(amusementTaxData.netReceipts) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Deductions:</span>
+                                <span>{formatCurrency(parseFloat(amusementTaxData.deductions) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Taxable Receipts:</span>
+                                <span>{formatCurrency(parseFloat(amusementTaxData.taxableReceipts) || 0)}</span>
+                              </div>
+                              <div className="flex justify-between font-medium pt-2 border-t">
+                                <span>Total Tax Due:</span>
+                                <span>{formatCurrency(parseFloat(amusementTaxData.totalDue) || 0)}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Payer Information Summary */}
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payer Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Name/Company:</span>
+                          <p className="font-medium">{payerName || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">EIN:</span>
+                          <p className="font-medium">{payerEin || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Email:</span>
+                          <p className="font-medium">{payerEmail || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Phone:</span>
+                          <p className="font-medium">{payerPhone || 'Not provided'}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <span className="text-muted-foreground">Address:</span>
+                          <p className="font-medium">{payerAddressDisplay || 'Not provided'}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Documents Summary */}
+                  {uploadedDocuments.length > 0 && (
+                    <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
                       <CardHeader className="pb-4">
                         <CardTitle className="text-base flex items-center gap-2">
                           <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          Payment Summary
+                          Uploaded Documents ({uploadedDocuments.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
-                          <div>
-                            <h4 className="font-medium">Tax Details</h4>
-                            <Separator className="my-2" />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">Municipality</span>
-                                <div>
-                                  {selectedMunicipality
-                                    ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}`
-                                    : '-'}
-                                </div>
+                        <div className="space-y-3">
+                          {uploadedDocuments.map((doc) => (
+                            <div key={doc.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
+                              <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
+                                <span className="text-xs font-medium text-primary">
+                                  {doc.name.split('.').pop()?.toUpperCase()}
+                                </span>
                               </div>
-                              <div>
-                                <span className="text-muted-foreground">Tax Type</span>
-                                <div>{taxType || '-'}</div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{doc.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {(doc.size / 1024 / 1024).toFixed(1)} MB
+                                </p>
                               </div>
                             </div>
-                            
-                            {/* Tax Calculation Summary */}
-                            <div className="mt-4">
-                              <h5 className="text-sm font-medium mb-2">Calculation Summary</h5>
-                              {taxType === 'Food & Beverage' && (
-                                <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
-                                  <div className="flex justify-between">
-                                    <span>Total Due:</span>
-                                    <span className="font-semibold">${foodBeverageTaxData.totalDue}</span>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {taxType === 'Hotel & Motel' && (
-                                <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
-                                  <div className="flex justify-between">
-                                    <span>Total Payment Due:</span>
-                                    <span className="font-semibold">${hotelMotelTaxData.line8}</span>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {taxType === 'Amusement' && (
-                                <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
-                                  <div className="flex justify-between">
-                                    <span>Total Due:</span>
-                                    <span className="font-semibold">${amusementTaxData.totalDue}</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <Separator />
-                          
-                          <div>
-                            <h4 className="font-medium">Payer Details</h4>
-                            <Separator className="my-2" />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">Name/Company</span>
-                                <div>{payerName || '-'}</div>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">EIN</span>
-                                <div>{payerEin || '-'}</div>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Phone</span>
-                                <div>{payerPhone || '-'}</div>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Email</span>
-                                <div>{payerEmail || '-'}</div>
-                              </div>
-                              <div className="md:col-span-2">
-                                <span className="text-muted-foreground">Address</span>
-                                <div>{payerAddressDisplay || '-'}</div>
-                              </div>
-                            </div>
-                          </div>
+                          ))}
                         </div>
                       </CardContent>
                     </Card>
                   )}
+
+                  {/* Payment Summary */}
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payment Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {(() => {
+                        let totalTaxCents = 0;
+                        
+                        if (taxType === 'Food & Beverage') {
+                          totalTaxCents = Math.round((parseFloat(foodBeverageTaxData.totalDue) || 0) * 100);
+                        } else if (taxType === 'Hotel & Motel') {
+                          totalTaxCents = Math.round((parseFloat(hotelMotelTaxData.line8) || 0) * 100);
+                        } else if (taxType === 'Amusement') {
+                          totalTaxCents = Math.round((parseFloat(amusementTaxData.totalDue) || 0) * 100);
+                        }
+                        
+                        const serviceFee = {
+                          totalFee: Math.round(totalTaxCents * 0.03), // 3% service fee
+                          percentageFee: Math.round(totalTaxCents * 0.03),
+                          fixedFee: 0,
+                          basisPoints: 300,
+                          isCard: true,
+                          totalAmountToCharge: totalTaxCents + Math.round(totalTaxCents * 0.03),
+                          serviceFeeToDisplay: Math.round(totalTaxCents * 0.03)
+                        };
+                        
+                        return (
+                          <PaymentSummary
+                            baseAmount={totalTaxCents}
+                            serviceFee={serviceFee}
+                            selectedPaymentMethod="card"
+                          />
+                        );
+                      })()}
+                      
+                      <div className="mt-6">
+                        <p className="text-sm text-muted-foreground mb-4">
+                          By clicking "Submit Payment", you authorize the payment of the above amount and agree to the terms of service.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </div>
