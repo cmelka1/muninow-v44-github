@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -899,10 +899,35 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         onSelectPaymentMethod={setSelectedPaymentMethod}
                         isLoading={paymentMethodsLoading}
                         maxMethods={3}
-                        onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
                       />
+
+                      {/* Payment Options - Side by Side */}
+                      {selectedMunicipality && getTaxAmountInCents() > 0 && googlePayMerchantId && (
+                        <PaymentButtonsContainer
+                          bill={{
+                            ...selectedMunicipality,
+                            taxType,
+                            amount: getTaxAmountInCents()
+                          }}
+                          totalAmount={totalWithFee}
+                          merchantId={googlePayMerchantId}
+                          isDisabled={isProcessingPayment}
+                          onGooglePayment={handleGooglePayment}
+                          onApplePayment={handleApplePayment}
+                        />
+                      )}
+                      
+                      {/* Show message when Google Pay is not available */}
+                      {(!selectedMunicipality || !googlePayMerchantId) && (
+                        <div className="text-sm text-muted-foreground text-center py-2">
+                          Alternative payment methods are not available for this tax payment.
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
+
+                  {/* Separator */}
+                  <div className="border-t border-border"></div>
 
                   {/* Payment Summary */}
                   <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
@@ -918,52 +943,40 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         serviceFee={serviceFee}
                         selectedPaymentMethod={selectedPaymentMethod || "card"}
                       />
-                      
-                      <div className="mt-6 space-y-4">
-                        {/* Regular Payment Button */}
-                        {selectedPaymentMethod && (
-                          <Button 
-                            onClick={handleSubmit} 
-                            disabled={isSubmitting || isProcessingPayment}
-                            className="w-full"
-                          >
-                            {isSubmitting || isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee / 100)}`}
-                          </Button>
-                        )}
-                        
-                        {/* Google Pay and Apple Pay Buttons */}
-                        {selectedMunicipality && getTaxAmountInCents() > 0 && (
-                          <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                              <span className="w-full border-t" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                              <span className="bg-background px-2 text-muted-foreground">Or pay with</span>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {selectedMunicipality && getTaxAmountInCents() > 0 && (
-                          <PaymentButtonsContainer
-                            bill={{
-                              ...selectedMunicipality,
-                              taxType,
-                              amount: getTaxAmountInCents()
-                            }}
-                            totalAmount={totalWithFee}
-                            merchantId={selectedMunicipality?.customer_id || ''}
-                            isDisabled={isSubmitting || isProcessingPayment}
-                            onGooglePayment={handleGooglePayment}
-                            onApplePayment={handleApplePayment}
-                          />
-                        )}
-                        
-                        <p className="text-sm text-muted-foreground text-center">
-                          By proceeding with payment, you authorize the payment of the above amount and agree to the terms of service.
-                        </p>
-                      </div>
                     </CardContent>
                   </Card>
+
+                  {/* Separator */}
+                  <div className="border-t border-border"></div>
+
+                  {/* Pay Now Section */}
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      disabled={!selectedPaymentMethod || isProcessingPayment || selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay'}
+                      onClick={handleSubmit}
+                    >
+                      {isProcessingPayment ? 'Processing...' : 
+                       selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : 
+                       selectedPaymentMethod === 'apple-pay' ? 'Use Apple Pay button above' :
+                       `Pay ${formatCurrency(totalWithFee)}`}
+                    </Button>
+                   
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => setIsAddPaymentMethodOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Payment Method
+                    </Button>
+                    
+                    <p className="text-xs text-muted-foreground text-center">
+                      Your payment will be processed securely
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
