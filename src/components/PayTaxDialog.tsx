@@ -20,6 +20,9 @@ import { HotelMotelTaxForm } from './tax-forms/HotelMotelTaxForm';
 import { AmusementTaxForm } from './tax-forms/AmusementTaxForm';
 import PaymentSummary from './PaymentSummary';
 import { formatCurrency } from '@/lib/formatters';
+import PaymentMethodSelector from './PaymentMethodSelector';
+import PaymentButtonsContainer from './PaymentButtonsContainer';
+import { useTaxPaymentMethods } from '@/hooks/useTaxPaymentMethods';
 
 
 interface PayTaxDialogProps {
@@ -110,6 +113,39 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Tax amount calculation for payment methods
+  const getTaxAmountInCents = () => {
+    if (taxType === 'Food & Beverage') {
+      return Math.round((parseFloat(foodBeverageTaxData.totalDue) || 0) * 100);
+    } else if (taxType === 'Hotel & Motel') {
+      return Math.round((parseFloat(hotelMotelTaxData.line8) || 0) * 100);
+    } else if (taxType === 'Amusement') {
+      return Math.round((parseFloat(amusementTaxData.totalDue) || 0) * 100);
+    }
+    return 0;
+  };
+
+  // Payment methods integration
+  const {
+    selectedPaymentMethod,
+    setSelectedPaymentMethod,
+    isProcessingPayment,
+    serviceFee,
+    totalWithFee,
+    paymentInstruments,
+    topPaymentMethods,
+    paymentMethodsLoading,
+    googlePayMerchantId,
+    handlePayment,
+    handleGooglePayment,
+    handleApplePayment,
+    loadPaymentInstruments
+  } = useTaxPaymentMethods({
+    municipality: selectedMunicipality,
+    taxType,
+    amount: getTaxAmountInCents()
+  });
 
   const scrollTop = () => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
@@ -269,16 +305,22 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
       return;
     }
 
+    if (!selectedPaymentMethod) {
+      toast({
+        title: "Error",
+        description: "Please select a payment method.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      toast({
-        title: 'Pay Tax form ready',
-        description: 'Payment flow will be connected next. Your details are captured.',
-      });
+      await handlePayment();
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: 'Submission failed', description: err?.message || 'Please try again', variant: 'destructive' });
+      toast({ title: 'Payment failed', description: err?.message || 'Please try again', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }
@@ -827,48 +869,81 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment Summary */}
+                  {/* Payment Method Selection */}
                   <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
                     <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Payment Information
+                        Payment Method
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <PaymentMethodSelector
+                        paymentInstruments={topPaymentMethods}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        onSelectPaymentMethod={setSelectedPaymentMethod}
+                        isLoading={paymentMethodsLoading}
+                        maxMethods={3}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Payment Summary */}
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payment Summary
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {(() => {
-                        let totalTaxCents = 0;
-                        
-                        if (taxType === 'Food & Beverage') {
-                          totalTaxCents = Math.round((parseFloat(foodBeverageTaxData.totalDue) || 0) * 100);
-                        } else if (taxType === 'Hotel & Motel') {
-                          totalTaxCents = Math.round((parseFloat(hotelMotelTaxData.line8) || 0) * 100);
-                        } else if (taxType === 'Amusement') {
-                          totalTaxCents = Math.round((parseFloat(amusementTaxData.totalDue) || 0) * 100);
-                        }
-                        
-                        const serviceFee = {
-                          totalFee: Math.round(totalTaxCents * 0.03), // 3% service fee
-                          percentageFee: Math.round(totalTaxCents * 0.03),
-                          fixedFee: 0,
-                          basisPoints: 300,
-                          isCard: true,
-                          totalAmountToCharge: totalTaxCents + Math.round(totalTaxCents * 0.03),
-                          serviceFeeToDisplay: Math.round(totalTaxCents * 0.03)
-                        };
-                        
-                        return (
-                          <PaymentSummary
-                            baseAmount={totalTaxCents}
-                            serviceFee={serviceFee}
-                            selectedPaymentMethod="card"
-                          />
-                        );
-                      })()}
+                      <PaymentSummary
+                        baseAmount={getTaxAmountInCents()}
+                        serviceFee={serviceFee}
+                        selectedPaymentMethod={selectedPaymentMethod || "card"}
+                      />
                       
-                      <div className="mt-6">
-                        <p className="text-sm text-muted-foreground mb-4">
-                          By clicking "Submit Payment", you authorize the payment of the above amount and agree to the terms of service.
+                      <div className="mt-6 space-y-4">
+                        {/* Regular Payment Button */}
+                        {selectedPaymentMethod && (
+                          <Button 
+                            onClick={handleSubmit} 
+                            disabled={isSubmitting || isProcessingPayment}
+                            className="w-full"
+                          >
+                            {isSubmitting || isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee / 100)}`}
+                          </Button>
+                        )}
+                        
+                        {/* Google Pay and Apple Pay Buttons */}
+                        {selectedMunicipality && getTaxAmountInCents() > 0 && (
+                          <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                              <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                              <span className="bg-background px-2 text-muted-foreground">Or pay with</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {selectedMunicipality && getTaxAmountInCents() > 0 && (
+                          <PaymentButtonsContainer
+                            bill={{
+                              ...selectedMunicipality,
+                              taxType,
+                              amount: getTaxAmountInCents()
+                            }}
+                            totalAmount={totalWithFee}
+                            merchantId={selectedMunicipality?.customer_id || ''}
+                            isDisabled={isSubmitting || isProcessingPayment}
+                            onGooglePayment={handleGooglePayment}
+                            onApplePayment={handleApplePayment}
+                          />
+                        )}
+                        
+                        <p className="text-sm text-muted-foreground text-center">
+                          By proceeding with payment, you authorize the payment of the above amount and agree to the terms of service.
                         </p>
                       </div>
                     </CardContent>
@@ -899,8 +974,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
-                <Button onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Processing...' : 'Confirm'}
+                <Button onClick={handleNext} disabled={!getTaxAmountInCents() || !selectedPaymentMethod}>
+                  Review Payment
                 </Button>
               )}
             </div>
