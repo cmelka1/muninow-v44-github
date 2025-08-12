@@ -2,18 +2,10 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
+import { ServiceFee, PaymentResponse, GooglePayMerchantResponse, PaymentMethodHookReturn } from '@/types/payment';
+import { classifyPaymentError, generateIdempotencyId, initializeApplePaySession } from '@/utils/paymentUtils';
 
-interface ServiceFee {
-  totalFee: number; // Legacy - same as serviceFeeToDisplay
-  percentageFee: number;
-  fixedFee: number;
-  basisPoints: number;
-  isCard: boolean;
-  totalAmountToCharge: number; // The grossed-up amount (T)
-  serviceFeeToDisplay: number; // The fee amount shown to user (T - A)
-}
-
-export const usePaymentMethods = (bill: any) => {
+export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
   const { toast } = useToast();
   const { paymentInstruments, isLoading: paymentMethodsLoading, loadPaymentInstruments } = useUserPaymentInstruments();
   
@@ -174,9 +166,10 @@ export const usePaymentMethods = (bill: any) => {
           return;
         }
         
-        if (data?.merchant_id) {
-          setGooglePayMerchantId(data.merchant_id);
-          console.log('Google Pay merchant ID fetched:', data.merchant_id);
+        const response = data as GooglePayMerchantResponse;
+        if (response?.merchant_id) {
+          setGooglePayMerchantId(response.merchant_id);
+          console.log('Google Pay merchant ID fetched:', response.merchant_id);
         } else {
           console.warn('Google Pay merchant ID not configured');
         }
@@ -212,7 +205,7 @@ export const usePaymentMethods = (bill: any) => {
       setIsProcessingPayment(true);
 
       // Generate idempotency ID
-      const idempotencyId = `${bill.bill_id}-${selectedPaymentMethod}-${Date.now()}`;
+      const idempotencyId = generateIdempotencyId('payment', bill.bill_id);
 
       // Get current fraud session ID
       let currentFraudSessionId = fraudSessionId;
@@ -341,7 +334,7 @@ export const usePaymentMethods = (bill: any) => {
       const billingAddress = paymentData.paymentMethodData.info?.billingAddress;
 
       // Generate idempotency ID
-      const idempotencyId = `googlepay_${bill.bill_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const idempotencyId = generateIdempotencyId('googlepay', bill.bill_id);
 
       // Call our edge function to process the payment
       const { data, error } = await supabase.functions.invoke('process-google-pay-transfer', {
@@ -374,63 +367,105 @@ export const usePaymentMethods = (bill: any) => {
 
     } catch (error) {
       console.error('Google Pay payment error:', error);
-      console.log('Google Pay error structure:', {
-        message: error?.message,
-        valueMessage: error?.value?.message,
-        valueStatusCode: error?.value?.statusCode,
-        valueName: error?.value?.name,
-        toString: error?.toString()
-      });
       
-      // Extract error message from nested structure
-      const errorMessage = error?.value?.message || error?.message || error?.toString() || '';
-      const statusCode = error?.value?.statusCode;
-      const errorName = error?.value?.name;
+      const classifiedError = classifyPaymentError(error);
       
-      // Check for user cancellation using multiple indicators
-      const isUserCancellation = statusCode === 'CANCELED' ||
-                                errorName === 'AbortError' ||
-                                errorMessage.includes('CANCELED') || 
-                                errorMessage.includes('canceled') || 
-                                errorMessage.includes('cancelled') ||
-                                errorMessage.includes('User canceled') ||
-                                errorMessage.includes('User closed the Payment Request UI') ||
-                                errorMessage.includes('AbortError') ||
-                                errorMessage.includes('Payment request was aborted');
-      
-      if (!isUserCancellation) {
+      if (classifiedError.type !== 'user_cancelled') {
         toast({
           title: "Payment Failed",
-          description: errorMessage || 'Google Pay payment failed. Please try again.',
+          description: classifiedError.message,
           variant: "destructive",
         });
       }
-      return { success: false };
+      return { success: false, error: classifiedError.message };
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
-  const handleApplePayment = async () => {
+  const handleApplePayment = async (): Promise<PaymentResponse> => {
     try {
       setIsProcessingPayment(true);
 
-      // This would need to be implemented in a full Apple Pay flow
-      // For now, return success for testing
-      toast({
-        title: "Payment Successful",
-        description: "Your Apple Pay payment has been processed successfully.",
+      if (!window.ApplePaySession?.canMakePayments()) {
+        throw new Error('Apple Pay is not available on this device');
+      }
+
+      if (!bill?.merchant_finix_identity_id) {
+        throw new Error('Merchant configuration not available');
+      }
+
+      const merchantName = bill.merchant_name || bill.business_legal_name || 'Merchant';
+
+      const onValidateMerchant = async (event: any) => {
+        const { data, error } = await supabase.functions.invoke('validate-apple-pay-merchant', {
+          body: {
+            validation_url: event.validationURL,
+            merchant_id: bill.merchant_finix_identity_id
+          }
+        });
+        
+        if (error || !data?.success) {
+          throw new Error('Merchant validation failed');
+        }
+        
+        return data.session;
+      };
+
+      const onPaymentAuthorized = async (event: any) => {
+        const idempotencyId = generateIdempotencyId('applepay', bill.bill_id);
+        
+        const { data, error } = await supabase.functions.invoke('process-apple-pay-transfer', {
+          body: {
+            bill_id: bill.bill_id,
+            apple_pay_token: event.payment.token,
+            total_amount_cents: totalWithFee,
+            idempotency_id: idempotencyId,
+            billing_address: event.payment.billingContact
+          }
+        });
+
+        if (error || !data?.success) {
+          return { success: false, error: data?.error || 'Payment failed' };
+        }
+
+        toast({
+          title: "Payment Successful",
+          description: "Your Apple Pay payment has been processed successfully.",
+        });
+
+        return { success: true, ...data };
+      };
+
+      const session = await initializeApplePaySession(
+        bill.merchant_finix_identity_id,
+        totalWithFee,
+        merchantName,
+        onValidateMerchant,
+        onPaymentAuthorized
+      );
+
+      session.begin();
+      
+      // Return promise that resolves when session completes
+      return new Promise((resolve) => {
+        session.oncancel = () => {
+          resolve({ success: false, error: 'Payment was cancelled' });
+        };
       });
-      return { success: true };
 
     } catch (error) {
       console.error('Apple Pay payment error:', error);
-      toast({
-        title: "Payment Failed",
-        description: "Apple Pay payment failed. Please try again.",
-        variant: "destructive",
-      });
-      return { success: false };
+      const classifiedError = classifyPaymentError(error);
+      
+      if (classifiedError.type !== 'user_cancelled') {
+        toast({
+          title: "Payment Failed",
+          description: classifiedError.message,
+          variant: "destructive",
+        });
+      }
+      return { success: false, error: classifiedError.message };
     } finally {
       setIsProcessingPayment(false);
     }

@@ -3,16 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments, UserPaymentInstrument } from './useUserPaymentInstruments';
-
-interface ServiceFee {
-  totalFee: number;
-  percentageFee: number;
-  fixedFee: number;
-  basisPoints: number;
-  isCard: boolean;
-  totalAmountToCharge: number;
-  serviceFeeToDisplay: number;
-}
+import { ServiceFee, PaymentResponse, GooglePayMerchantResponse } from '@/types/payment';
+import { classifyPaymentError, generateIdempotencyId } from '@/utils/paymentUtils';
 
 export const useTaxPaymentMethods = (taxData: {
   municipality: any;
@@ -118,8 +110,9 @@ export const useTaxPaymentMethods = (taxData: {
     const fetchGooglePayMerchantId = async () => {
       try {
         const { data } = await supabase.functions.invoke('get-google-pay-merchant-id');
-        if (data?.merchantId) {
-          setGooglePayMerchantId(data.merchantId);
+        const response = data as GooglePayMerchantResponse;
+        if (response?.merchant_id) {
+          setGooglePayMerchantId(response.merchant_id);
         }
       } catch (error) {
         console.error('Error fetching Google Pay merchant ID:', error);

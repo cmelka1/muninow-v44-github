@@ -15,7 +15,7 @@ import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import PermitPaymentSummary from '@/components/PermitPaymentSummary';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
-import PermitPaymentButtons from '@/components/PermitPaymentButtons';
+import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
@@ -398,11 +398,12 @@ const PermitDetail = () => {
                       </Button>
                     )}
                     
-                    <PermitPaymentButtons
-                      permit={permit}
+                    <PaymentButtonsContainer
+                      bill={permit}
                       totalAmount={totalWithFee || 0}
-                      onGooglePayment={handleGooglePayment}
-                      onApplePayment={handleApplePayment}
+                      merchantId={permit?.finix_merchant_id}
+                      onGooglePayment={() => handleGooglePayment().then(() => {})}
+                      onApplePayment={() => handleApplePayment().then(() => {})}
                       isDisabled={isProcessingPayment}
                     />
                   </div>

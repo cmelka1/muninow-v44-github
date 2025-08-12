@@ -2,16 +2,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
-
-interface ServiceFee {
-  totalFee: number; // Legacy - same as serviceFeeToDisplay
-  percentageFee: number;
-  fixedFee: number;
-  basisPoints: number;
-  isCard: boolean;
-  totalAmountToCharge: number; // The grossed-up amount (T)
-  serviceFeeToDisplay: number; // The fee amount shown to user (T - A)
-}
+import { ServiceFee, PaymentResponse, GooglePayMerchantResponse } from '@/types/payment';
+import { classifyPaymentError, generateIdempotencyId, initializeApplePaySession } from '@/utils/paymentUtils';
 
 export const usePermitPaymentMethods = (permit: any) => {
   const { toast } = useToast();
@@ -185,9 +177,10 @@ export const usePermitPaymentMethods = (permit: any) => {
           return;
         }
         
-        if (data?.merchant_id) {
-          setGooglePayMerchantId(data.merchant_id);
-          console.log('Google Pay merchant ID fetched:', data.merchant_id);
+        const response = data as GooglePayMerchantResponse;
+        if (response?.merchant_id) {
+          setGooglePayMerchantId(response.merchant_id);
+          console.log('Google Pay merchant ID fetched:', response.merchant_id);
         } else {
           console.warn('Google Pay merchant ID not configured');
         }
@@ -199,24 +192,24 @@ export const usePermitPaymentMethods = (permit: any) => {
     fetchGooglePayMerchantId();
   }, []);
 
-  const handlePayment = async (): Promise<void> => {
+  const handlePayment = async (): Promise<PaymentResponse> => {
     if (!selectedPaymentMethod || !permit) {
-      toast({
-        title: "Error",
-        description: "Please select a payment method and ensure permit details are loaded.",
-        variant: "destructive",
-      });
-      return;
+        toast({
+          title: "Error",
+          description: "Please select a payment method and ensure permit details are loaded.",
+          variant: "destructive",
+        });
+        return { success: false, error: "No payment method selected" };
     }
 
     // Handle regular payment methods
     if (!serviceFee) {
-      toast({
-        title: "Error",
-        description: "Service fee calculation failed. Please try again.",
-        variant: "destructive",
-      });
-      return;
+        toast({
+          title: "Error",
+          description: "Service fee calculation failed. Please try again.",
+          variant: "destructive",
+        });
+        return { success: false, error: "Service fee calculation failed" };
     }
 
     try {
@@ -243,7 +236,7 @@ export const usePermitPaymentMethods = (permit: any) => {
           description: "Fraud protection is not available. Please refresh the page and try again.",
           variant: "destructive",
         });
-        return;
+        return { success: false, error: "Fraud protection not available" };
       }
 
       console.log('Processing permit payment with fraud session ID:', currentFraudSessionId);
@@ -265,7 +258,7 @@ export const usePermitPaymentMethods = (permit: any) => {
           description: "There was an error processing your payment. Please try again.",
           variant: "destructive",
         });
-        return;
+        return { success: false, error: "Payment processing error" };
       }
 
       if (data.success) {
@@ -273,12 +266,14 @@ export const usePermitPaymentMethods = (permit: any) => {
           title: "Payment Successful",
           description: "Your permit payment has been processed successfully.",
         });
+        return { success: true, ...data };
       } else {
         toast({
           title: "Payment Failed",
           description: data.error || "Payment processing failed. Please try again.",
           variant: "destructive",
         });
+        return { success: false, error: data.error };
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -287,12 +282,13 @@ export const usePermitPaymentMethods = (permit: any) => {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+      return { success: false, error: "Unexpected error occurred" };
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
-  const handleGooglePayment = async (): Promise<void> => {
+  const handleGooglePayment = async (): Promise<PaymentResponse> => {
     try {
       setIsProcessingPayment(true);
 
@@ -358,7 +354,7 @@ export const usePermitPaymentMethods = (permit: any) => {
       const billingAddress = paymentData.paymentMethodData.info?.billingAddress;
 
       // Generate idempotency ID
-      const idempotencyId = `googlepay_${permit.permit_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const idempotencyId = generateIdempotencyId('googlepay_permit', permit.permit_id);
 
       // Call our edge function to process the payment
       const { data, error } = await supabase.functions.invoke('process-permit-google-pay-transfer', {
@@ -384,68 +380,96 @@ export const usePermitPaymentMethods = (permit: any) => {
           title: "Payment Successful",
           description: "Your Google Pay permit payment has been processed successfully.",
         });
+        return { success: true, ...data };
       } else {
         throw new Error(data?.error || 'Payment failed');
       }
 
     } catch (error) {
       console.error('Google Pay payment error:', error);
-      console.log('Google Pay error structure:', {
-        message: error?.message,
-        valueMessage: error?.value?.message,
-        valueStatusCode: error?.value?.statusCode,
-        valueName: error?.value?.name,
-        toString: error?.toString()
-      });
       
-      // Extract error message from nested structure
-      const errorMessage = error?.value?.message || error?.message || error?.toString() || '';
-      const statusCode = error?.value?.statusCode;
-      const errorName = error?.value?.name;
+      const classifiedError = classifyPaymentError(error);
       
-      // Check for user cancellation using multiple indicators
-      const isUserCancellation = statusCode === 'CANCELED' ||
-                                errorName === 'AbortError' ||
-                                errorMessage.includes('CANCELED') || 
-                                errorMessage.includes('canceled') || 
-                                errorMessage.includes('cancelled') ||
-                                errorMessage.includes('User canceled') ||
-                                errorMessage.includes('User closed the Payment Request UI') ||
-                                errorMessage.includes('AbortError') ||
-                                errorMessage.includes('Payment request was aborted');
-      
-      if (!isUserCancellation) {
+      if (classifiedError.type !== 'user_cancelled') {
         toast({
           title: "Payment Failed",
-          description: errorMessage || 'Google Pay payment failed. Please try again.',
+          description: classifiedError.message,
           variant: "destructive",
         });
       }
+      return { success: false, error: classifiedError.message };
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
-  const handleApplePayment = async (): Promise<void> => {
+  const handleApplePayment = async (): Promise<PaymentResponse> => {
     try {
-      setIsProcessingPayment(true);
+      if (!window.ApplePaySession?.canMakePayments()) {
+        throw new Error('Apple Pay is not available on this device');
+      }
 
-      // This would need to be implemented in a full Apple Pay flow
-      // For now, return success for testing
-      toast({
-        title: "Payment Successful",
-        description: "Your Apple Pay permit payment has been processed successfully.",
+      if (!permit?.finix_merchant_id) {
+        throw new Error('Merchant configuration not available');
+      }
+
+      const merchantName = permit?.merchant_name || 'Municipality';
+
+      const onValidateMerchant = async (event: any) => {
+        const { data, error } = await supabase.functions.invoke('validate-apple-pay-merchant', {
+          body: {
+            validation_url: event.validationURL,
+            merchant_id: permit.finix_merchant_id
+          }
+        });
+        
+        if (error || !data?.success) {
+          throw new Error('Merchant validation failed');
+        }
+        
+        return data.session;
+      };
+
+      const onPaymentAuthorized = async (event: any) => {
+        const idempotencyId = generateIdempotencyId('applepay_permit', permit.permit_id);
+        
+        const { data, error } = await supabase.functions.invoke('process-permit-apple-pay-transfer', {
+          body: {
+            permit_id: permit.permit_id,
+            apple_pay_token: event.payment.token,
+            total_amount_cents: totalWithFee,
+            idempotency_id: idempotencyId,
+            billing_address: event.payment.billingContact
+          }
+        });
+
+        if (error || !data?.success) {
+          return { success: false, error: data?.error || 'Payment failed' };
+        }
+
+        return { success: true, ...data };
+      };
+
+      const session = await initializeApplePaySession(
+        permit.finix_merchant_id,
+        totalWithFee,
+        merchantName,
+        onValidateMerchant,
+        onPaymentAuthorized
+      );
+
+      session.begin();
+      
+      return new Promise((resolve) => {
+        session.oncancel = () => {
+          resolve({ success: false, error: 'Payment was cancelled' });
+        };
       });
 
     } catch (error) {
       console.error('Apple Pay payment error:', error);
-      toast({
-        title: "Payment Failed",
-        description: "Apple Pay permit payment failed. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessingPayment(false);
+      const classifiedError = classifyPaymentError(error);
+      return { success: false, error: classifiedError.message };
     }
   };
 
