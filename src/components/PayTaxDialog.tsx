@@ -23,6 +23,7 @@ import { formatCurrency } from '@/lib/formatters';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import PaymentButtonsContainer from './PaymentButtonsContainer';
 import { useTaxPaymentMethods } from '@/hooks/useTaxPaymentMethods';
+import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 
 
 interface PayTaxDialogProps {
@@ -113,6 +114,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Add payment method dialog state
+  const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
 
   // Tax amount calculation for payment methods
   const getTaxAmountInCents = () => {
@@ -333,6 +337,17 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     } else {
       onOpenChange(true);
     }
+  };
+
+  const handleAddPaymentMethodSuccess = (paymentMethodId: string) => {
+    // Refresh payment instruments and auto-select the new one
+    loadPaymentInstruments();
+    setSelectedPaymentMethod(paymentMethodId);
+    setIsAddPaymentMethodOpen(false);
+    toast({
+      title: "Payment method added",
+      description: "Your new payment method has been added successfully.",
+    });
   };
 
   return (
@@ -884,6 +899,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         onSelectPaymentMethod={setSelectedPaymentMethod}
                         isLoading={paymentMethodsLoading}
                         maxMethods={3}
+                        onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
                       />
                     </CardContent>
                   </Card>
@@ -982,6 +998,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           </div>
         </div>
       </DialogContent>
+      
+      <AddPaymentMethodDialog
+        open={isAddPaymentMethodOpen}
+        onOpenChange={setIsAddPaymentMethodOpen}
+        onSuccess={handleAddPaymentMethodSuccess}
+      />
     </Dialog>
   );
 };

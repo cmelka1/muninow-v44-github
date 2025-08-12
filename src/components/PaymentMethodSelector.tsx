@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Building, Star } from 'lucide-react';
+import { CreditCard, Building, Star, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -9,6 +9,7 @@ interface PaymentMethodSelectorProps {
   onSelectPaymentMethod: (id: string) => void;
   isLoading?: boolean;
   maxMethods?: number;
+  onAddPaymentMethod?: () => void;
 }
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
@@ -16,7 +17,8 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   selectedPaymentMethod,
   onSelectPaymentMethod,
   isLoading = false,
-  maxMethods = 3
+  maxMethods = 3,
+  onAddPaymentMethod
 }) => {
   const getCardBrandIcon = (cardBrand: string) => {
     const brandMap: { [key: string]: string } = {
@@ -102,6 +104,27 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </div>
         </div>
       ))}
+      
+      {onAddPaymentMethod && (
+        <div
+          className="border border-dashed rounded-lg p-4 cursor-pointer transition-all hover:border-primary/50 hover:bg-primary/5"
+          onClick={onAddPaymentMethod}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="h-6 w-6 rounded-full border-2 border-dashed border-primary flex items-center justify-center">
+              <Plus className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-primary">
+                Add New Payment Method
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Add a credit card or bank account
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
