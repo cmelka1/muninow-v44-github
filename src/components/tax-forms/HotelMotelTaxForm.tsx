@@ -120,7 +120,7 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="line1"
                 type="text"
                 placeholder="0.00"
-              value={data.line1 ? formatNumberWithCommas(data.line1) : ''}
+              value={data.line1 || ''}
               onChange={(e) => handleInputChange('line1', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
@@ -135,7 +135,7 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="stateTax"
                 type="text"
                 placeholder="0.00"
-              value={data.stateTax ? formatNumberWithCommas(data.stateTax) : ''}
+              value={data.stateTax || ''}
               onChange={(e) => handleInputChange('stateTax', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
@@ -150,7 +150,7 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="miscReceipts"
                 type="text"
                 placeholder="0.00"
-              value={data.miscReceipts ? formatNumberWithCommas(data.miscReceipts) : ''}
+              value={data.miscReceipts || ''}
               onChange={(e) => handleInputChange('miscReceipts', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
@@ -181,7 +181,7 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="creditsAttached"
                 type="text"
                 placeholder="0.00"
-              value={data.creditsAttached ? formatNumberWithCommas(data.creditsAttached) : ''}
+              value={data.creditsAttached || ''}
               onChange={(e) => handleInputChange('creditsAttached', e.target.value)}
                 disabled={disabled}
                 className="mt-1"

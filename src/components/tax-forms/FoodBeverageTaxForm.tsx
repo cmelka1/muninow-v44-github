@@ -89,7 +89,7 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               id="gross-sales"
               type="text"
               placeholder="0.00"
-              value={data.grossSales ? formatNumberWithCommas(data.grossSales) : ''}
+              value={data.grossSales || ''}
               onChange={(e) => handleInputChange('grossSales', e.target.value)}
               disabled={disabled}
               className="mt-1"
@@ -104,7 +104,7 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               id="deductions"
               type="text"
               placeholder="0.00"
-              value={data.deductions ? formatNumberWithCommas(data.deductions) : ''}
+              value={data.deductions || ''}
               onChange={(e) => handleInputChange('deductions', e.target.value)}
               disabled={disabled}
               className="mt-1"
