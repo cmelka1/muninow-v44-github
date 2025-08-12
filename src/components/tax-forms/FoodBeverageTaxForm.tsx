@@ -43,8 +43,7 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
   };
 
   const formatNumberWithCommas = (value: string) => {
-    const numericValue = validateDecimalInput(value);
-    const number = parseFloat(numericValue) || 0;
+    const number = parseFloat(value) || 0;
     return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
