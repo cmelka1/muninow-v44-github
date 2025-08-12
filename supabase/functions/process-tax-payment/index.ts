@@ -7,10 +7,28 @@ const corsHeaders = {
 };
 
 interface ProcessTaxPaymentRequest {
-  taxSubmissionId: string;
+  taxType: string;
+  taxPeriodStart: string;
+  taxPeriodEnd: string;
+  taxYear: number;
+  customerId: string;
+  merchantId: string;
   paymentInstrumentId: string;
   idempotencyId: string;
   fraudSessionId?: string;
+  calculationData: any;
+  payer: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    businessName?: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      zipCode: string;
+    };
+  };
 }
 
 interface FinixTransferRequest {
@@ -64,16 +82,19 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { taxSubmissionId, paymentInstrumentId, idempotencyId, fraudSessionId }: ProcessTaxPaymentRequest = await req.json();
+    const { 
+      taxType, taxPeriodStart, taxPeriodEnd, taxYear, customerId, merchantId,
+      paymentInstrumentId, idempotencyId, fraudSessionId, calculationData, payer 
+    }: ProcessTaxPaymentRequest = await req.json();
 
-    console.log('Processing tax payment:', { taxSubmissionId, paymentInstrumentId, idempotencyId });
+    console.log('Processing tax payment:', { taxType, paymentInstrumentId, idempotencyId });
 
     // Check for duplicate idempotency ID
     const { data: existingPayment } = await supabaseServiceRole
       .from('payment_history')
       .select('id, transfer_state')
       .eq('idempotency_id', idempotencyId)
-      .single();
+      .maybeSingle();
 
     if (existingPayment) {
       console.log('Duplicate idempotency ID detected:', idempotencyId);
@@ -89,25 +110,6 @@ serve(async (req) => {
       );
     }
 
-    // Fetch tax submission details
-    const { data: taxSubmission, error: taxSubmissionError } = await supabaseServiceRole
-      .from('tax_submissions')
-      .select(`
-        *,
-        tax_calculations!inner(*)
-      `)
-      .eq('id', taxSubmissionId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (taxSubmissionError || !taxSubmission) {
-      throw new Error('Tax submission not found or access denied');
-    }
-
-    if (taxSubmission.payment_status === 'paid') {
-      throw new Error('Tax submission already paid');
-    }
-
     // Fetch payment instrument details
     const { data: paymentInstrument, error: piError } = await supabaseServiceRole
       .from('user_payment_instruments')
@@ -115,7 +117,7 @@ serve(async (req) => {
       .eq('id', paymentInstrumentId)
       .eq('user_id', user.id)
       .eq('enabled', true)
-      .single();
+      .maybeSingle();
 
     if (piError || !paymentInstrument) {
       throw new Error('Payment instrument not found or access denied');
@@ -128,8 +130,8 @@ serve(async (req) => {
         *,
         merchant_fee_profiles!inner(*)
       `)
-      .eq('id', taxSubmission.merchant_id)
-      .single();
+      .eq('id', merchantId)
+      .maybeSingle();
 
     if (merchantError || !merchant) {
       throw new Error('Merchant not found');
@@ -140,8 +142,13 @@ serve(async (req) => {
       throw new Error('Merchant fee profile not found');
     }
 
+    // Calculate tax amount from calculation data
+    const baseAmount = calculationData.totalDue || calculationData.tax || 0;
+    if (!baseAmount || baseAmount <= 0) {
+      throw new Error('Invalid tax amount');
+    }
+
     // Calculate service fees using grossed-up method
-    const baseAmount = taxSubmission.amount_cents;
     let serviceFee: number;
     let totalAmount: number;
 
@@ -163,42 +170,43 @@ serve(async (req) => {
 
     console.log('Fee calculation:', { baseAmount, serviceFee, totalAmount });
 
-    // Create payment history record with PENDING status
-    const { data: paymentRecord, error: paymentError } = await supabaseServiceRole
-      .from('payment_history')
-      .insert({
-        user_id: user.id,
-        customer_id: taxSubmission.customer_id,
-        amount_cents: baseAmount,
-        service_fee_cents: serviceFee,
-        total_amount_cents: totalAmount,
-        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        finix_merchant_id: merchant.finix_merchant_id,
-        currency: 'USD',
-        payment_type: paymentInstrument.instrument_type,
-        transfer_state: 'PENDING',
-        idempotency_id: idempotencyId,
-        fraud_session_id: fraudSessionId,
-        card_brand: paymentInstrument.card_brand,
-        card_last_four: paymentInstrument.card_last_four,
-        bank_last_four: paymentInstrument.bank_last_four,
-        merchant_name: merchant.merchant_name,
-        category: taxSubmission.category,
-        subcategory: taxSubmission.subcategory,
-        statement_descriptor: merchant.statement_descriptor,
-        customer_first_name: taxSubmission.first_name,
-        customer_last_name: taxSubmission.last_name,
-        customer_email: user.email,
-        payment_status: 'pending',
-        tax_submission_id: taxSubmissionId
-      })
-      .select()
-      .single();
+    // Use atomic function to create tax submission and payment record
+    const { data: atomicResult, error: atomicError } = await supabaseServiceRole
+      .rpc('create_tax_submission_with_payment', {
+        p_user_id: user.id,
+        p_customer_id: customerId,
+        p_merchant_id: merchantId,
+        p_tax_type: taxType,
+        p_tax_period_start: taxPeriodStart,
+        p_tax_period_end: taxPeriodEnd,
+        p_tax_year: taxYear,
+        p_amount_cents: baseAmount,
+        p_calculation_data: calculationData,
+        p_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+        p_finix_merchant_id: merchant.finix_merchant_id,
+        p_service_fee_cents: serviceFee,
+        p_total_amount_cents: totalAmount,
+        p_payment_type: paymentInstrument.instrument_type,
+        p_idempotency_id: idempotencyId,
+        p_fraud_session_id: fraudSessionId,
+        p_card_brand: paymentInstrument.card_brand,
+        p_card_last_four: paymentInstrument.card_last_four,
+        p_bank_last_four: paymentInstrument.bank_last_four,
+        p_merchant_name: merchant.merchant_name,
+        p_category: merchant.category,
+        p_subcategory: merchant.subcategory,
+        p_statement_descriptor: merchant.statement_descriptor,
+        p_first_name: payer.firstName,
+        p_last_name: payer.lastName,
+        p_user_email: payer.email
+      });
 
-    if (paymentError) {
-      console.error('Failed to create payment record:', paymentError);
-      throw new Error('Failed to create payment record');
+    if (atomicError || !atomicResult?.success) {
+      console.error('Failed to create tax submission and payment records:', atomicError);
+      throw new Error('Failed to create tax submission and payment records');
     }
+
+    const { tax_submission_id: taxSubmissionId, payment_history_id: paymentHistoryId } = atomicResult;
 
     // Prepare Finix transfer request
     const transferRequest: FinixTransferRequest = {
@@ -208,8 +216,8 @@ serve(async (req) => {
       source: paymentInstrument.finix_payment_instrument_id,
       tags: {
         tax_submission_id: taxSubmissionId,
-        payment_history_id: paymentRecord.id,
-        tax_type: taxSubmission.tax_type,
+        payment_history_id: paymentHistoryId,
+        tax_type: taxType,
         user_id: user.id
       }
     };
@@ -233,77 +241,88 @@ serve(async (req) => {
     const finixData: FinixTransferResponse = await finixResponse.json();
     console.log('Finix response:', finixData);
 
-    // Update payment history with Finix response
+    // If Finix call fails, rollback the transaction by deleting the created records
+    if (finixData.failure_code || finixData.state === 'FAILED') {
+      console.log('Finix transfer failed, rolling back transaction...');
+      
+      // Delete payment history record
+      await supabaseServiceRole
+        .from('payment_history')
+        .delete()
+        .eq('id', paymentHistoryId);
+      
+      // Delete tax calculation record  
+      await supabaseServiceRole
+        .from('tax_calculations')
+        .delete()
+        .eq('tax_submission_id', taxSubmissionId);
+      
+      // Delete tax submission record
+      await supabaseServiceRole
+        .from('tax_submissions')
+        .delete()
+        .eq('id', taxSubmissionId);
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Payment failed',
+          failure_code: finixData.failure_code,
+          failure_message: finixData.failure_message
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Update payment history with successful Finix response
     const updateData: any = {
       finix_transfer_id: finixData.id,
       transfer_state: finixData.state,
       raw_finix_response: finixData,
       finix_created_at: finixData.created_at,
-      finix_updated_at: finixData.updated_at
+      finix_updated_at: finixData.updated_at,
+      payment_status: 'paid'
     };
-
-    if (finixData.failure_code) {
-      updateData.failure_code = finixData.failure_code;
-      updateData.failure_message = finixData.failure_message;
-      updateData.payment_status = 'failed';
-    } else if (finixData.state === 'SUCCEEDED') {
-      updateData.payment_status = 'paid';
-    }
 
     const { error: updateError } = await supabaseServiceRole
       .from('payment_history')
       .update(updateData)
-      .eq('id', paymentRecord.id);
+      .eq('id', paymentHistoryId);
 
     if (updateError) {
       console.error('Failed to update payment record:', updateError);
     }
 
-    // Update tax submission if payment succeeded
-    if (finixData.state === 'SUCCEEDED') {
-      const { error: taxUpdateError } = await supabaseServiceRole
-        .from('tax_submissions')
-        .update({
-          payment_status: 'paid',
-          transfer_state: 'SUCCEEDED',
-          finix_transfer_id: finixData.id,
-          paid_at: new Date().toISOString(),
-          submission_status: 'submitted'
-        })
-        .eq('id', taxSubmissionId);
+    // Update tax submission with success
+    const { error: taxUpdateError } = await supabaseServiceRole
+      .from('tax_submissions')
+      .update({
+        payment_status: 'paid',
+        transfer_state: 'SUCCEEDED',
+        finix_transfer_id: finixData.id,
+        paid_at: new Date().toISOString(),
+        submission_status: 'submitted'
+      })
+      .eq('id', taxSubmissionId);
 
-      if (taxUpdateError) {
-        console.error('Failed to update tax submission:', taxUpdateError);
-      }
-    } else if (finixData.failure_code) {
-      // Update tax submission with failure info
-      const { error: taxUpdateError } = await supabaseServiceRole
-        .from('tax_submissions')
-        .update({
-          payment_status: 'failed',
-          transfer_state: 'FAILED',
-          failure_code: finixData.failure_code,
-          failure_message: finixData.failure_message
-        })
-        .eq('id', taxSubmissionId);
-
-      if (taxUpdateError) {
-        console.error('Failed to update tax submission with failure:', taxUpdateError);
-      }
+    if (taxUpdateError) {
+      console.error('Failed to update tax submission:', taxUpdateError);
     }
 
     return new Response(
       JSON.stringify({
-        success: finixData.state === 'SUCCEEDED',
+        success: true,
         transfer_id: finixData.id,
         transfer_state: finixData.state,
-        payment_history_id: paymentRecord.id,
-        amount_cents: totalAmount,
-        failure_code: finixData.failure_code,
-        failure_message: finixData.failure_message
+        payment_history_id: paymentHistoryId,
+        tax_submission_id: taxSubmissionId,
+        amount_cents: totalAmount
       }),
       {
-        status: finixData.state === 'SUCCEEDED' ? 200 : 400,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
