@@ -42,8 +42,10 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
     return cleaned;
   };
 
-  const formatNumberWithCommas = (value: string) => {
-    const number = parseFloat(value) || 0;
+  const formatDisplayValue = (value: string) => {
+    if (!value) return '';
+    const number = parseFloat(value);
+    if (isNaN(number)) return value;
     return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
@@ -74,6 +76,14 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
     onChange(newData);
   };
 
+  const handleInputBlur = (field: keyof FoodBeverageTaxData, value: string) => {
+    if (value && !isNaN(parseFloat(value))) {
+      const formattedValue = parseFloat(value).toFixed(2);
+      const newData = { ...data, [field]: formattedValue };
+      onChange(newData);
+    }
+  };
+
   return (
     <Card className="mt-4">
       <CardHeader>
@@ -91,6 +101,7 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               placeholder="0.00"
               value={data.grossSales || ''}
               onChange={(e) => handleInputChange('grossSales', e.target.value)}
+              onBlur={(e) => handleInputBlur('grossSales', e.target.value)}
               disabled={disabled}
               className="mt-1"
             />
@@ -106,6 +117,7 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               placeholder="0.00"
               value={data.deductions || ''}
               onChange={(e) => handleInputChange('deductions', e.target.value)}
+              onBlur={(e) => handleInputBlur('deductions', e.target.value)}
               disabled={disabled}
               className="mt-1"
             />
