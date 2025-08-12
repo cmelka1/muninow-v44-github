@@ -89,8 +89,12 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               id="gross-sales"
               type="text"
               placeholder="0.00"
-              value={data.grossSales || ''}
+              value={data.grossSales ? formatNumberWithCommas(data.grossSales) : ''}
               onChange={(e) => handleInputChange('grossSales', e.target.value)}
+              onFocus={(e) => {
+                const rawValue = parseFloat(data.grossSales || '0') || 0;
+                e.target.value = rawValue === 0 ? '' : rawValue.toString();
+              }}
               disabled={disabled}
               className="mt-1"
             />
@@ -104,8 +108,12 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               id="deductions"
               type="text"
               placeholder="0.00"
-              value={data.deductions || ''}
+              value={data.deductions ? formatNumberWithCommas(data.deductions) : ''}
               onChange={(e) => handleInputChange('deductions', e.target.value)}
+              onFocus={(e) => {
+                const rawValue = parseFloat(data.deductions || '0') || 0;
+                e.target.value = rawValue === 0 ? '' : rawValue.toString();
+              }}
               disabled={disabled}
               className="mt-1"
             />
