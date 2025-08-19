@@ -166,33 +166,36 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {tile.title}
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-8">
+        <DialogHeader className="space-y-4 pb-6 border-b">
+          <div className="space-y-2">
+            <DialogTitle className="text-xl font-semibold">
+              {tile.title}
+            </DialogTitle>
             {!tile.allow_user_defined_amount && (
-              <Badge variant="secondary" className="text-base px-3 py-1">
+              <Badge variant="secondary" className="text-sm px-3 py-1 w-fit">
                 ${(tile.amount_cents / 100).toFixed(2)}
               </Badge>
             )}
-          </DialogTitle>
-          <DialogDescription>
+          </div>
+          <DialogDescription className="text-base leading-relaxed">
             {tile.description}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8 pt-6">
           {/* User-Defined Amount Section */}
           {tile.allow_user_defined_amount && (
-            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+            <div className="border rounded-lg p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-base px-3 py-1">
-                  Amount: {formData.amount_cents ? `$${(formData.amount_cents / 100).toFixed(2)}` : 'TBD'}
+                <h3 className="text-sm font-medium">Service Fee</h3>
+                <Badge variant="outline" className="text-sm px-2 py-1">
+                  {formData.amount_cents ? `$${(formData.amount_cents / 100).toFixed(2)}` : 'Not set'}
                 </Badge>
               </div>
-              <div>
-                <Label htmlFor="amount" className="flex items-center gap-1">
-                  Service Fee Amount
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="flex items-center gap-1 text-sm">
+                  Amount
                   <span className="text-destructive">*</span>
                 </Label>
                 <div className="relative">
@@ -212,68 +215,83 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               </div>
             </div>
           )}
+
           {/* PDF Form Section */}
           {tile.pdf_form_url && (
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <span className="font-medium">Official Form</span>
+            <div className="border rounded-lg p-6">
+              <div className="flex items-start gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="space-y-3 flex-1">
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Download and review the official form before completing this application.
+                    </p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(tile.pdf_form_url, '_blank')}
+                    className="w-fit"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF Form
+                  </Button>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Please download and review the official form before completing this application.
-              </p>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={() => window.open(tile.pdf_form_url, '_blank')}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF Form
-              </Button>
             </div>
           )}
 
           {/* Auto-populate Toggle */}
           {tile.auto_populate_user_info && (
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="auto-populate"
-                checked={useAutoPopulate}
-                onCheckedChange={(checked) => setUseAutoPopulate(checked as boolean)}
-              />
-              <Label htmlFor="auto-populate" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Use my profile information
-              </Label>
+            <div className="border rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="auto-populate"
+                  checked={useAutoPopulate}
+                  onCheckedChange={(checked) => setUseAutoPopulate(checked as boolean)}
+                />
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="auto-populate" className="text-sm font-normal cursor-pointer">
+                    Use information from my profile
+                  </Label>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Dynamic Form Fields */}
-          <div className="space-y-4">
-            {tile.form_fields?.map((field) => (
-              <div key={field.id}>
-                <Label htmlFor={field.id} className="flex items-center gap-1">
-                  {field.label}
-                  {field.required && <span className="text-destructive">*</span>}
-                </Label>
-                {renderFormField(field)}
+          {tile.form_fields && tile.form_fields.length > 0 && (
+            <div className="border rounded-lg p-6 space-y-6">
+              <h3 className="text-sm font-medium">Application Information</h3>
+              <div className="space-y-5">
+                {tile.form_fields?.map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <Label htmlFor={field.id} className="flex items-center gap-1 text-sm">
+                      {field.label}
+                      {field.required && <span className="text-destructive">*</span>}
+                    </Label>
+                    {renderFormField(field)}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
 
           {/* Review Notice */}
           {tile.requires_review && (
-            <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Review Required:</strong> This application will be reviewed by municipal staff before approval. 
+            <div className="border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-4">
+              <p className="text-sm text-blue-900 dark:text-blue-100">
+                <span className="font-medium">Review Required:</span> This application will be reviewed by municipal staff before approval. 
                 Payment will only be processed after approval.
               </p>
             </div>
           )}
 
           {/* Submit Button */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-6 border-t">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
