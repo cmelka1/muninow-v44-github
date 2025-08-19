@@ -184,6 +184,33 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-8 pt-6">
+          {/* PDF Form Section */}
+          {tile.pdf_form_url && (
+            <div className="border rounded-lg p-6">
+              <div className="flex items-start gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="space-y-3 flex-1">
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Download and review the official form before completing this application.
+                    </p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(tile.pdf_form_url, '_blank')}
+                    className="w-fit"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF Form
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* User-Defined Amount Section */}
           {tile.allow_user_defined_amount && (
             <div className="border rounded-lg p-6 space-y-4">
@@ -211,33 +238,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     className="pl-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     required
                   />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PDF Form Section */}
-          {tile.pdf_form_url && (
-            <div className="border rounded-lg p-6">
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Download and review the official form before completing this application.
-                    </p>
-                  </div>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open(tile.pdf_form_url, '_blank')}
-                    className="w-fit"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF Form
-                  </Button>
                 </div>
               </div>
             </div>
