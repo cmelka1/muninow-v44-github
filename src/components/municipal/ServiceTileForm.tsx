@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,7 +31,7 @@ interface FormField {
 
 export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormProps) {
   const { profile } = useAuth();
-  const { merchants } = useMerchants();
+  const { merchants, isLoading, fetchMerchantsByCustomer } = useMerchants();
   const createServiceTile = useCreateServiceTile();
   const updateServiceTile = useUpdateServiceTile();
   
@@ -46,12 +46,15 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [pdfFormUrl, setPdfFormUrl] = useState(tile?.pdf_form_url || '');
   const [formFields, setFormFields] = useState<FormField[]>(tile?.form_fields as FormField[] || []);
 
-  // Filter merchants for this municipality - need to fetch them first
-  const municipalMerchants = merchants?.filter(merchant => 
-    merchant.customer_id === (customerId || profile?.customer_id)
-  ) || [];
+  // Fetch merchants for this municipality on mount
+  useEffect(() => {
+    const customerIdToUse = customerId || profile?.customer_id;
+    if (customerIdToUse) {
+      fetchMerchantsByCustomer(customerIdToUse);
+    }
+  }, [customerId, profile?.customer_id, fetchMerchantsByCustomer]);
 
-  const selectedMerchant = municipalMerchants?.find(m => m.id === selectedMerchantId);
+  const selectedMerchant = merchants?.find(m => m.id === selectedMerchantId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,23 +162,31 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="merchant">Payment Merchant</Label>
-            <Select value={selectedMerchantId} onValueChange={setSelectedMerchantId}>
+            <Select value={selectedMerchantId} onValueChange={setSelectedMerchantId} disabled={isLoading}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a merchant for payment processing" />
+                <SelectValue placeholder={isLoading ? "Loading merchants..." : "Select a merchant for payment processing"} />
               </SelectTrigger>
               <SelectContent>
-                {municipalMerchants?.map((merchant) => (
+                {merchants?.map((merchant) => (
                   <SelectItem key={merchant.id} value={merchant.id}>
                     {merchant.merchant_name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {!selectedMerchantId && (
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground mt-1">
+                Loading available merchants...
+              </p>
+            ) : !merchants?.length ? (
+              <p className="text-sm text-muted-foreground mt-1">
+                No merchants available for this municipality
+              </p>
+            ) : !selectedMerchantId ? (
               <p className="text-sm text-muted-foreground mt-1">
                 Select a merchant to enable online payments for this service
               </p>
-            )}
+            ) : null}
           </div>
         </CardContent>
       </Card>
