@@ -39,7 +39,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       const initialData: Record<string, any> = {};
       
       // Auto-populate user info if enabled
-      if (tile.auto_populate_user_info && useAutoPopulate && userProfile) {
+      if (useAutoPopulate && userProfile) {
         initialData.first_name = userProfile.first_name || '';
         initialData.last_name = userProfile.last_name || '';
         initialData.business_legal_name = userProfile.business_legal_name || '';
@@ -52,10 +52,16 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         initialData.zip_code = userProfile.zip_code || '';
       }
       
-      // Initialize form fields
+      // Initialize form fields (preserve existing values if not auto-populating)
       tile.form_fields?.forEach(field => {
-        if (!initialData[field.id]) {
-          initialData[field.id] = field.type === 'number' ? 0 : '';
+        if (useAutoPopulate && userProfile) {
+          // Use auto-populated value if available, otherwise use default
+          if (!initialData.hasOwnProperty(field.id)) {
+            initialData[field.id] = field.type === 'number' ? 0 : '';
+          }
+        } else {
+          // Keep existing form data when switching off auto-populate
+          initialData[field.id] = formData[field.id] || (field.type === 'number' ? 0 : '');
         }
       });
       
