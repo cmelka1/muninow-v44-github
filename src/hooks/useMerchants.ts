@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -92,13 +92,9 @@ export const useMerchants = () => {
     }
   };
 
-  const fetchMerchantsByCustomer = async (customerId: string, page = 1, pageSize = 10) => {
-    if (!user) {
-      console.log('No user found, cannot fetch merchants');
-      return { data: [], count: 0 };
-    }
+  const fetchMerchantsByCustomer = useCallback(async (customerId: string, page = 1, pageSize = 10) => {
+    if (!user) return { data: [], count: 0 };
     
-    console.log('Fetching merchants for customer ID:', customerId);
     setIsLoading(true);
     setError(null);
     
@@ -106,7 +102,6 @@ export const useMerchants = () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       
-      // Directly fetch merchants by customer_id
       const { data, error, count } = await supabase
         .from('merchants')
         .select('*', { count: 'exact' })
@@ -114,18 +109,11 @@ export const useMerchants = () => {
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (error) {
-        console.error('Supabase error fetching merchants:', error);
-        throw error;
-      }
-
-      console.log('Successfully fetched merchants:', data?.length || 0, 'merchants found');
-      console.log('Merchants data:', data);
+      if (error) throw error;
       
       setMerchants(data || []);
       return { data: data || [], count: count || 0 };
     } catch (err: any) {
-      console.error('Error in fetchMerchantsByCustomer:', err);
       setError(err.message);
       toast({
         title: "Error",
@@ -136,7 +124,7 @@ export const useMerchants = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, toast]);
 
   const fetchMerchantsByUserId = async (userId: string, page = 1, pageSize = 10) => {
     setIsLoading(true);
