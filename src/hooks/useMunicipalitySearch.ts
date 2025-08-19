@@ -29,8 +29,8 @@ export const useMunicipalitySearch = (searchTerm: string, minLength: number = 2)
         const { data, error } = await supabase
           .from('customers')
           .select('customer_id, legal_entity_name, doing_business_as, business_city, business_state')
-          .ilike('legal_entity_name', `%${searchTerm}%`)
-          .order('legal_entity_name')
+          .ilike('doing_business_as', `%${searchTerm}%`)
+          .order('doing_business_as')
           .limit(10);
 
         if (error) throw error;

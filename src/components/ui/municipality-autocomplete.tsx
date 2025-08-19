@@ -47,7 +47,7 @@ export const MunicipalityAutocomplete: React.FC<MunicipalityAutocompleteProps> =
   }, [value, selectedMunicipality]);
 
   const getDisplayName = (municipality: Municipality) => {
-    return municipality.legal_entity_name;
+    return municipality.doing_business_as;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
