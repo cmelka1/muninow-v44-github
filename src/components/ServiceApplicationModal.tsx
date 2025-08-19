@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { FileText, Download, User, Copy, ExternalLink, AlertCircle } from 'lucide-react';
@@ -300,18 +300,18 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           {/* Auto-populate Toggle */}
           {tile.auto_populate_user_info && (
             <div className="border rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="auto-populate"
-                  checked={useAutoPopulate}
-                  onCheckedChange={(checked) => setUseAutoPopulate(checked as boolean)}
-                />
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <Label htmlFor="auto-populate" className="text-sm font-normal cursor-pointer">
                     Use information from my profile
                   </Label>
                 </div>
+                <Switch
+                  id="auto-populate"
+                  checked={useAutoPopulate}
+                  onCheckedChange={(checked) => setUseAutoPopulate(checked as boolean)}
+                />
               </div>
             </div>
           )}
