@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, X, Upload, FileText, DollarSign } from 'lucide-react';
-import { FormFieldBuilder } from '@/components/municipal/FormFieldBuilder';
 import { MunicipalServiceTile, useCreateServiceTile, useUpdateServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useMerchants } from '@/hooks/useMerchants';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,14 +19,44 @@ interface ServiceTileFormProps {
   onClose: () => void;
 }
 
-interface FormField {
-  id: string;
-  label: string;
-  type: 'text' | 'textarea' | 'number' | 'email' | 'phone' | 'date' | 'select';
-  options?: string[];
-  required: boolean;
-  placeholder?: string;
-}
+// Standard form fields for all "Other Services"
+const STANDARD_FORM_FIELDS = [
+  {
+    id: 'name',
+    label: 'Full Name',
+    type: 'text' as const,
+    required: true,
+    placeholder: 'Enter your full name'
+  },
+  {
+    id: 'phone',
+    label: 'Phone Number',
+    type: 'phone' as const,
+    required: true,
+    placeholder: 'Enter your phone number'
+  },
+  {
+    id: 'email',
+    label: 'Email Address',
+    type: 'email' as const,
+    required: true,
+    placeholder: 'Enter your email address'
+  },
+  {
+    id: 'address',
+    label: 'Address',
+    type: 'text' as const,
+    required: true,
+    placeholder: 'Enter your full address'
+  },
+  {
+    id: 'additional_information',
+    label: 'Additional Information',
+    type: 'textarea' as const,
+    required: false,
+    placeholder: 'Please provide any additional details or information relevant to your request...'
+  }
+];
 
 export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormProps) {
   const { profile } = useAuth();
@@ -44,7 +73,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [autoPopulateUserInfo, setAutoPopulateUserInfo] = useState(tile?.auto_populate_user_info !== false);
   const [selectedMerchantId, setSelectedMerchantId] = useState(tile?.merchant_id || '');
   const [pdfFormUrl, setPdfFormUrl] = useState(tile?.pdf_form_url || '');
-  const [formFields, setFormFields] = useState<FormField[]>(tile?.form_fields as FormField[] || []);
 
   // Fetch merchants for this municipality on mount
   useEffect(() => {
@@ -82,7 +110,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       finix_merchant_id: selectedMerchant?.finix_merchant_id || undefined,
       // merchant_fee_profile_id will be set via merchant relationship
       pdf_form_url: pdfFormUrl.trim() || undefined,
-      form_fields: formFields,
+      form_fields: STANDARD_FORM_FIELDS,
       customer_id: customerId || profile?.customer_id!,
       created_by: profile?.id!,
     };
@@ -192,16 +220,32 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
         </CardContent>
       </Card>
 
-      {/* Form Builder */}
+      {/* Standard Application Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Application Form Fields</CardTitle>
+          <CardTitle>Application Form</CardTitle>
         </CardHeader>
         <CardContent>
-          <FormFieldBuilder 
-            fields={formFields}
-            onFieldsChange={setFormFields}
-          />
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground mb-4">
+              All "Other Services" will collect the following information from users:
+            </p>
+            {STANDARD_FORM_FIELDS.map((field) => (
+              <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{field.label}</span>
+                    {field.required && (
+                      <Badge variant="secondary" className="text-xs">Required</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {field.type === 'textarea' ? 'Large text area' : `${field.type} input`}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
