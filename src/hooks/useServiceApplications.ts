@@ -9,6 +9,7 @@ export interface ServiceApplication {
   customer_id: string;
   form_data: Record<string, any>;
   status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'denied' | 'paid';
+  amount_cents?: number;
   payment_id?: string;
   fraud_session_id?: string;
   idempotency_id?: string;

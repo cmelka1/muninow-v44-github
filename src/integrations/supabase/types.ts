@@ -1349,6 +1349,7 @@ export type Database = {
       }
       municipal_service_applications: {
         Row: {
+          amount_cents: number | null
           created_at: string
           customer_id: string
           form_data: Json | null
@@ -1365,6 +1366,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          amount_cents?: number | null
           created_at?: string
           customer_id: string
           form_data?: Json | null
@@ -1381,6 +1383,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          amount_cents?: number | null
           created_at?: string
           customer_id?: string
           form_data?: Json | null
@@ -1408,6 +1411,7 @@ export type Database = {
       }
       municipal_service_tiles: {
         Row: {
+          allow_user_defined_amount: boolean
           amount_cents: number
           auto_populate_user_info: boolean
           created_at: string
@@ -1426,6 +1430,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allow_user_defined_amount?: boolean
           amount_cents?: number
           auto_populate_user_info?: boolean
           created_at?: string
@@ -1444,6 +1449,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allow_user_defined_amount?: boolean
           amount_cents?: number
           auto_populate_user_info?: boolean
           created_at?: string

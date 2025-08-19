@@ -70,7 +70,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [amountDollars, setAmountDollars] = useState(tile ? (tile.amount_cents / 100).toString() : '0');
   const [requiresReview, setRequiresReview] = useState(tile?.requires_review || false);
   const [isActive, setIsActive] = useState(tile?.is_active !== false);
-  
+  const [allowUserDefinedAmount, setAllowUserDefinedAmount] = useState(tile?.allow_user_defined_amount || false);
   const [selectedMerchantId, setSelectedMerchantId] = useState(tile?.merchant_id || '');
   const [pdfFormUrl, setPdfFormUrl] = useState(tile?.pdf_form_url || '');
 
@@ -106,6 +106,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       requires_review: requiresReview,
       is_active: isActive,
       auto_populate_user_info: false,
+      allow_user_defined_amount: allowUserDefinedAmount,
       merchant_id: selectedMerchantId || undefined,
       finix_merchant_id: selectedMerchant?.finix_merchant_id || undefined,
       // merchant_fee_profile_id will be set via merchant relationship
@@ -238,6 +239,20 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
               id="requires-review"
               checked={requiresReview}
               onCheckedChange={setRequiresReview}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="allow-user-defined-amount">Allow User-Defined Amount</Label>
+              <p className="text-sm text-muted-foreground">
+                Let users enter their own service fee amount (useful for variable fees like vehicle registration)
+              </p>
+            </div>
+            <Switch
+              id="allow-user-defined-amount"
+              checked={allowUserDefinedAmount}
+              onCheckedChange={setAllowUserDefinedAmount}
             />
           </div>
           

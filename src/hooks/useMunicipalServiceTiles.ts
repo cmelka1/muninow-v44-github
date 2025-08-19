@@ -22,6 +22,7 @@ export interface MunicipalServiceTile {
     placeholder?: string;
   }>;
   auto_populate_user_info: boolean;
+  allow_user_defined_amount: boolean;
   is_active: boolean;
   created_by: string;
   created_at: string;

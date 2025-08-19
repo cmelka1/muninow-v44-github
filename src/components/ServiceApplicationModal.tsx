@@ -72,9 +72,14 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     if (!tile) return;
 
     // Validate required fields
-    const missingFields = tile.form_fields?.filter(field => 
+    let missingFields: { label: string }[] = tile.form_fields?.filter(field => 
       field.required && (!formData[field.id] || formData[field.id] === '')
-    ) || [];
+    ).map(field => ({ label: field.label })) || [];
+
+    // Add amount validation for user-defined amounts
+    if (tile.allow_user_defined_amount && (!formData.amount_cents || formData.amount_cents <= 0)) {
+      missingFields = [...missingFields, { label: 'Service Fee Amount' }];
+    }
 
     if (missingFields.length > 0) {
       toast({
@@ -92,6 +97,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         customer_id: tile.customer_id,
         form_data: formData,
         status: 'submitted',
+        amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
       });
       
       onClose();
@@ -163,9 +169,11 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {tile.title}
-            <Badge variant="secondary">
-              ${(tile.amount_cents / 100).toFixed(2)}
-            </Badge>
+            {!tile.allow_user_defined_amount && (
+              <Badge variant="secondary" className="text-base px-3 py-1">
+                ${(tile.amount_cents / 100).toFixed(2)}
+              </Badge>
+            )}
           </DialogTitle>
           <DialogDescription>
             {tile.description}
@@ -173,6 +181,36 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* User-Defined Amount Section */}
+          {tile.allow_user_defined_amount && (
+            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-base px-3 py-1">
+                  Amount: {formData.amount_cents ? `$${(formData.amount_cents / 100).toFixed(2)}` : 'TBD'}
+                </Badge>
+              </div>
+              <div>
+                <Label htmlFor="amount" className="flex items-center gap-1">
+                  Service Fee Amount
+                  <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.amount_cents ? (formData.amount_cents / 100).toString() : ''}
+                    onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                    placeholder="0.00"
+                    className="pl-8"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           {/* PDF Form Section */}
           {tile.pdf_form_url && (
             <div className="bg-muted/50 p-4 rounded-lg">
