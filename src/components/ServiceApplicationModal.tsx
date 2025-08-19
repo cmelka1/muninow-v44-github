@@ -41,39 +41,82 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // Debug logging
       console.log('ServiceApplicationModal - useAutoPopulate:', useAutoPopulate);
       console.log('ServiceApplicationModal - profile:', profile);
+      console.log('ServiceApplicationModal - tile.form_fields:', tile.form_fields);
       
-      // Auto-populate user info if enabled
-      if (useAutoPopulate && profile) {
-        initialData.first_name = profile.first_name || '';
-        initialData.last_name = profile.last_name || '';
-        initialData.business_legal_name = profile.business_legal_name || '';
-        initialData.email = profile.email || '';
-        initialData.phone = profile.phone || '';
-        initialData.street_address = profile.street_address || '';
-        initialData.apt_number = (profile as any).apt_number || '';
-        initialData.city = profile.city || '';
-        initialData.state = profile.state || '';
-        initialData.zip_code = profile.zip_code || '';
+      // Initialize form fields first
+      tile.form_fields?.forEach(field => {
+        initialData[field.id] = field.type === 'number' ? 0 : '';
+      });
+      
+      // Smart auto-population based on actual form field names
+      if (useAutoPopulate && profile && tile.form_fields) {
+        // Create a mapping of field IDs to check for common patterns
+        const fieldIds = tile.form_fields.map(field => field.id.toLowerCase());
+        
+        // Map profile data to form fields intelligently
+        tile.form_fields.forEach(field => {
+          const fieldId = field.id.toLowerCase();
+          
+          // Handle name fields
+          if (fieldId === 'name' || fieldId === 'full_name' || fieldId === 'fullname') {
+            if (profile.first_name || profile.last_name) {
+              initialData[field.id] = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+            }
+          } else if (fieldId === 'first_name' || fieldId === 'firstname') {
+            initialData[field.id] = profile.first_name || '';
+          } else if (fieldId === 'last_name' || fieldId === 'lastname') {
+            initialData[field.id] = profile.last_name || '';
+          }
+          
+          // Handle address fields
+          else if (fieldId === 'address' || fieldId === 'full_address' || fieldId === 'street_address') {
+            if (profile.street_address) {
+              const addressParts = [
+                profile.street_address,
+                (profile as any).apt_number ? `Apt ${(profile as any).apt_number}` : '',
+                profile.city,
+                profile.state,
+                profile.zip_code
+              ].filter(Boolean);
+              initialData[field.id] = addressParts.join(', ');
+            }
+          } else if (fieldId === 'street' || fieldId === 'street_address') {
+            initialData[field.id] = profile.street_address || '';
+          } else if (fieldId === 'apt' || fieldId === 'apt_number' || fieldId === 'apartment') {
+            initialData[field.id] = (profile as any).apt_number || '';
+          } else if (fieldId === 'city') {
+            initialData[field.id] = profile.city || '';
+          } else if (fieldId === 'state') {
+            initialData[field.id] = profile.state || '';
+          } else if (fieldId === 'zip' || fieldId === 'zip_code' || fieldId === 'postal_code') {
+            initialData[field.id] = profile.zip_code || '';
+          }
+          
+          // Handle contact fields
+          else if (fieldId === 'email') {
+            initialData[field.id] = profile.email || '';
+          } else if (fieldId === 'phone' || fieldId === 'phone_number') {
+            initialData[field.id] = profile.phone || '';
+          }
+          
+          // Handle business fields
+          else if (fieldId === 'business_name' || fieldId === 'business_legal_name' || fieldId === 'company_name') {
+            initialData[field.id] = profile.business_legal_name || '';
+          }
+        });
       }
       
-      // Initialize form fields (preserve existing values if not auto-populating)
-      tile.form_fields?.forEach(field => {
-        if (useAutoPopulate && profile) {
-          // Use auto-populated value if available, otherwise use default
-          if (!initialData.hasOwnProperty(field.id)) {
-            initialData[field.id] = field.type === 'number' ? 0 : '';
-          }
-        } else {
-          // Keep existing form data when switching off auto-populate
+      // If not auto-populating, preserve existing form data
+      if (!useAutoPopulate) {
+        tile.form_fields?.forEach(field => {
           initialData[field.id] = formData[field.id] || (field.type === 'number' ? 0 : '');
-        }
-      });
+        });
+      }
       
       setFormData(initialData);
       
       // Debug logging for form data
-      console.log('ServiceApplicationModal - initialData:', initialData);
-      console.log('ServiceApplicationModal - formData after setFormData:', initialData);
+      console.log('ServiceApplicationModal - initialData after smart mapping:', initialData);
     }
   }, [tile, isOpen, useAutoPopulate, profile]);
 
