@@ -220,34 +220,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
         </CardContent>
       </Card>
 
-      {/* Standard Application Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Application Form</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground mb-4">
-              All "Other Services" will collect the following information from users:
-            </p>
-            {STANDARD_FORM_FIELDS.map((field) => (
-              <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{field.label}</span>
-                    {field.required && (
-                      <Badge variant="secondary" className="text-xs">Required</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {field.type === 'textarea' ? 'Large text area' : `${field.type} input`}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Settings */}
       <Card>
