@@ -178,7 +178,7 @@ export function ApplicationHistoryTable({ applications, serviceTiles, isLoading 
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {tile ? formatCurrency(tile.amount_cents) : 'N/A'}
+                          {tile ? (tile.allow_user_defined_amount ? 'Varies' : formatCurrency(tile.amount_cents)) : 'N/A'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
