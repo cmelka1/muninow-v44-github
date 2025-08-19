@@ -211,38 +211,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             </div>
           )}
 
-          {/* User-Defined Amount Section */}
-          {tile.allow_user_defined_amount && (
-            <div className="border rounded-lg p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium">Service Fee</h3>
-                <Badge variant="outline" className="text-sm px-2 py-1">
-                  {formData.amount_cents ? `$${(formData.amount_cents / 100).toFixed(2)}` : 'Not set'}
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount" className="flex items-center gap-1 text-sm">
-                  Amount
-                  <span className="text-destructive">*</span>
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.amount_cents ? (formData.amount_cents / 100).toString() : ''}
-                    onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                    placeholder="0.00"
-                    className="pl-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Auto-populate Toggle */}
           {tile.auto_populate_user_info && (
             <div className="border rounded-lg p-4">
@@ -276,6 +244,38 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     {renderFormField(field)}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* User-Defined Amount Section */}
+          {tile.allow_user_defined_amount && (
+            <div className="border rounded-lg p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium">Service Fee</h3>
+                <Badge variant="outline" className="text-sm px-2 py-1">
+                  {formData.amount_cents ? `$${(formData.amount_cents / 100).toFixed(2)}` : 'Not set'}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="flex items-center gap-1 text-sm">
+                  Amount
+                  <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.amount_cents ? (formData.amount_cents / 100).toString() : ''}
+                    onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                    placeholder="0.00"
+                    className="pl-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    required
+                  />
+                </div>
               </div>
             </div>
           )}
