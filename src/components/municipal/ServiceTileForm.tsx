@@ -81,7 +81,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [isActive, setIsActive] = useState(tile?.is_active !== false);
   const [allowUserDefinedAmount, setAllowUserDefinedAmount] = useState(tile?.allow_user_defined_amount || false);
   const [selectedMerchantId, setSelectedMerchantId] = useState(tile?.merchant_id || '');
-  const [pdfFormUrl, setPdfFormUrl] = useState(tile?.pdf_form_url || '');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -153,7 +152,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
 
     const amountCents = Math.round(parseFloat(amountDollars || '0') * 100);
     
-    let finalPdfUrl = pdfFormUrl.trim() || undefined;
+    let finalPdfUrl = tile?.pdf_form_url; // Keep existing URL if no new file uploaded
     
     // Upload new PDF file if selected
     if (pdfFile) {
@@ -362,42 +361,31 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
             />
           </div>
           
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="pdf-upload">Upload PDF Form (Optional)</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="pdf-upload"
-                  type="file"
-                  accept=".pdf"
-                  onChange={handlePdfFileChange}
-                  className="flex-1"
-                />
-                <Upload className="h-4 w-4 text-muted-foreground" />
-              </div>
-              {pdfFile && (
-                <p className="text-sm text-green-600 mt-1">
-                  Selected: {pdfFile.name}
-                </p>
-              )}
-              <p className="text-sm text-muted-foreground mt-1">
-                Upload a PDF form file (max 10MB). This will replace any existing PDF URL.
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="pdf-form">Or enter PDF Form URL</Label>
+          <div>
+            <Label htmlFor="pdf-upload">Upload PDF Form (Optional)</Label>
+            <div className="flex items-center gap-2">
               <Input
-                id="pdf-form"
-                value={pdfFormUrl}
-                onChange={(e) => setPdfFormUrl(e.target.value)}
-                placeholder="https://example.com/form.pdf"
-                disabled={!!pdfFile}
+                id="pdf-upload"
+                type="file"
+                accept=".pdf"
+                onChange={handlePdfFileChange}
+                className="flex-1"
               />
-              <p className="text-sm text-muted-foreground mt-1">
-                {pdfFile ? 'Clear file selection to enter a URL' : 'Link to a downloadable PDF form for this service'}
-              </p>
+              <Upload className="h-4 w-4 text-muted-foreground" />
             </div>
+            {pdfFile && (
+              <p className="text-sm text-green-600 mt-1">
+                Selected: {pdfFile.name}
+              </p>
+            )}
+            {tile?.pdf_form_url && !pdfFile && (
+              <p className="text-sm text-blue-600 mt-1">
+                Current PDF: Available for download
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground mt-1">
+              Upload a PDF form file (max 10MB). This will replace any existing PDF.
+            </p>
           </div>
         </CardContent>
       </Card>
