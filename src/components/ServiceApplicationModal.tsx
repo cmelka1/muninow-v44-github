@@ -9,17 +9,40 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { FileText, Download, User, Copy, ExternalLink, AlertCircle } from 'lucide-react';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ServiceApplicationModalProps {
   tile: MunicipalServiceTile | null;
   isOpen: boolean;
   onClose: () => void;
 }
+
+interface UploadedDocument {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  documentType: string;
+  description?: string;
+  uploadProgress: number;
+  uploadStatus: 'pending' | 'uploading' | 'completed' | 'error';
+  filePath?: string;
+  error?: string;
+}
+
+const DOCUMENT_TYPES = [
+  'general',
+  'plans',
+  'specifications', 
+  'inspection',
+  'survey',
+  'other'
+];
 
 const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   tile,
@@ -29,6 +52,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [useAutoPopulate, setUseAutoPopulate] = useState(true);
   const [pdfAccessBlocked, setPdfAccessBlocked] = useState(false);
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
+  const [dragActive, setDragActive] = useState(false);
   
   const { profile } = useAuth();
   const createApplication = useCreateServiceApplication();
@@ -152,7 +177,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     }
 
     try {
-      await createApplication.mutateAsync({
+      const applicationData = await createApplication.mutateAsync({
         tile_id: tile.id,
         user_id: profile?.id || '',
         customer_id: tile.customer_id,
@@ -160,6 +185,27 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         status: 'submitted',
         amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
       });
+
+      // Link uploaded documents to the application
+      if (uploadedDocuments.length > 0) {
+        const documentPromises = uploadedDocuments
+          .filter(doc => doc.uploadStatus === 'completed')
+          .map(doc => 
+            supabase.from('service_application_documents').insert({
+              application_id: applicationData.id,
+              user_id: profile?.id || '',
+              customer_id: tile.customer_id,
+              file_name: doc.name,
+              document_type: doc.documentType,
+              description: doc.description || null,
+              storage_path: doc.filePath || '',
+              file_size: doc.size,
+              content_type: doc.type
+            })
+          );
+
+        await Promise.all(documentPromises);
+      }
       
       onClose();
     } catch (error) {
@@ -220,6 +266,160 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           />
         );
     }
+  };
+
+  // File upload handlers
+  const validateFile = (file: File): string | null => {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif'
+    ];
+
+    if (file.size > maxSize) {
+      return 'File size must be less than 10MB';
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      return 'File type not supported. Please upload PDF, DOC, DOCX, JPG, PNG, or GIF files.';
+    }
+
+    return null;
+  };
+
+  const uploadFile = async (file: File, documentId: string) => {
+    if (!profile?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${file.name}`;
+    const filePath = `${profile.id}/service-applications/${documentId}/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('service-application-documents')
+      .upload(filePath, file);
+
+    if (error) throw error;
+    return { path: data.path, fileName };
+  };
+
+  const handleFileSelect = async (files: FileList) => {
+    const fileArray = Array.from(files);
+    
+    for (const file of fileArray) {
+      const validationError = validateFile(file);
+      if (validationError) {
+        toast({
+          title: "File validation error",
+          description: validationError,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      const documentId = crypto.randomUUID();
+      const newDocument: UploadedDocument = {
+        id: documentId,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        documentType: 'general',
+        uploadProgress: 0,
+        uploadStatus: 'uploading'
+      };
+
+      setUploadedDocuments(prev => [...prev, newDocument]);
+
+      try {
+        const { path } = await uploadFile(file, documentId);
+        
+        setUploadedDocuments(prev => prev.map(doc => 
+          doc.id === documentId 
+            ? { ...doc, uploadStatus: 'completed', uploadProgress: 100, filePath: path }
+            : doc
+        ));
+
+        toast({
+          title: "File uploaded successfully",
+          description: `${file.name} has been uploaded.`,
+        });
+      } catch (error) {
+        console.error('Upload failed:', error);
+        setUploadedDocuments(prev => prev.map(doc => 
+          doc.id === documentId 
+            ? { ...doc, uploadStatus: 'error', error: 'Upload failed' }
+            : doc
+        ));
+        
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload ${file.name}. Please try again.`,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleRemoveDocument = (documentId: string) => {
+    setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  };
+
+  const handleDocumentTypeChange = (documentId: string, documentType: string) => {
+    setUploadedDocuments(prev => prev.map(doc => 
+      doc.id === documentId ? { ...doc, documentType } : doc
+    ));
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files);
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) {
+      return <Image className="h-4 w-4" />;
+    } else if (fileType === 'application/pdf') {
+      return <FileText className="h-4 w-4" />;
+    } else {
+      return <FileCheck className="h-4 w-4" />;
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (!tile) return null;
@@ -390,6 +590,119 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               </CardContent>
             </Card>
           )}
+
+          {/* Document Upload Section */}
+          <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                Document Upload
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-foreground">
+                    Supporting Documents <span className="text-muted-foreground">(Optional)</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Upload any documents that support your application
+                  </p>
+                  
+                  {/* File Upload Zone */}
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      dragActive 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+                    }`}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                    <div className="text-sm">
+                      <label htmlFor="file-upload" className="text-primary hover:text-primary/80 cursor-pointer font-medium">
+                        Click to upload
+                      </label>
+                      <span className="text-muted-foreground"> or drag and drop</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
+                    </p>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Uploaded Files List */}
+                {uploadedDocuments.length > 0 && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-foreground">
+                      Uploaded Files ({uploadedDocuments.length})
+                    </Label>
+                    {uploadedDocuments.map((doc) => (
+                      <div key={doc.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                        <div className="flex-shrink-0">
+                          {getFileIcon(doc.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {doc.name}
+                          </p>
+                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                            <span>{formatFileSize(doc.size)}</span>
+                            {doc.uploadStatus === 'uploading' && (
+                              <span className="text-blue-600">Uploading...</span>
+                            )}
+                            {doc.uploadStatus === 'completed' && (
+                              <span className="text-green-600">✓ Uploaded</span>
+                            )}
+                            {doc.uploadStatus === 'error' && (
+                              <span className="text-red-600">Error: {doc.error}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Select
+                            defaultValue={doc.documentType}
+                            onValueChange={(value) => handleDocumentTypeChange(doc.id, value)}
+                          >
+                            <SelectTrigger className="w-32 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="general">General</SelectItem>
+                              <SelectItem value="plans">Plans</SelectItem>
+                              <SelectItem value="specifications">Specifications</SelectItem>
+                              <SelectItem value="inspection">Inspection</SelectItem>
+                              <SelectItem value="survey">Survey</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveDocument(doc.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* User-Defined Amount Section */}
           {tile.allow_user_defined_amount && (

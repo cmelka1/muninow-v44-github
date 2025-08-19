@@ -2605,6 +2605,54 @@ export type Database = {
         }
         Relationships: []
       }
+      service_application_documents: {
+        Row: {
+          application_id: string
+          content_type: string
+          created_at: string
+          customer_id: string
+          description: string | null
+          document_type: string
+          file_name: string
+          file_size: number
+          id: string
+          storage_path: string
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          application_id: string
+          content_type: string
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          document_type: string
+          file_name: string
+          file_size: number
+          id?: string
+          storage_path: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          application_id?: string
+          content_type?: string
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          document_type?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          storage_path?: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tax_calculations: {
         Row: {
           calculation_data: Json
