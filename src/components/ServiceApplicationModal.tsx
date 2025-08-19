@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { FileText, Download, User } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
@@ -113,12 +114,12 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     switch (type) {
       case 'textarea':
         return (
-          <Textarea
+          <RichTextEditor
             key={id}
-            value={formData[id] || ''}
-            onChange={(e) => handleInputChange(id, e.target.value)}
-            placeholder={placeholder}
-            className="min-h-[100px]"
+            content={formData[id] || ''}
+            onChange={(content) => handleInputChange(id, content)}
+            placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
+            className="w-full"
           />
         );
       
