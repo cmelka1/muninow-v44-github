@@ -39,6 +39,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       if (tile.auto_populate_user_info && useAutoPopulate && userProfile) {
         initialData.first_name = userProfile.first_name || '';
         initialData.last_name = userProfile.last_name || '';
+        initialData.business_legal_name = userProfile.business_legal_name || '';
         initialData.email = userProfile.email || '';
         initialData.phone = userProfile.phone || '';
         initialData.street_address = userProfile.street_address || '';

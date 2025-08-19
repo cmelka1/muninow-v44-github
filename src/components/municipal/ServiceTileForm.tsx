@@ -29,6 +29,13 @@ const STANDARD_FORM_FIELDS = [
     placeholder: 'Enter your full name'
   },
   {
+    id: 'business_legal_name',
+    label: 'Business Legal Name',
+    type: 'text' as const,
+    required: false,
+    placeholder: 'Enter business legal name (if applicable)'
+  },
+  {
     id: 'phone',
     label: 'Phone Number',
     type: 'phone' as const,
