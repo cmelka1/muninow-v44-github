@@ -1,20 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { BusinessLicenseFilters } from '@/components/BusinessLicenseFilter';
 
 export interface BusinessLicense {
-  license_id: string;
+  id: string;
   license_number: string;
-  license_type: string;
-  business_name: string;
-  business_address: string;
-  applicant_name: string;
-  status: string;
-  license_fee_cents: number;
-  expiration_date?: string;
-  issued_date?: string;
-  submitted_at: string;
+  business_legal_name: string;
+  business_type: string;
+  business_street_address: string;
+  owner_first_name: string;
+  owner_last_name: string;
+  application_status: string;
+  base_fee_cents: number;
+  total_fee_cents: number;
+  submitted_at?: string;
+  approved_at?: string;
+  issued_at?: string;
   created_at: string;
-  business_category: string;
+  updated_at: string;
 }
 
 interface UseBusinessLicensesParams {
@@ -23,121 +27,29 @@ interface UseBusinessLicensesParams {
   pageSize?: number;
 }
 
-// Mock data for business licenses
-const mockBusinessLicenses: BusinessLicense[] = [
-  {
-    license_id: '1',
-    license_number: 'BL-2024-001',
-    license_type: 'Business License',
-    business_name: 'Main Street Coffee Shop',
-    business_address: '123 Main St, Springfield, IL 62701',
-    applicant_name: 'John Smith',
-    status: 'active',
-    license_fee_cents: 15000, // $150.00
-    expiration_date: '2024-12-31',
-    issued_date: '2024-01-15',
-    submitted_at: '2024-01-10T09:00:00Z',
-    created_at: '2024-01-10T09:00:00Z',
-    business_category: 'restaurant'
-  },
-  {
-    license_id: '2',
-    license_number: 'BL-2024-002',
-    license_type: 'Food Service',
-    business_name: 'Fresh Bites Deli',
-    business_address: '456 Oak Ave, Springfield, IL 62702',
-    applicant_name: 'Sarah Johnson',
-    status: 'under_review',
-    license_fee_cents: 20000, // $200.00
-    submitted_at: '2024-01-20T14:30:00Z',
-    created_at: '2024-01-20T14:30:00Z',
-    business_category: 'restaurant'
-  },
-  {
-    license_id: '3',
-    license_number: 'BL-2024-003',
-    license_type: 'Retail License',
-    business_name: 'Springfield Boutique',
-    business_address: '789 Elm St, Springfield, IL 62703',
-    applicant_name: 'Michael Brown',
-    status: 'active',
-    license_fee_cents: 12500, // $125.00
-    expiration_date: '2024-11-30',
-    issued_date: '2024-02-01',
-    submitted_at: '2024-01-25T11:15:00Z',
-    created_at: '2024-01-25T11:15:00Z',
-    business_category: 'retail'
-  },
-  {
-    license_id: '4',
-    license_number: 'BL-2024-004',
-    license_type: 'Professional Service',
-    business_name: 'Springfield Legal Services',
-    business_address: '321 Court St, Springfield, IL 62704',
-    applicant_name: 'Jennifer Davis',
-    status: 'expired',
-    license_fee_cents: 30000, // $300.00
-    expiration_date: '2023-12-31',
-    issued_date: '2023-01-15',
-    submitted_at: '2023-01-10T10:00:00Z',
-    created_at: '2023-01-10T10:00:00Z',
-    business_category: 'office'
-  },
-  {
-    license_id: '5',
-    license_number: 'BL-2024-005',
-    license_type: 'Liquor License',
-    business_name: 'The Corner Pub',
-    business_address: '654 Pine St, Springfield, IL 62705',
-    applicant_name: 'Robert Wilson',
-    status: 'submitted',
-    license_fee_cents: 50000, // $500.00
-    submitted_at: '2024-02-05T16:45:00Z',
-    created_at: '2024-02-05T16:45:00Z',
-    business_category: 'entertainment'
-  },
-  {
-    license_id: '6',
-    license_number: 'BL-2024-006',
-    license_type: 'Home Occupation',
-    business_name: 'Creative Design Studio',
-    business_address: '987 Maple Ave, Springfield, IL 62706',
-    applicant_name: 'Lisa Anderson',
-    status: 'active',
-    license_fee_cents: 7500, // $75.00
-    expiration_date: '2024-12-31',
-    issued_date: '2024-02-15',
-    submitted_at: '2024-02-10T08:30:00Z',
-    created_at: '2024-02-10T08:30:00Z',
-    business_category: 'personal_service'
-  }
-];
-
 export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: UseBusinessLicensesParams = {}) => {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ['business-licenses', filters, page, pageSize],
+    queryKey: ['business-licenses', filters, page, pageSize, user?.id],
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      let filteredLicenses = [...mockBusinessLicenses];
+      if (!user) throw new Error('User must be authenticated');
+
+      let query = supabase
+        .from('business_license_applications')
+        .select('*')
+        .eq('user_id', user.id);
 
       // Apply filters
       if (filters.status) {
-        filteredLicenses = filteredLicenses.filter(license => license.status === filters.status);
+        query = query.eq('application_status', filters.status as any);
       }
 
       if (filters.licenseType) {
-        filteredLicenses = filteredLicenses.filter(license => 
-          license.license_type.toLowerCase().replace(/\s+/g, '_') === filters.licenseType
-        );
+        query = query.eq('business_type', filters.licenseType);
       }
 
-      if (filters.category) {
-        filteredLicenses = filteredLicenses.filter(license => license.business_category === filters.category);
-      }
-
-      if (filters.dateRange) {
+      if (filters.dateRange && filters.dateRange !== 'all_time') {
         const now = new Date();
         let startDate: Date;
         
@@ -158,52 +70,72 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
             startDate = new Date(0);
         }
         
-        if (filters.dateRange !== 'all_time') {
-          filteredLicenses = filteredLicenses.filter(license => 
-            new Date(license.created_at) >= startDate
-          );
-        }
+        query = query.gte('created_at', startDate.toISOString());
       }
 
       if (filters.feeRange) {
         switch (filters.feeRange) {
           case '0-50':
-            filteredLicenses = filteredLicenses.filter(license => license.license_fee_cents <= 5000);
+            query = query.lte('base_fee_cents', 5000);
             break;
           case '51-100':
-            filteredLicenses = filteredLicenses.filter(license => 
-              license.license_fee_cents > 5000 && license.license_fee_cents <= 10000
-            );
+            query = query.gt('base_fee_cents', 5000).lte('base_fee_cents', 10000);
             break;
           case '101-250':
-            filteredLicenses = filteredLicenses.filter(license => 
-              license.license_fee_cents > 10000 && license.license_fee_cents <= 25000
-            );
+            query = query.gt('base_fee_cents', 10000).lte('base_fee_cents', 25000);
             break;
           case '251-500':
-            filteredLicenses = filteredLicenses.filter(license => 
-              license.license_fee_cents > 25000 && license.license_fee_cents <= 50000
-            );
+            query = query.gt('base_fee_cents', 25000).lte('base_fee_cents', 50000);
             break;
           case '500+':
-            filteredLicenses = filteredLicenses.filter(license => license.license_fee_cents > 50000);
+            query = query.gt('base_fee_cents', 50000);
             break;
         }
       }
 
-      // Apply pagination
-      const totalCount = filteredLicenses.length;
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      const paginatedLicenses = filteredLicenses.slice(startIndex, endIndex);
+      // Get total count for pagination
+      const { count } = await supabase
+        .from('business_license_applications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      // Apply pagination and ordering
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .range((page - 1) * pageSize, page * pageSize - 1);
+
+      if (error) throw error;
+
+      const totalCount = count || 0;
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      // Transform data to match the expected interface
+      const transformedLicenses: BusinessLicense[] = (data || []).map(license => ({
+        id: license.id,
+        license_number: license.license_number || '',
+        business_legal_name: license.business_legal_name,
+        business_type: license.business_type,
+        business_street_address: license.business_street_address,
+        owner_first_name: license.owner_first_name,
+        owner_last_name: license.owner_last_name,
+        application_status: license.application_status,
+        base_fee_cents: license.base_fee_cents || 0,
+        total_fee_cents: license.total_fee_cents || 0,
+        submitted_at: license.submitted_at,
+        approved_at: license.approved_at,
+        issued_at: license.issued_at,
+        created_at: license.created_at,
+        updated_at: license.updated_at,
+      }));
 
       return {
-        licenses: paginatedLicenses,
+        licenses: transformedLicenses,
         totalCount,
-        totalPages: Math.ceil(totalCount / pageSize),
+        totalPages,
         currentPage: page,
         pageSize
       };
-    }
+    },
+    enabled: !!user,
   });
 };

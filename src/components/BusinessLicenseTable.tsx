@@ -197,40 +197,40 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {
             <TableBody>
               {licenses.map((license) => (
                 <TableRow 
-                  key={license.license_id} 
+                  key={license.id} 
                   className="h-12 cursor-pointer hover:bg-muted/50" 
-                  onClick={() => handleRowClick(license.license_id)}
+                  onClick={() => handleRowClick(license.id)}
                 >
                   <TableCell className="hidden sm:table-cell py-2">
                     <span className="text-sm text-muted-foreground">
-                      {formatDate(license.submitted_at)}
+                      {license.submitted_at ? formatDate(license.submitted_at) : formatDate(license.created_at)}
                     </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate font-mono text-sm">{license.license_number}</span>
+                    <span className="truncate font-mono text-sm">{license.license_number || 'Pending'}</span>
                   </TableCell>
                   <TableCell className="py-2">
-                    <span className="truncate block max-w-[150px] font-medium" title={license.business_name}>
-                      {license.business_name}
+                    <span className="truncate block max-w-[150px] font-medium" title={license.business_legal_name}>
+                      {license.business_legal_name}
                     </span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell py-2">
-                    <span className="truncate block max-w-[150px] text-sm" title={license.business_address}>
-                      {license.business_address}
+                    <span className="truncate block max-w-[150px] text-sm" title={license.business_street_address}>
+                      {license.business_street_address}
                     </span>
                   </TableCell>
                   <TableCell className="hidden xl:table-cell py-2 text-center">
-                    <span className="truncate block max-w-[100px] mx-auto" title={getLicenseTypeLabel(license.license_type)}>
-                      {getLicenseTypeLabel(license.license_type)}
+                    <span className="truncate block max-w-[100px] mx-auto" title={getLicenseTypeLabel(license.business_type)}>
+                      {getLicenseTypeLabel(license.business_type)}
                     </span>
                   </TableCell>
                   <TableCell className="hidden 2xl:table-cell py-2 text-center">
                     <span className="text-sm font-medium">
-                      {formatAmount(license.license_fee_cents / 100)}
+                      {formatAmount(license.base_fee_cents / 100)}
                     </span>
                   </TableCell>
                   <TableCell className="text-center py-2">
-                    {getStatusBadge(license.status)}
+                    {getStatusBadge(license.application_status)}
                   </TableCell>
                 </TableRow>
               ))}
