@@ -47,6 +47,7 @@ import MunicipalTaxes from "./pages/MunicipalTaxes";
 import MunicipalOtherServices from "./pages/MunicipalOtherServices";
 import MunicipalBillOverview from "./pages/MunicipalBillOverview";
 import Permits from "./pages/Permits";
+import BusinessLicenses from "./pages/BusinessLicenses";
 import Taxes from "./pages/Taxes";
 import OtherServices from "./pages/OtherServices";
 import PermitOverview from "./pages/PermitOverview";
@@ -87,6 +88,7 @@ const App = () => (
                 } />
                 <Route path="/payment-history" element={<PaymentHistory />} />
                 <Route path="/permits" element={<Permits />} />
+                <Route path="/business-licenses" element={<BusinessLicenses />} />
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/other-services" element={<OtherServices />} />
                 <Route path="/permit/:permitId" element={<PermitDetail />} />

@@ -37,6 +37,11 @@ const navigationItems = [
     url: '/permits'
   },
   {
+    title: 'Business Licenses',
+    icon: FileText,
+    url: '/business-licenses'
+  },
+  {
     title: 'Taxes',
     icon: Receipt,
     url: '/taxes'
