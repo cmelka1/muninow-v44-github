@@ -372,6 +372,44 @@ export type Database = {
           },
         ]
       }
+      business_license_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          license_id: string
+          reviewer_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          license_id: string
+          reviewer_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          license_id?: string
+          reviewer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_license_comments_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_license_documents: {
         Row: {
           content_type: string
