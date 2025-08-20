@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
+import { normalizeEINInput, formatEINForStorage } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -452,10 +453,12 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                     <Input
                       id="business-ein"
                       placeholder="XX-XXXXXXX"
-                      value={businessInfo.businessEIN}
+                      value={normalizeEINInput(businessInfo.businessEIN)}
                       onChange={(e) => {
-                        setBusinessInfo(prev => ({ ...prev, businessEIN: e.target.value }));
-                        if (e.target.value) clearFieldError('businessEIN');
+                        const formatted = normalizeEINInput(e.target.value);
+                        const cleaned = formatEINForStorage(formatted);
+                        setBusinessInfo(prev => ({ ...prev, businessEIN: cleaned }));
+                        if (cleaned) clearFieldError('businessEIN');
                       }}
                       className={`mt-1 ${validationErrors.businessEIN ? 'ring-2 ring-destructive border-destructive' : ''}`}
                       data-error={!!validationErrors.businessEIN}
