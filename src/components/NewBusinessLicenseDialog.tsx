@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Circle } from "lucide-react";
-import { BuildingPermitsMunicipalityAutocomplete } from "@/components/ui/building-permits-municipality-autocomplete";
-import { RestPlacesAutocomplete } from "@/components/ui/rest-places-autocomplete";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewBusinessLicenseDialogProps {
   open: boolean;
@@ -18,151 +16,129 @@ interface NewBusinessLicenseDialogProps {
 
 interface SelectedMunicipality {
   id: string;
-  name: string;
-  state: string;
+  merchant_name: string;
+  business_name: string;
+  customer_city: string;
+  customer_state: string;
+  customer_id: string;
 }
-
-interface AddressComponents {
-  streetAddress: string;
-  city: string;
-  state: string;
-  zipCode: string;
-}
-
-const BUSINESS_TYPES = [
-  "Retail & Trade",
-  "Professional Services", 
-  "Construction & Contracting",
-  "Industrial & Manufacturing",
-  "Personal Services",
-  "Hospitality & Lodging",
-  "Other"
-];
 
 export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
   open,
-  onOpenChange,
+  onOpenChange
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
-  const [selectedBusinessType, setSelectedBusinessType] = useState<string>("");
-  const [businessName, setBusinessName] = useState("");
-  const [businessAddress, setBusinessAddress] = useState("");
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
-  const [ownerPhone, setOwnerPhone] = useState("");
+  const [selectedBusinessType, setSelectedBusinessType] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const dialogContentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
 
+  const validateStep1Fields = () => {
+    const errors: Record<string, string> = {};
+
+    if (!selectedMunicipality) errors.municipality = 'Municipality is required';
+    if (!selectedBusinessType) errors.businessType = 'Business type is required';
+
+    return errors;
+  };
+
   const handleNext = () => {
-    if (validateCurrentStep()) {
-      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    if (currentStep === 1) {
+      // Validate step 1 mandatory fields before proceeding
+      const errors = validateStep1Fields();
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        // Scroll to first error field
+        const firstErrorField = document.querySelector(`[data-error="true"]`);
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      } else {
+        setValidationErrors({});
+      }
+    }
+
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
     }
   };
 
   const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
+    }
+  };
+
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
   };
 
   const handleClose = () => {
     setCurrentStep(1);
     setSelectedMunicipality(null);
-    setSelectedBusinessType("");
-    setBusinessName("");
-    setBusinessAddress("");
-    setOwnerName("");
-    setOwnerEmail("");
-    setOwnerPhone("");
+    setSelectedBusinessType('');
     setValidationErrors({});
-    setIsSubmitting(false);
     onOpenChange(false);
   };
 
-  const validateCurrentStep = () => {
-    const errors: Record<string, string> = {};
-    
-    if (currentStep === 1) {
-      if (!selectedMunicipality) {
-        errors.municipality = "Municipality is required";
-      }
-      if (!selectedBusinessType) {
-        errors.businessType = "Business type is required";
-      }
-      if (!businessName.trim()) {
-        errors.businessName = "Business name is required";
-      }
-      if (!businessAddress.trim()) {
-        errors.businessAddress = "Business address is required";
-      }
-      if (!ownerName.trim()) {
-        errors.ownerName = "Owner name is required";
-      }
-      if (!ownerEmail.trim()) {
-        errors.ownerEmail = "Owner email is required";
-      }
-      if (!ownerPhone.trim()) {
-        errors.ownerPhone = "Owner phone is required";
-      }
-    }
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleMunicipalitySelect = (municipality: any) => {
-    // Transform the municipality data to match our interface
-    const transformedMunicipality: SelectedMunicipality = {
-      id: municipality.id || municipality.customer_id,
-      name: municipality.business_name || municipality.merchant_name,
-      state: municipality.customer_state
-    };
-    setSelectedMunicipality(transformedMunicipality);
-    setValidationErrors(prev => ({ ...prev, municipality: "" }));
+  const handleMunicipalitySelect = (municipality: SelectedMunicipality) => {
+    setSelectedMunicipality(municipality);
+    clearFieldError('municipality');
   };
 
   const handleBusinessTypeSelect = (businessType: string) => {
     setSelectedBusinessType(businessType);
-    setValidationErrors(prev => ({ ...prev, businessType: "" }));
-  };
-
-  const handleAddressSelect = (addressComponents: AddressComponents) => {
-    const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
-    setBusinessAddress(fullAddress);
-    setValidationErrors(prev => ({ ...prev, businessAddress: "" }));
+    clearFieldError('businessType');
   };
 
   const handleSubmit = async () => {
-    if (!validateCurrentStep()) {
+    // Validate required fields
+    const errors = validateStep1Fields();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
+        title: "Please complete all required fields",
+        description: "Check the highlighted fields below and try again.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      // TODO: Implement business license application submission
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      // TODO: Implement actual submission logic
       toast({
-        title: "Application Submitted",
-        description: "Your business license application has been submitted successfully.",
+        title: "Application submitted successfully!",
+        description: "Your business license application has been submitted for review.",
       });
+
       handleClose();
-    } catch (error) {
-      console.error('Error submitting business license application:', error);
+    } catch (error: any) {
+      console.error('Submission error:', error);
       toast({
-        title: "Submission Failed",
-        description: "Failed to submit business license application. Please try again.",
+        title: "Submission failed",
+        description: error.message || "An error occurred while submitting your application. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -170,155 +146,61 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
-            {/* License Information Card */}
-            <Card className="animate-fade-in" style={{ animationDelay: '0s' }}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="space-y-4">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                   License Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="municipality">Municipality *</Label>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="municipality" className="text-sm font-medium text-foreground">
+                      Municipality *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Select the municipality where your license will be processed
+                    </p>
                     <BuildingPermitsMunicipalityAutocomplete
-                      onSelect={handleMunicipalitySelect}
-                      className={validationErrors.municipality ? "border-destructive" : ""}
+                      placeholder="Search for your municipality..."
+                      onSelect={(municipality) => {
+                        handleMunicipalitySelect(municipality);
+                      }}
+                      className={`mt-1 ${validationErrors.municipality ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.municipality}
                     />
                     {validationErrors.municipality && (
-                      <p className="text-sm text-destructive">{validationErrors.municipality}</p>
+                      <p className="text-sm text-destructive mt-1">{validationErrors.municipality}</p>
                     )}
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="businessType">Business Type *</Label>
-                    <Select value={selectedBusinessType} onValueChange={handleBusinessTypeSelect}>
-                      <SelectTrigger className={validationErrors.businessType ? "border-destructive" : ""}>
-                        <SelectValue placeholder="Select business type" />
+                  
+                  <div>
+                    <Label htmlFor="business-type" className="text-sm font-medium text-foreground">
+                      Business Type *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Select the type of business you operate
+                    </p>
+                    <Select onValueChange={(value) => {
+                      handleBusinessTypeSelect(value);
+                    }}>
+                      <SelectTrigger className={`mt-1 ${validationErrors.businessType ? 'ring-2 ring-destructive border-destructive' : ''}`} data-error={!!validationErrors.businessType}>
+                        <SelectValue placeholder="Select a business type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {BUSINESS_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="retail_trade">Retail & Trade</SelectItem>
+                        <SelectItem value="professional_services">Professional Services</SelectItem>
+                        <SelectItem value="construction_contracting">Construction & Contracting</SelectItem>
+                        <SelectItem value="industrial_manufacturing">Industrial & Manufacturing</SelectItem>
+                        <SelectItem value="personal_services">Personal Services</SelectItem>
+                        <SelectItem value="hospitality_lodging">Hospitality & Lodging</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                     {validationErrors.businessType && (
-                      <p className="text-sm text-destructive">{validationErrors.businessType}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Business Information Card */}
-            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  Business Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="businessName">Business Name *</Label>
-                  <Input
-                    id="businessName"
-                    value={businessName}
-                    onChange={(e) => {
-                      setBusinessName(e.target.value);
-                      setValidationErrors(prev => ({ ...prev, businessName: "" }));
-                    }}
-                    className={validationErrors.businessName ? "border-destructive" : ""}
-                    placeholder="Enter business name"
-                  />
-                  {validationErrors.businessName && (
-                    <p className="text-sm text-destructive">{validationErrors.businessName}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="businessAddress">Business Address *</Label>
-                  <RestPlacesAutocomplete
-                    placeholder="Search for business address..."
-                    onAddressSelect={handleAddressSelect}
-                    value={businessAddress}
-                    onChange={(value) => {
-                      setBusinessAddress(value);
-                      setValidationErrors(prev => ({ ...prev, businessAddress: "" }));
-                    }}
-                    className={validationErrors.businessAddress ? "border-destructive" : ""}
-                  />
-                  {validationErrors.businessAddress && (
-                    <p className="text-sm text-destructive">{validationErrors.businessAddress}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Owner Information Card */}
-            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  Owner Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="ownerName">Owner Name *</Label>
-                  <Input
-                    id="ownerName"
-                    value={ownerName}
-                    onChange={(e) => {
-                      setOwnerName(e.target.value);
-                      setValidationErrors(prev => ({ ...prev, ownerName: "" }));
-                    }}
-                    className={validationErrors.ownerName ? "border-destructive" : ""}
-                    placeholder="Enter owner name"
-                  />
-                  {validationErrors.ownerName && (
-                    <p className="text-sm text-destructive">{validationErrors.ownerName}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="ownerEmail">Owner Email *</Label>
-                    <Input
-                      id="ownerEmail"
-                      type="email"
-                      value={ownerEmail}
-                      onChange={(e) => {
-                        setOwnerEmail(e.target.value);
-                        setValidationErrors(prev => ({ ...prev, ownerEmail: "" }));
-                      }}
-                      className={validationErrors.ownerEmail ? "border-destructive" : ""}
-                      placeholder="Enter owner email"
-                    />
-                    {validationErrors.ownerEmail && (
-                      <p className="text-sm text-destructive">{validationErrors.ownerEmail}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="ownerPhone">Owner Phone *</Label>
-                    <Input
-                      id="ownerPhone"
-                      type="tel"
-                      value={ownerPhone}
-                      onChange={(e) => {
-                        setOwnerPhone(e.target.value);
-                        setValidationErrors(prev => ({ ...prev, ownerPhone: "" }));
-                      }}
-                      className={validationErrors.ownerPhone ? "border-destructive" : ""}
-                      placeholder="Enter owner phone"
-                    />
-                    {validationErrors.ownerPhone && (
-                      <p className="text-sm text-destructive">{validationErrors.ownerPhone}</p>
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessType}</p>
                     )}
                   </div>
                 </div>
@@ -328,16 +210,34 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         );
       case 2:
         return (
-          <div className="text-center py-8">
-            <h3 className="text-lg font-semibold mb-2">Step 2: Additional Information</h3>
-            <p className="text-muted-foreground">This step will be implemented next.</p>
+          <div className="space-y-4">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Step 2 - Coming Soon
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Additional form fields will be added here.</p>
+              </CardContent>
+            </Card>
           </div>
         );
       case 3:
         return (
-          <div className="text-center py-8">
-            <h3 className="text-lg font-semibold mb-2">Step 3: Review & Submit</h3>
-            <p className="text-muted-foreground">This step will be implemented next.</p>
+          <div className="space-y-4">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Step 3 - Coming Soon
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Review and submission will be added here.</p>
+              </CardContent>
+            </Card>
           </div>
         );
       default:
@@ -347,78 +247,74 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>New Business License Application</DialogTitle>
+      <DialogContent 
+        className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col p-0"
+        ref={dialogContentRef}
+      >
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle className="text-xl font-semibold">New Business License Application</DialogTitle>
+          
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center space-x-4">
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <div key={i} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                    i + 1 < currentStep 
+                      ? 'bg-primary text-primary-foreground' 
+                      : i + 1 === currentStep 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {i + 1 < currentStep ? '✓' : i + 1}
+                  </div>
+                  {i < totalSteps - 1 && (
+                    <div className={`w-8 h-0.5 mx-2 transition-colors ${
+                      i + 1 < currentStep ? 'bg-primary' : 'bg-muted'
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Step {currentStep} of {totalSteps}
+            </div>
+          </div>
+          
+          {/* Progress Bar */}
+          <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
 
-        {/* Progress Section */}
-        <div className="space-y-4 mb-6">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Step {currentStep} of {totalSteps}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {Math.round(progress)}% Complete
-            </span>
-          </div>
-          <Progress value={progress} className="w-full" />
-        </div>
-
-        {/* Step Indicators */}
-        <div className="flex justify-center space-x-8 py-6">
-          {[
-            { step: 1, label: 'License Info' },
-            { step: 2, label: 'Additional Info' },
-            { step: 3, label: 'Review' }
-          ].map(({ step, label }) => (
-            <div key={step} className="flex flex-col items-center space-y-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
-                step < currentStep 
-                  ? 'bg-primary border-primary text-primary-foreground shadow-md' 
-                  : step === currentStep 
-                    ? 'border-primary bg-primary/10 text-primary ring-4 ring-primary/20' 
-                    : 'border-muted-foreground/30 bg-background text-muted-foreground'
-              }`}>
-                {step < currentStep ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  <span className="text-sm font-medium">{step}</span>
-                )}
-              </div>
-              <span className={`text-xs transition-colors ${
-                step <= currentStep ? 'text-foreground' : 'text-muted-foreground'
-              }`}>
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Step Content */}
-        <div className="min-h-[400px] mb-6">
+        <div className="flex-1 overflow-y-auto px-6">
           {renderStepContent()}
         </div>
 
         {/* Navigation Footer */}
-        <div className="bg-muted/30 rounded-lg p-4 mt-6">
-          <div className="flex justify-between items-center">
+        <div className="p-6 pt-4 border-t bg-muted/5">
+          <div className="flex justify-between">
             <Button
               variant="outline"
-              onClick={currentStep === 1 ? handleClose : handlePrevious}
-              disabled={isSubmitting}
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              className="flex items-center gap-2"
             >
-              {currentStep === 1 ? 'Cancel' : 'Previous'}
+              <ChevronLeft className="h-4 w-4" />
+              Previous
             </Button>
             
-            <div className="flex space-x-2">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              
               {currentStep < totalSteps ? (
-                <Button onClick={handleNext} disabled={isSubmitting}>
+                <Button onClick={handleNext} className="flex items-center gap-2">
                   Next
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                <Button onClick={handleSubmit} className="flex items-center gap-2">
+                  Submit Application
                 </Button>
               )}
             </div>
