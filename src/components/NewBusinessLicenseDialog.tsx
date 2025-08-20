@@ -212,14 +212,13 @@ const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="restaurant">Restaurant</SelectItem>
-                  <SelectItem value="retail">Retail Store</SelectItem>
-                  <SelectItem value="office">Office</SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
-                  <SelectItem value="automotive">Automotive</SelectItem>
-                  <SelectItem value="personal_service">Personal Service</SelectItem>
-                  <SelectItem value="entertainment">Entertainment</SelectItem>
-                  <SelectItem value="construction">Construction</SelectItem>
+                  <SelectItem value="retail_trade">Retail & Trade</SelectItem>
+                  <SelectItem value="professional_services">Professional Services</SelectItem>
+                  <SelectItem value="construction_contracting">Construction & Contracting</SelectItem>
+                  <SelectItem value="industrial_manufacturing">Industrial & Manufacturing</SelectItem>
+                  <SelectItem value="personal_services">Personal Services</SelectItem>
+                  <SelectItem value="hospitality_lodging">Hospitality & Lodging</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
