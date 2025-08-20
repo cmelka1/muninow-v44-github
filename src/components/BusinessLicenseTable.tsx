@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { BusinessLicenseFilters } from './BusinessLicenseFilter';
-import NewBusinessLicenseDialog from '@/components/NewBusinessLicenseDialog';
+import { NewBusinessLicenseDialog } from '@/components/NewBusinessLicenseDialog';
 import { useBusinessLicenses } from '@/hooks/useBusinessLicenses';
 
 interface BusinessLicenseTableProps {

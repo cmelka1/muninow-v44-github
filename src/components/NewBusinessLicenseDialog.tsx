@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewBusinessLicenseDialogProps {
@@ -17,417 +14,284 @@ interface NewBusinessLicenseDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-interface BusinessInformation {
-  businessName: string;
-  businessAddress: string;
-  businessPhone: string;
-  businessEmail: string;
-  licenseType: string;
-  businessCategory: string;
-  businessDescription: string;
-  operatingHours: string;
-  numberOfEmployees: string;
+interface SelectedMunicipality {
+  id: string;
+  merchant_name: string;
+  business_name: string;
+  customer_city: string;
+  customer_state: string;
+  customer_id: string;
 }
 
-interface OwnerInformation {
-  ownerName: string;
-  ownerPhone: string;
-  ownerEmail: string;
-  ownerAddress: string;
-  federalEIN: string;
-  stateRegistrationNumber: string;
-}
-
-const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
+export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
   open,
   onOpenChange
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [businessInfo, setBusinessInfo] = useState<BusinessInformation>({
-    businessName: '',
-    businessAddress: '',
-    businessPhone: '',
-    businessEmail: '',
-    licenseType: '',
-    businessCategory: '',
-    businessDescription: '',
-    operatingHours: '',
-    numberOfEmployees: ''
-  });
-  const [ownerInfo, setOwnerInfo] = useState<OwnerInformation>({
-    ownerName: '',
-    ownerPhone: '',
-    ownerEmail: '',
-    ownerAddress: '',
-    federalEIN: '',
-    stateRegistrationNumber: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
+  const [selectedBusinessType, setSelectedBusinessType] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  const dialogContentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
 
+  const validateStep1Fields = () => {
+    const errors: Record<string, string> = {};
+
+    if (!selectedMunicipality) errors.municipality = 'Municipality is required';
+    if (!selectedBusinessType) errors.businessType = 'Business type is required';
+
+    return errors;
+  };
+
   const handleNext = () => {
+    if (currentStep === 1) {
+      // Validate step 1 mandatory fields before proceeding
+      const errors = validateStep1Fields();
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        // Scroll to first error field
+        const firstErrorField = document.querySelector(`[data-error="true"]`);
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      } else {
+        setValidationErrors({});
+      }
+    }
+
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
+    }
+  };
+
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
     }
   };
 
   const handleClose = () => {
     setCurrentStep(1);
-    setBusinessInfo({
-      businessName: '',
-      businessAddress: '',
-      businessPhone: '',
-      businessEmail: '',
-      licenseType: '',
-      businessCategory: '',
-      businessDescription: '',
-      operatingHours: '',
-      numberOfEmployees: ''
-    });
-    setOwnerInfo({
-      ownerName: '',
-      ownerPhone: '',
-      ownerEmail: '',
-      ownerAddress: '',
-      federalEIN: '',
-      stateRegistrationNumber: ''
-    });
-    setIsSubmitting(false);
+    setSelectedMunicipality(null);
+    setSelectedBusinessType('');
+    setValidationErrors({});
     onOpenChange(false);
   };
 
+  const handleMunicipalitySelect = (municipality: SelectedMunicipality) => {
+    setSelectedMunicipality(municipality);
+    clearFieldError('municipality');
+  };
+
+  const handleBusinessTypeSelect = (businessType: string) => {
+    setSelectedBusinessType(businessType);
+    clearFieldError('businessType');
+  };
+
   const handleSubmit = async () => {
-    setIsSubmitting(true);
+    // Validate required fields
+    const errors = validateStep1Fields();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      toast({
+        title: "Please complete all required fields",
+        description: "Check the highlighted fields below and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
+      // TODO: Implement actual submission logic
       toast({
-        title: "License application submitted!",
+        title: "Application submitted successfully!",
         description: "Your business license application has been submitted for review.",
       });
 
       handleClose();
     } catch (error: any) {
+      console.error('Submission error:', error);
       toast({
         title: "Submission failed",
-        description: "An error occurred while submitting your application. Please try again.",
+        description: error.message || "An error occurred while submitting your application. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Business Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="businessName">Business Name *</Label>
-              <Input
-                id="businessName"
-                value={businessInfo.businessName}
-                onChange={(e) => setBusinessInfo(prev => ({ ...prev, businessName: e.target.value }))}
-                placeholder="Enter business name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="businessPhone">Business Phone *</Label>
-              <Input
-                id="businessPhone"
-                value={businessInfo.businessPhone}
-                onChange={(e) => setBusinessInfo(prev => ({ ...prev, businessPhone: e.target.value }))}
-                placeholder="(555) 123-4567"
-              />
-            </div>
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  License Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="municipality" className="text-sm font-medium text-foreground">
+                      Municipality *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Select the municipality where your license will be processed
+                    </p>
+                    <BuildingPermitsMunicipalityAutocomplete
+                      placeholder="Search for your municipality..."
+                      onSelect={(municipality) => {
+                        handleMunicipalitySelect(municipality);
+                      }}
+                      className={`mt-1 ${validationErrors.municipality ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.municipality}
+                    />
+                    {validationErrors.municipality && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.municipality}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-type" className="text-sm font-medium text-foreground">
+                      Business Type *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Select the type of business you operate
+                    </p>
+                    <Select onValueChange={(value) => {
+                      handleBusinessTypeSelect(value);
+                    }}>
+                      <SelectTrigger className={`mt-1 ${validationErrors.businessType ? 'ring-2 ring-destructive border-destructive' : ''}`} data-error={!!validationErrors.businessType}>
+                        <SelectValue placeholder="Select a business type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="retail_trade">Retail & Trade</SelectItem>
+                        <SelectItem value="professional_services">Professional Services</SelectItem>
+                        <SelectItem value="construction_contracting">Construction & Contracting</SelectItem>
+                        <SelectItem value="industrial_manufacturing">Industrial & Manufacturing</SelectItem>
+                        <SelectItem value="personal_services">Personal Services</SelectItem>
+                        <SelectItem value="hospitality_lodging">Hospitality & Lodging</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {validationErrors.businessType && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessType}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-
-          <div>
-            <Label htmlFor="businessEmail">Business Email *</Label>
-            <Input
-              id="businessEmail"
-              type="email"
-              value={businessInfo.businessEmail}
-              onChange={(e) => setBusinessInfo(prev => ({ ...prev, businessEmail: e.target.value }))}
-              placeholder="business@example.com"
-            />
+        );
+      case 2:
+        return (
+          <div className="space-y-4">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Step 2 - Coming Soon
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Additional form fields will be added here.</p>
+              </CardContent>
+            </Card>
           </div>
-
-          <div>
-            <Label htmlFor="businessAddress">Business Address *</Label>
-            <RestPlacesAutocomplete
-              value={businessInfo.businessAddress}
-              onChange={(value) => setBusinessInfo(prev => ({ ...prev, businessAddress: value }))}
-              onAddressSelect={(addressComponents) => {
-                const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
-                setBusinessInfo(prev => ({ ...prev, businessAddress: fullAddress }));
-              }}
-              placeholder="Enter business address"
-            />
+        );
+      case 3:
+        return (
+          <div className="space-y-4">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Step 3 - Coming Soon
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Review and submission will be added here.</p>
+              </CardContent>
+            </Card>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="licenseType">License Type *</Label>
-              <Select
-                value={businessInfo.licenseType}
-                onValueChange={(value) => setBusinessInfo(prev => ({ ...prev, licenseType: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select license type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="business_license">General Business License</SelectItem>
-                  <SelectItem value="food_service">Food Service License</SelectItem>
-                  <SelectItem value="liquor_license">Liquor License</SelectItem>
-                  <SelectItem value="retail_license">Retail License</SelectItem>
-                  <SelectItem value="professional_service">Professional Service License</SelectItem>
-                  <SelectItem value="home_occupation">Home Occupation Permit</SelectItem>
-                  <SelectItem value="special_event">Special Event Permit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="businessCategory">Business Category *</Label>
-              <Select
-                value={businessInfo.businessCategory}
-                onValueChange={(value) => setBusinessInfo(prev => ({ ...prev, businessCategory: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="retail_trade">Retail & Trade</SelectItem>
-                  <SelectItem value="professional_services">Professional Services</SelectItem>
-                  <SelectItem value="construction_contracting">Construction & Contracting</SelectItem>
-                  <SelectItem value="industrial_manufacturing">Industrial & Manufacturing</SelectItem>
-                  <SelectItem value="personal_services">Personal Services</SelectItem>
-                  <SelectItem value="hospitality_lodging">Hospitality & Lodging</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="businessDescription">Business Description</Label>
-            <Textarea
-              id="businessDescription"
-              value={businessInfo.businessDescription}
-              onChange={(e) => setBusinessInfo(prev => ({ ...prev, businessDescription: e.target.value }))}
-              placeholder="Describe your business activities"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="operatingHours">Operating Hours</Label>
-              <Input
-                id="operatingHours"
-                value={businessInfo.operatingHours}
-                onChange={(e) => setBusinessInfo(prev => ({ ...prev, operatingHours: e.target.value }))}
-                placeholder="e.g., Mon-Fri 9AM-5PM"
-              />
-            </div>
-            <div>
-              <Label htmlFor="numberOfEmployees">Number of Employees</Label>
-              <Select
-                value={businessInfo.numberOfEmployees}
-                onValueChange={(value) => setBusinessInfo(prev => ({ ...prev, numberOfEmployees: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 employee (just me)</SelectItem>
-                  <SelectItem value="2-5">2-5 employees</SelectItem>
-                  <SelectItem value="6-10">6-10 employees</SelectItem>
-                  <SelectItem value="11-25">11-25 employees</SelectItem>
-                  <SelectItem value="26-50">26-50 employees</SelectItem>
-                  <SelectItem value="50+">50+ employees</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Owner Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="ownerName">Owner/Authorized Representative Name *</Label>
-            <Input
-              id="ownerName"
-              value={ownerInfo.ownerName}
-              onChange={(e) => setOwnerInfo(prev => ({ ...prev, ownerName: e.target.value }))}
-              placeholder="Enter full name"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="ownerPhone">Owner Phone *</Label>
-              <Input
-                id="ownerPhone"
-                value={ownerInfo.ownerPhone}
-                onChange={(e) => setOwnerInfo(prev => ({ ...prev, ownerPhone: e.target.value }))}
-                placeholder="(555) 123-4567"
-              />
-            </div>
-            <div>
-              <Label htmlFor="ownerEmail">Owner Email *</Label>
-              <Input
-                id="ownerEmail"
-                type="email"
-                value={ownerInfo.ownerEmail}
-                onChange={(e) => setOwnerInfo(prev => ({ ...prev, ownerEmail: e.target.value }))}
-                placeholder="owner@example.com"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="ownerAddress">Owner Address *</Label>
-            <RestPlacesAutocomplete
-              value={ownerInfo.ownerAddress}
-              onChange={(value) => setOwnerInfo(prev => ({ ...prev, ownerAddress: value }))}
-              onAddressSelect={(addressComponents) => {
-                const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
-                setOwnerInfo(prev => ({ ...prev, ownerAddress: fullAddress }));
-              }}
-              placeholder="Enter owner address"
-            />
-          </div>
-
-          <Separator />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="federalEIN">Federal EIN (if applicable)</Label>
-              <Input
-                id="federalEIN"
-                value={ownerInfo.federalEIN}
-                onChange={(e) => setOwnerInfo(prev => ({ ...prev, federalEIN: e.target.value }))}
-                placeholder="XX-XXXXXXX"
-              />
-            </div>
-            <div>
-              <Label htmlFor="stateRegistrationNumber">State Registration Number</Label>
-              <Input
-                id="stateRegistrationNumber"
-                value={ownerInfo.stateRegistrationNumber}
-                onChange={(e) => setOwnerInfo(prev => ({ ...prev, stateRegistrationNumber: e.target.value }))}
-                placeholder="Enter state registration number"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Review & Submit</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h4 className="font-medium mb-2">Business Information</h4>
-            <div className="text-sm space-y-1 text-muted-foreground">
-              <p><strong>Business Name:</strong> {businessInfo.businessName}</p>
-              <p><strong>Address:</strong> {businessInfo.businessAddress}</p>
-              <p><strong>License Type:</strong> {businessInfo.licenseType}</p>
-              <p><strong>Category:</strong> {businessInfo.businessCategory}</p>
-              <p><strong>Phone:</strong> {businessInfo.businessPhone}</p>
-              <p><strong>Email:</strong> {businessInfo.businessEmail}</p>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h4 className="font-medium mb-2">Owner Information</h4>
-            <div className="text-sm space-y-1 text-muted-foreground">
-              <p><strong>Owner Name:</strong> {ownerInfo.ownerName}</p>
-              <p><strong>Phone:</strong> {ownerInfo.ownerPhone}</p>
-              <p><strong>Email:</strong> {ownerInfo.ownerEmail}</p>
-              <p><strong>Address:</strong> {ownerInfo.ownerAddress}</p>
-              {ownerInfo.federalEIN && <p><strong>Federal EIN:</strong> {ownerInfo.federalEIN}</p>}
-            </div>
-          </div>
-
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Important Notes</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Your application will be reviewed within 5-10 business days</li>
-              <li>• You will receive email updates on your application status</li>
-              <li>• Additional documentation may be requested during review</li>
-              <li>• License fees will be calculated based on your business type</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <DialogTitle>New Business License Application</DialogTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClose}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent 
+        className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col p-0"
+        ref={dialogContentRef}
+      >
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle className="text-xl font-semibold">New Business License Application</DialogTitle>
+          
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center space-x-4">
+              {Array.from({ length: totalSteps }, (_, i) => (
+                <div key={i} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                    i + 1 < currentStep 
+                      ? 'bg-primary text-primary-foreground' 
+                      : i + 1 === currentStep 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {i + 1 < currentStep ? '✓' : i + 1}
+                  </div>
+                  {i < totalSteps - 1 && (
+                    <div className={`w-8 h-0.5 mx-2 transition-colors ${
+                      i + 1 < currentStep ? 'bg-primary' : 'bg-muted'
+                    }`} />
+                  )}
+                </div>
+              ))}
             </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Step {currentStep} of {totalSteps}</span>
-                <span>{Math.round(progress)}% complete</span>
-              </div>
-              <Progress value={progress} className="h-2" />
+            <div className="text-sm text-muted-foreground">
+              Step {currentStep} of {totalSteps}
             </div>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto px-1">
-            {currentStep === 1 && renderStep1()}
-            {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
           </div>
+          
+          {/* Progress Bar */}
+          <Progress value={progress} className="w-full mt-2" />
+        </DialogHeader>
 
-          <div className="flex justify-between items-center pt-4 border-t flex-shrink-0">
+        <div className="flex-1 overflow-y-auto px-6">
+          {renderStepContent()}
+        </div>
+
+        {/* Navigation Footer */}
+        <div className="p-6 pt-4 border-t bg-muted/5">
+          <div className="flex justify-between">
             <Button
               variant="outline"
               onClick={handlePrevious}
@@ -437,38 +301,26 @@ const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-
+            
             <div className="flex gap-2">
+              <Button variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              
               {currentStep < totalSteps ? (
                 <Button onClick={handleNext} className="flex items-center gap-2">
                   Next
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button 
-                  onClick={handleSubmit} 
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-4 w-4" />
-                      Submit Application
-                    </>
-                  )}
+                <Button onClick={handleSubmit} className="flex items-center gap-2">
+                  Submit Application
                 </Button>
               )}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
-
-export default NewBusinessLicenseDialog;
