@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { normalizeEINInput, formatEINForStorage } from '@/lib/formatters';
@@ -38,6 +39,7 @@ interface BusinessInformation {
   businessAddress: string;
   businessEIN: string;
   businessDescription: string;
+  additionalDetails: string;
 }
 
 export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
@@ -54,7 +56,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     businessOwnerEmail: '',
     businessAddress: '',
     businessEIN: '',
-    businessDescription: ''
+    businessDescription: '',
+    additionalDetails: ''
   });
   const [useBusinessProfileInfo, setUseBusinessProfileInfo] = useState(false);
   const [isDifferentPropertyOwner, setIsDifferentPropertyOwner] = useState(false);
@@ -154,7 +157,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       businessOwnerEmail: '',
       businessAddress: '',
       businessEIN: '',
-      businessDescription: ''
+      businessDescription: '',
+      additionalDetails: ''
     });
     setUseBusinessProfileInfo(false);
     setIsDifferentPropertyOwner(false);
@@ -198,7 +202,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         businessOwnerEmail: prev.businessOwnerEmail || profile.email || '',
         businessAddress: prev.businessAddress || fullAddress,
         businessEIN: prev.businessEIN || '',
-        businessDescription: prev.businessDescription || ''
+        businessDescription: prev.businessDescription || '',
+        additionalDetails: prev.additionalDetails || ''
       }));
     }
     // Note: We no longer clear fields when toggled off to preserve user input
@@ -630,7 +635,58 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                   </p>
                 </div>
               </CardContent>
-            </Card>    
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Additional Business Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Please provide the following information using the formatting tools:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Total Gross Square Footage</li>
+                    <li>Average Number of Employees</li>
+                    <li>Business Established Date/Years Active</li>
+                    <li>Hours of Operations (Monday - Sunday)</li>
+                    <li>Any other information you'd like to provide</li>
+                  </ul>
+                </div>
+                
+                <div className="space-y-2">
+                  <RichTextEditor
+                    content={businessInfo.additionalDetails}
+                    onChange={(content) => {
+                      setBusinessInfo(prev => ({ ...prev, additionalDetails: content }));
+                    }}
+                    placeholder="Please provide the following details using the formatting tools above:
+
+• Total Gross Square Footage:
+
+• Average Number of Employees:
+
+• Business Established Date/Years Active:
+
+• Hours of Operations:
+  - Monday:
+  - Tuesday:
+  - Wednesday:
+  - Thursday:
+  - Friday:
+  - Saturday:
+  - Sunday:
+
+• Any other relevant information:"
+                    className="min-h-[200px]"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
       case 3:
