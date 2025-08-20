@@ -52,7 +52,6 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All statuses</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="submitted">Submitted</SelectItem>
                 <SelectItem value="under_review">Under Review</SelectItem>
@@ -78,7 +77,6 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
                 <SelectValue placeholder="All time" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All time</SelectItem>
                 <SelectItem value="last_30_days">Last 30 days</SelectItem>
                 <SelectItem value="last_3_months">Last 3 months</SelectItem>
                 <SelectItem value="last_6_months">Last 6 months</SelectItem>
@@ -100,7 +98,6 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All types</SelectItem>
                 <SelectItem value="business_license">Business License</SelectItem>
                 <SelectItem value="food_service">Food Service</SelectItem>
                 <SelectItem value="liquor_license">Liquor License</SelectItem>
@@ -125,7 +122,6 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All categories</SelectItem>
                 <SelectItem value="restaurant">Restaurant</SelectItem>
                 <SelectItem value="retail">Retail Store</SelectItem>
                 <SelectItem value="office">Office</SelectItem>
@@ -151,7 +147,6 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
                 <SelectValue placeholder="All fees" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All fees</SelectItem>
                 <SelectItem value="0-50">$0 - $50</SelectItem>
                 <SelectItem value="51-100">$51 - $100</SelectItem>
                 <SelectItem value="101-250">$101 - $250</SelectItem>
