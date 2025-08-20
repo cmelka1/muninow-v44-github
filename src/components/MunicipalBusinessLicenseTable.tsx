@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,14 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return format(new Date(dateString), 'MMM dd, yyyy');
+  };
+
+  const getLicenseTypeLabel = (businessType: string) => {
+    return businessType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   const handlePageSizeChange = (newPageSize: string) => {
@@ -73,6 +81,10 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Business Licenses</CardTitle>
+            <Button onClick={() => setShowNewLicenseDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New License
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -104,11 +116,19 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Business Licenses</CardTitle>
+            <Button onClick={() => setShowNewLicenseDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New License
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No business licenses found</p>
+            <p className="text-muted-foreground mb-4">No business licenses found</p>
+            <Button onClick={() => setShowNewLicenseDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New License
+            </Button>
           </div>
         </CardContent>
         <NewBusinessLicenseDialog
@@ -125,49 +145,56 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Business Licenses ({data.totalCount})</CardTitle>
+            <Button onClick={() => setShowNewLicenseDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New License
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>License #</TableHead>
-                  <TableHead>Business Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Owner Name</TableHead>
-                  <TableHead className="hidden lg:table-cell">Type</TableHead>
-                  <TableHead className="hidden sm:table-cell">Fee</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="font-semibold">Date Applied</TableHead>
+                  <TableHead className="font-semibold">License #</TableHead>
+                  <TableHead className="font-semibold">Business Name</TableHead>
+                  <TableHead className="font-semibold hidden md:table-cell">Type</TableHead>
+                  <TableHead className="font-semibold hidden lg:table-cell">Fee</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.licenses.map((license) => (
                   <TableRow 
                     key={license.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => handleRowClick(license)}
                   >
-                    <TableCell>
+                    <TableCell className="font-medium">
                       {formatDate(license.created_at)}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {license.license_number || 'Pending'}
+                    <TableCell className="font-mono text-sm">
+                      {license.license_number || (
+                        <span className="text-muted-foreground">Pending</span>
+                      )}
                     </TableCell>
                     <TableCell>
-                      <div className="max-w-[200px] truncate">
-                        {license.business_legal_name}
+                      <div className="space-y-1">
+                        <div className="font-medium max-w-[200px] truncate">
+                          {license.business_legal_name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {license.owner_first_name} {license.owner_last_name}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {license.owner_first_name} {license.owner_last_name}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Badge variant="outline">
-                        {license.business_type}
+                      <Badge variant="secondary" className="text-xs">
+                        {getLicenseTypeLabel(license.business_type)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
+                    <TableCell className="hidden lg:table-cell font-medium">
                       {formatAmount(license.total_amount_cents)}
                     </TableCell>
                     <TableCell>
