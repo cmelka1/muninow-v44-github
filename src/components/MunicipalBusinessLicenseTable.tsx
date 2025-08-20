@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
   onViewClick
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [showNewLicenseDialog, setShowNewLicenseDialog] = useState(false);
 
   const { data, isLoading, error } = useMunicipalBusinessLicenses({
@@ -37,11 +38,14 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
 
   const formatAmount = (cents: number | null) => {
     if (!cents) return '$0.00';
-    return `$${(cents / 100).toFixed(2)}`;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return format(new Date(dateString), 'MMM dd, yyyy');
   };
 
   const handlePageSizeChange = (newPageSize: string) => {
@@ -54,9 +58,7 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
   };
 
   const handleNextPage = () => {
-    if (data && currentPage < data.totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
+    setCurrentPage(prev => Math.min(prev + 1, data?.totalPages || 1));
   };
 
   const handleRowClick = (license: MunicipalBusinessLicense) => {
@@ -71,13 +73,11 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
     return (
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Business Licenses</CardTitle>
-          </div>
+          <CardTitle>Business Licenses</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
+          <div className="space-y-2">
+            {[...Array(pageSize)].map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
@@ -102,19 +102,11 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
     return (
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Business Licenses</CardTitle>
-          </div>
+          <CardTitle>Business Licenses ({data?.totalCount || 0})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No business licenses found</p>
-          </div>
+          <p className="text-muted-foreground">No business licenses found.</p>
         </CardContent>
-        <NewBusinessLicenseDialog
-          open={showNewLicenseDialog}
-          onOpenChange={setShowNewLicenseDialog}
-        />
       </Card>
     );
   }
@@ -123,54 +115,69 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex justify-between items-center">
             <CardTitle>Business Licenses ({data.totalCount})</CardTitle>
+            <Button 
+              onClick={() => setShowNewLicenseDialog(true)}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New License</span>
+            </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>License #</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="hidden md:table-cell">License #</TableHead>
                   <TableHead>Business Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Owner Name</TableHead>
-                  <TableHead className="hidden lg:table-cell">Type</TableHead>
-                  <TableHead className="hidden sm:table-cell">Fee</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Owner Name</TableHead>
+                  <TableHead className="hidden xl:table-cell text-center">Type</TableHead>
+                  <TableHead className="hidden 2xl:table-cell text-center">Fee</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.licenses.map((license) => (
                   <TableRow 
                     key={license.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="h-12 cursor-pointer hover:bg-muted/50"
                     onClick={() => handleRowClick(license)}
                   >
-                    <TableCell>
-                      {formatDate(license.created_at)}
+                    <TableCell className="hidden sm:table-cell py-2">
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(license.created_at)}
+                      </span>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {license.license_number || 'Pending'}
+                    <TableCell className="hidden md:table-cell py-2">
+                      <span className="truncate font-mono text-sm">
+                        {license.license_number || 'Pending'}
+                      </span>
                     </TableCell>
-                    <TableCell>
-                      <div className="max-w-[200px] truncate">
+                    <TableCell className="py-2">
+                      <span className="truncate block max-w-[150px] font-medium" title={license.business_legal_name}>
                         {license.business_legal_name}
-                      </div>
+                      </span>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {license.owner_first_name} {license.owner_last_name}
+                    <TableCell className="hidden lg:table-cell py-2">
+                      <span className="truncate block max-w-[150px]" title={`${license.owner_first_name} ${license.owner_last_name}`}>
+                        {license.owner_first_name} {license.owner_last_name}
+                      </span>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Badge variant="outline">
+                    <TableCell className="hidden xl:table-cell py-2 text-center">
+                      <span className="truncate block max-w-[100px] mx-auto" title={license.business_type}>
                         {license.business_type}
-                      </Badge>
+                      </span>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {formatAmount(license.total_amount_cents)}
+                    <TableCell className="hidden 2xl:table-cell py-2 text-center">
+                      <span className="text-sm font-medium">
+                        {formatAmount(license.total_amount_cents)}
+                      </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center py-2">
                       <BusinessLicenseStatusBadge status={license.application_status} />
                     </TableCell>
                   </TableRow>
@@ -178,47 +185,53 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
               </TableBody>
             </Table>
           </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between space-x-2 py-4">
-            <div className="flex items-center space-x-2">
-              <p className="text-sm font-medium">Rows per page</p>
-              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <p className="text-sm font-medium">
-                Page {currentPage} of {data.totalPages} ({data.totalCount} total)
-              </p>
+          
+          {/* Pagination Controls */}
+          {data.totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium">Show:</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className="w-16 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handlePreviousPage}
-                  disabled={currentPage <= 1}
+                  disabled={currentPage === 1}
+                  className="h-8 px-3"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
                 </Button>
+                
+                <span className="text-sm font-medium px-2">
+                  {currentPage} of {data.totalPages}
+                </span>
+                
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleNextPage}
-                  disabled={currentPage >= data.totalPages}
+                  disabled={currentPage === data.totalPages}
+                  className="h-8 px-3"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
