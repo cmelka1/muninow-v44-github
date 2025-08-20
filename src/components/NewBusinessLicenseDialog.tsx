@@ -7,6 +7,11 @@ import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/buildin
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
+import { normalizePhoneInput } from '@/lib/phoneUtils';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewBusinessLicenseDialogProps {
@@ -23,6 +28,15 @@ interface SelectedMunicipality {
   customer_id: string;
 }
 
+interface BusinessInformation {
+  businessLegalName: string;
+  businessOwner: string;
+  businessOwnerPhone: string;
+  businessOwnerEmail: string;
+  businessAddress: string;
+  businessEIN: string;
+}
+
 export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
   open,
   onOpenChange
@@ -30,11 +44,21 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
   const [selectedBusinessType, setSelectedBusinessType] = useState<string>('');
+  const [businessInfo, setBusinessInfo] = useState<BusinessInformation>({
+    businessLegalName: '',
+    businessOwner: '',
+    businessOwnerPhone: '',
+    businessOwnerEmail: '',
+    businessAddress: '',
+    businessEIN: ''
+  });
+  const [useBusinessProfileInfo, setUseBusinessProfileInfo] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const dialogContentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -44,6 +68,12 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
     if (!selectedMunicipality) errors.municipality = 'Municipality is required';
     if (!selectedBusinessType) errors.businessType = 'Business type is required';
+    if (!businessInfo.businessLegalName) errors.businessLegalName = 'Business legal name is required';
+    if (!businessInfo.businessOwner) errors.businessOwner = 'Business owner is required';
+    if (!businessInfo.businessOwnerPhone) errors.businessOwnerPhone = 'Business owner phone number is required';
+    if (!businessInfo.businessOwnerEmail) errors.businessOwnerEmail = 'Business owner email is required';
+    if (!businessInfo.businessAddress) errors.businessAddress = 'Business address is required';
+    if (!businessInfo.businessEIN) errors.businessEIN = 'Business EIN is required';
 
     return errors;
   };
@@ -98,6 +128,15 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     setCurrentStep(1);
     setSelectedMunicipality(null);
     setSelectedBusinessType('');
+    setBusinessInfo({
+      businessLegalName: '',
+      businessOwner: '',
+      businessOwnerPhone: '',
+      businessOwnerEmail: '',
+      businessAddress: '',
+      businessEIN: ''
+    });
+    setUseBusinessProfileInfo(false);
     setValidationErrors({});
     setIsSubmitting(false);
     onOpenChange(false);
@@ -111,6 +150,44 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
   const handleBusinessTypeSelect = (businessType: string) => {
     setSelectedBusinessType(businessType);
     clearFieldError('businessType');
+  };
+
+  const handleUseBusinessProfileInfoToggle = (checked: boolean) => {
+    setUseBusinessProfileInfo(checked);
+    if (checked && profile) {
+      // Populate business info with profile data
+      const fullName = profile.first_name && profile.last_name 
+        ? `${profile.first_name} ${profile.last_name}` 
+        : profile.business_legal_name || '';
+      
+      const fullAddress = profile.street_address 
+        ? `${profile.street_address}${profile.city ? `, ${profile.city}` : ''}${profile.state ? `, ${profile.state}` : ''}${profile.zip_code ? ` ${profile.zip_code}` : ''}`
+        : '';
+
+      setBusinessInfo({
+        businessLegalName: profile.business_legal_name || '',
+        businessOwner: fullName,
+        businessOwnerPhone: profile.phone ? normalizePhoneInput(profile.phone) : '',
+        businessOwnerEmail: profile.email || '',
+        businessAddress: fullAddress,
+        businessEIN: ''
+      });
+    } else if (!checked) {
+      // Clear business info when toggled off
+      setBusinessInfo({
+        businessLegalName: '',
+        businessOwner: '',
+        businessOwnerPhone: '',
+        businessOwnerEmail: '',
+        businessAddress: '',
+        businessEIN: ''
+      });
+    }
+  };
+
+  const handleBusinessAddressSelect = (addressComponents: any) => {
+    const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
+    setBusinessInfo(prev => ({ ...prev, businessAddress: fullAddress }));
   };
 
   const handleSubmit = async () => {
@@ -207,6 +284,176 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                     </Select>
                     {validationErrors.businessType && (
                       <p className="text-sm text-destructive mt-1">{validationErrors.businessType}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Business Information
+                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="use-business-profile-info" className="text-sm text-muted-foreground">
+                    Use Profile Information
+                  </Label>
+                  <Switch
+                    id="use-business-profile-info"
+                    checked={useBusinessProfileInfo}
+                    onCheckedChange={handleUseBusinessProfileInfoToggle}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="business-legal-name" className="text-sm font-medium text-foreground">
+                      Business Legal Name *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the legal name of your business
+                    </p>
+                    <Input
+                      id="business-legal-name"
+                      placeholder="Enter business legal name"
+                      value={businessInfo.businessLegalName}
+                      onChange={(e) => {
+                        setBusinessInfo(prev => ({ ...prev, businessLegalName: e.target.value }));
+                        if (e.target.value) clearFieldError('businessLegalName');
+                      }}
+                      className={`mt-1 ${validationErrors.businessLegalName ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      disabled={useBusinessProfileInfo}
+                      data-error={!!validationErrors.businessLegalName}
+                    />
+                    {validationErrors.businessLegalName && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessLegalName}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-owner" className="text-sm font-medium text-foreground">
+                      Business Owner *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the full name of the business owner
+                    </p>
+                    <Input
+                      id="business-owner"
+                      placeholder="Enter business owner name"
+                      value={businessInfo.businessOwner}
+                      onChange={(e) => {
+                        setBusinessInfo(prev => ({ ...prev, businessOwner: e.target.value }));
+                        if (e.target.value) clearFieldError('businessOwner');
+                      }}
+                      className={`mt-1 ${validationErrors.businessOwner ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      disabled={useBusinessProfileInfo}
+                      data-error={!!validationErrors.businessOwner}
+                    />
+                    {validationErrors.businessOwner && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessOwner}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-owner-phone" className="text-sm font-medium text-foreground">
+                      Business Owner Phone Number *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the business owner's contact phone number
+                    </p>
+                    <Input
+                      id="business-owner-phone"
+                      placeholder="(xxx) xxx-xxxx"
+                      value={businessInfo.businessOwnerPhone}
+                      onChange={(e) => {
+                        const normalized = normalizePhoneInput(e.target.value);
+                        setBusinessInfo(prev => ({ ...prev, businessOwnerPhone: normalized }));
+                        if (normalized) clearFieldError('businessOwnerPhone');
+                      }}
+                      className={`mt-1 ${validationErrors.businessOwnerPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      disabled={useBusinessProfileInfo}
+                      data-error={!!validationErrors.businessOwnerPhone}
+                    />
+                    {validationErrors.businessOwnerPhone && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessOwnerPhone}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-owner-email" className="text-sm font-medium text-foreground">
+                      Business Owner Email *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the business owner's email address
+                    </p>
+                    <Input
+                      id="business-owner-email"
+                      type="email"
+                      placeholder="Enter email address"
+                      value={businessInfo.businessOwnerEmail}
+                      onChange={(e) => {
+                        setBusinessInfo(prev => ({ ...prev, businessOwnerEmail: e.target.value }));
+                        if (e.target.value) clearFieldError('businessOwnerEmail');
+                      }}
+                      className={`mt-1 ${validationErrors.businessOwnerEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      disabled={useBusinessProfileInfo}
+                      data-error={!!validationErrors.businessOwnerEmail}
+                    />
+                    {validationErrors.businessOwnerEmail && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessOwnerEmail}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-address" className="text-sm font-medium text-foreground">
+                      Business Address *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the business address
+                    </p>
+                    <RestPlacesAutocomplete
+                      placeholder="Start typing the business address..."
+                      onAddressSelect={useBusinessProfileInfo ? () => {} : (addressComponents) => {
+                        handleBusinessAddressSelect(addressComponents);
+                        clearFieldError('businessAddress');
+                      }}
+                      value={businessInfo.businessAddress}
+                      onChange={useBusinessProfileInfo ? () => {} : (value) => {
+                        setBusinessInfo(prev => ({ ...prev, businessAddress: value }));
+                        if (value) clearFieldError('businessAddress');
+                      }}
+                      className={`mt-1 ${useBusinessProfileInfo ? 'opacity-50 pointer-events-none' : ''} ${validationErrors.businessAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      data-error={!!validationErrors.businessAddress}
+                    />
+                    {validationErrors.businessAddress && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessAddress}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-ein" className="text-sm font-medium text-foreground">
+                      Business EIN *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the Employer Identification Number (EIN)
+                    </p>
+                    <Input
+                      id="business-ein"
+                      placeholder="XX-XXXXXXX"
+                      value={businessInfo.businessEIN}
+                      onChange={(e) => {
+                        setBusinessInfo(prev => ({ ...prev, businessEIN: e.target.value }));
+                        if (e.target.value) clearFieldError('businessEIN');
+                      }}
+                      className={`mt-1 ${validationErrors.businessEIN ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      disabled={useBusinessProfileInfo}
+                      data-error={!!validationErrors.businessEIN}
+                    />
+                    {validationErrors.businessEIN && (
+                      <p className="text-sm text-destructive mt-1">{validationErrors.businessEIN}</p>
                     )}
                   </div>
                 </div>
