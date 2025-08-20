@@ -14,6 +14,7 @@ import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommun
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 
 export const BusinessLicenseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -236,18 +237,21 @@ export const BusinessLicenseDetail = () => {
                     <p className="text-sm">{formatEINForDisplay(license.federal_ein)}</p>
                   </div>
                 )}
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">Business Address</label>
-                <p className="text-sm mt-1">
-                  {license.business_street_address}
-                  {license.business_apt_number && `, ${license.business_apt_number}`}
-                  <br />
-                  {license.business_city}, {license.business_state} {license.business_zip_code}
-                </p>
+                {license.state_tax_id && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">State Tax ID</label>
+                    <p className="text-sm">{license.state_tax_id}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Business Address</label>
+                  <p className="text-sm">
+                    {license.business_street_address}
+                    {license.business_apt_number && `, ${license.business_apt_number}`}
+                    <br />
+                    {license.business_city}, {license.business_state} {license.business_zip_code}
+                  </p>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -264,6 +268,18 @@ export const BusinessLicenseDetail = () => {
                   </div>
                 )}
               </div>
+              
+              {license.additional_info?.additionalDetails && (
+                <>
+                  <Separator />
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Additional Business Information</label>
+                    <div className="mt-2">
+                      <SafeHtmlRenderer content={license.additional_info.additionalDetails} />
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
