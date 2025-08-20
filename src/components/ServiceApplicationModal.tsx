@@ -449,7 +449,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
             <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
               <p>
-                Please review the attached PDF carefully and provide responses to any applicable questions in the Additional Information text area. Be clear and thorough in your responses to help municipal officials process your application efficiently and avoid the need for follow-up inquiries.
+                Please review the attached PDF carefully and either (a) provide responses to any applicable questions in the Additional Information text area, or (b) upload a completed copy of the document in the Document Upload section.
               </p>
               <p>
                 If your payment amount is variable, please calculate the amount due and enter both the total and the calculation reasoning as the final item in the Additional Information text area.
