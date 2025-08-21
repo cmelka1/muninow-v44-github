@@ -3,17 +3,14 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import BillsTable from '@/components/BillsTable';
-import BillsFilter, { BillFilters } from '@/components/BillsFilter';
-import PaymentSidePanel from '@/components/PaymentSidePanel';
+import ApplicationsTable from '@/components/ApplicationsTable';
+import ApplicationsFilter, { ApplicationFilters } from '@/components/ApplicationsFilter';
 
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
-  const [filters, setFilters] = useState<BillFilters>({});
-  const [selectedBillId, setSelectedBillId] = useState<string>('');
-  const [isPaymentPanelOpen, setIsPaymentPanelOpen] = useState(false);
+  const [filters, setFilters] = useState<ApplicationFilters>({});
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -50,24 +47,11 @@ const Dashboard = () => {
               </h1>
             </div>
 
-
-            <BillsFilter filters={filters} onFiltersChange={setFilters} />
-            <BillsTable 
-              filters={filters} 
-              onPayClick={(billId) => {
-                setSelectedBillId(billId);
-                setIsPaymentPanelOpen(true);
-              }}
-            />
+            <ApplicationsFilter filters={filters} onFiltersChange={setFilters} />
+            <ApplicationsTable filters={filters} />
           </div>
         </SidebarInset>
       </div>
-      
-      <PaymentSidePanel
-        open={isPaymentPanelOpen}
-        onOpenChange={setIsPaymentPanelOpen}
-        billId={selectedBillId}
-      />
     </SidebarProvider>
   );
 };
