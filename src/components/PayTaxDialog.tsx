@@ -510,18 +510,17 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                            <Label htmlFor="payer-name" className="text-sm font-medium text-foreground">
                              Name/Company *
                            </Label>
-                          <Input
-                            id="payer-name"
-                            placeholder="Enter name or company"
-                            value={payerName}
-                            onChange={(e) => {
-                              setPayerName(e.target.value);
-                              if (e.target.value) clearFieldError('payerName');
-                            }}
-                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerName ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                            disabled={useProfileInfoForPayer}
-                            data-error={!!errors.payerName}
-                          />
+                           <Input
+                             id="payer-name"
+                             placeholder="Enter name or company"
+                             value={payerName}
+                             onChange={(e) => {
+                               setPayerName(e.target.value);
+                               if (e.target.value) clearFieldError('payerName');
+                             }}
+                             className={`mt-1 ${errors.payerName ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                             data-error={!!errors.payerName}
+                           />
                           {errors.payerName && (
                             <p className="text-sm text-destructive mt-1">{errors.payerName}</p>
                           )}
@@ -531,37 +530,35 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                            <Label htmlFor="payer-ein" className="text-sm font-medium text-foreground">
                              Employer Identification Number (EIN)
                            </Label>
-                           <Input
-                             id="payer-ein"
-                             placeholder="XX-XXXXXXX"
-                             value={payerEin}
-                             onChange={(e) => {
-                               const formatted = formatEin(e.target.value);
-                               setPayerEin(formatted);
-                             }}
-                             className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''}`}
-                             disabled={useProfileInfoForPayer}
-                             maxLength={10}
-                           />
+                            <Input
+                              id="payer-ein"
+                              placeholder="XX-XXXXXXX"
+                              value={payerEin}
+                              onChange={(e) => {
+                                const formatted = formatEin(e.target.value);
+                                setPayerEin(formatted);
+                              }}
+                              className="mt-1"
+                              maxLength={10}
+                            />
                          </div>
                          
                          <div>
                            <Label htmlFor="payer-phone" className="text-sm font-medium text-foreground">
                              Phone Number *
                            </Label>
-                          <Input
-                            id="payer-phone"
-                            placeholder="(xxx) xxx-xxxx"
-                            value={payerPhone}
-                            onChange={(e) => {
-                              const normalized = normalizePhoneInput(e.target.value);
-                              setPayerPhone(normalized);
-                              if (normalized) clearFieldError('payerPhone');
-                            }}
-                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                            disabled={useProfileInfoForPayer}
-                            data-error={!!errors.payerPhone}
-                          />
+                           <Input
+                             id="payer-phone"
+                             placeholder="(xxx) xxx-xxxx"
+                             value={payerPhone}
+                             onChange={(e) => {
+                               const normalized = normalizePhoneInput(e.target.value);
+                               setPayerPhone(normalized);
+                               if (normalized) clearFieldError('payerPhone');
+                             }}
+                             className={`mt-1 ${errors.payerPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                             data-error={!!errors.payerPhone}
+                           />
                           {errors.payerPhone && (
                             <p className="text-sm text-destructive mt-1">{errors.payerPhone}</p>
                           )}
@@ -571,19 +568,18 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           <Label htmlFor="payer-email" className="text-sm font-medium text-foreground">
                             Email *
                           </Label>
-                          <Input
-                            id="payer-email"
-                            type="email"
-                            placeholder="Enter email address"
-                            value={payerEmail}
-                            onChange={(e) => {
-                              setPayerEmail(e.target.value);
-                              if (e.target.value) clearFieldError('payerEmail');
-                            }}
-                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                            disabled={useProfileInfoForPayer}
-                            data-error={!!errors.payerEmail}
-                          />
+                           <Input
+                             id="payer-email"
+                             type="email"
+                             placeholder="Enter email address"
+                             value={payerEmail}
+                             onChange={(e) => {
+                               setPayerEmail(e.target.value);
+                               if (e.target.value) clearFieldError('payerEmail');
+                             }}
+                             className={`mt-1 ${errors.payerEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                             data-error={!!errors.payerEmail}
+                           />
                           {errors.payerEmail && (
                             <p className="text-sm text-destructive mt-1">{errors.payerEmail}</p>
                           )}
@@ -593,17 +589,17 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           <Label htmlFor="payer-address" className="text-sm font-medium text-foreground">
                             Address *
                            </Label>
-                          <RestPlacesAutocomplete
-                            placeholder="Start typing your address..."
-                            onAddressSelect={useProfileInfoForPayer ? () => {} : handlePayerAddressSelect}
-                            value={payerAddressDisplay}
-                            onChange={useProfileInfoForPayer ? () => {} : (value) => {
-                              setPayerAddressDisplay(value);
-                              if (value) clearFieldError('payerAddress');
-                            }}
-                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                            data-error={!!errors.payerAddress}
-                          />
+                           <RestPlacesAutocomplete
+                             placeholder="Start typing your address..."
+                             onAddressSelect={handlePayerAddressSelect}
+                             value={payerAddressDisplay}
+                             onChange={(value) => {
+                               setPayerAddressDisplay(value);
+                               if (value) clearFieldError('payerAddress');
+                             }}
+                             className={`mt-1 ${errors.payerAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                             data-error={!!errors.payerAddress}
+                           />
                           {errors.payerAddress && (
                             <p className="text-sm text-destructive mt-1">{errors.payerAddress}</p>
                           )}
