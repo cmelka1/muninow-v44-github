@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import BillsTable from '@/components/BillsTable';
 import BillsFilter, { BillFilters } from '@/components/BillsFilter';
 import PaymentSidePanel from '@/components/PaymentSidePanel';
-import AutopayTile from '@/components/AutopayTile';
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -50,11 +50,6 @@ const Dashboard = () => {
               </h1>
             </div>
 
-            {/* Autopay Tile */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <AutopayTile />
-              <div className="hidden lg:block" /> {/* Placeholder for future content */}
-            </div>
 
             <BillsFilter filters={filters} onFiltersChange={setFilters} />
             <BillsTable 
