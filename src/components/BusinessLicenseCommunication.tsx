@@ -18,7 +18,6 @@ interface BusinessLicenseCommunicationProps {
 export const BusinessLicenseCommunication = ({ licenseId }: BusinessLicenseCommunicationProps) => {
   const { user } = useAuth();
   const [newComment, setNewComment] = useState('');
-  const [isInternal, setIsInternal] = useState(false);
   
   const { data: comments, isLoading } = useBusinessLicenseComments(licenseId);
   const createComment = useCreateBusinessLicenseComment();
@@ -32,11 +31,10 @@ export const BusinessLicenseCommunication = ({ licenseId }: BusinessLicenseCommu
       await createComment.mutateAsync({
         license_id: licenseId,
         comment_text: newComment.trim(),
-        is_internal: isInternal,
+        is_internal: false,
       });
       
       setNewComment('');
-      setIsInternal(false);
       toast.success('Comment added successfully');
     } catch (error) {
       console.error('Error creating comment:', error);
@@ -132,20 +130,7 @@ export const BusinessLicenseCommunication = ({ licenseId }: BusinessLicenseCommu
             className="min-h-[80px]"
           />
           
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {isMunicipalUser && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={isInternal}
-                    onChange={(e) => setIsInternal(e.target.checked)}
-                    className="rounded"
-                  />
-                  Internal comment (not visible to applicant)
-                </label>
-              )}
-            </div>
+          <div className="flex items-center justify-end">
             
             <Button
               onClick={handleSubmitComment}
