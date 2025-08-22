@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building, Plus } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building, Plus, Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -24,12 +24,16 @@ import { formatCurrency, formatDate } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const PermitDetail = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<string | null>(null);
+  const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
   
@@ -54,37 +58,98 @@ const PermitDetail = () => {
   } = usePermitPaymentMethods(permit);
 
   const handleDocumentView = async (document: any) => {
+    setViewingDocument(document.id);
     try {
-      const { data } = await supabase.storage
-        .from('permit_documents')
+      console.log('Attempting to view document:', document.storage_path);
+      
+      const { data, error } = await supabase.storage
+        .from('permit-documents')
         .createSignedUrl(document.storage_path, 60);
+      
+      if (error) {
+        console.error('Error creating signed URL:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to access document. Please try again or contact support.",
+        });
+        return;
+      }
       
       if (data?.signedUrl) {
         window.open(data.signedUrl, '_blank');
+        toast({
+          title: "Document opened",
+          description: "Document opened in a new tab.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unable to generate document link.",
+        });
       }
     } catch (error) {
       console.error('Error viewing document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to view document. Please try again later.",
+      });
+    } finally {
+      setViewingDocument(null);
     }
   };
 
   const handleDocumentDownload = async (document: any) => {
+    setDownloadingDocument(document.id);
     try {
-      const { data } = await supabase.storage
-        .from('permit_documents')
+      console.log('Attempting to download document:', document.storage_path);
+      
+      const { data, error } = await supabase.storage
+        .from('permit-documents')
         .download(document.storage_path);
+      
+      if (error) {
+        console.error('Error downloading document:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to download document. Please try again or contact support.",
+        });
+        return;
+      }
       
       if (data) {
         const url = URL.createObjectURL(data);
-        const a = document.createElement('a');
+        const a = globalThis.document.createElement('a');
         a.href = url;
         a.download = document.file_name;
-        document.body.appendChild(a);
+        globalThis.document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        globalThis.document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Download started",
+          description: `${document.file_name} is being downloaded.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No data received for download.",
+        });
       }
     } catch (error) {
       console.error('Error downloading document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download document. Please try again later.",
+      });
+    } finally {
+      setDownloadingDocument(null);
     }
   };
 
@@ -366,15 +431,25 @@ const PermitDetail = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDocumentView(doc)}
+                          disabled={viewingDocument === doc.id}
                         >
-                          <Eye className="h-4 w-4" />
+                          {viewingDocument === doc.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDocumentDownload(doc)}
+                          disabled={downloadingDocument === doc.id}
                         >
-                          <Download className="h-4 w-4" />
+                          {downloadingDocument === doc.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
