@@ -1,34 +1,22 @@
 import React, { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { usePermit } from '@/hooks/usePermit';
 import { formatDate, formatCurrency } from '@/lib/formatters';
-import { useToast } from '@/hooks/use-toast';
 
 const PermitCertificate = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleDownloadPDF = () => {
-    // For now, use the browser print to PDF functionality
-    // Could be enhanced with a proper PDF generation library later
-    window.print();
-    toast({
-      title: "Print Dialog Opened",
-      description: "Use your browser's print dialog to save as PDF.",
-    });
   };
 
   if (isLoading) {
@@ -202,23 +190,13 @@ const PermitCertificate = () => {
               Back to Permit Details
             </Button>
             
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleDownloadPDF}
-                className="flex items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                Save as PDF
-              </Button>
-              <Button
-                onClick={handlePrint}
-                className="flex items-center gap-2"
-              >
-                <Printer className="h-4 w-4" />
-                Print Certificate
-              </Button>
-            </div>
+            <Button
+              onClick={handlePrint}
+              className="flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Print Certificate
+            </Button>
           </div>
         </div>
         
