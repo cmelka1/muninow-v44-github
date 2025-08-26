@@ -165,6 +165,8 @@ export type Database = {
       }
       business_license_applications: {
         Row: {
+          ach_basis_points: number | null
+          ach_fixed_fee: number | null
           additional_info: Json | null
           application_status:
             | Database["public"]["Enums"]["business_license_status_enum"]
@@ -172,6 +174,7 @@ export type Database = {
           approved_at: string | null
           assigned_reviewer_id: string | null
           base_fee_cents: number | null
+          basis_points: number | null
           business_apt_number: string | null
           business_city: string
           business_country: string | null
@@ -192,6 +195,8 @@ export type Database = {
           federal_ein: string | null
           finix_fee_profile_id: string | null
           finix_merchant_id: string | null
+          finix_transfer_id: string | null
+          fixed_fee: number | null
           form_responses: Json | null
           fraud_session_id: string | null
           id: string
@@ -203,6 +208,7 @@ export type Database = {
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
           merchant_id: string | null
+          merchant_name: string | null
           owner_apt_number: string | null
           owner_city: string
           owner_country: string | null
@@ -231,6 +237,8 @@ export type Database = {
           withdrawn_at: string | null
         }
         Insert: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
           additional_info?: Json | null
           application_status?:
             | Database["public"]["Enums"]["business_license_status_enum"]
@@ -238,6 +246,7 @@ export type Database = {
           approved_at?: string | null
           assigned_reviewer_id?: string | null
           base_fee_cents?: number | null
+          basis_points?: number | null
           business_apt_number?: string | null
           business_city: string
           business_country?: string | null
@@ -258,6 +267,8 @@ export type Database = {
           federal_ein?: string | null
           finix_fee_profile_id?: string | null
           finix_merchant_id?: string | null
+          finix_transfer_id?: string | null
+          fixed_fee?: number | null
           form_responses?: Json | null
           fraud_session_id?: string | null
           id?: string
@@ -269,6 +280,7 @@ export type Database = {
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
+          merchant_name?: string | null
           owner_apt_number?: string | null
           owner_city: string
           owner_country?: string | null
@@ -297,6 +309,8 @@ export type Database = {
           withdrawn_at?: string | null
         }
         Update: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
           additional_info?: Json | null
           application_status?:
             | Database["public"]["Enums"]["business_license_status_enum"]
@@ -304,6 +318,7 @@ export type Database = {
           approved_at?: string | null
           assigned_reviewer_id?: string | null
           base_fee_cents?: number | null
+          basis_points?: number | null
           business_apt_number?: string | null
           business_city?: string
           business_country?: string | null
@@ -324,6 +339,8 @@ export type Database = {
           federal_ein?: string | null
           finix_fee_profile_id?: string | null
           finix_merchant_id?: string | null
+          finix_transfer_id?: string | null
+          fixed_fee?: number | null
           form_responses?: Json | null
           fraud_session_id?: string | null
           id?: string
@@ -335,6 +352,7 @@ export type Database = {
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
+          merchant_name?: string | null
           owner_apt_number?: string | null
           owner_city?: string
           owner_country?: string | null

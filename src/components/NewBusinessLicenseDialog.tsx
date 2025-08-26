@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBusinessLicenseTypes } from '@/hooks/useBusinessLicenseTypes';
 import { useBusinessLicenseApplication } from '@/hooks/useBusinessLicenseApplication';
 import { useBusinessLicenseDocuments } from '@/hooks/useBusinessLicenseDocuments';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NewBusinessLicenseDialogProps {
   open: boolean;
@@ -418,9 +419,40 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       const selectedLicenseType = licenseTypes.find(type => type.id === selectedBusinessType);
       console.log('📜 Selected License Type:', selectedLicenseType);
 
+      // Fetch merchant and fee profile data
+      console.log('🔍 Fetching merchant fee profile data for merchant:', selectedMunicipality.id);
+      const { data: merchantData, error: merchantError } = await supabase
+        .from('merchants')
+        .select(`
+          *,
+          merchant_fee_profiles (
+            id,
+            finix_fee_profile_id,
+            basis_points,
+            fixed_fee,
+            ach_basis_points,
+            ach_fixed_fee
+          )
+        `)
+        .eq('id', selectedMunicipality.id)
+        .single();
+
+      if (merchantError) {
+        console.error('❌ Error fetching merchant data:', merchantError);
+        throw merchantError;
+      }
+
+      const feeProfile = merchantData.merchant_fee_profiles?.[0];
+      console.log('📊 Fee profile data:', feeProfile);
+
+      // Generate payment identifiers
+      const idempotencyId = crypto.randomUUID();
+      const fraudSessionId = crypto.randomUUID();
+
       // Create the application
       const applicationData = {
         customer_id: selectedMunicipality.customer_id,
+        merchant_id: selectedMunicipality.id,
         license_type_id: selectedBusinessType,
         business_legal_name: businessInfo.businessLegalName,
         business_type: selectedLicenseType?.name || '',
@@ -447,7 +479,20 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
           useBusinessProfileInfo,
           isDifferentPropertyOwner,
           propertyOwnerInfo: isDifferentPropertyOwner ? propertyOwnerInfo : null,
-        }
+        },
+        // Merchant data
+        merchant_name: merchantData.merchant_name,
+        finix_merchant_id: merchantData.finix_merchant_id,
+        merchant_finix_identity_id: merchantData.finix_identity_id,
+        // Fee profile data
+        merchant_fee_profile_id: feeProfile?.id,
+        basis_points: feeProfile?.basis_points,
+        fixed_fee: feeProfile?.fixed_fee,
+        ach_basis_points: feeProfile?.ach_basis_points,
+        ach_fixed_fee: feeProfile?.ach_fixed_fee,
+        // Payment tracking
+        idempotency_id: idempotencyId,
+        fraud_session_id: fraudSessionId
       };
 
       console.log('📝 Application Data:', applicationData);

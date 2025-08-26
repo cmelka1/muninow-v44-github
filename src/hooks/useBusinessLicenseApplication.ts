@@ -30,8 +30,21 @@ export interface CreateBusinessLicenseApplicationData {
   owner_zip_code: string;
   base_fee_cents?: number;
   total_fee_cents?: number;
+  service_fee_cents?: number;
+  total_amount_cents?: number;
   additional_info?: any;
   form_responses?: any;
+  // Merchant fee profile fields
+  merchant_name?: string;
+  basis_points?: number;
+  fixed_fee?: number;
+  ach_basis_points?: number;
+  ach_fixed_fee?: number;
+  merchant_fee_profile_id?: string;
+  finix_transfer_id?: string;
+  // Payment tracking fields
+  idempotency_id?: string;
+  fraud_session_id?: string;
 }
 
 export const useBusinessLicenseApplication = () => {
