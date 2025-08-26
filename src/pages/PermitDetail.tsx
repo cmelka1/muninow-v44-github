@@ -515,7 +515,6 @@ const PermitDetail = () => {
                         onClick={handlePayment}
                         disabled={isProcessingPayment}
                       >
-                        <CreditCard className="h-4 w-4 mr-2" />
                         {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
                       </Button>
                     )}
