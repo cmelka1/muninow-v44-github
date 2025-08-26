@@ -157,28 +157,6 @@ const BusinessLicenseCertificate = () => {
               </div>
             </div>
           </div>
-
-          {/* Footer - Auto positioned at bottom */}
-          <div className="border-t-2 border-primary pt-3 mt-auto">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <div className="text-base">
-                  <span className="font-semibold">Certificate ID:</span> {license.id.slice(0, 12).toUpperCase()}
-                </div>
-                <div className="text-base">
-                  <span className="font-semibold">Status:</span> {license.application_status?.toUpperCase()}
-                </div>
-              </div>
-              <div className="text-right space-y-1">
-                <div className="text-base">
-                  <span className="font-semibold">Generated:</span> {format(new Date(), 'MMMM d, yyyy')}
-                </div>
-                <div className="text-base font-semibold text-primary">
-                  Valid License on File
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     );
