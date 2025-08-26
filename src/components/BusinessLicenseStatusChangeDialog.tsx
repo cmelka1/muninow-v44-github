@@ -93,12 +93,7 @@ export const BusinessLicenseStatusChangeDialog: React.FC<BusinessLicenseStatusCh
               <SelectContent>
                 {validTransitions.map((status) => (
                   <SelectItem key={status} value={status}>
-                    <div>
-                      <div className="font-medium">{getStatusDisplayName(status)}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {getStatusDescription(status)}
-                      </div>
-                    </div>
+                    {getStatusDisplayName(status)}
                   </SelectItem>
                 ))}
               </SelectContent>
