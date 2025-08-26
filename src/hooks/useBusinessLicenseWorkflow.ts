@@ -56,7 +56,7 @@ export const getValidStatusTransitions = (currentStatus: BusinessLicenseStatus):
     under_review: ['information_requested', 'approved', 'denied', 'rejected'],
     information_requested: ['resubmitted', 'withdrawn', 'expired'],
     resubmitted: ['under_review'],
-    approved: ['issued'],
+    approved: ['issued', 'withdrawn'],
     denied: [],
     withdrawn: [],
     expired: [],
