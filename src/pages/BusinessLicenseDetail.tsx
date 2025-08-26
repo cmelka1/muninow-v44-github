@@ -9,6 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useBusinessLicense } from '@/hooks/useBusinessLicense';
 import { useBusinessLicenseDocumentsList } from '@/hooks/useBusinessLicenseDocumentsList';
 import { useBusinessLicenseDocuments } from '@/hooks/useBusinessLicenseDocuments';
@@ -23,7 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
-import { BusinessLicenseStatus } from '@/hooks/useBusinessLicenseWorkflow';
+import { BusinessLicenseStatus, useBusinessLicenseWorkflow } from '@/hooks/useBusinessLicenseWorkflow';
 import { useToast } from '@/hooks/use-toast';
 
 export const BusinessLicenseDetail = () => {
@@ -36,12 +39,18 @@ export const BusinessLicenseDetail = () => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
+  const [withdrawReason, setWithdrawReason] = useState('');
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
   const { getDocumentUrl } = useBusinessLicenseDocuments();
+  const { updateLicenseStatus, isUpdating, getValidStatusTransitions } = useBusinessLicenseWorkflow();
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
+  const isOwner = license?.user_id === user?.id;
+  const canWithdraw = !isMunicipalUser && isOwner && 
+    getValidStatusTransitions(license?.application_status as BusinessLicenseStatus).includes('withdrawn');
 
   const handleBack = () => {
     if (isMunicipalUser) {
@@ -101,6 +110,15 @@ export const BusinessLicenseDetail = () => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Not set';
     return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  };
+
+  const handleWithdraw = async () => {
+    const success = await updateLicenseStatus(license.id, 'withdrawn', withdrawReason || undefined);
+    if (success) {
+      setShowWithdrawDialog(false);
+      setWithdrawReason('');
+      refetch();
+    }
   };
 
   if (isLoading) {
@@ -229,6 +247,17 @@ export const BusinessLicenseDetail = () => {
               >
                 <Edit className="h-4 w-4" />
                 Change Status
+              </Button>
+            )}
+            {canWithdraw && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowWithdrawDialog(true)}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+              >
+                <AlertCircle className="h-4 w-4" />
+                Withdraw
               </Button>
             )}
           </div>
@@ -599,6 +628,55 @@ export const BusinessLicenseDetail = () => {
           // The BusinessLicensePaymentManagement component will auto-refresh
         }}
       />
+
+      {/* Withdraw License Dialog */}
+      <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Withdraw Business License Application</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to withdraw this business license application? This action cannot be undone.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="withdraw-reason">Reason for withdrawal (optional)</Label>
+              <Textarea
+                id="withdraw-reason"
+                placeholder="Please provide a reason for withdrawing your application..."
+                value={withdrawReason}
+                onChange={(e) => setWithdrawReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowWithdrawDialog(false);
+                setWithdrawReason('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleWithdraw}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Withdrawing...
+                </>
+              ) : (
+                'Withdraw Application'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
