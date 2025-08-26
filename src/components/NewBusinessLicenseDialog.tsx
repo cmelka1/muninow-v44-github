@@ -447,8 +447,41 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         throw new Error('No Business Licenses merchant configured for this municipality');
       }
 
-      const feeProfile = merchantData.merchant_fee_profiles?.[0];
-      console.log('📊 Found merchant:', merchantData.id, 'with fee profile:', feeProfile);
+      // Debug: Log the full merchant data structure
+      console.log('📊 Full merchant data structure:', JSON.stringify(merchantData, null, 2));
+      console.log('📊 Merchant fee profiles array:', merchantData.merchant_fee_profiles);
+
+      let feeProfile = merchantData.merchant_fee_profiles?.[0];
+      console.log('📊 Initial fee profile extraction:', feeProfile);
+
+      // Fallback: If no fee profile found in nested query, fetch directly
+      if (!feeProfile || !feeProfile.basis_points) {
+        console.log('🔄 No fee profile found in nested query, fetching directly...');
+        const { data: directFeeProfile, error: feeError } = await supabase
+          .from('merchant_fee_profiles')
+          .select('*')
+          .eq('merchant_id', merchantData.id)
+          .single();
+
+        if (feeError) {
+          console.error('❌ Error fetching fee profile directly:', feeError);
+        } else {
+          feeProfile = directFeeProfile;
+          console.log('✅ Found fee profile via direct query:', feeProfile);
+        }
+      }
+
+      if (!feeProfile) {
+        throw new Error('No fee profile configured for this Business Licenses merchant');
+      }
+
+      console.log('📊 Final fee profile data:', {
+        id: feeProfile.id,
+        basis_points: feeProfile.basis_points,
+        fixed_fee: feeProfile.fixed_fee,
+        ach_basis_points: feeProfile.ach_basis_points,
+        ach_fixed_fee: feeProfile.ach_fixed_fee
+      });
 
       // Generate payment identifiers
       const idempotencyId = crypto.randomUUID();
@@ -490,17 +523,25 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         finix_merchant_id: merchantData.finix_merchant_id,
         merchant_finix_identity_id: merchantData.finix_identity_id,
         // Fee profile data
-        merchant_fee_profile_id: feeProfile?.id,
-        basis_points: feeProfile?.basis_points,
-        fixed_fee: feeProfile?.fixed_fee,
-        ach_basis_points: feeProfile?.ach_basis_points,
-        ach_fixed_fee: feeProfile?.ach_fixed_fee,
+        merchant_fee_profile_id: feeProfile.id,
+        basis_points: feeProfile.basis_points,
+        fixed_fee: feeProfile.fixed_fee,
+        ach_basis_points: feeProfile.ach_basis_points,
+        ach_fixed_fee: feeProfile.ach_fixed_fee,
         // Payment tracking
         idempotency_id: idempotencyId,
         fraud_session_id: fraudSessionId
       };
 
-      console.log('📝 Application Data:', applicationData);
+      console.log('📝 Final application data with fees:', {
+        merchant_id: applicationData.merchant_id,
+        merchant_name: applicationData.merchant_name,
+        basis_points: applicationData.basis_points,
+        fixed_fee: applicationData.fixed_fee,
+        ach_basis_points: applicationData.ach_basis_points,
+        ach_fixed_fee: applicationData.ach_fixed_fee,
+        merchant_fee_profile_id: applicationData.merchant_fee_profile_id
+      });
       const result = await createApplication.mutateAsync(applicationData);
       console.log('✅ Application created successfully:', result);
 
