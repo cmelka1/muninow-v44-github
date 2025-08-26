@@ -143,28 +143,21 @@ export const BusinessLicenseDetail = () => {
             </div>
           </MunicipalLayout>
         ) : (
-          <SidebarProvider>
-            <div className="min-h-screen flex w-full">
-              <AppSidebar />
-              <main className="flex-1 overflow-auto bg-gray-100">
-                <div className="p-6">
-                  <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <div className="lg:col-span-2 space-y-6">
-                        <div className="h-48 bg-gray-200 rounded"></div>
-                        <div className="h-48 bg-gray-200 rounded"></div>
-                      </div>
-                      <div className="space-y-6">
-                        <div className="h-32 bg-gray-200 rounded"></div>
-                        <div className="h-48 bg-gray-200 rounded"></div>
-                      </div>
-                    </div>
-                  </div>
+          <div className="p-6">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="h-48 bg-gray-200 rounded"></div>
+                  <div className="h-48 bg-gray-200 rounded"></div>
                 </div>
-              </main>
+                <div className="space-y-6">
+                  <div className="h-32 bg-gray-200 rounded"></div>
+                  <div className="h-48 bg-gray-200 rounded"></div>
+                </div>
+              </div>
             </div>
-          </SidebarProvider>
+          </div>
         )}
       </div>
     );
@@ -189,25 +182,18 @@ export const BusinessLicenseDetail = () => {
             </div>
           </MunicipalLayout>
         ) : (
-          <SidebarProvider>
-            <div className="min-h-screen flex w-full">
-              <AppSidebar />
-              <main className="flex-1 overflow-auto bg-gray-100">
-                <div className="p-6">
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="text-center">
-                        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">License Not Found</h3>
-                        <p className="text-gray-600 mb-4">The requested business license could not be found.</p>
-                        <Button onClick={handleBack}>Go Back</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+          <div className="p-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">License Not Found</h3>
+                  <p className="text-gray-600 mb-4">The requested business license could not be found.</p>
+                  <Button onClick={handleBack}>Go Back</Button>
                 </div>
-              </main>
-            </div>
-          </SidebarProvider>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     );
@@ -687,14 +673,7 @@ export const BusinessLicenseDetail = () => {
           <PageContent />
         </MunicipalLayout>
       ) : (
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full">
-            <AppSidebar />
-            <main className="flex-1 overflow-auto bg-gray-100">
-              <PageContent />
-            </main>
-          </div>
-        </SidebarProvider>
+        <PageContent />
       )}
     </div>
   );

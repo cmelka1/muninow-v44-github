@@ -149,28 +149,21 @@ const PermitDetail = () => {
             </div>
           </MunicipalLayout>
         ) : (
-          <SidebarProvider>
-            <div className="min-h-screen flex w-full">
-              <AppSidebar />
-              <main className="flex-1 overflow-auto bg-gray-100">
-                <div className="p-6">
-                  <div className="animate-pulse space-y-6">
-                    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <div className="lg:col-span-2 space-y-6">
-                        <div className="h-48 bg-gray-200 rounded"></div>
-                        <div className="h-48 bg-gray-200 rounded"></div>
-                      </div>
-                      <div className="space-y-6">
-                        <div className="h-32 bg-gray-200 rounded"></div>
-                        <div className="h-48 bg-gray-200 rounded"></div>
-                      </div>
-                    </div>
-                  </div>
+          <div className="p-6">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="h-48 bg-gray-200 rounded"></div>
+                  <div className="h-48 bg-gray-200 rounded"></div>
                 </div>
-              </main>
+                <div className="space-y-6">
+                  <div className="h-32 bg-gray-200 rounded"></div>
+                  <div className="h-48 bg-gray-200 rounded"></div>
+                </div>
+              </div>
             </div>
-          </SidebarProvider>
+          </div>
         )}
       </div>
     );
@@ -190,20 +183,13 @@ const PermitDetail = () => {
             </div>
           </MunicipalLayout>
         ) : (
-          <SidebarProvider>
-            <div className="min-h-screen flex w-full">
-              <AppSidebar />
-              <main className="flex-1 overflow-auto bg-gray-100">
-                <div className="p-6">
-                  <Card>
-                    <CardContent className="py-12 text-center">
-                      <p className="text-destructive">Error loading permit details. Please try again.</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </main>
-            </div>
-          </SidebarProvider>
+          <div className="p-6">
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-destructive">Error loading permit details. Please try again.</p>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     );
@@ -633,14 +619,7 @@ const PermitDetail = () => {
           <PageContent />
         </MunicipalLayout>
       ) : (
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full">
-            <AppSidebar />
-            <main className="flex-1 overflow-auto bg-gray-100">
-              <PageContent />
-            </main>
-          </div>
-        </SidebarProvider>
+        <PageContent />
       )}
       {/* Document Viewer Modal */}
       <DocumentViewerModal
