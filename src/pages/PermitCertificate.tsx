@@ -230,11 +230,38 @@ const PermitCertificate = () => {
       <div className="hidden print:block">
         <style>
           {`
+            @page {
+              margin: 0;
+              size: letter;
+            }
             @media print {
+              body { 
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
               body * { visibility: hidden; }
               .print-certificate, .print-certificate * { visibility: visible; }
-              .print-certificate { position: absolute; left: 0; top: 0; width: 100%; }
-              @page { margin: 0.5in; size: letter; }
+              .print-certificate { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%;
+                padding: 0.5in;
+                margin: 0;
+              }
+              /* Hide browser headers and footers */
+              @page :first {
+                margin-top: 0;
+              }
+              @page {
+                @top-left { content: none; }
+                @top-center { content: none; }
+                @top-right { content: none; }
+                @bottom-left { content: none; }
+                @bottom-center { content: none; }
+                @bottom-right { content: none; }
+              }
             }
           `}
         </style>
