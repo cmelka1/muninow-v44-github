@@ -63,20 +63,20 @@ const BusinessLicenseCertificate = () => {
             <div className="bg-muted/10 p-6 rounded-lg">
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
-                  <span className="font-medium text-lg text-muted-foreground block mb-1">License Number:</span>
-                  <div className="text-2xl font-bold text-primary">
+                  <span className="font-medium text-xl text-muted-foreground block mb-2">License Number:</span>
+                  <div className="text-3xl font-bold text-primary">
                     #{license.license_number || license.id.slice(0, 8).toUpperCase()}
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-lg text-muted-foreground block mb-1">License Type:</span>
-                  <div className="text-xl font-semibold">
+                  <span className="font-medium text-xl text-muted-foreground block mb-2">License Type:</span>
+                  <div className="text-2xl font-semibold">
                     {license.business_type || 'Business License'}
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-lg text-muted-foreground block mb-1">Issue Date:</span>
-                  <div className="text-xl font-semibold">
+                  <span className="font-medium text-xl text-muted-foreground block mb-2">Issue Date:</span>
+                  <div className="text-2xl font-semibold">
                     {license.issued_at ? format(new Date(license.issued_at), 'MMMM d, yyyy') : 'Pending'}
                   </div>
                 </div>
@@ -100,27 +100,27 @@ const BusinessLicenseCertificate = () => {
               {/* Three Column Row: Owner | Business Address | Federal EIN */}
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center">
-                  <span className="font-medium text-base text-muted-foreground block mb-1">Business Owner:</span>
-                  <div className="text-base font-semibold">
+                  <span className="font-medium text-lg text-muted-foreground block mb-2">Business Owner:</span>
+                  <div className="text-xl font-semibold">
                     {license.owner_first_name} {license.owner_last_name}
                   </div>
                   {license.owner_title && (
-                    <div className="text-sm text-muted-foreground mt-1">{license.owner_title}</div>
+                    <div className="text-base text-muted-foreground mt-1">{license.owner_title}</div>
                   )}
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-base text-muted-foreground block mb-1">Business Address:</span>
-                  <div className="text-base font-semibold">
+                  <span className="font-medium text-lg text-muted-foreground block mb-2">Business Address:</span>
+                  <div className="text-xl font-semibold">
                     {license.business_street_address}
                     {license.business_apt_number && `, #${license.business_apt_number}`}
                   </div>
-                  <div className="text-sm">
+                  <div className="text-base">
                     {license.business_city}, {license.business_state} {license.business_zip_code}
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-base text-muted-foreground block mb-1">Federal EIN:</span>
-                  <div className="text-base font-semibold">
+                  <span className="font-medium text-lg text-muted-foreground block mb-2">Federal EIN:</span>
+                  <div className="text-xl font-semibold">
                     {license.federal_ein ? formatEINForDisplay(license.federal_ein) : 'Not provided'}
                   </div>
                 </div>
