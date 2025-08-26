@@ -143,19 +143,6 @@ const BusinessLicenseCertificate = () => {
                 </p>
               </div>
             </div>
-
-            {/* Issuing Authority Row - Compact */}
-            <div className="bg-muted/10 p-3 rounded-lg text-center">
-              <h3 className="text-lg font-bold text-primary mb-2">ISSUING AUTHORITY</h3>
-              <div className="space-y-1 text-base">
-                <div className="font-semibold">{municipality?.legal_entity_name}</div>
-                {municipality?.business_address_line1 && (
-                  <div>{municipality.business_address_line1}</div>
-                )}
-                <div>{municipality?.business_city}, {municipality?.business_state}</div>
-                <div className="text-muted-foreground mt-2">Business License Department</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
