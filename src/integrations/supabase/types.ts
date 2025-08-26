@@ -220,6 +220,9 @@ export type Database = {
           owner_street_address: string
           owner_title: string | null
           owner_zip_code: string
+          payment_instrument_id: string | null
+          payment_method_type: string | null
+          payment_processed_at: string | null
           payment_status: string | null
           payment_type: string | null
           resubmitted_at: string | null
@@ -292,6 +295,9 @@ export type Database = {
           owner_street_address: string
           owner_title?: string | null
           owner_zip_code: string
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
           resubmitted_at?: string | null
@@ -364,6 +370,9 @@ export type Database = {
           owner_street_address?: string
           owner_title?: string | null
           owner_zip_code?: string
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
           resubmitted_at?: string | null
