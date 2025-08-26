@@ -4,6 +4,7 @@ import { ArrowLeft, Building, Calendar, MapPin, User, FileText, Printer } from '
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { usePermit } from '@/hooks/usePermit';
 import { formatDate } from '@/lib/formatters';
 import { useToast } from '@/hooks/use-toast';
@@ -121,7 +122,11 @@ const PermitCertificate = () => {
               <FileText className="h-5 w-5 text-primary mt-1" />
               <div>
                 <p className="font-medium text-primary">SCOPE OF WORK</p>
-                <p className="text-base">{permit.scope_of_work || 'See application for details'}</p>
+                <SafeHtmlRenderer 
+                  content={permit.scope_of_work}
+                  fallback="See application for details"
+                  className="text-base leading-relaxed whitespace-pre-wrap"
+                />
               </div>
             </div>
           </div>
