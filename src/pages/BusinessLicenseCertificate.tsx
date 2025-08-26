@@ -31,7 +31,7 @@ const BusinessLicenseCertificate = () => {
     if (!license || !municipality) return null;
 
     return (
-      <div className="w-[1200px] h-[800px] bg-white p-12 font-serif relative">
+      <div className="w-[1200px] min-h-[800px] max-h-[800px] bg-white p-6 font-serif relative flex flex-col">
         {/* Enhanced decorative corners */}
         <div className="absolute top-4 left-4 w-20 h-20 border-l-4 border-t-4 border-primary"></div>
         <div className="absolute top-4 right-4 w-20 h-20 border-r-4 border-t-4 border-primary"></div>
@@ -39,7 +39,7 @@ const BusinessLicenseCertificate = () => {
         <div className="absolute bottom-4 right-4 w-20 h-20 border-r-4 border-b-4 border-primary"></div>
 
         {/* Certificate Border */}
-        <div className="border-4 border-primary/20 p-10 relative h-full">
+        <div className="border-4 border-primary/20 p-6 relative flex-1 flex flex-col">
           {/* Decorative Corner Elements */}
           <div className="absolute top-2 left-2 w-12 h-12 border-l-2 border-t-2 border-primary/30"></div>
           <div className="absolute top-2 right-2 w-12 h-12 border-r-2 border-t-2 border-primary/30"></div>
@@ -47,36 +47,36 @@ const BusinessLicenseCertificate = () => {
           <div className="absolute bottom-2 right-2 w-12 h-12 border-r-2 border-b-2 border-primary/30"></div>
 
           {/* Header */}
-          <div className="text-center mb-4">
-            <h1 className="text-5xl font-bold text-primary mb-4">
+          <div className="text-center mb-2">
+            <h1 className="text-4xl font-bold text-primary mb-2">
               BUSINESS LICENSE CERTIFICATE
             </h1>
-            <div className="text-2xl text-muted-foreground mb-4">
+            <div className="text-xl text-muted-foreground mb-2">
               {municipality?.legal_entity_name || 'Municipality'}
             </div>
             <div className="w-32 h-1 bg-primary mx-auto"></div>
           </div>
 
-          {/* Row-Based Content Layout */}
-          <div>
+          {/* Main Content - Flexible Layout */}
+          <div className="flex-1 space-y-2">
             {/* License Information Row */}
-            <div className="bg-muted/10 p-5 rounded-lg mb-1">
-              <div className="grid grid-cols-3 gap-8">
+            <div className="bg-muted/10 p-3 rounded-lg">
+              <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
-                  <span className="font-medium text-xl text-muted-foreground block mb-2">License Number:</span>
-                  <div className="text-3xl font-bold text-primary">
+                  <span className="font-medium text-lg text-muted-foreground block mb-1">License Number:</span>
+                  <div className="text-2xl font-bold text-primary">
                     #{license.license_number || license.id.slice(0, 8).toUpperCase()}
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-xl text-muted-foreground block mb-2">License Type:</span>
-                  <div className="text-2xl font-semibold">
+                  <span className="font-medium text-lg text-muted-foreground block mb-1">License Type:</span>
+                  <div className="text-xl font-semibold">
                     {license.business_type || 'Business License'}
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-xl text-muted-foreground block mb-2">Issue Date:</span>
-                  <div className="text-2xl font-semibold">
+                  <span className="font-medium text-lg text-muted-foreground block mb-1">Issue Date:</span>
+                  <div className="text-xl font-semibold">
                     {license.issued_at ? format(new Date(license.issued_at), 'MMMM d, yyyy') : 'Pending'}
                   </div>
                 </div>
@@ -84,54 +84,53 @@ const BusinessLicenseCertificate = () => {
             </div>
 
             {/* Business Information Row */}
-            <div className="bg-muted/10 p-5 rounded-lg">
-              
+            <div className="bg-muted/10 p-3 rounded-lg">
               {/* Business Name - Prominent Like License Number */}
-              <div className="text-center mb-8">
-                <div className="text-5xl font-bold text-primary">
+              <div className="text-center mb-4">
+                <div className="text-4xl font-bold text-primary">
                   {license.business_legal_name}
                 </div>
                 {license.doing_business_as && (
-                  <div className="text-xl text-muted-foreground mt-2">
+                  <div className="text-lg text-muted-foreground mt-1">
                     DBA: {license.doing_business_as}
                   </div>
                 )}
               </div>
 
               {/* Three Column Row: Owner | Business Address | Federal EIN */}
-              <div className="grid grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-2">
                 <div className="text-center">
-                  <span className="font-medium text-lg text-muted-foreground block mb-2">Business Owner:</span>
-                  <div className="text-lg font-semibold">
+                  <span className="font-medium text-base text-muted-foreground block mb-1">Business Owner:</span>
+                  <div className="text-base font-semibold">
                     {license.owner_first_name} {license.owner_last_name}
                   </div>
                   {license.owner_title && (
-                    <div className="text-base text-muted-foreground mt-1">{license.owner_title}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{license.owner_title}</div>
                   )}
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-lg text-muted-foreground block mb-2">Business Address:</span>
-                  <div className="text-lg font-semibold">
+                  <span className="font-medium text-base text-muted-foreground block mb-1">Business Address:</span>
+                  <div className="text-base font-semibold">
                     {license.business_street_address}
                     {license.business_apt_number && `, #${license.business_apt_number}`}
                   </div>
-                  <div className="text-base">
+                  <div className="text-sm">
                     {license.business_city}, {license.business_state} {license.business_zip_code}
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-lg text-muted-foreground block mb-2">Federal EIN:</span>
-                  <div className="text-lg font-semibold">
+                  <span className="font-medium text-base text-muted-foreground block mb-1">Federal EIN:</span>
+                  <div className="text-base font-semibold">
                     {license.federal_ein ? formatEINForDisplay(license.federal_ein) : 'Not provided'}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Legal Notice Row */}
-            <div className="bg-muted/10 p-3 rounded-lg mb-3">
-              <h3 className="text-lg font-bold text-primary mb-3">LEGAL NOTICE</h3>
-              <div className="space-y-2 text-base leading-relaxed">
+            {/* Legal Notice Row - Compact */}
+            <div className="bg-muted/10 p-2 rounded-lg">
+              <h3 className="text-base font-bold text-primary mb-2">LEGAL NOTICE</h3>
+              <div className="space-y-1 text-sm leading-normal">
                 <p>
                   This certificate serves as official documentation that the above-named business 
                   is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
@@ -145,36 +144,36 @@ const BusinessLicenseCertificate = () => {
               </div>
             </div>
 
-            {/* Issuing Authority Row */}
-            <div className="bg-muted/10 p-5 rounded-lg text-center">
-              <h3 className="text-xl font-bold text-primary mb-4">ISSUING AUTHORITY</h3>
-              <div className="space-y-2 text-lg">
+            {/* Issuing Authority Row - Compact */}
+            <div className="bg-muted/10 p-3 rounded-lg text-center">
+              <h3 className="text-lg font-bold text-primary mb-2">ISSUING AUTHORITY</h3>
+              <div className="space-y-1 text-base">
                 <div className="font-semibold">{municipality?.legal_entity_name}</div>
                 {municipality?.business_address_line1 && (
                   <div>{municipality.business_address_line1}</div>
                 )}
                 <div>{municipality?.business_city}, {municipality?.business_state}</div>
-                <div className="text-muted-foreground mt-3">Business License Department</div>
+                <div className="text-muted-foreground mt-2">Business License Department</div>
               </div>
             </div>
           </div>
 
-          {/* Enhanced footer */}
-          <div className="border-t-2 border-primary pt-6 mt-8">
-            <div className="grid grid-cols-2 gap-8">
+          {/* Footer - Auto positioned at bottom */}
+          <div className="border-t-2 border-primary pt-3 mt-auto">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-1">
-                <div className="text-lg">
+                <div className="text-base">
                   <span className="font-semibold">Certificate ID:</span> {license.id.slice(0, 12).toUpperCase()}
                 </div>
-                <div className="text-lg">
+                <div className="text-base">
                   <span className="font-semibold">Status:</span> {license.application_status?.toUpperCase()}
                 </div>
               </div>
               <div className="text-right space-y-1">
-                <div className="text-lg">
+                <div className="text-base">
                   <span className="font-semibold">Generated:</span> {format(new Date(), 'MMMM d, yyyy')}
                 </div>
-                <div className="text-lg font-semibold text-primary">
+                <div className="text-base font-semibold text-primary">
                   Valid License on File
                 </div>
               </div>
