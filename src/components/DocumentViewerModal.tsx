@@ -34,21 +34,11 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     if (isOpen && document) {
       loadDocument();
     } else {
-      // Reset state and cleanup blob URL when modal closes
-      if (signedUrl) {
-        URL.revokeObjectURL(signedUrl);
-      }
+      // Reset state when modal closes
       setSignedUrl(null);
       setError(null);
       setZoom(100);
     }
-    
-    // Cleanup on unmount
-    return () => {
-      if (signedUrl) {
-        URL.revokeObjectURL(signedUrl);
-      }
-    };
   }, [isOpen, document]);
 
   const loadDocument = async () => {
@@ -60,19 +50,18 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     try {
       const { data, error } = await supabase.storage
         .from(bucketName)
-        .download(document.storage_path);
+        .createSignedUrl(document.storage_path, 3600); // 1 hour expiry
 
       if (error) {
-        console.error('Error downloading document:', error);
+        console.error('Error creating signed URL:', error);
         setError('Failed to load document. Please try again.');
         return;
       }
 
-      if (data) {
-        const blobUrl = URL.createObjectURL(data);
-        setSignedUrl(blobUrl);
+      if (data?.signedUrl) {
+        setSignedUrl(data.signedUrl);
       } else {
-        setError('Unable to load document.');
+        setError('Unable to generate document link.');
       }
     } catch (error) {
       console.error('Error loading document:', error);
