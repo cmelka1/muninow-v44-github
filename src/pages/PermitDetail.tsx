@@ -16,6 +16,7 @@ import { usePermitPaymentMethods } from '@/hooks/usePermitPaymentMethods';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
+import { DocumentViewerModal } from '@/components/DocumentViewerModal';
 import PermitPaymentSummary from '@/components/PermitPaymentSummary';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
@@ -32,7 +33,8 @@ const PermitDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState<string | null>(null);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
@@ -57,48 +59,9 @@ const PermitDetail = () => {
     setSelectedPaymentMethod
   } = usePermitPaymentMethods(permit);
 
-  const handleDocumentView = async (document: any) => {
-    setViewingDocument(document.id);
-    try {
-      console.log('Attempting to view document:', document.storage_path);
-      
-      const { data, error } = await supabase.storage
-        .from('permit-documents')
-        .createSignedUrl(document.storage_path, 60);
-      
-      if (error) {
-        console.error('Error creating signed URL:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to access document. Please try again or contact support.",
-        });
-        return;
-      }
-      
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
-        toast({
-          title: "Document opened",
-          description: "Document opened in a new tab.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Unable to generate document link.",
-        });
-      }
-    } catch (error) {
-      console.error('Error viewing document:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to view document. Please try again later.",
-      });
-    } finally {
-      setViewingDocument(null);
-    }
+  const handleDocumentView = (document: any) => {
+    setSelectedDocument(document);
+    setDocumentViewerOpen(true);
   };
 
   const handleDocumentDownload = async (document: any) => {
@@ -431,13 +394,8 @@ const PermitDetail = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDocumentView(doc)}
-                          disabled={viewingDocument === doc.id}
                         >
-                          {viewingDocument === doc.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -653,6 +611,12 @@ const PermitDetail = () => {
           </div>
         </SidebarProvider>
       )}
+      {/* Document Viewer Modal */}
+      <DocumentViewerModal
+        isOpen={documentViewerOpen}
+        onClose={() => setDocumentViewerOpen(false)}
+        document={selectedDocument}
+      />
     </div>
   );
 };
