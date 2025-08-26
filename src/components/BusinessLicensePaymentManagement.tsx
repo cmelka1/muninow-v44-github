@@ -73,13 +73,16 @@ export const BusinessLicensePaymentManagement: React.FC<BusinessLicensePaymentMa
         {/* License Summary Section */}
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">License Summary</h3>
-          <div className="space-y-2">
-            <p className="text-base font-medium">{license?.license_number || 'N/A'}</p>
-            <p className="text-sm text-muted-foreground">{license?.business_legal_name}</p>
-            <BusinessLicenseStatusBadge status={license?.application_status} />
+          <div className="flex justify-between items-start">
+            {/* Left side - License info */}
+            <div className="space-y-1">
+              <p className="text-base font-medium">{license?.license_number || 'N/A'}</p>
+              <p className="text-sm text-muted-foreground">{license?.business_legal_name}</p>
+            </div>
             
-            {/* Payment Status Badge */}
-            <div className="flex items-center gap-2">
+            {/* Right side - Status badges */}
+            <div className="flex flex-col gap-2 items-end">
+              <BusinessLicenseStatusBadge status={license?.application_status} />
               {license?.payment_status === 'paid' ? (
                 <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
                   <CheckCircle className="h-3 w-3 mr-1" />
