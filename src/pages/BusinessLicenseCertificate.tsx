@@ -130,7 +130,7 @@ const BusinessLicenseCertificate = () => {
             {/* Legal Notice Row - Compact */}
             <div className="bg-muted/10 p-2 rounded-lg">
               <h3 className="text-base font-bold text-primary mb-2">LEGAL NOTICE</h3>
-              <div className="space-y-1 text-sm leading-normal">
+              <div className="space-y-0 text-sm leading-tight">
                 <p>
                   This certificate serves as official documentation that the above-named business 
                   is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
