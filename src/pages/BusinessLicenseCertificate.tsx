@@ -58,9 +58,9 @@ const BusinessLicenseCertificate = () => {
           </div>
 
           {/* Row-Based Content Layout */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* License Information Row */}
-            <div className="bg-muted/10 p-8 rounded-lg">
+            <div className="bg-muted/10 p-6 rounded-lg">
               <div className="grid grid-cols-3 gap-8">
                 <div className="text-center">
                   <span className="font-medium text-xl text-muted-foreground block mb-2">License Number:</span>
@@ -84,10 +84,10 @@ const BusinessLicenseCertificate = () => {
             </div>
 
             {/* Business Information Row */}
-            <div className="bg-muted/10 p-8 rounded-lg">
+            <div className="bg-muted/10 p-6 rounded-lg">
               
               {/* Business Name - Prominent Like License Number */}
-              <div className="text-center mb-8">
+              <div className="text-center mb-4">
                 <div className="text-5xl font-bold text-primary">
                   {license.business_legal_name}
                 </div>
