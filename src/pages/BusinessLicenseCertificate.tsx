@@ -61,8 +61,7 @@ const BusinessLicenseCertificate = () => {
           <div className="space-y-10">
             {/* License Information Row */}
             <div className="bg-muted/10 p-8 rounded-lg">
-              <h3 className="font-semibold text-2xl mb-6 flex items-center gap-3">
-                <Award className="h-6 w-6" />
+              <h3 className="font-semibold text-2xl mb-6">
                 License Details
               </h3>
               <div className="grid grid-cols-3 gap-8">
@@ -89,8 +88,7 @@ const BusinessLicenseCertificate = () => {
 
             {/* Business Information Row */}
             <div className="bg-muted/10 p-8 rounded-lg">
-              <h3 className="font-semibold text-2xl mb-6 flex items-center gap-3">
-                <Building className="h-6 w-6" />
+              <h3 className="font-semibold text-2xl mb-6">
                 Business Information
               </h3>
               
