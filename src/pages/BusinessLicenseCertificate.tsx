@@ -58,9 +58,9 @@ const BusinessLicenseCertificate = () => {
           </div>
 
           {/* Row-Based Content Layout */}
-          <div className="space-y-2">
+          <div>
             {/* License Information Row */}
-            <div className="bg-muted/10 p-5 rounded-lg">
+            <div className="bg-muted/10 p-5 rounded-lg mb-1">
               <div className="grid grid-cols-3 gap-8">
                 <div className="text-center">
                   <span className="font-medium text-xl text-muted-foreground block mb-2">License Number:</span>
