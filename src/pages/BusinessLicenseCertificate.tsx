@@ -128,7 +128,7 @@ const BusinessLicenseCertificate = () => {
             </div>
 
             {/* Legal Notice Row - Compact */}
-            <div className="bg-muted/10 p-4 rounded-lg">
+            <div className="bg-muted/10 p-2 rounded-lg">
               <h3 className="text-base font-bold text-primary mb-4">LEGAL NOTICE</h3>
               <div className="space-y-2 text-base leading-tight">
                 <p>
