@@ -47,20 +47,20 @@ const BusinessLicenseCertificate = () => {
           <div className="absolute bottom-2 right-2 w-12 h-12 border-r-2 border-b-2 border-primary/30"></div>
 
           {/* Header */}
-          <div className="text-center mb-2">
+          <div className="text-center mb-6">
             <h1 className="text-4xl font-bold text-primary mb-2">
               BUSINESS LICENSE CERTIFICATE
             </h1>
-            <div className="text-xl text-muted-foreground mb-2">
+            <div className="text-xl text-muted-foreground mb-4">
               {municipality?.legal_entity_name || 'Municipality'}
             </div>
             <div className="w-32 h-1 bg-primary mx-auto"></div>
           </div>
 
           {/* Main Content - Flexible Layout */}
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-6">
             {/* License Information Row */}
-            <div className="bg-muted/10 p-3 rounded-lg">
+            <div className="bg-muted/10 p-6 rounded-lg">
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
                   <span className="font-medium text-lg text-muted-foreground block mb-1">License Number:</span>
@@ -84,9 +84,9 @@ const BusinessLicenseCertificate = () => {
             </div>
 
             {/* Business Information Row */}
-            <div className="bg-muted/10 p-3 rounded-lg">
+            <div className="bg-muted/10 p-6 rounded-lg">
               {/* Business Name - Prominent Like License Number */}
-              <div className="text-center mb-4">
+              <div className="text-center mb-6">
                 <div className="text-4xl font-bold text-primary">
                   {license.business_legal_name}
                 </div>
@@ -98,7 +98,7 @@ const BusinessLicenseCertificate = () => {
               </div>
 
               {/* Three Column Row: Owner | Business Address | Federal EIN */}
-              <div className="grid grid-cols-3 gap-4 mb-2">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center">
                   <span className="font-medium text-base text-muted-foreground block mb-1">Business Owner:</span>
                   <div className="text-base font-semibold">
@@ -128,9 +128,9 @@ const BusinessLicenseCertificate = () => {
             </div>
 
             {/* Legal Notice Row - Compact */}
-            <div className="bg-muted/10 p-2 rounded-lg">
-              <h3 className="text-base font-bold text-primary mb-2">LEGAL NOTICE</h3>
-              <div className="space-y-0 text-sm leading-tight">
+            <div className="bg-muted/10 p-4 rounded-lg">
+              <h3 className="text-base font-bold text-primary mb-4">LEGAL NOTICE</h3>
+              <div className="space-y-2 text-base leading-tight">
                 <p>
                   This certificate serves as official documentation that the above-named business 
                   is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
