@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { usePermit } from '@/hooks/usePermit';
-import { formatDate } from '@/lib/formatters';
+import { formatDate, formatCurrency } from '@/lib/formatters';
 import { useToast } from '@/hooks/use-toast';
 
 const PermitCertificate = () => {
@@ -92,7 +92,7 @@ const PermitCertificate = () => {
         {/* Permit Information */}
         <div className="text-center border-b-2 border-gray-200 pb-6">
           <h3 className="text-2xl font-bold text-primary mb-2">PERMIT AUTHORIZED</h3>
-          <div className="grid grid-cols-2 gap-8 mt-6">
+          <div className="grid grid-cols-3 gap-6 mt-6">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">PERMIT NUMBER</p>
               <p className="text-2xl font-mono font-bold">{permit.permit_number}</p>
@@ -101,38 +101,46 @@ const PermitCertificate = () => {
               <p className="text-sm font-medium text-muted-foreground mb-1">PERMIT TYPE</p>
               <p className="text-xl font-semibold">{permit.permit_type}</p>
             </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">CONSTRUCTION VALUE</p>
+              <p className="text-xl font-semibold">
+                {permit.estimated_construction_value_cents 
+                  ? formatCurrency(permit.estimated_construction_value_cents / 100)
+                  : 'Not specified'
+                }
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Property and Work Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <div>
-              <p className="font-medium text-primary">PROPERTY ADDRESS</p>
-              <p className="text-lg">{permit.property_address}</p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-primary">SCOPE OF WORK</p>
-              <SafeHtmlRenderer 
-                content={permit.scope_of_work}
-                fallback="See application for details"
-                className="text-base leading-relaxed whitespace-pre-wrap"
-              />
-            </div>
+        {/* Property and Permit Information */}
+        <div className="space-y-6">
+          <div>
+            <p className="font-medium text-primary mb-2">PROPERTY ADDRESS</p>
+            <p className="text-lg">{permit.property_address}</p>
           </div>
+          
+          <div>
+            <p className="font-medium text-primary mb-2">PERMIT HOLDER</p>
+            <p className="text-lg">{permit.applicant_full_name}</p>
+            <p className="text-sm text-muted-foreground">{permit.applicant_email}</p>
+          </div>
+          
+          <div>
+            <p className="font-medium text-primary mb-2">DATE ISSUED</p>
+            <p className="text-lg">{formatDate(permit.issued_at)}</p>
+          </div>
+        </div>
 
-          <div className="space-y-4">
-            <div>
-              <p className="font-medium text-primary">PERMIT HOLDER</p>
-              <p className="text-lg">{permit.applicant_full_name}</p>
-              <p className="text-sm text-muted-foreground">{permit.applicant_email}</p>
-            </div>
-            
-            <div>
-              <p className="font-medium text-primary">DATE ISSUED</p>
-              <p className="text-lg">{formatDate(permit.issued_at)}</p>
-            </div>
+        {/* Scope of Work - Full Width Section */}
+        <div className="border-t-2 border-gray-200 pt-6">
+          <div>
+            <p className="font-medium text-primary mb-4">SCOPE OF WORK</p>
+            <SafeHtmlRenderer 
+              content={permit.scope_of_work}
+              fallback="See application for details"
+              className="text-base leading-relaxed whitespace-pre-wrap"
+            />
           </div>
         </div>
 
