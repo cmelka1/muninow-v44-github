@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, FileText, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -83,10 +83,7 @@ const PermitCertificate = () => {
     <div className="max-w-4xl mx-auto bg-white border-2 border-gray-300 shadow-xl">
       {/* Header */}
       <div className="bg-primary text-primary-foreground p-8 text-center border-b-4 border-primary-dark">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Building className="h-8 w-8" />
-          <h1 className="text-3xl font-bold tracking-wide">BUILDING PERMIT CERTIFICATE</h1>
-        </div>
+        <h1 className="text-3xl font-bold tracking-wide">BUILDING PERMIT CERTIFICATE</h1>
         <h2 className="text-xl font-semibold">{permit.merchant_name}</h2>
       </div>
 
