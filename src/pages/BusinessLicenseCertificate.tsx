@@ -128,34 +128,33 @@ const BusinessLicenseCertificate = () => {
               </div>
             </div>
 
-            {/* Legal Notice & Authority Row */}
-            <div className="grid grid-cols-2 gap-8">
-              <div className="bg-muted/10 p-6 rounded-lg">
-                <h3 className="text-xl font-bold text-primary mb-4">LEGAL NOTICE</h3>
-                <div className="space-y-3 text-lg leading-relaxed">
-                  <p>
-                    This certificate serves as official documentation that the above-named business 
-                    is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
-                  </p>
-                  <p>
-                    This license is subject to all applicable laws, regulations, and ordinances.
-                  </p>
-                  <p className="font-semibold text-primary">
-                    Must be displayed prominently at business location.
-                  </p>
-                </div>
+            {/* Legal Notice Row */}
+            <div className="bg-muted/10 p-5 rounded-lg mb-3">
+              <h3 className="text-xl font-bold text-primary mb-4">LEGAL NOTICE</h3>
+              <div className="space-y-3 text-lg leading-relaxed">
+                <p>
+                  This certificate serves as official documentation that the above-named business 
+                  is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
+                </p>
+                <p>
+                  This license is subject to all applicable laws, regulations, and ordinances.
+                </p>
+                <p className="font-semibold text-primary">
+                  Must be displayed prominently at business location.
+                </p>
               </div>
+            </div>
 
-              <div className="bg-muted/10 p-6 rounded-lg">
-                <h3 className="text-xl font-bold text-primary mb-4">ISSUING AUTHORITY</h3>
-                <div className="space-y-2 text-lg">
-                  <div className="font-semibold">{municipality?.legal_entity_name}</div>
-                  {municipality?.business_address_line1 && (
-                    <div>{municipality.business_address_line1}</div>
-                  )}
-                  <div>{municipality?.business_city}, {municipality?.business_state}</div>
-                  <div className="text-muted-foreground mt-3">Business License Department</div>
-                </div>
+            {/* Issuing Authority Row */}
+            <div className="bg-muted/10 p-5 rounded-lg text-center">
+              <h3 className="text-xl font-bold text-primary mb-4">ISSUING AUTHORITY</h3>
+              <div className="space-y-2 text-lg">
+                <div className="font-semibold">{municipality?.legal_entity_name}</div>
+                {municipality?.business_address_line1 && (
+                  <div>{municipality.business_address_line1}</div>
+                )}
+                <div>{municipality?.business_city}, {municipality?.business_state}</div>
+                <div className="text-muted-foreground mt-3">Business License Department</div>
               </div>
             </div>
           </div>
