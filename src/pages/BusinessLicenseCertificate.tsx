@@ -233,7 +233,7 @@ const BusinessLicenseCertificate = () => {
                         <Award className="h-5 w-5" />
                         License Details
                       </h3>
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
                           <span className="font-medium text-muted-foreground">License Number:</span>
                           <div className="text-lg font-bold text-primary">
