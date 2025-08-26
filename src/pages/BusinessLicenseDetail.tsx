@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -11,17 +11,20 @@ import { Separator } from '@/components/ui/separator';
 import { useBusinessLicense } from '@/hooks/useBusinessLicense';
 import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBadge';
 import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommunication';
+import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
+import { BusinessLicenseStatus } from '@/hooks/useBusinessLicenseWorkflow';
 
 export const BusinessLicenseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
   
-  const { data: license, isLoading, error } = useBusinessLicense(id!);
+  const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
 
@@ -160,7 +163,20 @@ export const BusinessLicenseDetail = () => {
             </h1>
             <p className="text-gray-600">{license.business_legal_name}</p>
           </div>
-          <BusinessLicenseStatusBadge status={license.application_status} />
+          <div className="flex items-center gap-3">
+            <BusinessLicenseStatusBadge status={license.application_status} />
+            {isMunicipalUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowStatusDialog(true)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Change Status
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -425,6 +441,20 @@ export const BusinessLicenseDetail = () => {
           <BusinessLicenseCommunication licenseId={license.id} />
         </div>
       </div>
+
+      {/* Status Change Dialog */}
+      {isMunicipalUser && (
+        <BusinessLicenseStatusChangeDialog
+          isOpen={showStatusDialog}
+          onClose={() => setShowStatusDialog(false)}
+          licenseId={license.id}
+          currentStatus={license.application_status as BusinessLicenseStatus}
+          onStatusChanged={() => {
+            refetch();
+            setShowStatusDialog(false);
+          }}
+        />
+      )}
     </div>
   );
 

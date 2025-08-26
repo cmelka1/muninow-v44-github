@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Edit } from 'lucide-react';
 import { useMunicipalBusinessLicenses, type MunicipalBusinessLicense } from '@/hooks/useMunicipalBusinessLicenses';
 import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBadge';
+import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { NewBusinessLicenseDialog } from '@/components/NewBusinessLicenseDialog';
+import { BusinessLicenseStatus } from '@/hooks/useBusinessLicenseWorkflow';
 import type { BusinessLicenseFilters } from '@/components/BusinessLicenseFilter';
 
 interface MunicipalBusinessLicenseTableProps {
@@ -24,8 +26,10 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [showNewLicenseDialog, setShowNewLicenseDialog] = useState(false);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [selectedLicense, setSelectedLicense] = useState<MunicipalBusinessLicense | null>(null);
 
-  const { data, isLoading, error } = useMunicipalBusinessLicenses({
+  const { data, isLoading, error, refetch } = useMunicipalBusinessLicenses({
     filters,
     page: currentPage,
     pageSize
@@ -61,12 +65,22 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
     setCurrentPage(prev => Math.min(prev + 1, data?.totalPages || 1));
   };
 
-  const handleRowClick = (license: MunicipalBusinessLicense) => {
+  const handleRowClick = (license: MunicipalBusinessLicense, event: React.MouseEvent) => {
+    // Prevent row click when clicking on action buttons
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    
     if (onViewClick) {
       onViewClick(license.id);
     } else {
       window.location.href = `/municipal/business-license/${license.id}`;
     }
+  };
+
+  const handleStatusChange = (license: MunicipalBusinessLicense) => {
+    setSelectedLicense(license);
+    setShowStatusDialog(true);
   };
 
   if (isLoading) {
@@ -138,6 +152,7 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
                   <TableHead className="hidden xl:table-cell text-center">Type</TableHead>
                   <TableHead className="hidden 2xl:table-cell text-center">Fee</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="w-[100px] text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -145,7 +160,7 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
                   <TableRow 
                     key={license.id}
                     className="h-12 cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(license)}
+                    onClick={(e) => handleRowClick(license, e)}
                   >
                     <TableCell className="hidden sm:table-cell py-2">
                       <span className="text-sm text-muted-foreground">
@@ -179,6 +194,17 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
                     </TableCell>
                     <TableCell className="text-center py-2">
                       <BusinessLicenseStatusBadge status={license.application_status} />
+                    </TableCell>
+                    <TableCell className="text-center py-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStatusChange(license)}
+                        className="h-8 w-8 p-0"
+                        title="Change Status"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -239,6 +265,24 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
         open={showNewLicenseDialog}
         onOpenChange={setShowNewLicenseDialog}
       />
+
+      {/* Status Change Dialog */}
+      {selectedLicense && (
+        <BusinessLicenseStatusChangeDialog
+          isOpen={showStatusDialog}
+          onClose={() => {
+            setShowStatusDialog(false);
+            setSelectedLicense(null);
+          }}
+          licenseId={selectedLicense.id}
+          currentStatus={selectedLicense.application_status as BusinessLicenseStatus}
+          onStatusChanged={() => {
+            refetch();
+            setShowStatusDialog(false);
+            setSelectedLicense(null);
+          }}
+        />
+      )}
     </>
   );
 };
