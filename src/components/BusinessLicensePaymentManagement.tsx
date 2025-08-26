@@ -173,7 +173,7 @@ export const BusinessLicensePaymentManagement: React.FC<BusinessLicensePaymentMa
                 {isProcessingPayment ? 'Processing...' : 
                  selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : 
                  selectedPaymentMethod === 'apple-pay' ? 'Use Apple Pay button above' :
-                 `Pay ${formatCurrency(totalWithFee)}`}
+                 `Pay ${formatCurrency(totalWithFee / 100)}`}
               </Button>
              
               <Button 
