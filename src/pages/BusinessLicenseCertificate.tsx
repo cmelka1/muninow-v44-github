@@ -110,10 +110,32 @@ const BusinessLicenseCertificate = () => {
       </div>
 
       {/* Certificate Content - Visible on screen and print */}
-      <div className="print:p-0 print:m-0 print:bg-white">
-        <div className="max-w-4xl mx-auto print:max-w-none print:mx-0">
+      <div className="print:p-0 print:m-0 print:bg-white print:shadow-none">
+        <div className="max-w-4xl mx-auto print:max-w-none print:mx-0 print:w-full print:h-full">
           {/* Certificate Layout - Horizontal/Landscape Optimized */}
-          <div className="bg-white print:h-screen print:flex print:flex-col print:justify-center print:p-12 p-8">
+          <div className="bg-white print:bg-white print:h-screen print:w-full print:flex print:flex-col print:justify-center print:items-center print:p-8 p-8">
+            <style dangerouslySetInnerHTML={{
+              __html: `
+                @media print {
+                  * {
+                    -webkit-print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                  }
+                  @page {
+                    size: landscape;
+                    margin: 0.5in;
+                  }
+                  body, html {
+                    background: white !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                  }
+                  .print\\:hidden {
+                    display: none !important;
+                  }
+                }
+              `
+            }} />
             <div className="print:landscape:max-h-full">
               {/* Certificate Border */}
               <div className="border-4 border-primary/20 p-8 relative">
