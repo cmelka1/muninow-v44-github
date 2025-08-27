@@ -2033,6 +2033,7 @@ export type Database = {
           id: string
           idempotency_id: string
           issue_date: string | null
+          merchant_id: string | null
           merchant_name: string | null
           original_amount_cents: number | null
           payment_status: string | null
@@ -2097,6 +2098,7 @@ export type Database = {
           id?: string
           idempotency_id: string
           issue_date?: string | null
+          merchant_id?: string | null
           merchant_name?: string | null
           original_amount_cents?: number | null
           payment_status?: string | null
@@ -2161,6 +2163,7 @@ export type Database = {
           id?: string
           idempotency_id?: string
           issue_date?: string | null
+          merchant_id?: string | null
           merchant_name?: string | null
           original_amount_cents?: number | null
           payment_status?: string | null
@@ -2189,6 +2192,13 @@ export type Database = {
             columns: ["business_license_id"]
             isOneToOne: false
             referencedRelation: "business_license_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_history_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
           {
