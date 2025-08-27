@@ -210,102 +210,6 @@ serve(async (req) => {
     // Determine payment type
     const paymentType = paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'Card' : 'Bank Account';
 
-    // Create tax submission record
-    const { data: taxSubmission, error: tsError } = await supabaseService
-      .from("tax_submissions")
-      .insert({
-        user_id: user.id,
-        customer_id: customer_id,
-        merchant_id: merchant.id,
-        tax_type: tax_type,
-        tax_period_start: tax_period_start,
-        tax_period_end: tax_period_end,
-        tax_year: tax_year,
-        amount_cents: baseAmount,
-        calculation_notes: calculation_notes,
-        total_amount_due_cents: baseAmount,
-        total_amount_cents: total_amount_cents,
-        service_fee_cents: calculatedServiceFee,
-        finix_merchant_id: finixMerchantId,
-        merchant_name: merchant.merchant_name,
-        category: merchant.category,
-        subcategory: merchant.subcategory,
-        statement_descriptor: merchant.statement_descriptor,
-        submission_status: 'draft',
-        payment_status: 'pending',
-        transfer_state: 'PENDING',
-        submission_date: new Date().toISOString(),
-        idempotency_id: idempotency_id,
-        fraud_session_id: fraud_session_id,
-        payment_type: paymentType,
-        first_name: payer_first_name,
-        last_name: payer_last_name,
-        email: payer_email,
-        payer_ein: payer_ein,
-        payer_phone: payer_phone,
-        payer_street_address: payer_street_address,
-        payer_city: payer_city,
-        payer_state: payer_state,
-        payer_zip_code: payer_zip_code,
-        payer_business_name: payer_business_name
-      })
-      .select()
-      .single();
-
-    if (tsError) {
-      console.error("Error creating tax submission:", tsError);
-      throw new Error("Failed to create tax submission record");
-    }
-
-    // Create payment history record
-    const { data: paymentHistory, error: phError } = await supabaseService
-      .from("payment_history")
-      .insert({
-        user_id: user.id,
-        customer_id: customer_id,
-        tax_submission_id: taxSubmission.id,
-        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        finix_merchant_id: finixMerchantId,
-        amount_cents: baseAmount,
-        service_fee_cents: calculatedServiceFee,
-        total_amount_cents: total_amount_cents,
-        currency: 'USD',
-        payment_type: paymentType,
-        idempotency_id: idempotency_id,
-        fraud_session_id: fraud_session_id,
-        transfer_state: 'PENDING',
-        card_brand: paymentInstrument.card_brand,
-        card_last_four: paymentInstrument.card_last_four,
-        bank_last_four: paymentInstrument.bank_last_four,
-        merchant_id: merchant.id,
-        merchant_name: merchant.merchant_name,
-        category: merchant.category,
-        subcategory: merchant.subcategory,
-        statement_descriptor: merchant.statement_descriptor,
-        // Customer information
-        customer_first_name: payer_first_name,
-        customer_last_name: payer_last_name,
-        customer_email: payer_email,
-        customer_street_address: payer_street_address,
-        customer_city: payer_city,
-        customer_state: payer_state,
-        customer_zip_code: payer_zip_code,
-        // Tax-specific information
-        bill_type: 'tax',
-        payment_status: 'pending',
-        bill_status: 'unpaid',
-        payment_instrument_id: payment_instrument_id
-      })
-      .select()
-      .single();
-
-    if (phError) {
-      console.error("Error creating payment history:", phError);
-      // Cleanup tax submission
-      await supabaseService.from("tax_submissions").delete().eq("id", taxSubmission.id);
-      throw new Error("Failed to create payment record");
-    }
-
     // Prepare Finix transfer request
     const finixRequest: FinixTransferRequest = {
       merchant: finixMerchantId,
@@ -333,7 +237,9 @@ serve(async (req) => {
       ? "https://finix.payments-api.com"
       : "https://finix.sandbox-payments-api.com";
 
-    // Create Finix transfer
+    console.log("Calling Finix API before creating database records");
+
+    // Create Finix transfer FIRST - only proceed if successful
     const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
       method: "POST",
       headers: {
@@ -352,68 +258,153 @@ serve(async (req) => {
       state: finixData.state 
     });
 
-    // Update payment history with Finix response
-    const updateData: any = {
-      raw_finix_response: finixData,
-      updated_at: new Date().toISOString()
-    };
-
-    if (finixResponse.ok && finixData.id) {
-      updateData.finix_transfer_id = finixData.id;
-      updateData.transfer_state = finixData.state || 'PENDING';
-      updateData.finix_created_at = finixData.created_at;
-      updateData.finix_updated_at = finixData.updated_at;
-      updateData.payment_status = 'paid';
-    } else {
-      updateData.transfer_state = 'FAILED';
-      updateData.failure_code = finixData.failure_code || 'API_ERROR';
-      updateData.failure_message = finixData.failure_message || 'Finix API request failed';
-      updateData.payment_status = 'failed';
-    }
-
-    await supabaseService
-      .from("payment_history")
-      .update(updateData)
-      .eq("id", paymentHistory.id);
-
-    // If transfer succeeded, update the tax submission
-    if (finixResponse.ok && finixData.state === 'SUCCEEDED') {
-      try {
-        const { error: taxUpdateError } = await supabaseService
-          .from("tax_submissions")
-          .update({
-            payment_status: 'paid',
-            transfer_state: 'SUCCEEDED',
-            finix_transfer_id: finixData.id,
-            paid_at: new Date().toISOString(),
-            submission_status: 'submitted',
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", taxSubmission.id);
-
-        if (taxUpdateError) {
-          console.error("Error updating tax submission:", taxUpdateError);
-          throw new Error("Failed to update tax submission status");
-        }
-
-        console.log("Tax submission updated successfully for payment:", finixData.id);
-      } catch (error) {
-        console.error("Tax submission update failed:", error);
-        // Note: Payment was successful, but tax submission update failed
-        // This should be handled by manual review
-      }
-    }
-
-    // Return response
+    // If Finix failed, return error immediately without creating database records
     if (!finixResponse.ok) {
+      const errorMessage = finixData.failure_message || `Finix API error: ${finixResponse.status}`;
+      console.error("Finix transfer failed:", errorMessage);
+      
       return new Response(
         JSON.stringify({
           success: false,
-          error: updateData.failure_message,
-          payment_history_id: paymentHistory.id
+          error: errorMessage,
+          finix_error_code: finixData.failure_code,
+          finix_response: finixData
         }),
         { 
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+
+    console.log("Finix transfer successful, creating database records");
+
+    // Only create database records after Finix success
+    let taxSubmission, paymentHistory;
+
+    try {
+      // Create tax submission record
+      const { data: tsData, error: tsError } = await supabaseService
+        .from("tax_submissions")
+        .insert({
+          user_id: user.id,
+          customer_id: customer_id,
+          merchant_id: merchant.id,
+          tax_type: tax_type,
+          tax_period_start: tax_period_start,
+          tax_period_end: tax_period_end,
+          tax_year: tax_year,
+          amount_cents: baseAmount,
+          calculation_notes: calculation_notes,
+          total_amount_due_cents: baseAmount,
+          total_amount_cents: total_amount_cents,
+          service_fee_cents: calculatedServiceFee,
+          finix_merchant_id: finixMerchantId,
+          merchant_name: merchant.merchant_name,
+          category: merchant.category,
+          subcategory: merchant.subcategory,
+          statement_descriptor: merchant.statement_descriptor,
+          submission_status: 'submitted',
+          payment_status: 'paid',
+          transfer_state: finixData.state || 'SUCCEEDED',
+          finix_transfer_id: finixData.id,
+          paid_at: new Date().toISOString(),
+          submission_date: new Date().toISOString(),
+          idempotency_id: idempotency_id,
+          fraud_session_id: fraud_session_id,
+          payment_type: paymentType,
+          first_name: payer_first_name,
+          last_name: payer_last_name,
+          email: payer_email,
+          payer_ein: payer_ein,
+          payer_phone: payer_phone,
+          payer_street_address: payer_street_address,
+          payer_city: payer_city,
+          payer_state: payer_state,
+          payer_zip_code: payer_zip_code,
+          payer_business_name: payer_business_name
+        })
+        .select()
+        .single();
+
+      if (tsError) {
+        console.error("Error creating tax submission after successful Finix transfer:", tsError);
+        throw new Error("Failed to create tax submission record");
+      }
+
+      taxSubmission = tsData;
+
+      // Create payment history record
+      const { data: phData, error: phError } = await supabaseService
+        .from("payment_history")
+        .insert({
+          user_id: user.id,
+          customer_id: customer_id,
+          tax_submission_id: taxSubmission.id,
+          finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+          finix_merchant_id: finixMerchantId,
+          finix_transfer_id: finixData.id,
+          amount_cents: baseAmount,
+          service_fee_cents: calculatedServiceFee,
+          total_amount_cents: total_amount_cents,
+          currency: 'USD',
+          payment_type: paymentType,
+          idempotency_id: idempotency_id,
+          fraud_session_id: fraud_session_id,
+          transfer_state: finixData.state || 'SUCCEEDED',
+          card_brand: paymentInstrument.card_brand,
+          card_last_four: paymentInstrument.card_last_four,
+          bank_last_four: paymentInstrument.bank_last_four,
+          merchant_id: merchant.id,
+          merchant_name: merchant.merchant_name,
+          category: merchant.category,
+          subcategory: merchant.subcategory,
+          statement_descriptor: merchant.statement_descriptor,
+          // Customer information
+          customer_first_name: payer_first_name,
+          customer_last_name: payer_last_name,
+          customer_email: payer_email,
+          customer_street_address: payer_street_address,
+          customer_city: payer_city,
+          customer_state: payer_state,
+          customer_zip_code: payer_zip_code,
+          // Tax-specific information
+          bill_type: 'tax',
+          payment_status: 'paid',
+          bill_status: 'paid',
+          payment_instrument_id: payment_instrument_id,
+          raw_finix_response: finixData,
+          finix_created_at: finixData.created_at,
+          finix_updated_at: finixData.updated_at
+        })
+        .select()
+        .single();
+
+      if (phError) {
+        console.error("Error creating payment history after successful Finix transfer:", phError);
+        // Cleanup tax submission since payment history failed
+        await supabaseService.from("tax_submissions").delete().eq("id", taxSubmission.id);
+        throw new Error("Failed to create payment record");
+      }
+
+      paymentHistory = phData;
+
+      console.log("Successfully created all database records for payment:", finixData.id);
+
+    } catch (dbError) {
+      console.error("Database operation failed after successful Finix transfer:", dbError);
+      
+      // Return error indicating payment succeeded but database failed
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Payment processed successfully but database recording failed. Please contact support.",
+          transfer_id: finixData.id,
+          finix_state: finixData.state,
+          internal_error: dbError.message
+        }),
+        { 
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
