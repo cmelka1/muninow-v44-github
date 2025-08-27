@@ -2036,6 +2036,7 @@ export type Database = {
           merchant_id: string | null
           merchant_name: string | null
           original_amount_cents: number | null
+          payment_instrument_id: string | null
           payment_status: string | null
           payment_type: string
           permit_id: string | null
@@ -2101,6 +2102,7 @@ export type Database = {
           merchant_id?: string | null
           merchant_name?: string | null
           original_amount_cents?: number | null
+          payment_instrument_id?: string | null
           payment_status?: string | null
           payment_type: string
           permit_id?: string | null
@@ -2166,6 +2168,7 @@ export type Database = {
           merchant_id?: string | null
           merchant_name?: string | null
           original_amount_cents?: number | null
+          payment_instrument_id?: string | null
           payment_status?: string | null
           payment_type?: string
           permit_id?: string | null
@@ -2199,6 +2202,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_history_payment_instrument_id_fkey"
+            columns: ["payment_instrument_id"]
+            isOneToOne: false
+            referencedRelation: "user_payment_instruments"
             referencedColumns: ["id"]
           },
           {
