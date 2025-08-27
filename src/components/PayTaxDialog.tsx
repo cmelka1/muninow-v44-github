@@ -38,6 +38,7 @@ interface SelectedMunicipality {
   customer_city: string;
   customer_state: string;
   customer_id: string;
+  finix_merchant_id: string;
 }
 
 interface AddressComponents {

@@ -175,21 +175,19 @@ serve(async (req) => {
       throw new Error("Payment instrument not found or access denied");
     }
 
-    // Get merchant details
+    // Get merchant details using the provided merchant_id as the Finix merchant ID
     const { data: merchant, error: merchantError } = await supabaseService
       .from("merchants")
       .select("*")
-      .eq("id", merchant_id)
+      .eq("finix_merchant_id", merchant_id)
       .single();
 
     if (merchantError || !merchant) {
-      throw new Error("Merchant not found");
+      throw new Error("Merchant not found or not configured for payments");
     }
 
-    // Validate finix_merchant_id is present
-    if (!merchant.finix_merchant_id) {
-      throw new Error("Merchant is not configured for Finix payment processing");
-    }
+    // merchant_id from the request should be the finix_merchant_id
+    const finixMerchantId = merchant_id;
 
     // Calculate base amount and service fee using the same logic as permits
     const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
@@ -218,7 +216,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         customer_id: customer_id,
-        merchant_id: merchant_id,
+        merchant_id: merchant.id,
         tax_type: tax_type,
         tax_period_start: tax_period_start,
         tax_period_end: tax_period_end,
@@ -228,7 +226,7 @@ serve(async (req) => {
         total_amount_due_cents: baseAmount,
         total_amount_cents: total_amount_cents,
         service_fee_cents: calculatedServiceFee,
-        finix_merchant_id: merchant.finix_merchant_id,
+        finix_merchant_id: finixMerchantId,
         merchant_name: merchant.merchant_name,
         category: merchant.category,
         subcategory: merchant.subcategory,
@@ -267,7 +265,7 @@ serve(async (req) => {
         customer_id: customer_id,
         tax_submission_id: taxSubmission.id,
         finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        finix_merchant_id: merchant.finix_merchant_id,
+        finix_merchant_id: finixMerchantId,
         amount_cents: baseAmount,
         service_fee_cents: calculatedServiceFee,
         total_amount_cents: total_amount_cents,
@@ -279,7 +277,7 @@ serve(async (req) => {
         card_brand: paymentInstrument.card_brand,
         card_last_four: paymentInstrument.card_last_four,
         bank_last_four: paymentInstrument.bank_last_four,
-        merchant_id: merchant_id,
+        merchant_id: merchant.id,
         merchant_name: merchant.merchant_name,
         category: merchant.category,
         subcategory: merchant.subcategory,
@@ -311,7 +309,7 @@ serve(async (req) => {
 
     // Prepare Finix transfer request
     const finixRequest: FinixTransferRequest = {
-      merchant: merchant.finix_merchant_id,
+      merchant: finixMerchantId,
       currency: "USD",
       amount: total_amount_cents,
       source: paymentInstrument.finix_payment_instrument_id,

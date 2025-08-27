@@ -140,9 +140,9 @@ export const useTaxPaymentMethods = (taxData: {
     }
   }, [user, taxData.municipality?.finix_merchant_id]);
 
-  // Fetch Google Pay merchant ID
-  useEffect(() => {
-    const fetchGooglePayMerchantId = async () => {
+  // Fetch Google Pay merchant ID only when Google Pay is selected
+  const fetchGooglePayMerchantId = async () => {
+    if (!googlePayMerchantId) {
       try {
         const { data } = await supabase.functions.invoke('get-google-pay-merchant-id');
         const response = data as GooglePayMerchantResponse;
@@ -151,11 +151,10 @@ export const useTaxPaymentMethods = (taxData: {
         }
       } catch (error) {
         console.error('Error fetching Google Pay merchant ID:', error);
+        throw new Error('Google Pay is not available for this municipality');
       }
-    };
-
-    fetchGooglePayMerchantId();
-  }, []);
+    }
+  };
 
   // Handle regular payment processing
   const handlePayment = async (): Promise<void> => {
@@ -232,7 +231,7 @@ export const useTaxPaymentMethods = (taxData: {
         tax_period_end: taxData.taxPeriodEnd,
         tax_year: taxData.taxYear,
         customer_id: taxData.municipality?.customer_id,
-        merchant_id: taxData.municipality?.id,
+        merchant_id: taxData.municipality?.finix_merchant_id,
         payment_instrument_id: selectedPaymentMethod,
         total_amount_cents: finalAmountCents,
         idempotency_id: idempotencyId,
@@ -281,7 +280,7 @@ export const useTaxPaymentMethods = (taxData: {
 
   // Handle Google Pay payment
   const handleGooglePayment = async (): Promise<void> => {
-    if (!googlePayMerchantId || !taxData.municipality?.finix_merchant_id) {
+    if (!taxData.municipality?.finix_merchant_id) {
       toast({
         title: "Error",
         description: "Google Pay is not available for this municipality.",
@@ -291,6 +290,23 @@ export const useTaxPaymentMethods = (taxData: {
     }
 
     setIsProcessingPayment(true);
+    
+    try {
+      // Fetch Google Pay merchant ID if not already available
+      await fetchGooglePayMerchantId();
+      
+      if (!googlePayMerchantId) {
+        throw new Error("Failed to initialize Google Pay");
+      }
+    } catch (error: any) {
+      setIsProcessingPayment(false);
+      toast({
+        title: "Error",
+        description: error.message || "Google Pay is not available for this municipality.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const paymentsClient = new window.google.payments.api.PaymentsClient({
