@@ -3150,6 +3150,7 @@ export type Database = {
           ach_fixed_fee: number | null
           amount_cents: number
           basis_points: number | null
+          calculation_notes: string
           category: string | null
           created_at: string
           customer_id: string
@@ -3190,6 +3191,7 @@ export type Database = {
           tax_type: string
           tax_year: number
           total_amount_cents: number
+          total_amount_due_cents: number
           transfer_state: string | null
           updated_at: string
           user_id: string
@@ -3199,6 +3201,7 @@ export type Database = {
           ach_fixed_fee?: number | null
           amount_cents: number
           basis_points?: number | null
+          calculation_notes: string
           category?: string | null
           created_at?: string
           customer_id: string
@@ -3239,6 +3242,7 @@ export type Database = {
           tax_type: string
           tax_year: number
           total_amount_cents: number
+          total_amount_due_cents: number
           transfer_state?: string | null
           updated_at?: string
           user_id: string
@@ -3248,6 +3252,7 @@ export type Database = {
           ach_fixed_fee?: number | null
           amount_cents?: number
           basis_points?: number | null
+          calculation_notes?: string
           category?: string | null
           created_at?: string
           customer_id?: string
@@ -3288,6 +3293,7 @@ export type Database = {
           tax_type?: string
           tax_year?: number
           total_amount_cents?: number
+          total_amount_due_cents?: number
           transfer_state?: string | null
           updated_at?: string
           user_id?: string

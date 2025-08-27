@@ -11,13 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
-import { FoodBeverageTaxForm } from './tax-forms/FoodBeverageTaxForm';
-import { HotelMotelTaxForm } from './tax-forms/HotelMotelTaxForm';
-import { AmusementTaxForm } from './tax-forms/AmusementTaxForm';
 import PaymentSummary from './PaymentSummary';
 import { formatCurrency } from '@/lib/formatters';
 import PaymentMethodSelector from './PaymentMethodSelector';
@@ -73,39 +71,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [payerAddressDisplay, setPayerAddressDisplay] = useState('');
   const [useProfileInfoForPayer, setUseProfileInfoForPayer] = useState(false);
 
-  // Tax Calculation Data
-  const [foodBeverageTaxData, setFoodBeverageTaxData] = useState({
-    grossSales: '',
-    deductions: '',
-    taxableReceipts: '0.00',
-    tax: '0.00',
-    commission: '0.00',
-    totalDue: '0.00'
-  });
-
-  const [hotelMotelTaxData, setHotelMotelTaxData] = useState({
-    line1: '', // Total Monthly Receipts
-    stateTax: '', // State Tax Deduction
-    miscReceipts: '', // Misc Receipts Deduction
-    monthsLate: '', // Months Late (0-12)
-    creditsAttached: '', // Credits Attached
-    // Calculated fields
-    line2Total: '0.00', // Total Deduction
-    line3: '0.00', // Net Receipts
-    line4: '0.00', // Municipal Tax
-    line5: '0.00', // Penalty
-    line6: '0.00', // Total Tax including Penalty
-    line8: '0.00' // Total Payment Due
-  });
-
-  const [amusementTaxData, setAmusementTaxData] = useState({
-    netReceipts: '',
-    deductions: '',
-    taxableReceipts: '0.00',
-    tax: '0.00',
-    commission: '0.00',
-    totalDue: '0.00'
-  });
+  // Simplified Tax Data
+  const [calculationNotes, setCalculationNotes] = useState('');
+  const [totalAmountDue, setTotalAmountDue] = useState('');
 
   // Document upload state
   const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([]);
@@ -120,25 +88,14 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   // Tax amount calculation for payment methods
   const getTaxAmountInCents = () => {
-    if (taxType === 'Food & Beverage') {
-      return Math.round((parseFloat(foodBeverageTaxData.totalDue) || 0) * 100);
-    } else if (taxType === 'Hotel & Motel') {
-      return Math.round((parseFloat(hotelMotelTaxData.line8) || 0) * 100);
-    } else if (taxType === 'Amusement') {
-      return Math.round((parseFloat(amusementTaxData.totalDue) || 0) * 100);
-    }
-    return 0;
+    return Math.round((parseFloat(totalAmountDue) || 0) * 100);
   };
 
   const getCurrentTaxCalculationData = () => {
-    if (taxType === 'Food & Beverage') {
-      return foodBeverageTaxData;
-    } else if (taxType === 'Hotel & Motel') {
-      return hotelMotelTaxData;
-    } else if (taxType === 'Amusement') {
-      return amusementTaxData;
-    }
-    return {};
+    return {
+      calculationNotes,
+      totalAmountDue
+    };
   };
 
   const getPayerData = () => {
@@ -284,8 +241,20 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     return Object.keys(e).length === 0;
   };
 
+  const validateStep2 = () => {
+    const e: Record<string, string> = {};
+    if (!calculationNotes.trim()) e.calculationNotes = 'Calculation details are required';
+    if (!totalAmountDue.trim()) e.totalAmountDue = 'Total amount due is required';
+    if (totalAmountDue && (isNaN(parseFloat(totalAmountDue)) || parseFloat(totalAmountDue) <= 0)) {
+      e.totalAmountDue = 'Please enter a valid amount greater than 0';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleNext = () => {
     if (currentStep === 1 && !validateStep1()) return;
+    if (currentStep === 2 && !validateStep2()) return;
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
@@ -316,39 +285,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setUploadedDocuments([]);
     setDragActive(false);
     
-    // Reset tax calculation data
-    setFoodBeverageTaxData({
-      grossSales: '',
-      deductions: '',
-      taxableReceipts: '0.00',
-      tax: '0.00',
-      commission: '0.00',
-      totalDue: '0.00'
-    });
-    
-    setHotelMotelTaxData({
-      line1: '', // Total Monthly Receipts
-      stateTax: '', // State Tax Deduction
-      miscReceipts: '', // Misc Receipts Deduction
-      monthsLate: '', // Months Late (0-12)
-      creditsAttached: '', // Credits Attached
-      // Calculated fields
-      line2Total: '0.00', // Total Deduction
-      line3: '0.00', // Net Receipts
-      line4: '0.00', // Municipal Tax
-      line5: '0.00', // Penalty
-      line6: '0.00', // Total Tax including Penalty
-      line8: '0.00' // Total Payment Due
-    });
-    
-    setAmusementTaxData({
-      netReceipts: '',
-      deductions: '',
-      taxableReceipts: '0.00',
-      tax: '0.00',
-      commission: '0.00',
-      totalDue: '0.00'
-    });
+    // Reset simplified tax data
+    setCalculationNotes('');
+    setTotalAmountDue('');
     
     setErrors({});
     setIsSubmitting(false);
@@ -356,6 +295,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   const handleSubmit = async () => {
     if (!validateStep1()) {
+      setCurrentStep(1);
+      scrollTop();
+      return;
+    }
+
+    if (!validateStep2()) {
+      setCurrentStep(2);
       scrollTop();
       return;
     }
@@ -619,35 +565,62 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         Tax Calculation - {taxType}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      {/* Tax Calculation Forms */}
-                      {taxType === 'Food & Beverage' && (
-                        <FoodBeverageTaxForm
-                          data={foodBeverageTaxData}
-                          onChange={setFoodBeverageTaxData}
-                          disabled={false}
-                        />
-                      )}
-                      
-                      {taxType === 'Hotel & Motel' && (
-                        <HotelMotelTaxForm
-                          data={hotelMotelTaxData}
-                          onChange={setHotelMotelTaxData}
-                          disabled={false}
-                        />
-                      )}
-                      
-                      {taxType === 'Amusement' && (
-                        <AmusementTaxForm
-                          data={amusementTaxData}
-                          onChange={setAmusementTaxData}
-                          disabled={false}
-                        />
-                      )}
-                      
-                      {!taxType && (
+                    <CardContent className="space-y-4">
+                      {taxType ? (
+                        <>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Please download the appropriate tax form from your municipality, complete your calculations, 
+                            and provide the details below along with supporting documents.
+                          </p>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="calculation-notes" className="text-sm font-medium">
+                                Calculation Details / Notes *
+                              </Label>
+                              <textarea
+                                id="calculation-notes"
+                                placeholder="Enter your tax calculation details, breakdown, or any notes about your submission..."
+                                value={calculationNotes}
+                                onChange={(e) => {
+                                  setCalculationNotes(e.target.value);
+                                  if (e.target.value.trim()) clearFieldError('calculationNotes');
+                                }}
+                                className={`mt-1 w-full min-h-[120px] p-3 border rounded-md resize-y ${
+                                  errors.calculationNotes ? 'border-destructive ring-2 ring-destructive' : 'border-input'
+                                }`}
+                                rows={6}
+                              />
+                              {errors.calculationNotes && (
+                                <p className="text-sm text-destructive mt-1">{errors.calculationNotes}</p>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="total-amount-due" className="text-sm font-medium">
+                                Total Amount Due ($) *
+                              </Label>
+                              <Input
+                                id="total-amount-due"
+                                type="text"
+                                placeholder="0.00"
+                                value={totalAmountDue}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/[^\d.]/g, '');
+                                  setTotalAmountDue(value);
+                                  if (value.trim()) clearFieldError('totalAmountDue');
+                                }}
+                                className={`mt-1 ${errors.totalAmountDue ? 'border-destructive ring-2 ring-destructive' : ''}`}
+                              />
+                              {errors.totalAmountDue && (
+                                <p className="text-sm text-destructive mt-1">{errors.totalAmountDue}</p>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
                         <div className="text-center text-muted-foreground py-8">
-                          Please select a tax type in step 1 to continue with the calculation.
+                          Please select a tax type in step 1 to continue.
                         </div>
                       )}
                     </CardContent>
@@ -796,71 +769,21 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       </div>
                       
                       {/* Tax Calculation Summary */}
-                      {taxType && (
+                      {taxType && calculationNotes && totalAmountDue && (
                         <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                          <h4 className="font-medium mb-3">Tax Calculation</h4>
-                          {taxType === 'Food & Beverage' && (
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Gross Sales:</span>
-                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.grossSales) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Deductions:</span>
-                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.deductions) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Taxable Receipts:</span>
-                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.taxableReceipts) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between font-medium pt-2 border-t">
-                                <span>Total Tax Due:</span>
-                                <span>{formatCurrency(parseFloat(foodBeverageTaxData.totalDue) || 0)}</span>
-                              </div>
+                          <h4 className="font-medium mb-3">Tax Calculation Summary</h4>
+                          <div className="space-y-3 text-sm">
+                            <div>
+                              <span className="text-muted-foreground block mb-1">Calculation Details:</span>
+                              <p className="whitespace-pre-wrap bg-background p-2 rounded border text-sm">
+                                {calculationNotes}
+                              </p>
                             </div>
-                          )}
-                          
-                          {taxType === 'Hotel & Motel' && (
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Monthly Receipts:</span>
-                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line1) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Net Receipts:</span>
-                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line3) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Municipal Tax:</span>
-                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line4) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between font-medium pt-2 border-t">
-                                <span>Total Payment Due:</span>
-                                <span>{formatCurrency(parseFloat(hotelMotelTaxData.line8) || 0)}</span>
-                              </div>
+                            <div className="flex justify-between font-medium pt-2 border-t">
+                              <span>Total Amount Due:</span>
+                              <span>{formatCurrency(parseFloat(totalAmountDue) || 0)}</span>
                             </div>
-                          )}
-                          
-                          {taxType === 'Amusement' && (
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Net Receipts:</span>
-                                <span>{formatCurrency(parseFloat(amusementTaxData.netReceipts) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Deductions:</span>
-                                <span>{formatCurrency(parseFloat(amusementTaxData.deductions) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Taxable Receipts:</span>
-                                <span>{formatCurrency(parseFloat(amusementTaxData.taxableReceipts) || 0)}</span>
-                              </div>
-                              <div className="flex justify-between font-medium pt-2 border-t">
-                                <span>Total Tax Due:</span>
-                                <span>{formatCurrency(parseFloat(amusementTaxData.totalDue) || 0)}</span>
-                              </div>
-                            </div>
-                          )}
+                          </div>
                         </div>
                       )}
                     </CardContent>
