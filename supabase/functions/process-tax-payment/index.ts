@@ -2,36 +2,32 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 interface ProcessTaxPaymentRequest {
-  taxType: string;
-  taxPeriodStart: string;
-  taxPeriodEnd: string;
-  taxYear: number;
-  customerId: string;
-  merchantId: string;
-  paymentInstrumentId: string;
-  idempotencyId: string;
-  fraudSessionId?: string;
-  calculationNotes: string;
-  totalAmountDue: string;
-  payer: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    ein?: string;
-    phone?: string;
-    businessName?: string;
-    address: {
-      street: string;
-      city: string;
-      state: string;
-      zipCode: string;
-    };
-  };
+  tax_type: string;
+  tax_period_start: string;
+  tax_period_end: string;
+  tax_year: number;
+  customer_id: string;
+  merchant_id: string;
+  payment_instrument_id: string;
+  total_amount_cents: number;
+  idempotency_id: string;
+  fraud_session_id: string;
+  calculation_notes: string;
+  payer_first_name: string;
+  payer_last_name: string;
+  payer_email: string;
+  payer_ein?: string;
+  payer_phone?: string;
+  payer_business_name?: string;
+  payer_street_address: string;
+  payer_city: string;
+  payer_state: string;
+  payer_zip_code: string;
 }
 
 interface FinixTransferRequest {
@@ -46,203 +42,269 @@ interface FinixTransferRequest {
 interface FinixTransferResponse {
   id: string;
   amount: number;
-  currency: string;
   state: string;
-  failure_code?: string;
-  failure_message?: string;
+  currency: string;
+  source: string;
+  merchant: string;
   created_at: string;
   updated_at: string;
+  failure_code?: string;
+  failure_message?: string;
+  fee?: number;
+  statement_descriptor?: string;
   [key: string]: any;
-}
-
-// Tax type mapping function
-function normalizeTaxType(displayTaxType: string): string {
-  const taxTypeMap: Record<string, string> = {
-    'Food & Beverage': 'food_beverage',
-    'Hotel & Motel': 'hotel_motel',
-    'Amusement': 'amusement',
-    // Also support technical names in case they're already normalized
-    'food_beverage': 'food_beverage',
-    'hotel_motel': 'hotel_motel',
-    'amusement': 'amusement'
-  };
-  
-  const normalized = taxTypeMap[displayTaxType];
-  if (!normalized) {
-    throw new Error(`Invalid tax type: ${displayTaxType}. Supported types: Food & Beverage, Hotel & Motel, Amusement`);
-  }
-  
-  return normalized;
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Initialize Supabase clients
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-  );
-
-  const supabaseServiceRole = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    { auth: { persistSession: false } }
-  );
-
   try {
-    // Authenticate user
-    const authHeader = req.headers.get('Authorization');
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    // Create service role client for database operations
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Get authenticated user
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error('Missing authorization header');
+      throw new Error("Missing authorization header");
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData } = await supabaseClient.auth.getUser(token);
+    const user = userData.user;
 
-    if (!user?.id) {
-      throw new Error('User not authenticated');
+    if (!user) {
+      throw new Error("User not authenticated");
     }
 
     // Parse request body
+    const body: ProcessTaxPaymentRequest = await req.json();
     const { 
-      taxType, taxPeriodStart, taxPeriodEnd, taxYear, customerId, merchantId,
-      paymentInstrumentId, idempotencyId, fraudSessionId, calculationNotes, totalAmountDue, payer 
-    }: ProcessTaxPaymentRequest = await req.json();
+      tax_type,
+      tax_period_start,
+      tax_period_end,
+      tax_year,
+      customer_id,
+      merchant_id,
+      payment_instrument_id,
+      total_amount_cents,
+      idempotency_id,
+      fraud_session_id,
+      calculation_notes,
+      payer_first_name,
+      payer_last_name,
+      payer_email,
+      payer_ein,
+      payer_phone,
+      payer_business_name,
+      payer_street_address,
+      payer_city,
+      payer_state,
+      payer_zip_code
+    } = body;
 
-    // Normalize tax type to database format
-    const normalizedTaxType = normalizeTaxType(taxType);
-    console.log('Processing tax payment:', { taxType, normalizedTaxType, paymentInstrumentId, idempotencyId });
+    console.log("Processing tax payment:", { 
+      tax_type, 
+      payment_instrument_id, 
+      total_amount_cents, 
+      user_id: user.id 
+    });
 
-    // Check for duplicate idempotency ID
-    const { data: existingPayment } = await supabaseServiceRole
-      .from('payment_history')
-      .select('id, transfer_state')
-      .eq('idempotency_id', idempotencyId)
-      .maybeSingle();
+    // Validate input
+    if (!tax_type || !payment_instrument_id || !total_amount_cents || !idempotency_id || !fraud_session_id) {
+      throw new Error("Missing required parameters");
+    }
+
+    // Check for duplicate idempotency_id
+    const { data: existingPayment } = await supabaseService
+      .from("payment_history")
+      .select("id, transfer_state")
+      .eq("idempotency_id", idempotency_id)
+      .single();
 
     if (existingPayment) {
-      console.log('Duplicate idempotency ID detected:', idempotencyId);
       return new Response(
         JSON.stringify({ 
-          error: 'Payment already processed',
-          transfer_state: existingPayment.transfer_state 
+          success: true, 
+          payment_history_id: existingPayment.id,
+          message: "Payment already processed",
+          transfer_state: existingPayment.transfer_state
         }),
-        { 
-          status: 409, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch payment instrument details
-    const { data: paymentInstrument, error: piError } = await supabaseServiceRole
-      .from('user_payment_instruments')
-      .select('*')
-      .eq('id', paymentInstrumentId)
-      .eq('user_id', user.id)
-      .eq('enabled', true)
-      .maybeSingle();
+    // Get payment instrument and validate ownership
+    const { data: paymentInstrument, error: piError } = await supabaseService
+      .from("user_payment_instruments")
+      .select("*")
+      .eq("id", payment_instrument_id)
+      .eq("user_id", user.id)
+      .eq("enabled", true)
+      .single();
 
     if (piError || !paymentInstrument) {
-      throw new Error('Payment instrument not found or access denied');
+      throw new Error("Payment instrument not found or access denied");
     }
 
-    // Fetch merchant details
-    const { data: merchant, error: merchantError } = await supabaseServiceRole
-      .from('merchants')
-      .select(`
-        *,
-        merchant_fee_profiles!inner(*)
-      `)
-      .eq('id', merchantId)
-      .maybeSingle();
+    // Get merchant details
+    const { data: merchant, error: merchantError } = await supabaseService
+      .from("merchants")
+      .select("*")
+      .eq("id", merchant_id)
+      .single();
 
     if (merchantError || !merchant) {
-      throw new Error('Merchant not found');
+      throw new Error("Merchant not found");
     }
 
     // Validate finix_merchant_id is present
     if (!merchant.finix_merchant_id) {
-      throw new Error('Merchant is not configured for Finix payment processing');
+      throw new Error("Merchant is not configured for Finix payment processing");
     }
 
-    const feeProfile = merchant.merchant_fee_profiles[0];
-    if (!feeProfile) {
-      throw new Error('Merchant fee profile not found');
-    }
-
-    // Calculate tax amount from totalAmountDue - convert from dollars to cents
-    // Remove commas before parsing to handle formatted numbers like "1,000.00"
-    const cleanedTotalAmountDue = totalAmountDue.replace(/,/g, '');
-    const baseAmountDollars = parseFloat(cleanedTotalAmountDue);
-    if (isNaN(baseAmountDollars) || baseAmountDollars <= 0) {
-      throw new Error('Invalid tax amount: must be a valid number greater than 0');
-    }
-    const baseAmount = Math.round(baseAmountDollars * 100); // Convert dollars to cents
-
-    // Calculate service fees using hardcoded rates for tax payments
+    // Calculate base amount and service fee using the same logic as permits
     const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
     const basisPoints = isCard ? 300 : 150; // 3% for cards, 1.5% for ACH
-    const fixedFee = 50; // $0.50 fixed fee for both card and ACH
+    const fixedFee = 50; // $0.50 fixed fee for both
     
-    // Use grossed-up calculation to match frontend
+    // Calculate base amount from total (reverse grossed-up calculation)
     const percentageDecimal = basisPoints / 10000;
-    const expectedTotal = Math.round((baseAmount + fixedFee) / (1 - percentageDecimal));
-    const serviceFee = expectedTotal - baseAmount;
-    const totalAmount = expectedTotal;
+    const baseAmount = Math.round((total_amount_cents * (1 - percentageDecimal)) - fixedFee);
+    const calculatedServiceFee = total_amount_cents - baseAmount;
 
-    console.log('Fee calculation:', { baseAmount, serviceFee, totalAmount, basisPoints, fixedFee });
+    console.log("Fee calculation:", { 
+      baseAmount, 
+      serviceFee: calculatedServiceFee, 
+      totalAmount: total_amount_cents, 
+      basisPoints, 
+      fixedFee 
+    });
 
-    // Use atomic function to create tax submission and payment record
-    const { data: atomicResult, error: atomicError } = await supabaseServiceRole
-      .rpc('create_tax_submission_with_payment', {
-        p_user_id: user.id,
-        p_customer_id: customerId,
-        p_merchant_id: merchantId,
-        p_tax_type: normalizedTaxType,
-        p_tax_period_start: taxPeriodStart,
-        p_tax_period_end: taxPeriodEnd,
-        p_tax_year: taxYear,
-        p_amount_cents: baseAmount,
-        p_calculation_notes: calculationNotes,
-        p_total_amount_due_cents: baseAmount,
-        p_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        p_finix_merchant_id: merchant.finix_merchant_id,
-        p_service_fee_cents: serviceFee,
-        p_total_amount_cents: totalAmount,
-        p_payment_type: paymentInstrument.instrument_type,
-        p_idempotency_id: idempotencyId,
-        p_fraud_session_id: fraudSessionId,
-        p_card_brand: paymentInstrument.card_brand,
-        p_card_last_four: paymentInstrument.card_last_four,
-        p_bank_last_four: paymentInstrument.bank_last_four,
-        p_merchant_name: merchant.merchant_name,
-        p_category: merchant.category,
-        p_subcategory: merchant.subcategory,
-        p_statement_descriptor: merchant.statement_descriptor,
-        p_first_name: payer.firstName,
-        p_last_name: payer.lastName,
-        p_user_email: payer.email,
-        p_payer_ein: payer.ein || '',
-        p_payer_phone: payer.phone || '',
-        p_payer_street_address: payer.address?.street || '',
-        p_payer_city: payer.address?.city || '',
-        p_payer_state: payer.address?.state || '',
-        p_payer_zip_code: payer.address?.zipCode || '',
-        p_payer_business_name: payer.businessName || '',
-      });
+    // Determine payment type
+    const paymentType = paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'Card' : 'Bank Account';
 
-    if (atomicError || !atomicResult?.success) {
-      console.error('Failed to create tax submission and payment records:', atomicError);
-      throw new Error('Failed to create tax submission and payment records');
+    // Create tax submission record
+    const { data: taxSubmission, error: tsError } = await supabaseService
+      .from("tax_submissions")
+      .insert({
+        user_id: user.id,
+        customer_id: customer_id,
+        merchant_id: merchant_id,
+        tax_type: tax_type,
+        tax_period_start: tax_period_start,
+        tax_period_end: tax_period_end,
+        tax_year: tax_year,
+        amount_cents: baseAmount,
+        calculation_notes: calculation_notes,
+        total_amount_due_cents: baseAmount,
+        total_amount_cents: total_amount_cents,
+        service_fee_cents: calculatedServiceFee,
+        finix_merchant_id: merchant.finix_merchant_id,
+        merchant_name: merchant.merchant_name,
+        category: merchant.category,
+        subcategory: merchant.subcategory,
+        statement_descriptor: merchant.statement_descriptor,
+        submission_status: 'draft',
+        payment_status: 'pending',
+        transfer_state: 'PENDING',
+        submission_date: new Date().toISOString(),
+        idempotency_id: idempotency_id,
+        fraud_session_id: fraud_session_id,
+        payment_type: paymentType,
+        first_name: payer_first_name,
+        last_name: payer_last_name,
+        email: payer_email,
+        payer_ein: payer_ein,
+        payer_phone: payer_phone,
+        payer_street_address: payer_street_address,
+        payer_city: payer_city,
+        payer_state: payer_state,
+        payer_zip_code: payer_zip_code,
+        payer_business_name: payer_business_name
+      })
+      .select()
+      .single();
+
+    if (tsError) {
+      console.error("Error creating tax submission:", tsError);
+      throw new Error("Failed to create tax submission record");
     }
 
-    const { tax_submission_id: taxSubmissionId, payment_history_id: paymentHistoryId } = atomicResult;
+    // Create payment history record
+    const { data: paymentHistory, error: phError } = await supabaseService
+      .from("payment_history")
+      .insert({
+        user_id: user.id,
+        customer_id: customer_id,
+        tax_submission_id: taxSubmission.id,
+        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+        finix_merchant_id: merchant.finix_merchant_id,
+        amount_cents: baseAmount,
+        service_fee_cents: calculatedServiceFee,
+        total_amount_cents: total_amount_cents,
+        currency: 'USD',
+        payment_type: paymentType,
+        idempotency_id: idempotency_id,
+        fraud_session_id: fraud_session_id,
+        transfer_state: 'PENDING',
+        card_brand: paymentInstrument.card_brand,
+        card_last_four: paymentInstrument.card_last_four,
+        bank_last_four: paymentInstrument.bank_last_four,
+        merchant_id: merchant_id,
+        merchant_name: merchant.merchant_name,
+        category: merchant.category,
+        subcategory: merchant.subcategory,
+        statement_descriptor: merchant.statement_descriptor,
+        // Customer information
+        customer_first_name: payer_first_name,
+        customer_last_name: payer_last_name,
+        customer_email: payer_email,
+        customer_street_address: payer_street_address,
+        customer_city: payer_city,
+        customer_state: payer_state,
+        customer_zip_code: payer_zip_code,
+        // Tax-specific information
+        bill_type: 'tax',
+        payment_status: 'pending',
+        bill_status: 'unpaid',
+        payment_method_type: paymentType,
+        payment_instrument_id: payment_instrument_id
+      })
+      .select()
+      .single();
+
+    if (phError) {
+      console.error("Error creating payment history:", phError);
+      // Cleanup tax submission
+      await supabaseService.from("tax_submissions").delete().eq("id", taxSubmission.id);
+      throw new Error("Failed to create payment record");
+    }
+
+    // Prepare Finix transfer request
+    const finixRequest: FinixTransferRequest = {
+      merchant: merchant.finix_merchant_id,
+      currency: "USD",
+      amount: total_amount_cents,
+      source: paymentInstrument.finix_payment_instrument_id,
+      idempotency_id: idempotency_id
+    };
+
+    if (fraud_session_id) {
+      finixRequest.fraud_session_id = fraud_session_id;
+    }
 
     // Get Finix credentials
     const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");
@@ -258,30 +320,15 @@ serve(async (req) => {
       ? "https://finix.payments-api.com"
       : "https://finix.sandbox-payments-api.com";
 
-    // Prepare Finix transfer request
-    const transferRequest: FinixTransferRequest = {
-      merchant: merchant.finix_merchant_id,
-      currency: 'USD',
-      amount: totalAmount,
-      source: paymentInstrument.finix_payment_instrument_id,
-      idempotency_id: idempotencyId
-    };
-
-    if (fraudSessionId) {
-      transferRequest.fraud_session_id = fraudSessionId;
-    }
-
-    console.log('Creating Finix transfer:', transferRequest);
-
-    // Make request to Finix API
+    // Create Finix transfer
     const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Finix-Version': '2022-02-01',
-        'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`
+        "Content-Type": "application/json",
+        "Finix-Version": "2022-02-01",
+        "Authorization": `Basic ${btoa(finixApplicationId + ":" + finixApiSecret)}`
       },
-      body: JSON.stringify(transferRequest)
+      body: JSON.stringify(finixRequest)
     });
 
     const finixData: FinixTransferResponse = await finixResponse.json();
@@ -311,50 +358,50 @@ serve(async (req) => {
       updateData.payment_status = 'failed';
     }
 
-    await supabaseServiceRole
-      .from('payment_history')
+    await supabaseService
+      .from("payment_history")
       .update(updateData)
-      .eq('id', paymentHistoryId);
+      .eq("id", paymentHistory.id);
 
     // If transfer succeeded, update the tax submission
     if (finixResponse.ok && finixData.state === 'SUCCEEDED') {
-      const { error: taxUpdateError } = await supabaseServiceRole
-        .from('tax_submissions')
-        .update({
-          payment_status: 'paid',
-          transfer_state: 'SUCCEEDED',
-          finix_transfer_id: finixData.id,
-          paid_at: new Date().toISOString(),
-          submission_status: 'submitted'
-        })
-        .eq('id', taxSubmissionId);
+      try {
+        const { error: taxUpdateError } = await supabaseService
+          .from("tax_submissions")
+          .update({
+            payment_status: 'paid',
+            transfer_state: 'SUCCEEDED',
+            finix_transfer_id: finixData.id,
+            paid_at: new Date().toISOString(),
+            submission_status: 'submitted',
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", taxSubmission.id);
 
-      if (taxUpdateError) {
-        console.error('Failed to update tax submission:', taxUpdateError);
+        if (taxUpdateError) {
+          console.error("Error updating tax submission:", taxUpdateError);
+          throw new Error("Failed to update tax submission status");
+        }
+
+        console.log("Tax submission updated successfully for payment:", finixData.id);
+      } catch (error) {
+        console.error("Tax submission update failed:", error);
+        // Note: Payment was successful, but tax submission update failed
+        // This should be handled by manual review
       }
-    } else if (!finixResponse.ok) {
-      // If Finix call fails, rollback the transaction by deleting the created records
-      console.log('Finix transfer failed, rolling back transaction...');
-      
-      await supabaseServiceRole
-        .from('payment_history')
-        .delete()
-        .eq('id', paymentHistoryId);
-      
-      await supabaseServiceRole
-        .from('tax_submissions')
-        .delete()
-        .eq('id', taxSubmissionId);
+    }
 
+    // Return response
+    if (!finixResponse.ok) {
       return new Response(
         JSON.stringify({
           success: false,
           error: updateData.failure_message,
-          payment_history_id: paymentHistoryId
+          payment_history_id: paymentHistory.id
         }),
-        {
+        { 
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
@@ -362,28 +409,27 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        payment_history_id: paymentHistory.id,
+        tax_submission_id: taxSubmission.id,
         transfer_id: finixData.id,
         transfer_state: finixData.state,
-        payment_history_id: paymentHistoryId,
-        tax_submission_id: taxSubmissionId,
-        amount_cents: totalAmount,
+        amount_cents: total_amount_cents,
         redirect_url: `/taxes`
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error('Tax payment processing error:', error);
+    console.error("Tax payment error:", error);
+    
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Failed to process tax payment' 
+      JSON.stringify({
+        success: false,
+        error: error.message || "An unexpected error occurred"
       }),
-      {
+      { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
   }
