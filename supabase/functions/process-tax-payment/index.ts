@@ -35,13 +35,12 @@ interface ProcessTaxPaymentRequest {
 }
 
 interface FinixTransferRequest {
-  amount: number;
+  merchant: string;
   currency: string;
-  destination: string;
+  amount: number;
   source: string;
-  idempotency_id: string;  // REQUIRED by Finix
-  fraud_session_id?: string; // REQUIRED by Finix when available
-  tags?: Record<string, string>;
+  fraud_session_id?: string;
+  idempotency_id: string;
 }
 
 interface FinixTransferResponse {
@@ -182,27 +181,18 @@ serve(async (req) => {
     }
     const baseAmount = Math.round(baseAmountDollars * 100); // Convert dollars to cents
 
-    // Calculate service fees using grossed-up method
-    let serviceFee: number;
-    let totalAmount: number;
+    // Calculate service fees using grossed-up method to match frontend
+    const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
+    const basisPoints = isCard ? (feeProfile.basis_points || 250) : (feeProfile.ach_basis_points || 20);
+    const fixedFee = isCard ? (feeProfile.fixed_fee || 50) : (feeProfile.ach_fixed_fee || 50);
+    
+    // Use grossed-up calculation to match frontend
+    const percentageDecimal = basisPoints / 10000;
+    const expectedTotal = Math.round((baseAmount + fixedFee) / (1 - percentageDecimal));
+    const serviceFee = expectedTotal - baseAmount;
+    const totalAmount = expectedTotal;
 
-    if (paymentInstrument.instrument_type === 'PAYMENT_CARD') {
-      const percentageRate = feeProfile.basis_points / 10000;
-      const fixedFee = feeProfile.fixed_fee || 0;
-      
-      // Grossed-up calculation: total = (base + fixed) / (1 - percentage)
-      totalAmount = Math.round((baseAmount + fixedFee) / (1 - percentageRate));
-      serviceFee = totalAmount - baseAmount;
-    } else {
-      // ACH
-      const percentageRate = feeProfile.ach_basis_points / 10000;
-      const fixedFee = feeProfile.ach_fixed_fee || 0;
-      
-      totalAmount = Math.round((baseAmount + fixedFee) / (1 - percentageRate));
-      serviceFee = totalAmount - baseAmount;
-    }
-
-    console.log('Fee calculation:', { baseAmount, serviceFee, totalAmount });
+    console.log('Fee calculation:', { baseAmount, serviceFee, totalAmount, basisPoints, fixedFee });
 
     // Use atomic function to create tax submission and payment record
     const { data: atomicResult, error: atomicError } = await supabaseServiceRole
@@ -250,21 +240,27 @@ serve(async (req) => {
 
     const { tax_submission_id: taxSubmissionId, payment_history_id: paymentHistoryId } = atomicResult;
 
+    // Get Finix credentials
+    const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");
+    const finixApiSecret = Deno.env.get("FINIX_API_SECRET");
+    const finixEnvironment = Deno.env.get("FINIX_ENVIRONMENT") || "sandbox";
+    
+    if (!finixApplicationId || !finixApiSecret) {
+      throw new Error("Finix API credentials not configured");
+    }
+
+    // Determine Finix API URL based on environment
+    const finixBaseUrl = finixEnvironment === "live" 
+      ? "https://finix.payments-api.com"
+      : "https://finix.sandbox-payments-api.com";
+
     // Prepare Finix transfer request
     const transferRequest: FinixTransferRequest = {
-      amount: totalAmount,
+      merchant: merchant.finix_merchant_id,
       currency: 'USD',
-      destination: merchant.finix_merchant_id,
+      amount: totalAmount,
       source: paymentInstrument.finix_payment_instrument_id,
-      idempotency_id: idempotencyId,  // Required by Finix
-      tags: {
-        tax_submission_id: taxSubmissionId,
-        payment_history_id: paymentHistoryId,
-        tax_type: taxType,
-        user_id: user.id,
-        finix_merchant_id: merchant.finix_merchant_id,
-        merchant_name: merchant.merchant_name
-      }
+      idempotency_id: idempotencyId
     };
 
     if (fraudSessionId) {
@@ -274,29 +270,73 @@ serve(async (req) => {
     console.log('Creating Finix transfer:', transferRequest);
 
     // Make request to Finix API
-    const finixResponse = await fetch('https://finix.sandbox-payments-api.com/transfers', {
+    const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/vnd.json+api',
-        'Authorization': `Basic ${btoa(Deno.env.get('FINIX_USERNAME') + ':' + Deno.env.get('FINIX_PASSWORD'))}`
+        'Content-Type': 'application/json',
+        'Finix-Version': '2022-02-01',
+        'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`
       },
       body: JSON.stringify(transferRequest)
     });
 
     const finixData: FinixTransferResponse = await finixResponse.json();
-    console.log('Finix response:', finixData);
 
-    // If Finix call fails, rollback the transaction by deleting the created records
-    if (finixData.failure_code || finixData.state === 'FAILED') {
+    console.log("Finix transfer response:", { 
+      status: finixResponse.status, 
+      transfer_id: finixData.id,
+      state: finixData.state 
+    });
+
+    // Update payment history with Finix response
+    const updateData: any = {
+      raw_finix_response: finixData,
+      updated_at: new Date().toISOString()
+    };
+
+    if (finixResponse.ok && finixData.id) {
+      updateData.finix_transfer_id = finixData.id;
+      updateData.transfer_state = finixData.state || 'PENDING';
+      updateData.finix_created_at = finixData.created_at;
+      updateData.finix_updated_at = finixData.updated_at;
+      updateData.payment_status = 'paid';
+    } else {
+      updateData.transfer_state = 'FAILED';
+      updateData.failure_code = finixData.failure_code || 'API_ERROR';
+      updateData.failure_message = finixData.failure_message || 'Finix API request failed';
+      updateData.payment_status = 'failed';
+    }
+
+    await supabaseServiceRole
+      .from('payment_history')
+      .update(updateData)
+      .eq('id', paymentHistoryId);
+
+    // If transfer succeeded, update the tax submission
+    if (finixResponse.ok && finixData.state === 'SUCCEEDED') {
+      const { error: taxUpdateError } = await supabaseServiceRole
+        .from('tax_submissions')
+        .update({
+          payment_status: 'paid',
+          transfer_state: 'SUCCEEDED',
+          finix_transfer_id: finixData.id,
+          paid_at: new Date().toISOString(),
+          submission_status: 'submitted'
+        })
+        .eq('id', taxSubmissionId);
+
+      if (taxUpdateError) {
+        console.error('Failed to update tax submission:', taxUpdateError);
+      }
+    } else if (!finixResponse.ok) {
+      // If Finix call fails, rollback the transaction by deleting the created records
       console.log('Finix transfer failed, rolling back transaction...');
       
-      // Delete payment history record
       await supabaseServiceRole
         .from('payment_history')
         .delete()
         .eq('id', paymentHistoryId);
       
-      // Delete tax submission record
       await supabaseServiceRole
         .from('tax_submissions')
         .delete()
@@ -305,50 +345,14 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Payment failed',
-          failure_code: finixData.failure_code,
-          failure_message: finixData.failure_message
+          error: updateData.failure_message,
+          payment_history_id: paymentHistoryId
         }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
-    }
-
-    // Update payment history with successful Finix response
-    const updateData: any = {
-      finix_transfer_id: finixData.id,
-      transfer_state: finixData.state,
-      raw_finix_response: finixData,
-      finix_created_at: finixData.created_at,
-      finix_updated_at: finixData.updated_at,
-      payment_status: 'paid'
-    };
-
-    const { error: updateError } = await supabaseServiceRole
-      .from('payment_history')
-      .update(updateData)
-      .eq('id', paymentHistoryId);
-
-    if (updateError) {
-      console.error('Failed to update payment record:', updateError);
-    }
-
-    // Update tax submission with success
-    const { error: taxUpdateError } = await supabaseServiceRole
-      .from('tax_submissions')
-      .update({
-        payment_status: 'paid',
-        transfer_state: 'SUCCEEDED',
-        finix_transfer_id: finixData.id,
-        paid_at: new Date().toISOString(),
-        submission_status: 'submitted'
-      })
-      .eq('id', taxSubmissionId);
-
-    if (taxUpdateError) {
-      console.error('Failed to update tax submission:', taxUpdateError);
     }
 
     return new Response(
@@ -358,7 +362,8 @@ serve(async (req) => {
         transfer_state: finixData.state,
         payment_history_id: paymentHistoryId,
         tax_submission_id: taxSubmissionId,
-        amount_cents: totalAmount
+        amount_cents: totalAmount,
+        redirect_url: `/taxes`
       }),
       {
         status: 200,
