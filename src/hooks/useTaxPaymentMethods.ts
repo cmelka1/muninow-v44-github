@@ -141,19 +141,41 @@ export const useTaxPaymentMethods = (taxData: {
     setIsProcessingPayment(true);
     
     try {
+      // Convert totalAmountDue to cents if it's a string
+      let totalAmountCents = totalWithFee;
+      if (taxData.calculationData?.totalAmountDue) {
+        const totalAmountString = taxData.calculationData.totalAmountDue.toString();
+        // If it's a dollar amount string, convert to cents
+        if (totalAmountString.includes('.')) {
+          totalAmountCents = Math.round(parseFloat(totalAmountString) * 100);
+        } else {
+          totalAmountCents = parseInt(totalAmountString);
+        }
+      }
+
       const paymentData = {
-        taxType: taxData.taxType,
-        taxPeriodStart: taxData.taxPeriodStart,
-        taxPeriodEnd: taxData.taxPeriodEnd,
-        taxYear: taxData.taxYear,
-        customerId: taxData.municipality?.customer_id,
-        merchantId: taxData.municipality?.id,
-        paymentInstrumentId: selectedPaymentMethod,
-        idempotencyId: generateIdempotencyId('tax'),
-        fraudSessionId,
-        calculationNotes: taxData.calculationData?.calculationNotes || '',
-        totalAmountDue: taxData.calculationData?.totalAmountDue || '',
-        payer: taxData.payer
+        tax_type: taxData.taxType,
+        tax_period_start: taxData.taxPeriodStart,
+        tax_period_end: taxData.taxPeriodEnd,
+        tax_year: taxData.taxYear,
+        customer_id: taxData.municipality?.customer_id,
+        merchant_id: taxData.municipality?.id,
+        payment_instrument_id: selectedPaymentMethod,
+        total_amount_cents: totalAmountCents,
+        idempotency_id: generateIdempotencyId('tax'),
+        fraud_session_id: fraudSessionId,
+        calculation_notes: taxData.calculationData?.calculationNotes || '',
+        // Flatten payer object into individual fields
+        payer_first_name: taxData.payer?.firstName || '',
+        payer_last_name: taxData.payer?.lastName || '',
+        payer_email: taxData.payer?.email || '',
+        payer_ein: taxData.payer?.ein || '',
+        payer_phone: taxData.payer?.phone || '',
+        payer_business_name: taxData.payer?.businessName || '',
+        payer_street_address: taxData.payer?.streetAddress || '',
+        payer_city: taxData.payer?.city || '',
+        payer_state: taxData.payer?.state || '',
+        payer_zip_code: taxData.payer?.zipCode || ''
       };
 
       const { data, error } = await supabase.functions.invoke('process-tax-payment', {
