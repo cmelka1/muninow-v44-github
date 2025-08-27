@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertCircle, ChevronLeft, ChevronRight, Eye, FileText } from 'lucide-react';
 import { useMunicipalTaxSubmissions } from '@/hooks/useMunicipalTaxSubmissions';
 import { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
+import { TaxSubmissionDetailModal } from '@/components/municipal/TaxSubmissionDetailModal';
 
 interface MunicipalTaxSubmissionsTableProps {
   filters?: TaxSubmissionFilters;
@@ -22,6 +24,8 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const { data, isLoading, error } = useMunicipalTaxSubmissions({
     page: currentPage,
@@ -89,6 +93,16 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, data?.count || 0);
 
+  const handleViewDetails = (submissionId: string) => {
+    setSelectedSubmissionId(submissionId);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedSubmissionId(null);
+  };
+
   if (error) {
     return (
       <Card>
@@ -142,11 +156,12 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                   <TableHead>Tax Year</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.data.map((submission) => (
-                  <TableRow key={submission.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={submission.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
                       {formatDate(submission.submission_date)}
                     </TableCell>
@@ -161,6 +176,16 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     <TableCell>{getStatusBadge(submission.payment_status)}</TableCell>
                     <TableCell className="text-right font-medium">
                       {formatAmount(submission.total_amount_cents)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDetails(submission.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -212,6 +237,19 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
           </>
         )}
       </CardContent>
+
+      {/* Tax Submission Detail Modal */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Tax Submission Details</DialogTitle>
+          </DialogHeader>
+          <TaxSubmissionDetailModal
+            submissionId={selectedSubmissionId}
+            onClose={handleCloseDetailModal}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
