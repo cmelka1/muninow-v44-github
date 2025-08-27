@@ -3144,6 +3144,51 @@ export type Database = {
           },
         ]
       }
+      tax_submission_documents: {
+        Row: {
+          content_type: string
+          created_at: string
+          description: string | null
+          document_type: string
+          file_name: string
+          file_size: number
+          id: string
+          original_file_name: string
+          storage_path: string
+          tax_submission_id: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_name: string
+          file_size: number
+          id?: string
+          original_file_name: string
+          storage_path: string
+          tax_submission_id: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          original_file_name?: string
+          storage_path?: string
+          tax_submission_id?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       tax_submissions: {
         Row: {
           ach_basis_points: number | null

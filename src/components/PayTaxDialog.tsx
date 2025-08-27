@@ -22,6 +22,8 @@ import PaymentMethodSelector from './PaymentMethodSelector';
 import PaymentButtonsContainer from './PaymentButtonsContainer';
 import { useTaxPaymentMethods } from '@/hooks/useTaxPaymentMethods';
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
+import { TaxDocumentUpload } from './TaxDocumentUpload';
+import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 
 
 interface PayTaxDialogProps {
@@ -317,7 +319,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
     setIsSubmitting(true);
     try {
+      // Process payment - document upload will be handled separately for now
       await handlePayment();
+      
+      // Note: Document upload functionality will be completed in Phase 3
+      // when we enhance the municipal review interface
+      
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
@@ -627,122 +634,11 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                   </Card>
                   
                   {/* Document Upload Section */}
-                  <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Supporting Documents
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                          Upload any supporting documents for your tax submission (receipts, reports, etc.)
-                        </p>
-                        
-                        {/* File Upload Zone */}
-                        <div
-                          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                            dragActive 
-                              ? 'border-primary bg-primary/5' 
-                              : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/25'
-                          }`}
-                          onDragEnter={(e) => {
-                            e.preventDefault();
-                            setDragActive(true);
-                          }}
-                          onDragLeave={(e) => {
-                            e.preventDefault();
-                            setDragActive(false);
-                          }}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            setDragActive(false);
-                            // Handle file drop - simplified for now
-                            const files = Array.from(e.dataTransfer.files);
-                            files.forEach(file => {
-                              const newDoc = {
-                                id: crypto.randomUUID(),
-                                name: file.name,
-                                size: file.size,
-                                type: file.type,
-                                uploadStatus: 'completed'
-                              };
-                              setUploadedDocuments(prev => [...prev, newDoc]);
-                            });
-                          }}
-                        >
-                          <div className="space-y-2">
-                            <div className="text-sm">
-                              <label htmlFor="tax-file-upload" className="text-primary hover:text-primary/80 cursor-pointer font-medium">
-                                Click to upload
-                              </label>
-                              <span className="text-muted-foreground"> or drag and drop</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (max 10MB each)
-                            </p>
-                          </div>
-                          <input
-                            id="tax-file-upload"
-                            type="file"
-                            multiple
-                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
-                            className="hidden"
-                            onChange={(e) => {
-                              const files = Array.from(e.target.files || []);
-                              files.forEach(file => {
-                                const newDoc = {
-                                  id: crypto.randomUUID(),
-                                  name: file.name,
-                                  size: file.size,
-                                  type: file.type,
-                                  uploadStatus: 'completed'
-                                };
-                                setUploadedDocuments(prev => [...prev, newDoc]);
-                              });
-                            }}
-                          />
-                        </div>
-                        
-                        {/* Uploaded Files List */}
-                        {uploadedDocuments.length > 0 && (
-                          <div className="space-y-3">
-                            <Label className="text-sm font-medium text-foreground">
-                              Uploaded Files ({uploadedDocuments.length})
-                            </Label>
-                            {uploadedDocuments.map((doc) => (
-                              <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
-                                    <span className="text-xs font-medium text-primary">
-                                      {doc.name.split('.').pop()?.toUpperCase()}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium">{doc.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {(doc.size / 1024 / 1024).toFixed(1)} MB
-                                    </p>
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setUploadedDocuments(prev => prev.filter(d => d.id !== doc.id));
-                                  }}
-                                >
-                                  Remove
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TaxDocumentUpload
+                    documents={uploadedDocuments}
+                    onDocumentsChange={setUploadedDocuments}
+                    disabled={false}
+                  />
                 </div>
               )}
 
@@ -834,18 +730,21 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {uploadedDocuments.map((doc) => (
-                            <div key={doc.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
+                          {uploadedDocuments.map((doc, index) => (
+                            <div key={index} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
                               <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
                                 <span className="text-xs font-medium text-primary">
-                                  {doc.name.split('.').pop()?.toUpperCase()}
+                                  {doc.file.name.split('.').pop()?.toUpperCase()}
                                 </span>
                               </div>
                               <div className="flex-1">
-                                <p className="text-sm font-medium">{doc.name}</p>
+                                <p className="text-sm font-medium">{doc.file.name}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {(doc.size / 1024 / 1024).toFixed(1)} MB
+                                  {doc.documentType} • {(doc.file.size / 1024 / 1024).toFixed(1)} MB
                                 </p>
+                                {doc.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
+                                )}
                               </div>
                             </div>
                           ))}
