@@ -151,7 +151,8 @@ export const useTaxPaymentMethods = (taxData: {
         paymentInstrumentId: selectedPaymentMethod,
         idempotencyId: generateIdempotencyId('tax'),
         fraudSessionId,
-        calculationData: taxData.calculationData,
+        calculationNotes: taxData.calculationData?.calculationNotes || '',
+        totalAmountDue: taxData.calculationData?.totalAmountDue || '',
         payer: taxData.payer
       };
 
