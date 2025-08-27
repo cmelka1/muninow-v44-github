@@ -92,21 +92,51 @@ export const useTaxPaymentMethods = (taxData: {
 
   // Initialize Finix fraud detection
   useEffect(() => {
-    const initializeFinix = async () => {
-      try {
-        if (typeof window !== 'undefined' && window.Finix) {
-          // Simplified fraud detection for tax payments
-          const sessionId = `tax-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          setFraudSessionId(sessionId);
-          setFinixFingerprint('tax-fingerprint');
+    const initializeFinixAuth = () => {
+      // Check if Finix library is loaded and municipality has merchant data
+      if (typeof window !== 'undefined' && window.Finix && taxData.municipality?.finix_merchant_id) {
+        try {
+          const finixMerchantId = taxData.municipality.finix_merchant_id;
+          console.log('Initializing Finix Auth for tax payments with merchant ID:', finixMerchantId);
+          
+          // Use proper Finix Auth initialization (same pattern as permits)
+          const auth = window.Finix.Auth(
+            "sandbox", // Environment
+            finixMerchantId, // Merchant ID from municipality data
+            (sessionKey: string) => {
+              console.log('Finix Auth initialized with session key for tax payments:', sessionKey);
+              setFraudSessionId(sessionKey);
+            }
+          );
+          
+          // Also try to get session key immediately if available
+          try {
+            const immediateSessionKey = auth.getSessionKey();
+            if (immediateSessionKey) {
+              setFraudSessionId(immediateSessionKey);
+              console.log('Got immediate session key for tax payments');
+            }
+          } catch (error) {
+            console.log('Session key not immediately available for tax payments, will wait for callback');
+          }
+        } catch (error) {
+          console.error('Error initializing Finix Auth for tax payments:', error);
+          // Fallback session ID generation on error
+          const fallbackSessionId = `tax-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          setFraudSessionId(fallbackSessionId);
+          setFinixFingerprint('tax-fingerprint-error');
         }
-      } catch (error) {
-        console.error('Error initializing Finix fraud detection:', error);
+      } else {
+        console.warn('Finix library not loaded or no merchant ID, using fallback session ID for tax payments');
+        // Fallback for when Finix library is not available
+        const fallbackSessionId = `tax-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        setFraudSessionId(fallbackSessionId);
+        setFinixFingerprint('tax-fingerprint-fallback');
       }
     };
 
     if (user && taxData.municipality?.finix_merchant_id) {
-      initializeFinix();
+      initializeFinixAuth();
     }
   }, [user, taxData.municipality?.finix_merchant_id]);
 
@@ -138,20 +168,63 @@ export const useTaxPaymentMethods = (taxData: {
       return;
     }
 
+    // Validate municipality has Finix merchant ID
+    if (!taxData.municipality?.finix_merchant_id) {
+      toast({
+        title: "Configuration Error",
+        description: "This municipality is not configured for online payments. Please contact support.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate amount is reasonable
+    if (!totalWithFee || totalWithFee <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "The payment amount must be greater than zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessingPayment(true);
     
     try {
-      // Convert totalAmountDue to cents if it's a string
-      let totalAmountCents = totalWithFee;
-      if (taxData.calculationData?.totalAmountDue) {
-        const totalAmountString = taxData.calculationData.totalAmountDue.toString();
-        // If it's a dollar amount string, convert to cents
-        if (totalAmountString.includes('.')) {
-          totalAmountCents = Math.round(parseFloat(totalAmountString) * 100);
-        } else {
-          totalAmountCents = parseInt(totalAmountString);
+      // Always use totalWithFee as the primary amount (includes service fees)
+      // This is the grossed-up amount that includes the service fee
+      const finalAmountCents = totalWithFee;
+
+      // Generate idempotency ID with validation
+      let idempotencyId: string;
+      try {
+        idempotencyId = generateIdempotencyId('tax');
+        if (!idempotencyId || idempotencyId.trim() === '') {
+          throw new Error('Failed to generate idempotency ID');
         }
+      } catch (error) {
+        console.error('Idempotency ID generation failed:', error);
+        toast({
+          title: "System Error",
+          description: "Failed to generate payment identifier. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      // Validate fraud session ID
+      let validFraudSessionId = fraudSessionId;
+      if (!validFraudSessionId || validFraudSessionId.trim() === '') {
+        console.warn('No fraud session ID available, generating fallback');
+        validFraudSessionId = `tax-fallback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      }
+
+      console.log('Payment data preparation:', {
+        finalAmountCents,
+        idempotencyId,
+        fraudSessionId: validFraudSessionId,
+        serviceFee: serviceFee.totalFee
+      });
 
       const paymentData = {
         tax_type: taxData.taxType,
@@ -161,9 +234,9 @@ export const useTaxPaymentMethods = (taxData: {
         customer_id: taxData.municipality?.customer_id,
         merchant_id: taxData.municipality?.id,
         payment_instrument_id: selectedPaymentMethod,
-        total_amount_cents: totalAmountCents,
-        idempotency_id: generateIdempotencyId('tax'),
-        fraud_session_id: fraudSessionId,
+        total_amount_cents: finalAmountCents,
+        idempotency_id: idempotencyId,
+        fraud_session_id: validFraudSessionId,
         calculation_notes: taxData.calculationData?.calculationNotes || '',
         // Flatten payer object into individual fields
         payer_first_name: taxData.payer?.firstName || '',

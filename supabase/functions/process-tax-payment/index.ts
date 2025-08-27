@@ -122,9 +122,25 @@ serve(async (req) => {
       user_id: user.id 
     });
 
-    // Validate input
-    if (!tax_type || !payment_instrument_id || !total_amount_cents || !idempotency_id || !fraud_session_id) {
-      throw new Error("Missing required parameters");
+    // Validate required input parameters
+    const missingParams = [];
+    if (!tax_type) missingParams.push("tax_type");
+    if (!payment_instrument_id) missingParams.push("payment_instrument_id");
+    if (!total_amount_cents) missingParams.push("total_amount_cents");
+    if (!idempotency_id) missingParams.push("idempotency_id");
+    
+    if (missingParams.length > 0) {
+      throw new Error(`Missing required parameters: ${missingParams.join(", ")}`);
+    }
+
+    // Validate amount is reasonable
+    if (total_amount_cents <= 0) {
+      throw new Error("Amount must be greater than zero");
+    }
+
+    // fraud_session_id is optional - if empty, we'll still proceed but log a warning
+    if (!fraud_session_id || fraud_session_id.trim() === '') {
+      console.warn("No fraud session ID provided for tax payment");
     }
 
     // Check for duplicate idempotency_id

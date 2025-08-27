@@ -86,10 +86,25 @@ export const classifyPaymentError = (error: any): PaymentError => {
 };
 
 export const generateIdempotencyId = (prefix: string, billId?: string): string => {
-  const timestamp = Date.now();
-  const randomPart = Math.random().toString(36).substr(2, 9);
-  const billPart = billId ? `${billId}_` : '';
-  return `${prefix}_${billPart}${timestamp}_${randomPart}`;
+  try {
+    const timestamp = Date.now();
+    const randomPart = Math.random().toString(36).substr(2, 9);
+    const billPart = billId ? `${billId}_` : '';
+    const id = `${prefix}_${billPart}${timestamp}_${randomPart}`;
+    
+    // Validate the generated ID
+    if (!id || id.trim() === '' || id.length < 10) {
+      throw new Error('Generated ID is invalid');
+    }
+    
+    return id;
+  } catch (error) {
+    console.error('Error generating idempotency ID:', error);
+    // Fallback generation
+    const fallbackId = `${prefix}_fallback_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+    console.warn('Using fallback idempotency ID:', fallbackId);
+    return fallbackId;
+  }
 };
 
 export const initializeApplePaySession = async (
