@@ -153,8 +153,8 @@ serve(async (req) => {
         has_accepted_credit_cards_previously: customer.has_accepted_cards_previously || false,
         incorporation_date: incorporationDate,
         last_name: customer.last_name,
-        max_transaction_amount: customer.max_card_amount || 0,
-        ach_max_transaction_amount: customer.max_ach_amount || 0,
+        max_transaction_amount: customer.max_card_amount || 999900,
+        ach_max_transaction_amount: customer.max_ach_amount || 999900,
         mcc: customer.mcc_code,
         ownership_type: customer.ownership_type.toUpperCase(),
         personal_address: {
