@@ -294,7 +294,6 @@ serve(async (req) => {
         bill_type: 'tax',
         payment_status: 'pending',
         bill_status: 'unpaid',
-        payment_method_type: paymentType,
         payment_instrument_id: payment_instrument_id
       })
       .select()
