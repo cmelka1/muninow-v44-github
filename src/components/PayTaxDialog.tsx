@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+// Removed calendar and popover imports - using text inputs for dates
 
 import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
@@ -14,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
-import { ChevronLeft, ChevronRight, Plus, CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -69,9 +68,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
   
-  // Reporting Period
-  const [reportingPeriodStart, setReportingPeriodStart] = useState<Date>();
-  const [reportingPeriodEnd, setReportingPeriodEnd] = useState<Date>();
+  // Reporting Period (using strings for text input)
+  const [reportingPeriodStart, setReportingPeriodStart] = useState<string>('');
+  const [reportingPeriodEnd, setReportingPeriodEnd] = useState<string>('');
 
   // Payer Information
   const [payerName, setPayerName] = useState('');
@@ -135,7 +134,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   const getCurrentTaxPeriodStart = () => {
     if (reportingPeriodStart) {
-      return format(reportingPeriodStart, 'yyyy-MM-dd');
+      return reportingPeriodStart;
     }
     // Fallback to current year start
     const now = new Date();
@@ -144,7 +143,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   const getCurrentTaxPeriodEnd = () => {
     if (reportingPeriodEnd) {
-      return format(reportingPeriodEnd, 'yyyy-MM-dd');
+      return reportingPeriodEnd;
     }
     // Fallback to current year end  
     const now = new Date();
@@ -255,11 +254,26 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     const e: Record<string, string> = {};
     if (!selectedMunicipality) e.municipality = 'Municipality is required';
     if (!taxType) e.taxType = 'Tax type is required';
-    if (!reportingPeriodStart) e.reportingPeriodStart = 'Reporting period start date is required';
-    if (!reportingPeriodEnd) e.reportingPeriodEnd = 'Reporting period end date is required';
-    if (reportingPeriodStart && reportingPeriodEnd && reportingPeriodStart >= reportingPeriodEnd) {
-      e.reportingPeriodEnd = 'End date must be after start date';
+    if (!reportingPeriodStart.trim()) e.reportingPeriodStart = 'Reporting period start date is required';
+    if (!reportingPeriodEnd.trim()) e.reportingPeriodEnd = 'Reporting period end date is required';
+    
+    // Validate date format and comparison
+    if (reportingPeriodStart && reportingPeriodEnd) {
+      const startDate = new Date(reportingPeriodStart);
+      const endDate = new Date(reportingPeriodEnd);
+      
+      if (isNaN(startDate.getTime())) {
+        e.reportingPeriodStart = 'Please enter a valid date (MM/DD/YYYY or YYYY-MM-DD)';
+      }
+      if (isNaN(endDate.getTime())) {
+        e.reportingPeriodEnd = 'Please enter a valid date (MM/DD/YYYY or YYYY-MM-DD)';
+      }
+      
+      if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime()) && startDate >= endDate) {
+        e.reportingPeriodEnd = 'End date must be after start date';
+      }
     }
+    
     if (!payerName.trim()) e.payerName = 'Full name is required';
     if (!payerEmail.trim()) e.payerEmail = 'Email is required';
     if (!payerPhone.trim()) e.payerPhone = 'Phone is required';
@@ -302,8 +316,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setAccountNumber('');
     setAmount('');
     setMemo('');
-    setReportingPeriodStart(undefined);
-    setReportingPeriodEnd(undefined);
+    setReportingPeriodStart('');
+    setReportingPeriodEnd('');
     setPayerName('');
     setPayerEin('');
     setPayerEmail('');
@@ -473,66 +487,35 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>Period Start Date</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !reportingPeriodStart && "text-muted-foreground",
-                                    errors.reportingPeriodStart && "border-destructive ring-2 ring-destructive"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {reportingPeriodStart ? format(reportingPeriodStart, "PPP") : <span>Pick start date</span>}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={reportingPeriodStart}
-                                  onSelect={(date) => {
-                                    setReportingPeriodStart(date);
-                                    if (date) clearFieldError('reportingPeriodStart');
-                                  }}
-                                  initialFocus
-                                  className={cn("p-3 pointer-events-auto")}
-                                />
-                              </PopoverContent>
-                            </Popover>
+                            <Input
+                              type="date"
+                              value={reportingPeriodStart}
+                              onChange={(e) => {
+                                setReportingPeriodStart(e.target.value);
+                                if (e.target.value) clearFieldError('reportingPeriodStart');
+                              }}
+                              className={cn(
+                                errors.reportingPeriodStart && "border-destructive focus-visible:ring-destructive"
+                              )}
+                              placeholder="YYYY-MM-DD"
+                            />
                             {errors.reportingPeriodStart && <p className="text-sm text-destructive">{errors.reportingPeriodStart}</p>}
                           </div>
 
                           <div className="space-y-2">
                             <Label>Period End Date</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !reportingPeriodEnd && "text-muted-foreground",
-                                    errors.reportingPeriodEnd && "border-destructive ring-2 ring-destructive"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {reportingPeriodEnd ? format(reportingPeriodEnd, "PPP") : <span>Pick end date</span>}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={reportingPeriodEnd}
-                                  onSelect={(date) => {
-                                    setReportingPeriodEnd(date);
-                                    if (date) clearFieldError('reportingPeriodEnd');
-                                  }}
-                                  disabled={(date) => reportingPeriodStart ? date <= reportingPeriodStart : false}
-                                  initialFocus
-                                  className={cn("p-3 pointer-events-auto")}
-                                />
-                              </PopoverContent>
-                            </Popover>
+                            <Input
+                              type="date"
+                              value={reportingPeriodEnd}
+                              onChange={(e) => {
+                                setReportingPeriodEnd(e.target.value);
+                                if (e.target.value) clearFieldError('reportingPeriodEnd');
+                              }}
+                              className={cn(
+                                errors.reportingPeriodEnd && "border-destructive focus-visible:ring-destructive"
+                              )}
+                              placeholder="YYYY-MM-DD"
+                            />
                             {errors.reportingPeriodEnd && <p className="text-sm text-destructive">{errors.reportingPeriodEnd}</p>}
                           </div>
                         </div>
@@ -773,7 +756,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           <span className="text-muted-foreground">Reporting Period:</span>
                           <p className="font-medium">
                             {reportingPeriodStart && reportingPeriodEnd ? 
-                              `${format(reportingPeriodStart, "MMM d, yyyy")} - ${format(reportingPeriodEnd, "MMM d, yyyy")}` : 
+                              `${reportingPeriodStart} - ${reportingPeriodEnd}` : 
                               'Not selected'
                             }
                           </p>
