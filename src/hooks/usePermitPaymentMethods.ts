@@ -4,10 +4,12 @@ import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceFee, PaymentResponse, GooglePayMerchantResponse } from '@/types/payment';
 import { classifyPaymentError, generateIdempotencyId, initializeApplePaySession } from '@/utils/paymentUtils';
+import { useSessionValidation } from '@/hooks/useSessionValidation';
 
 export const usePermitPaymentMethods = (permit: any) => {
   const { toast } = useToast();
   const { paymentInstruments, isLoading: paymentMethodsLoading, loadPaymentInstruments } = useUserPaymentInstruments();
+  const { ensureValidSession } = useSessionValidation();
   
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -200,6 +202,13 @@ export const usePermitPaymentMethods = (permit: any) => {
           variant: "destructive",
         });
         return { success: false, error: "No payment method selected" };
+    }
+
+    // Validate session before processing payment
+    const sessionValid = await ensureValidSession();
+    
+    if (!sessionValid) {
+      return { success: false, error: "Session validation failed" };
     }
 
     // Handle regular payment methods

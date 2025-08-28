@@ -35,6 +35,9 @@ interface AuthContextType {
   updatePassword: (password: string) => Promise<{ error: any }>;
   setForgotPasswordOpen: (open: boolean) => void;
   clearError: () => void;
+  validateSession: () => Promise<boolean>;
+  refreshSession: () => Promise<boolean>;
+  isSessionValid: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -284,6 +287,76 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoginError(null);
   };
 
+  const validateSession = async (): Promise<boolean> => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session validation error:', error);
+        return false;
+      }
+      
+      if (!session) {
+        console.warn('No active session found');
+        return false;
+      }
+      
+      // Check if session is expired
+      const now = new Date().getTime();
+      const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+      
+      if (expiresAt && now >= expiresAt) {
+        console.warn('Session has expired');
+        return false;
+      }
+      
+      // Check if session expires within next 5 minutes (300 seconds)
+      const expiresWithinFiveMinutes = expiresAt && (expiresAt - now) < (5 * 60 * 1000);
+      
+      if (expiresWithinFiveMinutes) {
+        console.warn('Session expires within 5 minutes, should refresh');
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Session validation failed:', error);
+      return false;
+    }
+  };
+
+  const refreshSession = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('Session refresh error:', error);
+        return false;
+      }
+      
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        console.log('Session refreshed successfully');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Session refresh failed:', error);
+      return false;
+    }
+  };
+
+  const isSessionValid = (): boolean => {
+    if (!session) return false;
+    
+    const now = new Date().getTime();
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+    
+    return expiresAt ? now < expiresAt : true;
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -299,7 +372,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     resetPassword,
     updatePassword,
     setForgotPasswordOpen,
-    clearError
+    clearError,
+    validateSession,
+    refreshSession,
+    isSessionValid
   };
 
   return (

@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments, UserPaymentInstrument } from './useUserPaymentInstruments';
 import { ServiceFee, PaymentResponse, GooglePayMerchantResponse } from '@/types/payment';
 import { classifyPaymentError, generateIdempotencyId } from '@/utils/paymentUtils';
+import { useSessionValidation } from '@/hooks/useSessionValidation';
 
 export const useTaxPaymentMethods = (taxData: {
   municipality: any;
@@ -19,6 +20,7 @@ export const useTaxPaymentMethods = (taxData: {
   const { user } = useAuth();
   const { toast } = useToast();
   const { paymentInstruments, isLoading: paymentMethodsLoading, loadPaymentInstruments } = useUserPaymentInstruments();
+  const { ensureValidSession } = useSessionValidation();
   
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -164,6 +166,13 @@ export const useTaxPaymentMethods = (taxData: {
         description: "Please select a payment method and ensure you are logged in.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Validate session before processing payment
+    const sessionValid = await ensureValidSession();
+    
+    if (!sessionValid) {
       return;
     }
 
