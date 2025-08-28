@@ -3179,7 +3179,7 @@ export type Database = {
           staging_id: string | null
           status: string
           storage_path: string
-          tax_submission_id: string
+          tax_submission_id: string | null
           updated_at: string
           upload_progress: number | null
           uploaded_by: string
@@ -3198,7 +3198,7 @@ export type Database = {
           staging_id?: string | null
           status?: string
           storage_path: string
-          tax_submission_id: string
+          tax_submission_id?: string | null
           updated_at?: string
           upload_progress?: number | null
           uploaded_by: string
@@ -3217,7 +3217,7 @@ export type Database = {
           staging_id?: string | null
           status?: string
           storage_path?: string
-          tax_submission_id?: string
+          tax_submission_id?: string | null
           updated_at?: string
           upload_progress?: number | null
           uploaded_by?: string
