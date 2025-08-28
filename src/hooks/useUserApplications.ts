@@ -49,7 +49,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         // Tax Submissions
         supabase
           .from('tax_submissions')
-          .select('id, tax_type, submission_status, customer_id, submission_date, created_at')
+          .select('id, tax_type, submission_status, customer_id, submission_date, created_at, payer_street_address, payer_city, payer_state, payer_zip_code')
           .eq('user_id', user.id),
         
         // Municipal Service Applications
@@ -104,19 +104,31 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         })),
 
         // Transform tax submissions
-        ...(taxes.data || []).map(tax => ({
-          id: tax.id,
-          serviceType: 'tax' as const,
-          serviceName: tax.tax_type.includes('_') 
-            ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-            : tax.tax_type,
-          dateSubmitted: tax.submission_date || tax.created_at,
-          address: 'N/A',
-          municipality: customerMap.get(tax.customer_id) || 'Unknown',
-          status: tax.submission_status,
-          customerId: tax.customer_id,
-          detailPath: `/taxes`
-        })),
+        ...(taxes.data || []).map(tax => {
+          // Construct address from payer fields
+          const addressParts = [
+            tax.payer_street_address,
+            tax.payer_city,
+            tax.payer_state,
+            tax.payer_zip_code
+          ].filter(Boolean);
+          
+          const address = addressParts.length > 0 ? addressParts.join(', ') : 'N/A';
+          
+          return {
+            id: tax.id,
+            serviceType: 'tax' as const,
+            serviceName: tax.tax_type.includes('_') 
+              ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+              : tax.tax_type,
+            dateSubmitted: tax.submission_date || tax.created_at,
+            address,
+            municipality: customerMap.get(tax.customer_id) || 'Unknown',
+            status: tax.submission_status,
+            customerId: tax.customer_id,
+            detailPath: `/taxes`
+          };
+        }),
 
         // Transform service applications
         ...(services.data || []).map(service => ({
