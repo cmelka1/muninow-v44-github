@@ -7,6 +7,7 @@ import { User, FileText, DollarSign, Calendar, FolderOpen, Download, Eye } from 
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { format } from 'date-fns';
 
 interface TaxSubmissionDetailModalProps {
@@ -155,7 +156,13 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
                 {submission.calculation_notes && (
                   <div className="pt-2 border-t">
                     <span className="text-sm text-muted-foreground block mb-1">Calculation Notes:</span>
-                    <p className="text-sm bg-muted p-2 rounded">{submission.calculation_notes}</p>
+                    <div className="bg-muted p-2 rounded">
+                      <SafeHtmlRenderer 
+                        content={submission.calculation_notes} 
+                        className="text-sm"
+                        fallback="No calculation notes provided"
+                      />
+                    </div>
                   </div>
                 )}
               </CardContent>

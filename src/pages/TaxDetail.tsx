@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -297,7 +298,11 @@ const TaxDetail: React.FC = () => {
             {submission.calculation_notes && (
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Calculation Notes</Label>
-                <p className="text-base whitespace-pre-wrap">{submission.calculation_notes}</p>
+                <SafeHtmlRenderer 
+                  content={submission.calculation_notes}
+                  className="text-base"
+                  fallback="No calculation notes provided"
+                />
               </div>
             )}
           </CardContent>

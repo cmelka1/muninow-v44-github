@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -729,18 +730,15 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                               <Label htmlFor="calculation-notes" className="text-sm font-medium">
                                 Calculation Details / Notes *
                               </Label>
-                              <textarea
-                                id="calculation-notes"
-                                placeholder="Enter your tax calculation details, breakdown, or any notes about your submission..."
-                                value={calculationNotes}
-                                onChange={(e) => {
-                                  setCalculationNotes(e.target.value);
-                                  if (e.target.value.trim()) clearFieldError('calculationNotes');
+                              <RichTextEditor
+                                content={calculationNotes}
+                                onChange={(content) => {
+                                  setCalculationNotes(content);
+                                  if (content.trim()) clearFieldError('calculationNotes');
                                 }}
-                                className={`mt-1 w-full min-h-[120px] p-3 border rounded-md resize-y ${
-                                  errors.calculationNotes ? 'border-destructive ring-2 ring-destructive' : 'border-input'
-                                }`}
-                                rows={6}
+                                placeholder="Enter your tax calculation details, breakdown, or any notes about your submission..."
+                                error={!!errors.calculationNotes}
+                                className="mt-1"
                               />
                               {errors.calculationNotes && (
                                 <p className="text-sm text-destructive mt-1">{errors.calculationNotes}</p>
