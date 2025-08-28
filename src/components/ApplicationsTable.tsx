@@ -209,8 +209,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                 <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead className="text-center">Service Type</TableHead>
                 <TableHead className="hidden md:table-cell text-center">Category</TableHead>
-                <TableHead className="hidden lg:table-cell">Address</TableHead>
-                <TableHead className="hidden xl:table-cell">Municipality</TableHead>
+                <TableHead className="hidden lg:table-cell">Municipality</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-center">Payment</TableHead>
               </TableRow>
@@ -238,11 +237,6 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                     </span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell py-2">
-                    <span className="truncate block max-w-[150px] text-sm" title={application.address}>
-                      {application.address}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell py-2">
                     <span className="truncate block max-w-[120px] text-sm" title={application.municipality}>
                       {application.municipality}
                     </span>

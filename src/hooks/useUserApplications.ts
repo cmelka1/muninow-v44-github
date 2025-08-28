@@ -7,7 +7,6 @@ export interface UserApplication {
   serviceType: 'permit' | 'license' | 'tax' | 'service';
   serviceName: string;
   dateSubmitted: string;
-  address: string;
   municipality: string;
   status: string;
   paymentStatus: string;
@@ -38,19 +37,19 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         // Permits
         supabase
           .from('permit_applications')
-          .select('permit_id, permit_number, permit_type, application_status, property_address, customer_id, submitted_at, created_at, payment_status')
+          .select('permit_id, permit_number, permit_type, application_status, customer_id, submitted_at, created_at, payment_status')
           .eq('user_id', user.id),
         
         // Business Licenses  
         supabase
           .from('business_license_applications')
-          .select('id, license_number, business_type, application_status, business_street_address, customer_id, submitted_at, created_at, payment_status')
+          .select('id, license_number, business_type, application_status, customer_id, submitted_at, created_at, payment_status')
           .eq('user_id', user.id),
         
         // Tax Submissions
         supabase
           .from('tax_submissions')
-          .select('id, tax_type, submission_status, customer_id, submission_date, created_at, payer_street_address, payer_city, payer_state, payer_zip_code, payment_status')
+          .select('id, tax_type, submission_status, customer_id, submission_date, created_at, payment_status')
           .eq('user_id', user.id),
         
         // Municipal Service Applications
@@ -84,7 +83,6 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           serviceType: 'permit' as const,
           serviceName: permit.permit_type,
           dateSubmitted: permit.submitted_at || permit.created_at,
-          address: permit.property_address || 'N/A',
           municipality: customerMap.get(permit.customer_id) || 'Unknown',
           status: permit.application_status,
           paymentStatus: permit.payment_status || 'unpaid',
@@ -98,7 +96,6 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           serviceType: 'license' as const,
           serviceName: license.business_type,
           dateSubmitted: license.submitted_at || license.created_at,
-          address: license.business_street_address || 'N/A',
           municipality: customerMap.get(license.customer_id) || 'Unknown',
           status: license.application_status,
           paymentStatus: license.payment_status || 'unpaid',
@@ -107,32 +104,19 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         })),
 
         // Transform tax submissions
-        ...(taxes.data || []).map(tax => {
-          // Construct address from payer fields
-          const addressParts = [
-            tax.payer_street_address,
-            tax.payer_city,
-            tax.payer_state,
-            tax.payer_zip_code
-          ].filter(Boolean);
-          
-          const address = addressParts.length > 0 ? addressParts.join(', ') : 'N/A';
-          
-          return {
-            id: tax.id,
-            serviceType: 'tax' as const,
-            serviceName: tax.tax_type.includes('_') 
-              ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-              : tax.tax_type,
-            dateSubmitted: tax.submission_date || tax.created_at,
-            address,
-            municipality: customerMap.get(tax.customer_id) || 'Unknown',
-            status: tax.submission_status,
-            paymentStatus: tax.payment_status || 'pending',
-            customerId: tax.customer_id,
-            detailPath: `/taxes`
-          };
-        }),
+        ...(taxes.data || []).map(tax => ({
+          id: tax.id,
+          serviceType: 'tax' as const,
+          serviceName: tax.tax_type.includes('_') 
+            ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            : tax.tax_type,
+          dateSubmitted: tax.submission_date || tax.created_at,
+          municipality: customerMap.get(tax.customer_id) || 'Unknown',
+          status: tax.submission_status,
+          paymentStatus: tax.payment_status || 'pending',
+          customerId: tax.customer_id,
+          detailPath: `/taxes`
+        })),
 
         // Transform service applications
         ...(services.data || []).map(service => ({
@@ -140,7 +124,6 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           serviceType: 'service' as const,
           serviceName: (service.municipal_service_tiles as any)?.title || 'Service Application',
           dateSubmitted: service.created_at,
-          address: 'N/A',
           municipality: customerMap.get(service.customer_id) || 'Unknown',
           status: service.status,
           paymentStatus: service.status === 'paid' ? 'paid' : 'n/a',
