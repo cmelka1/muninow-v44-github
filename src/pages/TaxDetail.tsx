@@ -240,20 +240,6 @@ const TaxDetail: React.FC = () => {
                 <p className="text-base whitespace-pre-wrap">{submission.calculation_notes}</p>
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Tax Amount</Label>
-                <p className="text-base">{formatCurrency(submission.amount_cents / 100)}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Service Fee</Label>
-                <p className="text-base">{formatCurrency(submission.service_fee_cents / 100)}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Total Paid</Label>
-                <p className="text-base font-semibold">{formatCurrency(submission.total_amount_cents / 100)}</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
