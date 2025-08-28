@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const TaxDetail: React.FC = () => {
-  console.log('TaxDetail component loading...'); // Debug log
   const { submissionId } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -401,9 +401,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     setIsSubmitting(true);
 
     try {
-      console.log('🚀 Starting business license application submission...');
-      console.log('📋 Selected Municipality:', selectedMunicipality);
-      console.log('🏢 Selected Business Type ID:', selectedBusinessType);
       
       // Parse the business address
       const addressParts = businessInfo.businessAddress.split(', ');
@@ -417,10 +414,10 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
       // Find selected license type
       const selectedLicenseType = licenseTypes.find(type => type.id === selectedBusinessType);
-      console.log('📜 Selected License Type:', selectedLicenseType);
+      
 
       // Fetch merchant and fee profile data for Business Licenses
-      console.log('🔍 Fetching Business Licenses merchant for customer:', selectedMunicipality.customer_id);
+      
       const { data: merchantData, error: merchantError } = await supabase
         .from('merchants')
         .select(`
@@ -447,16 +444,11 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         throw new Error('No Business Licenses merchant configured for this municipality');
       }
 
-      // Debug: Log the full merchant data structure
-      console.log('📊 Full merchant data structure:', JSON.stringify(merchantData, null, 2));
-      console.log('📊 Merchant fee profiles array:', merchantData.merchant_fee_profiles);
-
       let feeProfile = merchantData.merchant_fee_profiles?.[0];
-      console.log('📊 Initial fee profile extraction:', feeProfile);
 
       // Fallback: If no fee profile found in nested query, fetch directly
       if (!feeProfile || !feeProfile.basis_points) {
-        console.log('🔄 No fee profile found in nested query, fetching directly...');
+        
         const { data: directFeeProfile, error: feeError } = await supabase
           .from('merchant_fee_profiles')
           .select('*')
@@ -467,7 +459,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
           console.error('❌ Error fetching fee profile directly:', feeError);
         } else {
           feeProfile = directFeeProfile;
-          console.log('✅ Found fee profile via direct query:', feeProfile);
+          
         }
       }
 
@@ -543,22 +535,22 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         merchant_fee_profile_id: applicationData.merchant_fee_profile_id
       });
       const result = await createApplication.mutateAsync(applicationData);
-      console.log('✅ Application created successfully:', result);
+      
 
       // Upload documents if any
       for (const doc of businessInfo.uploadedDocuments) {
         if (doc.uploadStatus === 'completed') {
           // Note: In a real implementation, you'd need to store the actual file
           // For now, we'll skip the document upload part since we can't access the file
-          console.log('📎 Document upload would happen here:', doc);
+          
         }
       }
 
       // Submit the application
-      console.log('🚀 Submitting application with ID:', result.id);
+      
       await submitApplication.mutateAsync(result.id);
 
-      console.log('✅ Application submitted successfully!');
+      
 
       toast({
         title: "Application submitted successfully!",
@@ -1211,9 +1203,14 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                             variant="link"
                             size="sm"
                             className="p-0 h-auto text-primary hover:text-primary/80"
-                            onClick={() => {
-                              // TODO: Implement expand/collapse functionality
-                            }}
+                             onClick={(event) => {
+                               // Implement expand/collapse functionality
+                               const button = event.currentTarget as HTMLButtonElement;
+                               const textElement = button.parentElement?.querySelector('p');
+                               if (textElement) {
+                                 textElement.classList.toggle('line-clamp-none');
+                               }
+                             }}
                           >
                             View Full Description
                           </Button>

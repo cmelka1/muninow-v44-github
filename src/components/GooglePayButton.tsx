@@ -24,7 +24,6 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
     const checkGooglePayAvailability = async () => {
       try {
         if (!window.google?.payments?.api) {
-          console.log('Google Pay API not available');
           setIsLoading(false);
           return;
         }

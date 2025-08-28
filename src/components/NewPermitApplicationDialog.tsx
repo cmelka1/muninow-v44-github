@@ -287,9 +287,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setIsSubmitting(true);
 
     try {
-      // Debug logging to identify the issue
-      console.log('Selected municipality data:', selectedMunicipality);
-      console.log('Municipality ID being used:', selectedMunicipality!.id);
       
       // Fetch merchant and fee profile data
       const { data: merchantData, error: merchantError } = await supabase
@@ -319,20 +316,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       // Calculate payment amount from permit type
       const paymentAmountCents = selectedPermitType!.base_fee_cents;
 
-      // Comprehensive debug logging for UUID validation
-      console.log('=== PERMIT APPLICATION DEBUG ===');
-      console.log('user_id (profile.id):', profile.id, 'Type:', typeof profile.id);
-      console.log('customer_id:', selectedMunicipality!.customer_id, 'Type:', typeof selectedMunicipality!.customer_id);
-      console.log('merchant_id (selectedMunicipality.id):', selectedMunicipality!.id, 'Type:', typeof selectedMunicipality!.id);
-      console.log('finix_merchant_id:', merchantData.finix_merchant_id, 'Type:', typeof merchantData.finix_merchant_id);
-      console.log('merchant_finix_identity_id:', merchantData.finix_identity_id, 'Type:', typeof merchantData.finix_identity_id);
-      console.log('Full selectedMunicipality object:', selectedMunicipality);
-      console.log('Full merchantData object:', merchantData);
-      if (feeProfile) {
-        console.log('feeProfile.id (UUID for merchant_fee_profile_id):', feeProfile.id, 'Type:', typeof feeProfile.id);
-        console.log('feeProfile.finix_fee_profile_id (Finix ID):', feeProfile.finix_fee_profile_id, 'Type:', typeof feeProfile.finix_fee_profile_id);
-      }
-      console.log('===========================');
 
       // Validate UUID fields before insertion
       const isValidUUID = (str: string) => {

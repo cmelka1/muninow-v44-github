@@ -63,10 +63,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // Initialize form data
       const initialData: Record<string, any> = {};
       
-      // Debug logging
-      console.log('ServiceApplicationModal - useAutoPopulate:', useAutoPopulate);
-      console.log('ServiceApplicationModal - profile:', profile);
-      console.log('ServiceApplicationModal - tile.form_fields:', tile.form_fields);
       
       // Initialize form fields first
       tile.form_fields?.forEach(field => {
@@ -140,8 +136,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       
       setFormData(initialData);
       
-      // Debug logging for form data
-      console.log('ServiceApplicationModal - initialData after smart mapping:', initialData);
     }
   }, [tile, isOpen, useAutoPopulate, profile]);
 

@@ -303,7 +303,7 @@ export const PermitReviewDashboard: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => console.log('View permit:', permit.permit_id)}
+                        onClick={() => {/* TODO: Implement permit view navigation */}}
                       >
                         View
                       </Button>

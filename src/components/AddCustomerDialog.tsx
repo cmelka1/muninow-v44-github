@@ -118,7 +118,6 @@ const step3Schema = z.object({
   refundPolicy: z.enum(['no_refunds', 'merchandise_exchange', 'within_30_days', 'other']).default('no_refunds'),
 }).refine((data) => {
   const cardTotal = data.cardPresentPercent + data.motoPercent + data.ecommercePercent;
-  console.log('Card volume validation:', { cardPresentPercent: data.cardPresentPercent, motoPercent: data.motoPercent, ecommercePercent: data.ecommercePercent, total: cardTotal });
   return cardTotal === 100;
 }, {
   message: 'Card volume distribution must total exactly 100 (currently ' + 
@@ -126,7 +125,6 @@ const step3Schema = z.object({
   path: ['ecommercePercent']
 }).refine((data) => {
   const businessTotal = data.b2bPercent + data.b2cPercent + data.p2pPercent;
-  console.log('Business volume validation:', { b2bPercent: data.b2bPercent, b2cPercent: data.b2cPercent, p2pPercent: data.p2pPercent, total: businessTotal });
   return businessTotal === 100;
 }, {
   message: 'Business volume distribution must total exactly 100 (currently ' + 
@@ -227,8 +225,6 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
 
   const onStep3Submit = async (data: Step3FormData) => {
     if (!step1Data || !step2Data) return;
-    
-    console.log('Form submission started with data:', { step1Data, step2Data, step3Data: data });
     
     try {
       const formData = {
@@ -1588,13 +1584,6 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                   type="submit" 
                   className="flex items-center gap-2"
                   disabled={isSubmitting}
-                  onClick={(e) => {
-                    console.log('Complete Setup button clicked');
-                    const formErrors = step3Form.formState.errors;
-                    if (Object.keys(formErrors).length > 0) {
-                      console.log('Form validation errors:', formErrors);
-                    }
-                  }}
                 >
                   {isSubmitting ? 'Creating...' : 'Complete Setup'}
                   <ChevronRight className="h-4 w-4" />

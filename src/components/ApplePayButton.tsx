@@ -24,14 +24,12 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
       try {
         // Check if Apple Pay is available
         if (!window.ApplePaySession) {
-          console.log('Apple Pay not available - ApplePaySession not found');
           setIsLoading(false);
           return;
         }
 
         // Check if device supports Apple Pay
         if (!window.ApplePaySession.canMakePayments()) {
-          console.log('Apple Pay not available - device cannot make payments');
           setIsLoading(false);
           return;
         }
@@ -66,7 +64,6 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     // Handle merchant validation
     applePaySession.onvalidatemerchant = async (event) => {
       try {
-        console.log('Apple Pay onvalidatemerchant triggered', event);
         
         // Import supabase client
         const { supabase } = await import('@/integrations/supabase/client');
@@ -86,7 +83,6 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
           return;
         }
         
-        console.log('Completing merchant validation with Finix session');
         applePaySession.completeMerchantValidation(data);
       } catch (error) {
         console.error('Merchant validation failed:', error);
@@ -145,7 +141,6 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
 
     // Handle payment cancellation
     applePaySession.oncancel = () => {
-      console.log('Apple Pay cancelled by user');
       setIsProcessing(false);
       onPaymentComplete(false, 'Payment cancelled by user');
     };

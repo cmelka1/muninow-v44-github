@@ -159,7 +159,6 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
   // Handle address selection from Google Places
   const handleAddressSelect = (addressComponents: any) => {
-    console.log('Address selected:', addressComponents);
     
     // Distribute to proper form fields using setValue with conditional checks
     if (addressComponents.streetAddress) {
@@ -202,7 +201,6 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      console.log('Submitting payment method:', data.paymentType);
       
       let response;
       if (data.paymentType === 'card') {
@@ -238,7 +236,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         });
       }
 
-      console.log('Edge function response:', response);
+      
 
       // Check for Supabase function invocation errors (network/auth errors)
       if (response.error) {

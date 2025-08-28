@@ -231,8 +231,3 @@ export const performanceUtils = {
     });
   }
 };
-
-// Expose to window for debugging
-if (typeof window !== 'undefined') {
-  (window as any).municipalPerformance = performanceUtils;
-}
