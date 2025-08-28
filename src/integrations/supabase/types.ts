@@ -3170,13 +3170,18 @@ export type Database = {
           created_at: string
           description: string | null
           document_type: string
+          error_message: string | null
           file_name: string
           file_size: number
           id: string
           original_file_name: string
+          retry_count: number | null
+          staging_id: string | null
+          status: string
           storage_path: string
           tax_submission_id: string
           updated_at: string
+          upload_progress: number | null
           uploaded_by: string
         }
         Insert: {
@@ -3184,13 +3189,18 @@ export type Database = {
           created_at?: string
           description?: string | null
           document_type?: string
+          error_message?: string | null
           file_name: string
           file_size: number
           id?: string
           original_file_name: string
+          retry_count?: number | null
+          staging_id?: string | null
+          status?: string
           storage_path: string
           tax_submission_id: string
           updated_at?: string
+          upload_progress?: number | null
           uploaded_by: string
         }
         Update: {
@@ -3198,13 +3208,18 @@ export type Database = {
           created_at?: string
           description?: string | null
           document_type?: string
+          error_message?: string | null
           file_name?: string
           file_size?: number
           id?: string
           original_file_name?: string
+          retry_count?: number | null
+          staging_id?: string | null
+          status?: string
           storage_path?: string
           tax_submission_id?: string
           updated_at?: string
+          upload_progress?: number | null
           uploaded_by?: string
         }
         Relationships: []
@@ -3763,6 +3778,18 @@ export type Database = {
       }
       cleanup_expired_verification_codes: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_staged_tax_documents: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_staged_tax_documents: {
+        Args: { p_staging_id: string }
+        Returns: undefined
+      }
+      confirm_staged_tax_documents: {
+        Args: { p_staging_id: string; p_tax_submission_id: string }
         Returns: undefined
       }
       create_municipal_team_invitation: {

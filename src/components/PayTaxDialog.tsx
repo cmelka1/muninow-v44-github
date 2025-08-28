@@ -86,8 +86,22 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [totalAmountDue, setTotalAmountDue] = useState('');
 
   // Document upload state
-  const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState<Array<{
+    id: string;
+    file_name: string;
+    original_file_name: string;
+    document_type: string;
+    description: string | null;
+    file_size: number;
+    content_type: string;
+    upload_progress: number;
+    status: 'staged' | 'confirmed' | 'failed';
+    created_at: string;
+  }>>([]);
   const [dragActive, setDragActive] = useState(false);
+
+  // Generate staging ID for document uploads
+  const [stagingId] = useState(() => crypto.randomUUID());
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,8 +110,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
 
-  // Document upload functionality
-  const { uploadMultipleDocuments } = useTaxSubmissionDocuments();
+  // Document upload functionality - using new staging system
+  const { cleanupStagingArea } = useTaxSubmissionDocuments(stagingId);
 
   // Helper function to parse formatted numbers (removes commas)
   const parseFormattedNumber = (value: string) => {
@@ -338,6 +352,11 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setUploadedDocuments([]);
     setDragActive(false);
     
+    // Cleanup staging area for documents
+    if (uploadedDocuments.length > 0) {
+      cleanupStagingArea();
+    }
+    
     // Reset simplified tax data
     setCalculationNotes('');
     setTotalAmountDue('');
@@ -370,32 +389,27 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
     setIsSubmitting(true);
     try {
-      // Process payment and get tax submission ID
+      // Process payment - staging_id will be handled by the payment hook
       const paymentResult = await handlePayment();
       
-      // Upload documents if any were provided and payment was successful
-      if (uploadedDocuments.length > 0 && paymentResult && paymentResult.taxSubmissionId) {
-        try {
-          await uploadMultipleDocuments(uploadedDocuments, paymentResult.taxSubmissionId);
-          
-          toast({
-            title: "Tax Payment Complete",
-            description: `Your tax payment has been processed and ${uploadedDocuments.length} document(s) uploaded successfully.`,
-          });
-        } catch (uploadError: any) {
-          console.error('Document upload failed:', uploadError);
-          toast({
-            title: "Payment Successful, Document Upload Failed",
-            description: "Your payment was processed but some documents failed to upload. You can upload them later from the tax detail page.",
-            variant: "destructive",
-          });
-        }
+      if (paymentResult) {
+        toast({
+          title: "Tax Payment Complete",
+          description: uploadedDocuments.length > 0 
+            ? `Your tax payment has been processed and ${uploadedDocuments.length} document(s) confirmed.`
+            : "Your tax payment has been processed successfully.",
+        });
+        
+        onOpenChange(false);
+        resetForm();
       }
-      
-      resetForm();
-      onOpenChange(false);
-    } catch (err: any) {
-      toast({ title: 'Payment failed', description: err?.message || 'Please try again', variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Tax payment failed:', error);
+      toast({
+        title: "Payment Failed",
+        description: error.message || "An error occurred while processing your payment. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -754,6 +768,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     documents={uploadedDocuments}
                     onDocumentsChange={setUploadedDocuments}
                     disabled={false}
+                    stagingId={stagingId}
                   />
                 </div>
               )}
@@ -856,16 +871,16 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       <CardContent>
                         <div className="space-y-3">
                           {uploadedDocuments.map((doc, index) => (
-                            <div key={index} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
+                            <div key={doc.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
                               <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
                                 <span className="text-xs font-medium text-primary">
-                                  {doc.file.name.split('.').pop()?.toUpperCase()}
+                                  {doc.original_file_name.split('.').pop()?.toUpperCase()}
                                 </span>
                               </div>
                               <div className="flex-1">
-                                <p className="text-sm font-medium">{doc.file.name}</p>
+                                <p className="text-sm font-medium">{doc.original_file_name}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {doc.documentType} • {(doc.file.size / 1024 / 1024).toFixed(1)} MB
+                                  {doc.document_type.replace('_', ' ')} • {(doc.file_size / 1024 / 1024).toFixed(2)} MB
                                 </p>
                                 {doc.description && (
                                   <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>

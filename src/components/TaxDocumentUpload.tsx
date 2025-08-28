@@ -4,26 +4,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, X, FileText, Eye } from 'lucide-react';
+import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useTaxSubmissionDocuments, TaxDocument } from '@/hooks/useTaxSubmissionDocuments';
 
-interface TaxDocument {
-  id?: string;
-  file: File;
-  documentType: string;
-  description: string;
-  uploaded?: boolean;
-  storagePath?: string;
+interface StagedDocument {
+  id: string;
+  file_name: string;
+  original_file_name: string;
+  document_type: string;
+  description: string | null;
+  file_size: number;
+  content_type: string;
+  upload_progress: number;
+  status: 'staged' | 'confirmed' | 'failed';
+  created_at: string;
 }
 
 interface TaxDocumentUploadProps {
-  documents: TaxDocument[];
-  onDocumentsChange: (documents: TaxDocument[]) => void;
+  documents: StagedDocument[];
+  onDocumentsChange: (documents: StagedDocument[]) => void;
   disabled?: boolean;
-  taxSubmissionId?: string;
+  stagingId?: string;
 }
 
 const DOCUMENT_TYPES = [
@@ -50,13 +53,21 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
   documents,
   onDocumentsChange,
   disabled = false,
-  taxSubmissionId
+  stagingId
 }) => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [selectedDocuments, setSelectedDocuments] = useState<{ [key: string]: { type: string; description: string } }>({});
+  
+  const {
+    uploadDocument,
+    deleteDocument,
+    uploadProgress,
+    isUploading,
+    isDeleting,
+    stagingId: currentStagingId
+  } = useTaxSubmissionDocuments(stagingId);
 
   const validateFile = (file: File): string | null => {
     if (file.size > MAX_FILE_SIZE) {
@@ -70,99 +81,68 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
     return null;
   };
 
-  const generateStoragePath = (userId: string, fileName: string): string => {
-    const timestamp = Date.now();
-    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-    return `${userId}/${timestamp}_${sanitizedFileName}`;
-  };
-
-  const uploadFileToStorage = async (file: File): Promise<string> => {
-    if (!user) throw new Error('User not authenticated');
-    
-    const storagePath = generateStoragePath(user.id, file.name);
-    
-    const { error } = await supabase.storage
-      .from('tax-documents')
-      .upload(storagePath, file);
-    
-    if (error) {
-      throw new Error(`Upload failed: ${error.message}`);
-    }
-    
-    return storagePath;
-  };
-
-  const saveDocumentRecord = async (
-    file: File,
-    storagePath: string,
-    documentType: string,
-    description: string
-  ): Promise<void> => {
-    if (!user || !taxSubmissionId) return;
-    
-    const { error } = await supabase
-      .from('tax_submission_documents')
-      .insert({
-        tax_submission_id: taxSubmissionId,
-        document_type: documentType,
-        file_name: storagePath.split('/')[1], // Remove user folder prefix
-        original_file_name: file.name,
-        content_type: file.type,
-        file_size: file.size,
-        storage_path: storagePath,
-        description: description || null,
-        uploaded_by: user.id
-      });
-    
-    if (error) {
-      throw new Error(`Failed to save document record: ${error.message}`);
-    }
-  };
-
   const handleFileUpload = async (files: File[]) => {
-    if (disabled || uploading) return;
+    if (disabled || isUploading) return;
     
-    setUploading(true);
-    const newDocuments: TaxDocument[] = [];
+    const validFiles: File[] = [];
     
-    try {
-      for (const file of files) {
-        const error = validateFile(file);
-        if (error) {
-          toast({
-            title: 'File validation failed',
-            description: `${file.name}: ${error}`,
-            variant: 'destructive'
-          });
-          continue;
-        }
-        
-        // For now, add files to the list without uploading to storage
-        // Upload will happen when the tax submission is created
-        newDocuments.push({
-          file,
-          documentType: 'supporting_document',
-          description: '',
-          uploaded: false
-        });
-      }
-      
-      onDocumentsChange([...documents, ...newDocuments]);
-      
-      if (newDocuments.length > 0) {
+    // Validate all files first
+    for (const file of files) {
+      const error = validateFile(file);
+      if (error) {
         toast({
-          title: 'Files added',
-          description: `${newDocuments.length} file(s) added successfully.`
+          title: 'File validation failed',
+          description: `${file.name}: ${error}`,
+          variant: 'destructive'
         });
+        continue;
       }
-    } catch (error: any) {
-      toast({
-        title: 'Upload failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-    } finally {
-      setUploading(false);
+      validFiles.push(file);
+    }
+    
+    if (validFiles.length === 0) return;
+    
+    // Upload files immediately with default values
+    for (const file of validFiles) {
+      try {
+        const result = await uploadDocument.mutateAsync({
+          file,
+          data: {
+            staging_id: currentStagingId,
+            document_type: 'supporting_document', // Default type
+            description: '' // Default empty description
+          }
+        });
+        
+        // Add to local state for editing
+        const newDoc: StagedDocument = {
+          id: result.id,
+          file_name: result.file_name,
+          original_file_name: result.original_file_name,
+          document_type: result.document_type,
+          description: result.description,
+          file_size: result.file_size,
+          content_type: result.content_type,
+          upload_progress: 100,
+          status: 'staged' as const,
+          created_at: result.created_at
+        };
+        
+        onDocumentsChange([...documents, newDoc]);
+        
+        // Initialize editing state
+        setSelectedDocuments(prev => ({
+          ...prev,
+          [result.id]: {
+            type: result.document_type,
+            description: result.description || ''
+          }
+        }));
+        
+      } catch (error) {
+        console.error('Upload failed for file:', file.name, error);
+        // Error already handled by mutation onError
+      }
     }
   };
 
@@ -201,23 +181,62 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
     e.target.value = '';
   };
 
-  const removeDocument = (index: number) => {
-    if (disabled) return;
+  const removeDocument = async (index: number) => {
+    if (disabled || isDeleting) return;
     
-    const updatedDocuments = documents.filter((_, i) => i !== index);
-    onDocumentsChange(updatedDocuments);
+    const document = documents[index];
+    if (!document) return;
+    
+    try {
+      await deleteDocument.mutateAsync(document.id);
+      
+      // Remove from local state
+      const updatedDocuments = documents.filter((_, i) => i !== index);
+      onDocumentsChange(updatedDocuments);
+      
+      // Clean up editing state
+      setSelectedDocuments(prev => {
+        const newState = { ...prev };
+        delete newState[document.id];
+        return newState;
+      });
+      
+    } catch (error) {
+      console.error('Failed to remove document:', error);
+      // Error already handled by mutation onError
+    }
   };
 
-  const updateDocument = (index: number, updates: Partial<TaxDocument>) => {
+  const updateDocumentMetadata = (documentId: string, field: 'type' | 'description', value: string) => {
     if (disabled) return;
     
-    const updatedDocuments = documents.map((doc, i) => 
-      i === index ? { ...doc, ...updates } : doc
+    setSelectedDocuments(prev => ({
+      ...prev,
+      [documentId]: {
+        ...prev[documentId],
+        [field === 'type' ? 'type' : 'description']: value
+      }
+    }));
+    
+    // Update in documents array for immediate UI feedback
+    const updatedDocuments = documents.map(doc => 
+      doc.id === documentId 
+        ? { 
+            ...doc, 
+            [field === 'type' ? 'document_type' : 'description']: value 
+          }
+        : doc
     );
     onDocumentsChange(updatedDocuments);
   };
 
-  const getFileIcon = (fileType: string) => {
+  const getFileIcon = (fileType: string, status: string, progress: number) => {
+    if (status === 'failed') {
+      return <AlertCircle className="h-4 w-4 text-destructive" />;
+    }
+    if (status === 'staged' && progress === 100) {
+      return <CheckCircle className="h-4 w-4 text-success" />;
+    }
     return <FileText className="h-4 w-4" />;
   };
 
@@ -250,7 +269,7 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
         >
           <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-1">
-            {uploading ? 'Uploading...' : 'Click to upload or drag and drop'}
+            {isUploading ? 'Uploading documents...' : 'Click to upload or drag and drop'}
           </p>
           <p className="text-xs text-muted-foreground">
             PDF, DOC, DOCX, XLS, XLSX, or images (max 50MB)
@@ -262,7 +281,7 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
             accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
             onChange={handleFileInputChange}
             className="hidden"
-            disabled={disabled || uploading}
+            disabled={disabled || isUploading}
           />
         </div>
 
@@ -270,75 +289,96 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
         {documents.length > 0 && (
           <div className="space-y-3">
             <Label className="text-sm font-medium">Uploaded Documents</Label>
-            {documents.map((doc, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30"
-              >
-                <div className="flex-shrink-0 mt-1">
-                  {getFileIcon(doc.file.type)}
-                </div>
-                
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{doc.file.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(doc.file.size)}
-                      </p>
-                    </div>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeDocument(index)}
-                      disabled={disabled}
-                      className="flex-shrink-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+            {documents.map((doc, index) => {
+              const docSettings = selectedDocuments[doc.id] || { 
+                type: doc.document_type, 
+                description: doc.description || '' 
+              };
+              const progress = uploadProgress[doc.id] || doc.upload_progress || 100;
+              
+              return (
+                <div
+                  key={doc.id}
+                  className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30"
+                >
+                  <div className="flex-shrink-0 mt-1">
+                    {getFileIcon(doc.content_type, doc.status, progress)}
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div>
-                      <Label htmlFor={`doc-type-${index}`} className="text-xs">
-                        Document Type
-                      </Label>
-                      <Select
-                        value={doc.documentType}
-                        onValueChange={(value) => updateDocument(index, { documentType: value })}
-                        disabled={disabled}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{doc.original_file_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatFileSize(doc.file_size)}
+                        </p>
+                        {progress < 100 && (
+                          <div className="mt-1">
+                            <Progress value={progress} className="h-1" />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Uploading... {progress}%
+                            </p>
+                          </div>
+                        )}
+                        {doc.status === 'failed' && (
+                          <p className="text-xs text-destructive mt-1">
+                            Upload failed. Please try again.
+                          </p>
+                        )}
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDocument(index)}
+                        disabled={disabled || isDeleting}
+                        className="flex-shrink-0"
                       >
-                        <SelectTrigger id={`doc-type-${index}`} className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DOCUMENT_TYPES.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                     
-                    <div>
-                      <Label htmlFor={`doc-desc-${index}`} className="text-xs">
-                        Description (Optional)
-                      </Label>
-                      <Input
-                        id={`doc-desc-${index}`}
-                        placeholder="Brief description"
-                        value={doc.description}
-                        onChange={(e) => updateDocument(index, { description: e.target.value })}
-                        disabled={disabled}
-                        className="h-8 text-xs"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor={`doc-type-${doc.id}`} className="text-xs">
+                          Document Type
+                        </Label>
+                        <Select
+                          value={docSettings.type}
+                          onValueChange={(value) => updateDocumentMetadata(doc.id, 'type', value)}
+                          disabled={disabled || progress < 100}
+                        >
+                          <SelectTrigger id={`doc-type-${doc.id}`} className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DOCUMENT_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`doc-desc-${doc.id}`} className="text-xs">
+                          Description (Optional)
+                        </Label>
+                        <Input
+                          id={`doc-desc-${doc.id}`}
+                          placeholder="Brief description"
+                          value={docSettings.description}
+                          onChange={(e) => updateDocumentMetadata(doc.id, 'description', e.target.value)}
+                          disabled={disabled || progress < 100}
+                          className="h-8 text-xs"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>

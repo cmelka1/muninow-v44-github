@@ -1,20 +1,23 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-interface TaxDocument {
+export interface TaxDocument {
   id?: string;
   file: File;
   documentType: string;
   description: string;
   uploaded?: boolean;
   storagePath?: string;
+  uploadProgress?: number;
+  error?: string;
 }
 
-interface UploadedDocument {
+export interface StagedTaxDocument {
   id: string;
-  tax_submission_id: string;
+  staging_id: string;
   document_type: string;
   file_name: string;
   original_file_name: string;
@@ -23,152 +26,253 @@ interface UploadedDocument {
   storage_path: string;
   description: string | null;
   uploaded_by: string;
+  status: 'staged' | 'confirmed' | 'failed';
+  upload_progress: number;
+  retry_count: number;
+  error_message: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export const useTaxSubmissionDocuments = () => {
+export interface UploadTaxDocumentData {
+  staging_id: string;
+  document_type: string;
+  description?: string;
+}
+
+export const useTaxSubmissionDocuments = (stagingId?: string) => {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
-  const generateStoragePath = useCallback((userId: string, fileName: string): string => {
+  // Generate unique staging ID for this upload session
+  const currentStagingId = stagingId || crypto.randomUUID();
+
+  const generateStoragePath = (userId: string, fileName: string): string => {
     const timestamp = Date.now();
     const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
     return `${userId}/${timestamp}_${sanitizedFileName}`;
-  }, []);
+  };
 
-  const uploadDocument = useCallback(async (
-    file: File,
-    taxSubmissionId: string,
-    documentType: string,
-    description: string
-  ): Promise<string> => {
-    if (!user) throw new Error('User not authenticated');
-    
-    const storagePath = generateStoragePath(user.id, file.name);
-    
-    // Upload file to storage
-    const { error: uploadError } = await supabase.storage
-      .from('tax-documents')
-      .upload(storagePath, file);
-    
-    if (uploadError) {
-      throw new Error(`Upload failed: ${uploadError.message}`);
-    }
-    
-    // Save document record
-    const { error: dbError } = await supabase
-      .from('tax_submission_documents')
-      .insert({
-        tax_submission_id: taxSubmissionId,
-        document_type: documentType,
-        file_name: storagePath.split('/')[1], // Remove user folder prefix
-        original_file_name: file.name,
-        content_type: file.type,
-        file_size: file.size,
-        storage_path: storagePath,
-        description: description || null,
-        uploaded_by: user.id
-      });
-    
-    if (dbError) {
-      // Clean up uploaded file if database insert fails
-      await supabase.storage
+  // Immediate upload mutation (like business license documents)
+  const uploadDocument = useMutation({
+    mutationFn: async ({ file, data }: { file: File; data: UploadTaxDocumentData }) => {
+      if (!user) throw new Error('User must be authenticated');
+
+      const fileId = crypto.randomUUID();
+      const fileName = `${fileId}-${file.name}`;
+      const filePath = `tax-documents/${currentStagingId}/${fileName}`;
+
+      // Set initial progress
+      setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+
+      // Upload file to storage with progress tracking
+      const { error: uploadError } = await supabase.storage
         .from('tax-documents')
-        .remove([storagePath]);
-      
-      throw new Error(`Failed to save document record: ${dbError.message}`);
-    }
-    
-    return storagePath;
-  }, [user, generateStoragePath]);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
-  const uploadMultipleDocuments = useCallback(async (
-    documents: TaxDocument[],
-    taxSubmissionId: string
-  ): Promise<void> => {
-    if (!user || documents.length === 0) return;
-    
-    setUploading(true);
-    
-    try {
-      const uploadPromises = documents.map(doc => 
-        uploadDocument(doc.file, taxSubmissionId, doc.documentType, doc.description)
-      );
+      if (uploadError) {
+        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        throw uploadError;
+      }
+
+      // Update progress to 50% after storage upload
+      setUploadProgress(prev => ({ ...prev, [fileId]: 50 }));
+
+      // Create staged document record
+      const { data: document, error: docError } = await supabase
+        .from('tax_submission_documents')
+        .insert({
+          staging_id: data.staging_id,
+          document_type: data.document_type,
+          file_name: fileName,
+          original_file_name: file.name,
+          content_type: file.type,
+          file_size: file.size,
+          storage_path: filePath,
+          description: data.description || null,
+          uploaded_by: user.id,
+          status: 'staged',
+          upload_progress: 100,
+          retry_count: 0,
+          tax_submission_id: null // Will be updated when payment succeeds
+        })
+        .select()
+        .single();
+
+      if (docError) {
+        // Clean up uploaded file if database insert fails
+        await supabase.storage
+          .from('tax-documents')
+          .remove([filePath]);
+        
+        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        throw docError;
+      }
+
+      // Complete progress
+      setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
       
-      await Promise.all(uploadPromises);
-      
+      return document;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staged-tax-documents'] });
       toast({
-        title: 'Documents uploaded',
-        description: `${documents.length} document(s) uploaded successfully.`
+        title: 'Document uploaded',
+        description: 'Document uploaded and staged for tax submission.'
       });
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({
         title: 'Upload failed',
         description: error.message,
         variant: 'destructive'
       });
-      throw error;
-    } finally {
-      setUploading(false);
     }
-  }, [user, uploadDocument, toast]);
+  });
 
-  const getDocuments = useCallback(async (taxSubmissionId: string): Promise<UploadedDocument[]> => {
+  // Delete staged document mutation
+  const deleteDocument = useMutation({
+    mutationFn: async (documentId: string) => {
+      // Get document info first
+      const { data: document, error: fetchError } = await supabase
+        .from('tax_submission_documents')
+        .select('storage_path')
+        .eq('id', documentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('tax-documents')
+        .remove([document.storage_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete document record
+      const { error: deleteError } = await supabase
+        .from('tax_submission_documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (deleteError) throw deleteError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staged-tax-documents'] });
+      toast({
+        title: 'Document removed',
+        description: 'Document removed from staging area.'
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Delete failed',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Get staged documents for current staging session
+  const getStagedDocuments = async (): Promise<StagedTaxDocument[]> => {
+    const { data, error } = await supabase
+      .from('tax_submission_documents')
+      .select('*')
+      .eq('staging_id', currentStagingId)
+      .eq('status', 'staged')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw new Error(`Failed to fetch staged documents: ${error.message}`);
+    }
+    
+    return (data as StagedTaxDocument[]) || [];
+  };
+
+  // Get confirmed documents for a tax submission
+  const getConfirmedDocuments = async (taxSubmissionId: string): Promise<StagedTaxDocument[]> => {
     const { data, error } = await supabase
       .from('tax_submission_documents')
       .select('*')
       .eq('tax_submission_id', taxSubmissionId)
+      .eq('status', 'confirmed')
       .order('created_at', { ascending: false });
     
     if (error) {
-      throw new Error(`Failed to fetch documents: ${error.message}`);
+      throw new Error(`Failed to fetch confirmed documents: ${error.message}`);
     }
     
-    return data || [];
-  }, []);
+    return (data as StagedTaxDocument[]) || [];
+  };
 
-  const getDocumentUrl = useCallback(async (storagePath: string): Promise<string> => {
-    const { data, error } = await supabase.storage
-      .from('tax-documents')
-      .createSignedUrl(storagePath, 3600); // 1 hour expiry
-    
-    if (error) {
-      throw new Error(`Failed to generate download URL: ${error.message}`);
-    }
-    
-    return data.signedUrl;
-  }, []);
+  // Backward compatibility - legacy getDocuments method
+  const getDocuments = async (taxSubmissionId: string): Promise<StagedTaxDocument[]> => {
+    return getConfirmedDocuments(taxSubmissionId);
+  };
 
-  const deleteDocument = useCallback(async (documentId: string, storagePath: string): Promise<void> => {
-    // Delete from database
-    const { error: dbError } = await supabase
-      .from('tax_submission_documents')
-      .delete()
-      .eq('id', documentId);
+  // Backward compatibility - legacy uploadMultipleDocuments method
+  const uploadMultipleDocuments = async (
+    documents: TaxDocument[], 
+    stagingIdOverride?: string
+  ): Promise<void> => {
+    if (!user || documents.length === 0) return;
     
-    if (dbError) {
-      throw new Error(`Failed to delete document record: ${dbError.message}`);
-    }
+    const uploadPromises = documents.map(doc => 
+      uploadDocument.mutateAsync({ 
+        file: doc.file, 
+        data: { 
+          staging_id: stagingIdOverride || currentStagingId,
+          document_type: doc.documentType,
+          description: doc.description
+        } 
+      })
+    );
     
-    // Delete from storage
-    const { error: storageError } = await supabase.storage
+    await Promise.all(uploadPromises);
+  };
+
+  const getDocumentUrl = async (storagePath: string) => {
+    const { data } = await supabase.storage
       .from('tax-documents')
-      .remove([storagePath]);
-    
-    if (storageError) {
-      console.warn('Failed to delete file from storage:', storageError.message);
-      // Don't throw error for storage deletion failure
+      .createSignedUrl(storagePath, 3600);
+
+    return data?.signedUrl;
+  };
+
+  // Cleanup staging area (for error recovery)
+  const cleanupStagingArea = async () => {
+    try {
+      const { error } = await supabase.rpc('cleanup_staged_tax_documents', {
+        p_staging_id: currentStagingId
+      });
+      
+      if (error) {
+        console.error('Failed to cleanup staging area:', error);
+      }
+    } catch (error) {
+      console.error('Error during staging cleanup:', error);
     }
-  }, []);
+  };
 
   return {
-    uploading,
     uploadDocument,
-    uploadMultipleDocuments,
-    getDocuments,
+    deleteDocument,
+    getStagedDocuments,
+    getConfirmedDocuments,
+    getDocuments, // Backward compatibility
+    uploadMultipleDocuments, // Backward compatibility
     getDocumentUrl,
-    deleteDocument
+    cleanupStagingArea,
+    uploadProgress,
+    setUploadProgress,
+    stagingId: currentStagingId,
+    isUploading: uploadDocument.isPending,
+    isDeleting: deleteDocument.isPending,
+    uploading: uploadDocument.isPending // Backward compatibility
   };
 };

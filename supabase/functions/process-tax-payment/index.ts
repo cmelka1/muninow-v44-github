@@ -28,6 +28,7 @@ interface ProcessTaxPaymentRequest {
   payer_city: string;
   payer_state: string;
   payer_zip_code: string;
+  staging_id?: string; // For confirming staged documents
 }
 
 interface FinixTransferRequest {
@@ -112,7 +113,8 @@ serve(async (req) => {
       payer_street_address,
       payer_city,
       payer_state,
-      payer_zip_code
+      payer_zip_code,
+      staging_id
     } = body;
 
     console.log("Processing tax payment:", { 
@@ -391,8 +393,41 @@ serve(async (req) => {
 
       console.log("Successfully created all database records for payment:", finixData.id);
 
+      // Confirm staged documents if staging_id is provided
+      if (staging_id) {
+        console.log("Confirming staged documents for staging_id:", staging_id);
+        try {
+          const { error: confirmError } = await supabaseService.rpc('confirm_staged_tax_documents', {
+            p_staging_id: staging_id,
+            p_tax_submission_id: taxSubmission.id
+          });
+          
+          if (confirmError) {
+            console.error("Error confirming staged documents:", confirmError);
+            // Don't fail the payment for document confirmation issues
+          } else {
+            console.log("Successfully confirmed staged documents");
+          }
+        } catch (docError) {
+          console.error("Failed to confirm staged documents:", docError);
+          // Don't fail the payment for document confirmation issues
+        }
+      }
+
     } catch (dbError) {
       console.error("Database operation failed after successful Finix transfer:", dbError);
+      
+      // Cleanup staged documents on payment failure
+      if (staging_id) {
+        try {
+          await supabaseService.rpc('cleanup_staged_tax_documents', {
+            p_staging_id: staging_id
+          });
+          console.log("Cleaned up staged documents after payment failure");
+        } catch (cleanupError) {
+          console.error("Failed to cleanup staged documents:", cleanupError);
+        }
+      }
       
       // Return error indicating payment succeeded but database failed
       return new Response(
