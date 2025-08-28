@@ -26,17 +26,28 @@ const TaxDetail: React.FC = () => {
   const { getDocuments } = useTaxSubmissionDocuments();
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
 
   // Load documents when submission is loaded
   React.useEffect(() => {
     if (submission?.id) {
+      console.log('Loading documents for submission:', submission.id);
       setDocumentsLoading(true);
+      setDocumentsError(null);
+      
       getDocuments(submission.id)
-        .then(setDocuments)
-        .catch(console.error)
+        .then((docs) => {
+          console.log('Documents loaded successfully:', docs);
+          setDocuments(docs);
+        })
+        .catch((error) => {
+          console.error('Failed to load documents:', error);
+          setDocumentsError(error.message || 'Failed to load documents');
+          setDocuments([]);
+        })
         .finally(() => setDocumentsLoading(false));
     }
-  }, [submission?.id, getDocuments]);
+  }, [submission?.id]); // Removed getDocuments from dependency array to fix infinite loop
 
   const handleDocumentView = (document: any) => {
     setSelectedDocument(document);
@@ -314,6 +325,36 @@ const TaxDetail: React.FC = () => {
               <div className="space-y-2">
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
+              </div>
+            ) : documentsError ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p className="text-sm text-red-600">Error loading documents</p>
+                <p className="text-xs mt-1">{documentsError}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => {
+                    console.log('Retrying document load for submission:', submission?.id);
+                    setDocumentsLoading(true);
+                    setDocumentsError(null);
+                    if (submission?.id) {
+                      getDocuments(submission.id)
+                        .then((docs) => {
+                          console.log('Retry successful, documents loaded:', docs);
+                          setDocuments(docs);
+                        })
+                        .catch((error) => {
+                          console.error('Retry failed:', error);
+                          setDocumentsError(error.message || 'Failed to load documents');
+                        })
+                        .finally(() => setDocumentsLoading(false));
+                    }
+                  }}
+                >
+                  Retry
+                </Button>
               </div>
             ) : documents && documents.length > 0 ? (
               <div className="space-y-3">
