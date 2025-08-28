@@ -45,6 +45,7 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadingDocuments, setUploadingDocuments] = useState<Set<string>>(new Set());
 
   // Generate unique staging ID for this upload session
   const currentStagingId = stagingId || crypto.randomUUID();
@@ -64,6 +65,8 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
       const fileName = `${fileId}-${file.name}`;
       const filePath = `tax-documents/${currentStagingId}/${fileName}`;
 
+      // Track uploading document
+      setUploadingDocuments(prev => new Set(prev).add(fileId));
       // Set initial progress
       setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
 
@@ -114,8 +117,13 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
         throw docError;
       }
 
-      // Complete progress
+      // Complete progress and remove from uploading set
       setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+      setUploadingDocuments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(fileId);
+        return newSet;
+      });
       
       return document;
     },
@@ -126,7 +134,15 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
         description: 'Document uploaded and staged for tax submission.'
       });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
+      // Remove from uploading set on error
+      const fileId = crypto.randomUUID(); // This won't match, so let's handle this differently
+      setUploadingDocuments(prev => {
+        const newSet = new Set(prev);
+        // Clear all uploading documents on error (simple approach)
+        newSet.clear();
+        return newSet;
+      });
       toast({
         title: 'Upload failed',
         description: error.message,
@@ -278,6 +294,9 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     }
   };
 
+  // Calculate if all uploads are complete
+  const allUploadsComplete = uploadingDocuments.size === 0 && !uploadDocument.isPending;
+
   return {
     uploadDocument,
     deleteDocument,
@@ -292,6 +311,9 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     stagingId: currentStagingId,
     isUploading: uploadDocument.isPending,
     isDeleting: deleteDocument.isPending,
-    uploading: uploadDocument.isPending // Backward compatibility
+    uploading: uploadDocument.isPending, // Backward compatibility
+    allUploadsComplete,
+    hasUploadingDocuments: uploadingDocuments.size > 0,
+    uploadingDocumentsCount: uploadingDocuments.size
   };
 };

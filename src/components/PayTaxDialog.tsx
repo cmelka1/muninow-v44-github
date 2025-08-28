@@ -111,7 +111,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
 
   // Document upload functionality - using new staging system
-  const { cleanupStagingArea } = useTaxSubmissionDocuments(stagingId);
+  const { 
+    cleanupStagingArea, 
+    allUploadsComplete, 
+    hasUploadingDocuments,
+    uploadingDocumentsCount 
+  } = useTaxSubmissionDocuments(stagingId);
 
   // Helper function to parse formatted numbers (removes commas)
   const parseFormattedNumber = (value: string) => {
@@ -314,6 +319,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     if (totalAmountDue && (isNaN(parseFormattedNumber(totalAmountDue)) || parseFormattedNumber(totalAmountDue) <= 0)) {
       e.totalAmountDue = 'Please enter a valid amount greater than 0';
     }
+    
+    // Check if documents are still uploading
+    if (hasUploadingDocuments) {
+      e.documentsUploading = `Please wait for ${uploadingDocumentsCount} document${uploadingDocumentsCount > 1 ? 's' : ''} to finish uploading`;
+    }
+    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -321,6 +332,17 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const handleNext = () => {
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 2 && !validateStep2()) return;
+    
+    // Additional check for step 2 - ensure no uploads are in progress
+    if (currentStep === 2 && hasUploadingDocuments) {
+      toast({
+        title: "Documents Still Uploading",
+        description: `Please wait for ${uploadingDocumentsCount} document${uploadingDocumentsCount > 1 ? 's' : ''} to finish uploading before proceeding.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
@@ -771,6 +793,10 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     disabled={false}
                     stagingId={stagingId}
                   />
+                  {/* Display upload status error if present */}
+                  {errors.documentsUploading && (
+                    <p className="text-sm text-destructive mt-2">{errors.documentsUploading}</p>
+                  )}
                 </div>
               )}
 
@@ -1008,7 +1034,11 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                 Cancel
               </Button>
               {currentStep < totalSteps && (
-                <Button onClick={handleNext} className="flex items-center space-x-2">
+                <Button 
+                  onClick={handleNext} 
+                  className="flex items-center space-x-2"
+                  disabled={currentStep === 2 && hasUploadingDocuments}
+                >
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
                 </Button>

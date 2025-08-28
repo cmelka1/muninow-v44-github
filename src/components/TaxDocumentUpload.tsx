@@ -66,7 +66,10 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
     uploadProgress,
     isUploading,
     isDeleting,
-    stagingId: currentStagingId
+    stagingId: currentStagingId,
+    allUploadsComplete,
+    hasUploadingDocuments,
+    uploadingDocumentsCount
   } = useTaxSubmissionDocuments(stagingId);
 
   const validateFile = (file: File): string | null => {
@@ -284,6 +287,33 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
             disabled={disabled || isUploading}
           />
         </div>
+
+        {/* Upload Status */}
+        {hasUploadingDocuments && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Uploading {uploadingDocumentsCount} document{uploadingDocumentsCount > 1 ? 's' : ''}...
+              </span>
+            </div>
+            <p className="text-xs text-yellow-700 mt-1">
+              Please wait for all documents to finish uploading before proceeding.
+            </p>
+          </div>
+        )}
+
+        {documents.length > 0 && allUploadsComplete && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-green-800">
+              <CheckCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">All documents ready</span>
+            </div>
+            <p className="text-xs text-green-700 mt-1">
+              {documents.length} document{documents.length > 1 ? 's' : ''} uploaded and ready for submission.
+            </p>
+          </div>
+        )}
 
         {/* Document List */}
         {documents.length > 0 && (
