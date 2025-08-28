@@ -127,84 +127,89 @@ const TaxDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <AppSidebar />
-          <main className="flex-1 overflow-auto">
-            <div className="p-6">
-              <div className="animate-pulse space-y-6">
-                <div className="h-8 bg-muted rounded w-1/3"></div>
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 lg:gap-4">
-                  <div className="lg:col-span-3 space-y-4 lg:space-y-6">
-                    <Skeleton className="h-48" />
-                    <Skeleton className="h-48" />
-                    <Skeleton className="h-48" />
-                  </div>
-                  <div className="space-y-4 lg:space-y-6">
-                    <Skeleton className="h-32" />
-                    <Skeleton className="h-48" />
+      <div className="min-h-screen bg-gray-100">
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <AppSidebar />
+            <main className="flex-1 overflow-auto">
+              <div className="p-6">
+                <div className="animate-pulse space-y-6">
+                  <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-6">
+                      <div className="h-48 bg-gray-200 rounded"></div>
+                      <div className="h-48 bg-gray-200 rounded"></div>
+                      <div className="h-48 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="space-y-6">
+                      <div className="h-32 bg-gray-200 rounded"></div>
+                      <div className="h-48 bg-gray-200 rounded"></div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
+            </main>
+          </div>
+        </SidebarProvider>
+      </div>
     );
   }
 
   if (error || !submission) {
     return (
+      <div className="min-h-screen bg-gray-100">
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <AppSidebar />
+            <main className="flex-1 overflow-auto">
+              <div className="p-6">
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <p className="text-destructive">Error loading tax submission details. Please try again.</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </main>
+          </div>
+        </SidebarProvider>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <AppSidebar />
           <main className="flex-1 overflow-auto">
             <div className="p-6">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-destructive">Error loading tax submission details. Please try again.</p>
-                </CardContent>
-              </Card>
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
-    );
-  }
-
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="p-4 lg:p-6 max-w-7xl">
-            {/* Header */}
-            <div className="mb-4 lg:mb-6">
-              <div className="flex items-center gap-4 mb-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/taxes')}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold">Tax Submission</h1>
-                  <p className="text-muted-foreground">Submission #{submission.id}</p>
+              {/* Header */}
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/taxes')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
                 </div>
-                {getStatusBadge(submission.payment_status)}
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold">Tax Submission</h1>
+                    <p className="text-muted-foreground">Submission #{submission.id}</p>
+                  </div>
+                  {getStatusBadge(submission.payment_status)}
+                </div>
               </div>
-            </div>
 
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 lg:gap-4">
-              {/* Left Column - Main Content */}
-              <div className="lg:col-span-3 space-y-4 lg:space-y-6">
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Main Content */}
+                <div className="lg:col-span-2 space-y-6">
                 {/* Tax Submission Overview */}
                 <Card>
                   <CardHeader>
@@ -408,10 +413,10 @@ const TaxDetail: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
-              </div>
+                </div>
 
-              {/* Right Column - Sidebar */}
-              <div className="space-y-6">
+                {/* Right Column - Sidebar */}
+                <div className="space-y-6">
                 {/* Payment Summary */}
                 <Card>
                   <CardHeader>
@@ -488,20 +493,21 @@ const TaxDetail: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               </div>
-            </div>
 
-            {/* Document Viewer Modal */}
-            <DocumentViewerModal
-              isOpen={documentViewerOpen}
-              onClose={() => setDocumentViewerOpen(false)}
-              document={selectedDocument}
-              bucketName="tax-documents"
-            />
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+              {/* Document Viewer Modal */}
+              <DocumentViewerModal
+                isOpen={documentViewerOpen}
+                onClose={() => setDocumentViewerOpen(false)}
+                document={selectedDocument}
+                bucketName="tax-documents"
+              />
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </div>
   );
 };
 
