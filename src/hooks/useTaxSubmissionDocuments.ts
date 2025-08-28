@@ -210,9 +210,36 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     return (data as StagedTaxDocument[]) || [];
   };
 
-  // Backward compatibility - legacy getDocuments method
+  // Updated getDocuments method - fetches documents for paid tax submissions regardless of status
   const getDocuments = async (taxSubmissionId: string): Promise<StagedTaxDocument[]> => {
-    return getConfirmedDocuments(taxSubmissionId);
+    // First try to get confirmed documents
+    let documents = await getConfirmedDocuments(taxSubmissionId);
+    
+    // If no confirmed documents found, check if tax submission is paid and get staged documents
+    if (documents.length === 0) {
+      const { data: submission } = await supabase
+        .from('tax_submissions')
+        .select('payment_status')
+        .eq('id', taxSubmissionId)
+        .single();
+      
+      // If submission is paid, get all documents (staged and confirmed)
+      if (submission?.payment_status === 'paid') {
+        const { data, error } = await supabase
+          .from('tax_submission_documents')
+          .select('*')
+          .eq('tax_submission_id', taxSubmissionId)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw new Error(`Failed to fetch documents: ${error.message}`);
+        }
+        
+        documents = (data as StagedTaxDocument[]) || [];
+      }
+    }
+    
+    return documents;
   };
 
   // Backward compatibility - legacy uploadMultipleDocuments method
