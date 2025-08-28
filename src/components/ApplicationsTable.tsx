@@ -75,9 +75,9 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
   const getServiceTypeLabel = (serviceType: string) => {
     switch (serviceType) {
       case 'permit':
-        return 'Permit';
+        return 'Building Permit';
       case 'license':
-        return 'License';
+        return 'Business License';
       case 'tax':
         return 'Tax';
       case 'service':
@@ -186,7 +186,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Date</TableHead>
-                <TableHead>Service Type</TableHead>
+                <TableHead className="text-center">Service Type</TableHead>
                 <TableHead className="hidden md:table-cell">Service Name</TableHead>
                 <TableHead className="hidden lg:table-cell">Address</TableHead>
                 <TableHead className="hidden xl:table-cell">Municipality</TableHead>
@@ -205,7 +205,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                       {formatDate(application.dateSubmitted)}
                     </span>
                   </TableCell>
-                  <TableCell className="py-2">
+                  <TableCell className="py-2 text-center">
                     <span className="font-medium">
                       {getServiceTypeLabel(application.serviceType)}
                     </span>
