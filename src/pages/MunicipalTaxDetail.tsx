@@ -5,7 +5,7 @@ import {
   ArrowLeft, 
   FileText, 
   User, 
-  CreditCard,
+  Receipt,
   Clock, 
   Building,
   Download,
@@ -91,17 +91,16 @@ const MunicipalTaxDetail = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      paid: { label: 'Paid', variant: 'default' as const },
-      pending: { label: 'Pending', variant: 'secondary' as const },
-      failed: { label: 'Failed', variant: 'destructive' as const },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || { 
-      label: status, 
-      variant: 'secondary' as const 
-    };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    switch (status) {
+      case 'paid':
+        return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Paid</Badge>;
+      case 'pending':
+        return <Badge variant="secondary">Pending</Badge>;
+      case 'failed':
+        return <Badge variant="destructive">Failed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   const getPaymentMethodDisplay = (submission: any) => {
@@ -116,20 +115,19 @@ const MunicipalTaxDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-8 w-64" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-          <div className="space-y-6">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-32 w-full" />
+      <div className="min-h-screen bg-gray-100 p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-48 bg-gray-200 rounded"></div>
+              <div className="h-48 bg-gray-200 rounded"></div>
+              <div className="h-48 bg-gray-200 rounded"></div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-48 bg-gray-200 rounded"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -138,13 +136,7 @@ const MunicipalTaxDetail = () => {
 
   if (error || !submission) {
     return (
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => navigate('/municipal/taxes')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tax Submissions
-          </Button>
-        </div>
+      <div className="min-h-screen bg-gray-100 p-6">
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-destructive">Error loading tax submission details. Please try again.</p>
@@ -155,20 +147,27 @@ const MunicipalTaxDetail = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gray-100 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/municipal/taxes')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tax Submissions
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/municipal/taxes')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Button>
+        </div>
+        
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Tax Submission Details</h1>
-            <p className="text-muted-foreground">
-              {submission.payer_business_name || `${submission.first_name} ${submission.last_name}`}
-            </p>
+            <h1 className="text-2xl font-bold">Tax Submission</h1>
+            <p className="text-muted-foreground">Submission #{submission.id.slice(0, 8)}</p>
           </div>
+          {getStatusBadge(submission.payment_status)}
         </div>
       </div>
 
@@ -180,7 +179,7 @@ const MunicipalTaxDetail = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
+                <Receipt className="h-5 w-5" />
                 Tax Submission Overview
               </CardTitle>
             </CardHeader>
@@ -418,7 +417,7 @@ const MunicipalTaxDetail = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
+                <Receipt className="h-5 w-5" />
                 Payment Summary
               </CardTitle>
             </CardHeader>
