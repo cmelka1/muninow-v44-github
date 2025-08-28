@@ -211,7 +211,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                     </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2 text-center">
-                    <span className="truncate block max-w-[150px]" title={application.serviceName}>
+                    <span className="truncate mx-auto block max-w-[150px]" title={application.serviceName}>
                       {application.serviceName}
                     </span>
                   </TableCell>
