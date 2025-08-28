@@ -82,3 +82,38 @@ export const formatEINForDisplay = (ein: string): string => {
 export const formatEINForStorage = (ein: string): string => {
   return ein.replace(/\D/g, '');
 };
+
+/**
+ * Smart abbreviation for filenames that maintains readability
+ */
+export const smartAbbreviateFilename = (filename: string, maxLength: number = 30): string => {
+  if (!filename || filename.length <= maxLength) {
+    return filename;
+  }
+
+  // Find the last dot to separate name and extension
+  const lastDotIndex = filename.lastIndexOf('.');
+  const hasExtension = lastDotIndex > 0 && lastDotIndex < filename.length - 1;
+  
+  if (!hasExtension) {
+    // No extension, just truncate with ellipsis
+    return filename.slice(0, maxLength - 3) + '...';
+  }
+
+  const name = filename.slice(0, lastDotIndex);
+  const extension = filename.slice(lastDotIndex);
+  
+  // Calculate how much space we have for the name part
+  const spaceForName = maxLength - extension.length - 3; // 3 for '...'
+  
+  if (spaceForName <= 6) {
+    // Very little space, just show beginning + extension
+    return filename.slice(0, 6) + '...' + extension;
+  }
+
+  // Split the available space between beginning and end
+  const beginLength = Math.ceil(spaceForName * 0.6);
+  const endLength = Math.floor(spaceForName * 0.4);
+  
+  return name.slice(0, beginLength) + '...' + name.slice(-endLength) + extension;
+};

@@ -22,7 +22,7 @@ import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
-import { formatCurrency, formatDate } from '@/lib/formatters';
+import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -335,7 +335,12 @@ const MunicipalTaxDetail = () => {
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate">{doc.original_file_name}</span>
+                          <span 
+                            className="text-sm font-medium cursor-pointer hover:text-primary" 
+                            title={doc.original_file_name}
+                          >
+                            {smartAbbreviateFilename(doc.original_file_name, 35)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                           <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
