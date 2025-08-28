@@ -142,21 +142,31 @@ export const useTaxPaymentMethods = (taxData: {
     }
   }, [user, taxData.municipality?.finix_merchant_id]);
 
-  // Fetch Google Pay merchant ID only when Google Pay is selected
-  const fetchGooglePayMerchantId = async () => {
-    if (!googlePayMerchantId) {
+  // Fetch Google Pay merchant ID automatically on mount
+  useEffect(() => {
+    const fetchGooglePayMerchantId = async () => {
       try {
-        const { data } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        
+        if (error) {
+          console.error('Error fetching Google Pay merchant ID:', error);
+          return;
+        }
+        
         const response = data as GooglePayMerchantResponse;
         if (response?.merchant_id) {
           setGooglePayMerchantId(response.merchant_id);
+          console.log('Google Pay merchant ID fetched for tax payments:', response.merchant_id);
+        } else {
+          console.warn('Google Pay merchant ID not configured for tax payments');
         }
       } catch (error) {
-        console.error('Error fetching Google Pay merchant ID:', error);
-        throw new Error('Google Pay is not available for this municipality');
+        console.error('Failed to fetch Google Pay merchant ID for tax payments:', error);
       }
-    }
-  };
+    };
+
+    fetchGooglePayMerchantId();
+  }, []);
 
   // Handle regular payment processing
   const handlePayment = async (): Promise<{ taxSubmissionId?: string } | void> => {
@@ -298,24 +308,23 @@ export const useTaxPaymentMethods = (taxData: {
       return;
     }
 
-    setIsProcessingPayment(true);
+    // Validate session before processing payment
+    const sessionValid = await ensureValidSession();
     
-    try {
-      // Fetch Google Pay merchant ID if not already available
-      await fetchGooglePayMerchantId();
-      
-      if (!googlePayMerchantId) {
-        throw new Error("Failed to initialize Google Pay");
-      }
-    } catch (error: any) {
-      setIsProcessingPayment(false);
+    if (!sessionValid) {
+      return;
+    }
+
+    if (!googlePayMerchantId) {
       toast({
         title: "Error",
-        description: error.message || "Google Pay is not available for this municipality.",
+        description: "Google Pay is not configured for this municipality.",
         variant: "destructive",
       });
       return;
     }
+
+    setIsProcessingPayment(true);
 
     try {
       const paymentsClient = new window.google.payments.api.PaymentsClient({
@@ -400,6 +409,13 @@ export const useTaxPaymentMethods = (taxData: {
         description: "Apple Pay is not available on this device.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Validate session before processing payment
+    const sessionValid = await ensureValidSession();
+    
+    if (!sessionValid) {
       return;
     }
 
