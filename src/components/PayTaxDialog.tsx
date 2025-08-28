@@ -151,6 +151,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   };
 
   const getCurrentTaxYear = () => {
+    if (reportingPeriodEnd) {
+      const endDate = new Date(reportingPeriodEnd);
+      if (!isNaN(endDate.getTime())) {
+        return endDate.getFullYear();
+      }
+    }
+    // Fallback to current year if no valid reporting period end date
     return new Date().getFullYear();
   };
 
