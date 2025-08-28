@@ -451,20 +451,6 @@ const MunicipalTaxDetail = () => {
                 </div>
               </div>
 
-              <Separator />
-
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Payment Method</Label>
-                  <p className="text-sm">{getPaymentMethodDisplay(submission)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
-                  <div className="mt-1">
-                    {getStatusBadge(submission.payment_status)}
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
