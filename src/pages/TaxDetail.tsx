@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Eye, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
-import { DocumentViewerModal } from '@/components/DocumentViewerModal';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,8 +17,6 @@ const TaxDetail: React.FC = () => {
   const { submissionId } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const { data: submission, isLoading, error } = useTaxSubmissionDetail(submissionId || '');
@@ -48,11 +45,6 @@ const TaxDetail: React.FC = () => {
         .finally(() => setDocumentsLoading(false));
     }
   }, [submission?.id]); // Removed getDocuments from dependency array to fix infinite loop
-
-  const handleDocumentView = (document: any) => {
-    setSelectedDocument(document);
-    setDocumentViewerOpen(true);
-  };
 
   const handleDocumentDownload = async (document: any) => {
     setDownloadingDocument(document.id);
@@ -382,13 +374,6 @@ const TaxDetail: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDocumentView(doc)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleDocumentDownload(doc)}
                         disabled={downloadingDocument === doc.id}
                       >
@@ -475,14 +460,6 @@ const TaxDetail: React.FC = () => {
         </Card>
         </div>
       </div>
-
-      {/* Document Viewer Modal */}
-      <DocumentViewerModal
-        isOpen={documentViewerOpen}
-        onClose={() => setDocumentViewerOpen(false)}
-        document={selectedDocument}
-        bucketName="tax-documents"
-      />
     </div>
   );
 };
