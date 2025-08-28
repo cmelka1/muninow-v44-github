@@ -134,13 +134,13 @@ const TaxDetail: React.FC = () => {
             <div className="p-6">
               <div className="animate-pulse space-y-6">
                 <div className="h-8 bg-muted rounded w-1/3"></div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 lg:gap-4">
+                  <div className="lg:col-span-3 space-y-4 lg:space-y-6">
                     <Skeleton className="h-48" />
                     <Skeleton className="h-48" />
                     <Skeleton className="h-48" />
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-4 lg:space-y-6">
                     <Skeleton className="h-32" />
                     <Skeleton className="h-48" />
                   </div>
@@ -177,9 +177,9 @@ const TaxDetail: React.FC = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto">
-          <div className="p-6">
+          <div className="p-4 lg:p-6 max-w-7xl">
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-4 lg:mb-6">
               <div className="flex items-center gap-4 mb-4">
                 <Button
                   variant="ghost"
@@ -202,9 +202,9 @@ const TaxDetail: React.FC = () => {
             </div>
 
             {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 lg:gap-4">
               {/* Left Column - Main Content */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-3 space-y-4 lg:space-y-6">
                 {/* Tax Submission Overview */}
                 <Card>
                   <CardHeader>
