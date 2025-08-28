@@ -112,14 +112,19 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   // Document upload functionality - using new staging system
   const { 
+    uploadDocument,
+    deleteDocument,
+    uploadProgress,
+    uploadStates,
+    clearFailedUpload,
+    isUploading,
+    isDeleting,
     cleanupStagingArea, 
     allUploadsComplete, 
     hasUploadingDocuments,
     uploadingDocumentsCount 
   } = useTaxSubmissionDocuments(stagingId);
 
-  // Debug logging for Next button state
-  console.log(`[PayTaxDialog DEBUG] hasUploadingDocuments: ${hasUploadingDocuments}, uploadingDocumentsCount: ${uploadingDocumentsCount}`);
 
   // Helper function to parse formatted numbers (removes commas)
   const parseFormattedNumber = (value: string) => {
@@ -459,17 +464,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           <DialogDescription>Complete the steps below to submit your tax payment.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+          <div className="space-y-6">
             <div className="space-y-4 pb-6 border-b">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Step {currentStep} of {totalSteps}</span>
                 <span>{Math.round(progress)}% Complete</span>
               </div>
               <Progress value={progress} className="h-2" />
-              {/* Debug display */}
-              <div className="text-xs text-red-500 font-mono">
-                DEBUG: hasUploadingDocuments={hasUploadingDocuments.toString()}, count={uploadingDocumentsCount}
-              </div>
             </div>
 
           <div className="flex justify-between py-4">
@@ -789,6 +790,16 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     onDocumentsChange={setUploadedDocuments}
                     disabled={false}
                     stagingId={stagingId}
+                    uploadDocument={uploadDocument}
+                    deleteDocument={deleteDocument}
+                    uploadProgress={uploadProgress}
+                    uploadStates={uploadStates}
+                    clearFailedUpload={clearFailedUpload}
+                    isUploading={isUploading}
+                    isDeleting={isDeleting}
+                    allUploadsComplete={allUploadsComplete}
+                    hasUploadingDocuments={hasUploadingDocuments}
+                    uploadingDocumentsCount={uploadingDocumentsCount}
                   />
                   {/* Display upload status error if present */}
                   {errors.documentsUploading && (

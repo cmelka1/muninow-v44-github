@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useTaxSubmissionDocuments, TaxDocument } from '@/hooks/useTaxSubmissionDocuments';
+import { TaxDocument } from '@/hooks/useTaxSubmissionDocuments';
 
 interface StagedDocument {
   id: string;
@@ -27,6 +27,17 @@ interface TaxDocumentUploadProps {
   onDocumentsChange: (documents: StagedDocument[]) => void;
   disabled?: boolean;
   stagingId?: string;
+  // Upload functions and state from hook
+  uploadDocument: any;
+  deleteDocument: any;
+  uploadProgress: Record<string, number>;
+  uploadStates: Record<string, string>;
+  clearFailedUpload: (fileId: string) => void;
+  isUploading: boolean;
+  isDeleting: boolean;
+  allUploadsComplete: boolean;
+  hasUploadingDocuments: boolean;
+  uploadingDocumentsCount: number;
 }
 
 const DOCUMENT_TYPES = [
@@ -53,26 +64,22 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
   documents,
   onDocumentsChange,
   disabled = false,
-  stagingId
+  stagingId,
+  uploadDocument,
+  deleteDocument,
+  uploadProgress,
+  uploadStates,
+  clearFailedUpload,
+  isUploading,
+  isDeleting,
+  allUploadsComplete,
+  hasUploadingDocuments,
+  uploadingDocumentsCount
 }) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedDocuments, setSelectedDocuments] = useState<{ [key: string]: { type: string; description: string } }>({});
-  
-  const {
-    uploadDocument,
-    deleteDocument,
-    uploadProgress,
-    uploadStates,
-    clearFailedUpload,
-    isUploading,
-    isDeleting,
-    stagingId: currentStagingId,
-    allUploadsComplete,
-    hasUploadingDocuments,
-    uploadingDocumentsCount
-  } = useTaxSubmissionDocuments(stagingId);
 
   const validateFile = (file: File): string | null => {
     if (file.size > MAX_FILE_SIZE) {
@@ -115,7 +122,7 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
           file,
           fileId, // Pass the fileId for proper tracking
           data: {
-            staging_id: currentStagingId,
+            staging_id: stagingId,
             document_type: 'supporting_document', // Default type
             description: '' // Default empty description
           }
