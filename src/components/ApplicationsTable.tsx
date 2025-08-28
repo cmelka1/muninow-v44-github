@@ -187,7 +187,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead className="text-center">Service Type</TableHead>
-                <TableHead className="hidden md:table-cell">Service Name</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Service Name</TableHead>
                 <TableHead className="hidden lg:table-cell">Address</TableHead>
                 <TableHead className="hidden xl:table-cell">Municipality</TableHead>
                 <TableHead className="text-center">Status</TableHead>
@@ -210,7 +210,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                       {getServiceTypeLabel(application.serviceType)}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-2">
+                  <TableCell className="hidden md:table-cell py-2 text-center">
                     <span className="truncate block max-w-[150px]" title={application.serviceName}>
                       {application.serviceName}
                     </span>
