@@ -206,12 +206,9 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                     </span>
                   </TableCell>
                   <TableCell className="py-2">
-                    <div className="flex items-center gap-2">
-                      {getServiceTypeIcon(application.serviceType)}
-                      <span className="font-medium">
-                        {getServiceTypeLabel(application.serviceType)}
-                      </span>
-                    </div>
+                    <span className="font-medium">
+                      {getServiceTypeLabel(application.serviceType)}
+                    </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
                     <span className="truncate block max-w-[150px]" title={application.serviceName}>
