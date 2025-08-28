@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
   title = "Tax Submissions",
   headerAction 
 }) => {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
@@ -147,7 +149,11 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
               </TableHeader>
               <TableBody>
                 {data.data.map((submission) => (
-                  <TableRow key={submission.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow 
+                    key={submission.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/tax/${submission.id}`)}
+                  >
                     <TableCell className="font-medium">
                       {formatDate(submission.submission_date)}
                     </TableCell>

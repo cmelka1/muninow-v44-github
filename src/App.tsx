@@ -56,6 +56,7 @@ import PermitOverview from "./pages/PermitOverview";
 import PermitDetail from "./pages/PermitDetail";
 import PermitCertificate from "./pages/PermitCertificate";
 import BusinessLicenseCertificate from "./pages/BusinessLicenseCertificate";
+import TaxDetail from "./pages/TaxDetail";
 import Notifications from "./pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
@@ -114,6 +115,16 @@ const App = () => (
                   </SidebarProvider>
                 } />
                 <Route path="/taxes" element={<Taxes />} />
+                <Route path="/tax/:submissionId" element={
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-auto">
+                        <TaxDetail />
+                      </main>
+                    </div>
+                  </SidebarProvider>
+                } />
                 <Route path="/other-services" element={<OtherServices />} />
                 <Route path="/permit/:permitId" element={
                   <SidebarProvider>
