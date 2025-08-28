@@ -118,6 +118,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     uploadingDocumentsCount 
   } = useTaxSubmissionDocuments(stagingId);
 
+  // Debug logging for Next button state
+  console.log(`[PayTaxDialog DEBUG] hasUploadingDocuments: ${hasUploadingDocuments}, uploadingDocumentsCount: ${uploadingDocumentsCount}`);
+
   // Helper function to parse formatted numbers (removes commas)
   const parseFormattedNumber = (value: string) => {
     return parseFloat(value.replace(/,/g, '') || '0');
@@ -467,13 +470,17 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="space-y-4 pb-6 border-b">
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Step {currentStep} of {totalSteps}</span>
-              <span>{Math.round(progress)}% Complete</span>
+            <div className="space-y-4 pb-6 border-b">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Step {currentStep} of {totalSteps}</span>
+                <span>{Math.round(progress)}% Complete</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+              {/* Debug display */}
+              <div className="text-xs text-red-500 font-mono">
+                DEBUG: hasUploadingDocuments={hasUploadingDocuments.toString()}, count={uploadingDocumentsCount}
+              </div>
             </div>
-            <Progress value={progress} className="h-2" />
-          </div>
 
           <div className="flex justify-between py-4">
             {[1, 2, 3].map((step) => (

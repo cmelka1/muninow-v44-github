@@ -75,7 +75,11 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
       console.log(`[Upload] Starting upload for file: ${file.name}, fileId: ${fileId}`);
 
       // Track uploading document and state
-      setUploadingDocuments(prev => new Set(prev).add(fileId));
+      setUploadingDocuments(prev => {
+        const newSet = new Set(prev).add(fileId);
+        console.log(`[DEBUG] Adding fileId ${fileId} to uploading set. New size: ${newSet.size}`);
+        return newSet;
+      });
       setUploadStates(prev => ({ ...prev, [fileId]: 'uploading' }));
       setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
 
@@ -132,6 +136,7 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
         setUploadingDocuments(prev => {
           const newSet = new Set(prev);
           newSet.delete(fileId);
+          console.log(`[DEBUG] Removing fileId ${fileId} from uploading set (SUCCESS). New size: ${newSet.size}`);
           return newSet;
         });
         
@@ -145,6 +150,7 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
         setUploadingDocuments(prev => {
           const newSet = new Set(prev);
           newSet.delete(fileId);
+          console.log(`[DEBUG] Removing fileId ${fileId} from uploading set (ERROR). New size: ${newSet.size}`);
           return newSet;
         });
         throw error;
@@ -328,6 +334,9 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
   // Calculate if all uploads are complete
   const allUploadsComplete = uploadingDocuments.size === 0 && !uploadDocument.isPending;
 
+  const hasUploadingDocuments = uploadingDocuments.size > 0;
+  console.log(`[DEBUG] hasUploadingDocuments: ${hasUploadingDocuments}, uploadingDocuments.size: ${uploadingDocuments.size}`);
+
   return {
     uploadDocument,
     deleteDocument,
@@ -346,7 +355,7 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     isDeleting: deleteDocument.isPending,
     uploading: uploadDocument.isPending, // Backward compatibility
     allUploadsComplete,
-    hasUploadingDocuments: uploadingDocuments.size > 0,
+    hasUploadingDocuments,
     uploadingDocumentsCount: uploadingDocuments.size
   };
 };
