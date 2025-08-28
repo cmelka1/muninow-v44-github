@@ -145,7 +145,7 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
                 <TableHead className="hidden sm:table-cell">Submission Date</TableHead>
                 <TableHead>Tax Type</TableHead>
                 <TableHead className="hidden md:table-cell">Tax Period</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-center">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -168,7 +168,7 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
                       {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right font-medium py-2">
+                  <TableCell className="text-center font-medium py-2">
                     {formatAmount(submission.total_amount_cents)}
                   </TableCell>
                 </TableRow>
