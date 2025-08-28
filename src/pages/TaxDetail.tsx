@@ -210,16 +210,16 @@ const TaxDetail: React.FC = () => {
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Submitted</Label>
-                <p className="text-base">{formatDate(submission.submission_date)}</p>
+                <Label className="text-sm font-medium text-muted-foreground">Tax Period</Label>
+                <p className="text-base">{formatPeriod(submission.tax_period_start, submission.tax_period_end)}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Tax Year</Label>
                 <p className="text-base">{submission.tax_year}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Total Amount</Label>
-                <p className="text-base font-semibold">{formatCurrency(submission.total_amount_cents / 100)}</p>
+                <Label className="text-sm font-medium text-muted-foreground">Submitted</Label>
+                <p className="text-base">{formatDate(submission.submission_date)}</p>
               </div>
             </div>
           </CardContent>
@@ -234,10 +234,6 @@ const TaxDetail: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium text-muted-foreground">Tax Period</Label>
-              <p className="text-base">{formatPeriod(submission.tax_period_start, submission.tax_period_end)}</p>
-            </div>
             {submission.calculation_notes && (
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Calculation Notes</Label>
