@@ -103,35 +103,20 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           detailPath: `/business-license/${license.id}`
         })),
 
-        // Transform tax submissions (deduplicated by tax_type, showing most recent)
-        ...(() => {
-          const taxTransformed = (taxes.data || []).map(tax => ({
-            id: tax.id,
-            serviceType: 'tax' as const,
-            serviceName: tax.tax_type.includes('_') 
-              ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-              : tax.tax_type,
-            dateSubmitted: tax.submission_date || tax.created_at,
-            address: 'N/A',
-            municipality: customerMap.get(tax.customer_id) || 'Unknown',
-            status: tax.submission_status,
-            customerId: tax.customer_id,
-            detailPath: `/taxes`,
-            taxType: tax.tax_type
-          }));
-          
-          // Group by tax_type and keep only the most recent submission for each type
-          const taxByType = new Map();
-          taxTransformed
-            .sort((a, b) => new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime())
-            .forEach(tax => {
-              if (!taxByType.has(tax.taxType)) {
-                taxByType.set(tax.taxType, tax);
-              }
-            });
-          
-          return Array.from(taxByType.values()).map(({ taxType, ...tax }) => tax);
-        })(),
+        // Transform tax submissions
+        ...(taxes.data || []).map(tax => ({
+          id: tax.id,
+          serviceType: 'tax' as const,
+          serviceName: tax.tax_type.includes('_') 
+            ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            : tax.tax_type,
+          dateSubmitted: tax.submission_date || tax.created_at,
+          address: 'N/A',
+          municipality: customerMap.get(tax.customer_id) || 'Unknown',
+          status: tax.submission_status,
+          customerId: tax.customer_id,
+          detailPath: `/taxes`
+        })),
 
         // Transform service applications
         ...(services.data || []).map(service => ({
