@@ -1,4 +1,4 @@
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,8 +28,14 @@ export function NotificationDropdown() {
 
   const recentNotifications = notifications.slice(0, 5);
 
+  const handleOpenChange = (open: boolean) => {
+    if (open && unreadCount > 0) {
+      markAllAsRead();
+    }
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
@@ -44,19 +50,8 @@ export function NotificationDropdown() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
-        <div className="flex items-center justify-between p-3">
+        <div className="p-3">
           <span className="font-semibold">Notifications</span>
-          {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={markAllAsRead}
-              className="h-8 px-2"
-            >
-              <CheckCheck className="h-4 w-4 mr-1" />
-              Mark all read
-            </Button>
-          )}
         </div>
         <DropdownMenuSeparator />
         
