@@ -9,22 +9,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SimpleAuthContext';
 import { Mail, ArrowLeft } from 'lucide-react';
 
-export const ForgotPasswordDialog: React.FC = () => {
+interface ForgotPasswordDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({ 
+  open = false, 
+  onOpenChange 
+}) => {
   const { 
-    isForgotPasswordOpen, 
-    setForgotPasswordOpen, 
     resetPassword, 
-    isSubmitting, 
-    loginError,
-    resetSent,
-    clearError 
+    error
   } = useAuth();
   
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,7 +41,6 @@ export const ForgotPasswordDialog: React.FC = () => {
     
     // Clear previous errors
     setEmailError('');
-    clearError();
     
     // Validate email
     if (!email.trim()) {
@@ -49,14 +53,20 @@ export const ForgotPasswordDialog: React.FC = () => {
       return;
     }
 
-    await resetPassword(email);
+    setIsSubmitting(true);
+    const { error } = await resetPassword(email);
+    
+    if (!error) {
+      setResetSent(true);
+    }
+    setIsSubmitting(false);
   };
 
   const handleClose = () => {
-    setForgotPasswordOpen(false);
+    if (onOpenChange) onOpenChange(false);
     setEmail('');
     setEmailError('');
-    clearError();
+    setResetSent(false);
   };
 
   const handleBackToLogin = () => {
@@ -64,7 +74,7 @@ export const ForgotPasswordDialog: React.FC = () => {
   };
 
   return (
-    <Dialog open={isForgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-0 bg-card/95 backdrop-blur-md">
         <DialogHeader className="text-center">
           <DialogTitle className="text-2xl font-bold gradient-text">
@@ -114,7 +124,6 @@ export const ForgotPasswordDialog: React.FC = () => {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (emailError) setEmailError('');
-                  if (loginError) clearError();
                 }}
                 className="h-11"
                 disabled={isSubmitting}
@@ -125,9 +134,9 @@ export const ForgotPasswordDialog: React.FC = () => {
               )}
             </div>
 
-            {loginError && (
+            {error && (
               <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                <p className="text-sm text-destructive">{loginError}</p>
+                <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 

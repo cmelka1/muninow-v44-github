@@ -1,16 +1,19 @@
-
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SimpleAuthContext';
 
-interface MunicipalProtectedRouteProps {
+interface SimpleProtectedRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
+  requireAccountType?: 'resident' | 'municipal' | 'superadmin';
+  requireCustomerId?: boolean;
 }
 
-export const MunicipalProtectedRoute: React.FC<MunicipalProtectedRouteProps> = ({
+export const SimpleProtectedRoute: React.FC<SimpleProtectedRouteProps> = ({
   children,
-  redirectTo = '/signin'
+  redirectTo = '/signin',
+  requireAccountType,
+  requireCustomerId = false
 }) => {
   const { user, profile, isLoading } = useAuth();
 
@@ -25,13 +28,15 @@ export const MunicipalProtectedRoute: React.FC<MunicipalProtectedRouteProps> = (
     );
   }
 
-  // Check if user is authenticated and has municipal account type
-  if (!user || !profile || profile.account_type !== 'municipal') {
+  if (!user) {
     return <Navigate to={redirectTo} replace />;
   }
 
-  // Check if municipal user has valid customer_id assignment
-  if (!profile.customer_id) {
+  if (requireAccountType && (!profile || profile.account_type !== requireAccountType)) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  if (requireCustomerId && (!profile || !profile.customer_id)) {
     return <Navigate to="/signin" replace />;
   }
 

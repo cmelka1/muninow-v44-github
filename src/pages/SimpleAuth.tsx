@@ -1,59 +1,58 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SimpleAuthContext';
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
 
-const Auth = () => {
+const SimpleAuth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const navigate = useNavigate();
   
   const { 
     user, 
     profile,
     isLoading,
-    isSubmitting, 
-    isLoggingOut,
-    loginError, 
-    signIn, 
-    setForgotPasswordOpen,
-    clearError 
+    signIn
   } = useAuth();
 
-  // Dynamic navigation based on user type - avoid navigating during logout
+  // Dynamic navigation based on user type
   useEffect(() => {
-    if (user && !isLoading && profile && !isLoggingOut) {
+    if (user && profile) {
       if (profile.account_type === 'municipal') {
         navigate('/municipal/dashboard');
-      } else if (profile.account_type === 'business' && profile.role === 'superAdmin') {
+      } else if (profile.account_type === 'superadmin') {
         navigate('/superadmin/dashboard');
       } else {
         navigate('/dashboard');
       }
     }
-  }, [user, profile, isLoading, isLoggingOut, navigate]);
+  }, [user, profile, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
+    setIsSubmitting(true);
+    setLoginError(null);
 
     const { error } = await signIn(email, password);
 
-    if (!error) {
-      // Navigation will be handled by the auth context effect
+    if (error) {
+      setLoginError(error.message);
     }
+    
+    setIsSubmitting(false);
   };
 
   const handleForgotPassword = () => {
@@ -177,11 +176,14 @@ const Auth = () => {
           </Card>
         </div>
         
-        <ForgotPasswordDialog />
+        <ForgotPasswordDialog 
+          open={forgotPasswordOpen}
+          onOpenChange={setForgotPasswordOpen}
+        />
       </main>
       <PreloginFooter />
     </div>
   );
 };
 
-export default Auth;
+export default SimpleAuth;

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SimpleAuthContext';
 import { PersonalTab } from '@/components/profile/PersonalTab';
 import { VehiclesTab } from '@/components/profile/VehiclesTab';
 import { PaymentMethodsTab } from '@/components/profile/PaymentMethodsTab';

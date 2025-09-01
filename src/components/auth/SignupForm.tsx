@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SimpleAuthContext';
 import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -178,7 +178,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
   const [formData, setFormData] = useState<SignupFormValues | null>(null);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [isValidatingInvitation, setIsValidatingInvitation] = useState(false);
-  const { signUp, isSubmitting } = useAuth();
+  const { signUp } = useAuth();
 
   // Scroll to top utility function
   const scrollToTop = () => {
@@ -1162,9 +1162,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
               <Button
                 type="submit"
                 className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
-                disabled={isSubmitting || isCheckingEmail}
+                disabled={isCreatingAccount || isCheckingEmail}
               >
-                {isSubmitting || isCheckingEmail ? (
+                {isCreatingAccount || isCheckingEmail ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : null}
                 Continue to Verification
