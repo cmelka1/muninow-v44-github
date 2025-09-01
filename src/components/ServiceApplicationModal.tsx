@@ -901,7 +901,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 <Button 
                   type="button"
                   onClick={handleNext}
-                  className="flex-1 flex items-center gap-2"
+                  className="flex items-center gap-2"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
