@@ -1727,16 +1727,21 @@ export type Database = {
           amount_cents: number | null
           created_at: string
           customer_id: string
+          finix_transfer_id: string | null
           form_data: Json | null
           fraud_session_id: string | null
           id: string
           idempotency_id: string | null
+          paid_at: string | null
           payment_id: string | null
+          payment_status: string | null
           review_date: string | null
           review_notes: string | null
           reviewed_by: string | null
+          service_fee_cents: number | null
           status: string
           tile_id: string
+          total_amount_cents: number | null
           updated_at: string
           user_id: string
         }
@@ -1744,16 +1749,21 @@ export type Database = {
           amount_cents?: number | null
           created_at?: string
           customer_id: string
+          finix_transfer_id?: string | null
           form_data?: Json | null
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          paid_at?: string | null
           payment_id?: string | null
+          payment_status?: string | null
           review_date?: string | null
           review_notes?: string | null
           reviewed_by?: string | null
+          service_fee_cents?: number | null
           status?: string
           tile_id: string
+          total_amount_cents?: number | null
           updated_at?: string
           user_id: string
         }
@@ -1761,16 +1771,21 @@ export type Database = {
           amount_cents?: number | null
           created_at?: string
           customer_id?: string
+          finix_transfer_id?: string | null
           form_data?: Json | null
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          paid_at?: string | null
           payment_id?: string | null
+          payment_status?: string | null
           review_date?: string | null
           review_notes?: string | null
           reviewed_by?: string | null
+          service_fee_cents?: number | null
           status?: string
           tile_id?: string
+          total_amount_cents?: number | null
           updated_at?: string
           user_id?: string
         }

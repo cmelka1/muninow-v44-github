@@ -16,6 +16,7 @@ export interface PaymentResponse {
   transaction_id?: string;
   payment_id?: string;
   status?: string;
+  retryable?: boolean;
 }
 
 export interface PaymentError {

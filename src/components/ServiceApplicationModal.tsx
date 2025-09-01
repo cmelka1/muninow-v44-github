@@ -316,12 +316,60 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   const handlePayment = async () => {
     if (!tile || !selectedPaymentMethod || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      // First create the application
+      const applicationData = await createApplication.mutateAsync({
+        tile_id: tile.id,
+        user_id: profile?.id || '',
+        customer_id: tile.customer_id,
+        form_data: formData,
+        status: 'draft',
+        amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+      });
 
-    // TODO: Implement payment processing
-    toast({
-      title: 'Payment Processing',
-      description: 'Payment functionality will be implemented next.',
-    });
+      // Link uploaded documents to the application
+      if (uploadedDocuments.length > 0) {
+        const documentPromises = uploadedDocuments
+          .filter(doc => doc.uploadStatus === 'completed')
+          .map(doc => 
+            supabase.from('service_application_documents').insert({
+              application_id: applicationData.id,
+              user_id: profile?.id || '',
+              customer_id: tile.customer_id,
+              file_name: doc.name,
+              document_type: doc.documentType,
+              description: doc.description || null,
+              storage_path: doc.filePath || '',
+              file_size: doc.size,
+              content_type: doc.type
+            })
+          );
+
+        await Promise.all(documentPromises);
+      }
+
+      // Process payment using the hook
+      const paymentResult = await handleServicePayment(applicationData.id);
+      
+      if (paymentResult.success) {
+        onClose();
+        // Refresh the page or navigate to show updated status
+        window.location.reload();
+      }
+      // Error handling is done in the payment hook
+      
+    } catch (error) {
+      console.error('Error during payment:', error);
+      toast({
+        title: "Payment Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderFormField = (field: any) => {

@@ -232,52 +232,117 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     fetchGooglePayMerchantId();
   }, []);
 
-  const handlePayment = async (): Promise<PaymentResponse> => {
+  const handlePayment = async (applicationId: string): Promise<PaymentResponse> => {
+    console.log('Processing service application payment:', {
+      applicationId,
+      selectedPaymentMethod,
+      totalWithFee,
+      serviceFee
+    });
+    
+    // Validate session and selected payment method
     if (!selectedPaymentMethod || !tile) {
-        toast({
-          title: "Error",
-          description: "Please select a payment method and ensure service details are loaded.",
-          variant: "destructive",
-        });
-        return { success: false, error: "No payment method selected" };
+      toast({
+        title: "Error",
+        description: "Please select a payment method and ensure service details are loaded.",
+        variant: "destructive",
+      });
+      return { success: false, error: "No payment method selected", retryable: false };
     }
 
     // Validate session before processing payment
     const sessionValid = await ensureValidSession();
     
     if (!sessionValid) {
-      return { success: false, error: "Session validation failed" };
+      return { success: false, error: "Session validation failed", retryable: false };
     }
 
-    // Handle regular payment methods
-    if (!serviceFee) {
-        toast({
-          title: "Error",
-          description: "Service fee calculation failed. Please try again.",
-          variant: "destructive",
-        });
-        return { success: false, error: "Service fee calculation failed" };
+    if (!serviceFee || totalWithFee <= 0) {
+      toast({
+        title: "Error",
+        description: "Service fee calculation failed. Please try again.",
+        variant: "destructive",
+      });
+      return { success: false, error: "Invalid payment amount", retryable: false };
     }
 
     try {
       setIsProcessingPayment(true);
 
-      // For now, return a placeholder response since we don't have the full payment flow yet
-      // This will be implemented when we have the complete service application submission
-      toast({
-        title: "Payment Processing",
-        description: "Service application payment system is being implemented.",
+      // Generate idempotency ID for payment safety
+      const idempotencyId = generateIdempotencyId('service-app', applicationId);
+
+      const { data, error } = await supabase.functions.invoke('process-service-application-payment', {
+        body: {
+          application_id: applicationId,
+          payment_instrument_id: selectedPaymentMethod,
+          total_amount_cents: totalWithFee,
+          idempotency_id: idempotencyId,
+          fraud_session_id: fraudSessionId,
+        }
       });
+
+      if (error) {
+        console.error('Payment processing error:', error);
+        toast({
+          title: "Payment Failed",
+          description: error.message || "Payment processing failed. Please try again.",
+          variant: "destructive",
+        });
+        return {
+          success: false,
+          error: error.message || "Payment processing failed",
+          retryable: true,
+        };
+      }
+
+      if (!data.success) {
+        toast({
+          title: "Payment Failed",
+          description: data.error || "Payment failed. Please try again.",
+          variant: "destructive",
+        });
+        return {
+          success: false,
+          error: data.error || "Payment failed",
+          retryable: false,
+        };
+      }
+
+      console.log('Payment processed successfully:', data);
       
-      return { success: true };
+      // Show success message based on whether application was auto-approved
+      if (data.auto_approved) {
+        toast({
+          title: "Payment Successful",
+          description: "Your payment has been processed and your application has been approved!",
+        });
+      } else {
+        toast({
+          title: "Payment Successful",
+          description: "Your payment has been processed. Your application is now under review.",
+        });
+      }
+
+      return {
+        success: true,
+        payment_id: data.payment_id,
+        transaction_id: data.transfer_id,
+        status: data.payment_status,
+      };
+
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Payment processing error:', error);
       toast({
         title: "Payment Failed",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      return { success: false, error: "Unexpected error occurred" };
+      return {
+        success: false,
+        error: "Payment processing failed",
+        retryable: true,
+      };
     } finally {
       setIsProcessingPayment(false);
     }
