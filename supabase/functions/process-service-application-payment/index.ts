@@ -15,11 +15,10 @@ interface ProcessServiceApplicationPaymentRequest {
 }
 
 interface FinixTransferRequest {
-  merchant_id: string;
-  source: string;
-  amount: number;
-  fee: number;
+  merchant: string;
   currency: string;
+  amount: number;
+  source: string;
   idempotency_id: string;
   fraud_session_id?: string;
 }
@@ -258,25 +257,28 @@ serve(async (req) => {
 
     // Determine Finix base URL based on environment
     const finixBaseUrl = finixEnvironment === "live" 
-      ? "https://finix.com" 
+      ? "https://finix.payments-api.com" 
       : "https://finix.sandbox-payments-api.com";
 
     // Process payment via Finix
     const finixTransferData: FinixTransferRequest = {
-      merchant_id: merchant.finix_merchant_id,
-      source: paymentInstrument.finix_payment_instrument_id,
-      amount: grossedUpAmount,
-      fee: serviceFee,
+      merchant: merchant.finix_merchant_id,
       currency: "USD",
+      amount: grossedUpAmount,
+      source: paymentInstrument.finix_payment_instrument_id,
       idempotency_id: requestBody.idempotency_id,
-      fraud_session_id: requestBody.fraud_session_id,
     };
+
+    if (requestBody.fraud_session_id) {
+      finixTransferData.fraud_session_id = requestBody.fraud_session_id;
+    }
 
     console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Initiating Finix transfer");
     const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Finix-Version": "2022-02-01",
         "Authorization": `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`,
       },
       body: JSON.stringify(finixTransferData),
