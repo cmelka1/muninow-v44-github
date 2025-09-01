@@ -60,6 +60,7 @@ import BusinessLicenseCertificate from "./pages/BusinessLicenseCertificate";
 import TaxDetail from "./pages/TaxDetail";
 import Notifications from "./pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { DashboardProtectedRoute } from "@/components/DashboardProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -82,9 +83,9 @@ const App = () => (
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/dashboard" element={
-                  <ProtectedRoute requiredRole="user">
+                  <DashboardProtectedRoute>
                     <Dashboard />
-                  </ProtectedRoute>
+                  </DashboardProtectedRoute>
                 } />
                 <Route path="/notifications" element={
                   <SidebarProvider>
