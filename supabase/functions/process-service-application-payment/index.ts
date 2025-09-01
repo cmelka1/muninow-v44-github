@@ -380,16 +380,18 @@ serve(async (req) => {
     }
 
     console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Payment processed successfully");
+    
+    // Standardize response format to match tax payment structure
     return new Response(
       JSON.stringify({
         success: true,
-        payment_id: paymentHistory.id,
-        application_id: application.id,
+        payment_history_id: paymentHistory.id,
+        service_application_id: application.id,
         transfer_id: finixResult.id,
-        status: updateData.status || application.status,
-        payment_status: updateData.payment_status,
+        transfer_state: finixResult.state,
         amount_cents: grossedUpAmount,
-        auto_approved: !tile.requires_review && finixResult.state === "SUCCEEDED",
+        redirect_url: '/other-services',
+        auto_approved: !tile.requires_review && finixResult.state === "SUCCEEDED"
       }),
       { headers: corsHeaders, status: 200 }
     );
