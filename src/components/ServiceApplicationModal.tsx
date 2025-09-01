@@ -1123,7 +1123,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             ) : (
               /* Submit Section for Manual Review Services */
               <>
-                <Card>
+                <Card className="mt-8">
                   <CardHeader>
                     <CardTitle className="text-base">Next Steps</CardTitle>
                   </CardHeader>
