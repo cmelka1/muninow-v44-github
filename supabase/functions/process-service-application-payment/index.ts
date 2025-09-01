@@ -317,7 +317,8 @@ serve(async (req) => {
         payment_type: isCard ? "PAYMENT_CARD" : "BANK_ACCOUNT",
         payment_status: finixResult.state === "SUCCEEDED" ? "completed" : "pending",
         payment_method_type: paymentInstrument.instrument_type,
-        payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+        payment_instrument_id: requestBody.payment_instrument_id,
+        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
         idempotency_id: requestBody.idempotency_id,
         fraud_session_id: requestBody.fraud_session_id,
         card_brand: paymentInstrument.card_brand,
@@ -326,6 +327,7 @@ serve(async (req) => {
         merchant_id: merchant.id,
         finix_merchant_id: merchant.finix_merchant_id,
         merchant_name: merchant.merchant_name,
+        currency: "USD",
         transfer_state: finixResult.state,
         finix_transfer_id: finixResult.id,
       })
