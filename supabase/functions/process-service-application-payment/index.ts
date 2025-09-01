@@ -229,17 +229,22 @@ serve(async (req) => {
     }
 
     // Get Finix credentials
-    const finixBaseUrl = Deno.env.get("FINIX_BASE_URL");
-    const finixUsername = Deno.env.get("FINIX_USERNAME");
-    const finixPassword = Deno.env.get("FINIX_PASSWORD");
+    const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");
+    const finixApiSecret = Deno.env.get("FINIX_API_SECRET");
+    const finixEnvironment = Deno.env.get("FINIX_ENVIRONMENT") || "sandbox";
 
-    if (!finixBaseUrl || !finixUsername || !finixPassword) {
+    if (!finixApplicationId || !finixApiSecret) {
       console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Missing Finix credentials");
       return new Response(
         JSON.stringify({ error: "Payment system configuration error" }),
         { headers: corsHeaders, status: 500 }
       );
     }
+
+    // Determine Finix base URL based on environment
+    const finixBaseUrl = finixEnvironment === "live" 
+      ? "https://finix.com" 
+      : "https://finix.sandbox-payments-api.com";
 
     // Process payment via Finix
     const finixTransferData: FinixTransferRequest = {
@@ -257,7 +262,7 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Basic ${btoa(`${finixUsername}:${finixPassword}`)}`,
+        "Authorization": `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`,
       },
       body: JSON.stringify(finixTransferData),
     });
