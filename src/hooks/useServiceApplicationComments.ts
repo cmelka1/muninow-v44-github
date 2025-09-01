@@ -26,9 +26,32 @@ export const useServiceApplicationComments = (applicationId: string) => {
     queryFn: async () => {
       if (!user || !applicationId) throw new Error('User must be authenticated and application ID provided');
 
-      // For now, return empty array until the database table types are updated
-      // This will be fixed when Supabase types are regenerated after the migration
-      return [] as ServiceApplicationComment[];
+      const { data, error } = await supabase
+        .from('municipal_service_application_comments')
+        .select(`
+          id,
+          application_id,
+          reviewer_id,
+          comment_text,
+          is_internal,
+          created_at,
+          updated_at,
+          reviewer:profiles!reviewer_id(
+            first_name,
+            last_name,
+            email,
+            account_type
+          )
+        `)
+        .eq('application_id', applicationId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching service application comments:', error);
+        throw error;
+      }
+
+      return data as unknown as ServiceApplicationComment[];
     },
     enabled: !!user && !!applicationId,
   });
@@ -46,17 +69,23 @@ export const useCreateServiceApplicationComment = () => {
     }) => {
       if (!user) throw new Error('User must be authenticated');
 
-      // For now, return a mock result until the database table types are updated
-      // This will be fixed when Supabase types are regenerated after the migration
-      return {
-        id: 'temp-id',
-        application_id: data.application_id,
-        reviewer_id: user.id,
-        comment_text: data.comment_text,
-        is_internal: data.is_internal || false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      const { data: newComment, error } = await supabase
+        .from('municipal_service_application_comments')
+        .insert({
+          application_id: data.application_id,
+          reviewer_id: user.id,
+          comment_text: data.comment_text,
+          is_internal: data.is_internal || false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating service application comment:', error);
+        throw error;
+      }
+
+      return newComment;
     },
     onSuccess: (data) => {
       // For now, just show success message
