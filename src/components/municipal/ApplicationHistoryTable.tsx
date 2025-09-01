@@ -190,7 +190,7 @@ export function ApplicationHistoryTable({ applications, serviceTiles, isLoading 
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleViewApplication(application)}
+                            onClick={() => window.location.href = `/municipal/service-application/${application.id}`}
                             className="gap-2"
                           >
                             <Eye className="h-3 w-3" />

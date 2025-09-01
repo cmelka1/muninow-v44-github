@@ -58,6 +58,7 @@ import PermitDetail from "./pages/PermitDetail";
 import PermitCertificate from "./pages/PermitCertificate";
 import BusinessLicenseCertificate from "./pages/BusinessLicenseCertificate";
 import TaxDetail from "./pages/TaxDetail";
+import ServiceApplicationDetail from "./pages/ServiceApplicationDetail";
 import Notifications from "./pages/Notifications";
 import { SimpleProtectedRoute } from "@/components/SimpleProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
@@ -129,7 +130,17 @@ const App = () => (
                     </div>
                   </SidebarProvider>
                 } />
-                <Route path="/other-services" element={<OtherServices />} />
+          <Route path="/other-services" element={<OtherServices />} />
+          <Route path="/service-application/:applicationId" element={
+            <SidebarProvider>
+              <div className="min-h-screen flex w-full">
+                <AppSidebar />
+                <main className="flex-1 overflow-auto">
+                  <ServiceApplicationDetail />
+                </main>
+              </div>
+            </SidebarProvider>
+          } />
                 <Route path="/permit/:permitId" element={
                   <SidebarProvider>
                     <div className="min-h-screen flex w-full">
@@ -291,13 +302,20 @@ const App = () => (
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
-                <Route path="/municipal/other-services" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
-                    <MunicipalLayout>
-                      <MunicipalOtherServices />
-                    </MunicipalLayout>
-                  </SimpleProtectedRoute>
-                } />
+          <Route path="/municipal/other-services" element={
+            <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+              <MunicipalLayout>
+                <MunicipalOtherServices />
+              </MunicipalLayout>
+            </SimpleProtectedRoute>
+          } />
+          <Route path="/municipal/service-application/:applicationId" element={
+            <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+              <MunicipalLayout>
+                <ServiceApplicationDetail />
+              </MunicipalLayout>
+            </SimpleProtectedRoute>
+          } />
                 <Route path="/municipal/bill/:billId" element={
                   <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
                     <MunicipalLayout>

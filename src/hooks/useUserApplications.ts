@@ -10,6 +10,7 @@ export interface UserApplication {
   municipality: string;
   status: string;
   paymentStatus: string;
+  detailUrl?: string;
   customerId: string;
   detailPath: string;
 }
@@ -128,7 +129,8 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           status: service.status,
           paymentStatus: service.payment_status || 'unpaid',
           customerId: service.customer_id,
-          detailPath: `/other-services`
+          detailPath: `/service-application/${service.id}`,
+          detailUrl: `/service-application/${service.id}`
         }))
       ];
 
