@@ -990,7 +990,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               )}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between pt-6">
+              <div className="flex justify-between pt-6 border-t">
                 <Button 
                   type="button" 
                   variant="outline" 
