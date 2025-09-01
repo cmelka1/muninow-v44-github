@@ -190,11 +190,18 @@ export function ApplicationHistoryTable({ applications, serviceTiles, isLoading 
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.location.href = `/municipal/service-application/${application.id}`}
+                            onClick={() => {
+                              const tile = serviceTiles.find(t => t.id === application.tile_id);
+                              if (tile?.requires_review) {
+                                window.location.href = `/municipal/service-application/${application.id}`;
+                              } else {
+                                handleViewApplication(application);
+                              }
+                            }}
                             className="gap-2"
                           >
                             <Eye className="h-3 w-3" />
-                            View
+                            {serviceTiles.find(t => t.id === application.tile_id)?.requires_review ? 'Review' : 'View'}
                           </Button>
                         </TableCell>
                       </TableRow>

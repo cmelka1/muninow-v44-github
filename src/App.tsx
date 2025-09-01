@@ -59,6 +59,7 @@ import PermitCertificate from "./pages/PermitCertificate";
 import BusinessLicenseCertificate from "./pages/BusinessLicenseCertificate";
 import TaxDetail from "./pages/TaxDetail";
 import ServiceApplicationDetail from "@/pages/ServiceApplicationDetail";
+import MunicipalServiceApplicationDetail from "@/pages/MunicipalServiceApplicationDetail";
 import Notifications from "./pages/Notifications";
 import { SimpleProtectedRoute } from "@/components/SimpleProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
@@ -312,7 +313,7 @@ const App = () => (
           <Route path="/municipal/service-application/:applicationId" element={
             <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
               <MunicipalLayout>
-                <ServiceApplicationDetail />
+                <MunicipalServiceApplicationDetail />
               </MunicipalLayout>
             </SimpleProtectedRoute>
           } />
