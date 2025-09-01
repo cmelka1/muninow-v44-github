@@ -54,6 +54,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
   };
 
   const handleRowClick = (application: UserApplication) => {
+    console.log('Navigating to:', application.detailPath, 'Application:', application);
     navigate(application.detailPath);
   };
 
