@@ -306,9 +306,13 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
 
-      if (!data || !data.success) {
-        const errorMsg = data?.error || "Payment failed. Please try again.";
-        console.error('Payment data error:', data);
+      // Enhanced response validation - check for actual response structure
+      console.log('Raw payment response:', data);
+      
+      // Check if we have a valid response structure
+      if (!data) {
+        const errorMsg = "No response received from payment service";
+        console.error('Empty payment response');
         
         toast({
           title: "Payment Failed",
@@ -323,23 +327,59 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
 
-      console.log('Payment processed successfully:', data);
-      
-      // Show success message based on whether application was auto-approved
-      const successMessage = data.auto_approved 
-        ? "Your payment has been processed and your application has been approved!"
-        : "Your payment has been processed. Your application is now under review.";
+      // Check for explicit failure in response
+      if (data.success === false || data.error) {
+        const errorMsg = data.error || "Payment processing failed";
+        console.error('Payment failed with error:', data);
+        
+        toast({
+          title: "Payment Failed",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        
+        return {
+          success: false,
+          error: errorMsg,
+          retryable: true,
+        };
+      }
+
+      // Check for successful payment indicators
+      if (data.success === true || data.payment_id || data.transfer_id || data.payment_status === 'completed') {
+        console.log('Payment processed successfully:', data);
+        
+        const successMessage = data.auto_approved 
+          ? "Your payment has been processed and your application has been approved!"
+          : "Your payment has been processed. Your application is now under review.";
+        
+        toast({
+          title: "Payment Successful",
+          description: successMessage,
+        });
+
+        return {
+          success: true,
+          payment_id: data.payment_id,
+          transaction_id: data.transfer_id,
+          status: data.payment_status,
+        };
+      }
+
+      // Handle edge case where response structure is unexpected
+      console.warn('Unexpected payment response structure:', data);
+      const warningMsg = "Payment status unclear. Please check your payment history.";
       
       toast({
-        title: "Payment Successful",
-        description: successMessage,
+        title: "Payment Processing",
+        description: warningMsg,
+        variant: "default",
       });
 
       return {
-        success: true,
-        payment_id: data.payment_id,
-        transaction_id: data.transfer_id,
-        status: data.payment_status,
+        success: false,
+        error: warningMsg,
+        retryable: true,
       };
 
     } catch (error) {
