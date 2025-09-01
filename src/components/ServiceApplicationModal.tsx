@@ -628,7 +628,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           currentStep={currentStep}
           totalSteps={2}
         >
-        <DialogHeader className="space-y-4 pb-6">
+        <DialogHeader className="space-y-4 pb-6 border-b">
           <div className="space-y-3">
             <DialogTitle className="text-xl font-semibold">
               {tile.title}
@@ -654,11 +654,9 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             </div>
           </div>
           
-          {currentStep === 1 && tile.description && (
-            <DialogDescription className="text-base leading-relaxed">
-              {tile.description}
-            </DialogDescription>
-          )}
+          <DialogDescription className="text-base leading-relaxed">
+            {currentStep === 1 ? tile.description : ''}
+          </DialogDescription>
         </DialogHeader>
 
         {currentStep === 1 ? (
@@ -1026,7 +1024,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             {!tile.requires_review ? (
               /* Payment Section for Auto-Approve Services */
               <>
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {totalAmount > 0 && (
                     <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
                       <CardHeader className="pb-4">
