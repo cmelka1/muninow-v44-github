@@ -242,35 +242,42 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     
     // Validate session and selected payment method
     if (!selectedPaymentMethod || !tile) {
+      const errorMsg = "Please select a payment method and ensure service details are loaded.";
       toast({
         title: "Error",
-        description: "Please select a payment method and ensure service details are loaded.",
+        description: errorMsg,
         variant: "destructive",
       });
-      return { success: false, error: "No payment method selected", retryable: false };
+      return { success: false, error: errorMsg, retryable: false };
     }
 
     // Validate session before processing payment
-    const sessionValid = await ensureValidSession();
-    
-    if (!sessionValid) {
+    try {
+      const sessionValid = await ensureValidSession();
+      if (!sessionValid) {
+        return { success: false, error: "Session validation failed", retryable: false };
+      }
+    } catch (sessionError) {
+      console.error('Session validation error:', sessionError);
       return { success: false, error: "Session validation failed", retryable: false };
     }
 
     if (!serviceFee || totalWithFee <= 0) {
+      const errorMsg = "Service fee calculation failed. Please try again.";
       toast({
         title: "Error",
-        description: "Service fee calculation failed. Please try again.",
+        description: errorMsg,
         variant: "destructive",
       });
-      return { success: false, error: "Invalid payment amount", retryable: false };
+      return { success: false, error: errorMsg, retryable: false };
     }
 
-    try {
-      setIsProcessingPayment(true);
+    setIsProcessingPayment(true);
 
+    try {
       // Generate idempotency ID for payment safety
       const idempotencyId = generateIdempotencyId('service-app', applicationId);
+      console.log('Generated idempotency ID:', idempotencyId);
 
       const { data, error } = await supabase.functions.invoke('process-service-application-payment', {
         body: {
@@ -283,46 +290,50 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       });
 
       if (error) {
-        console.error('Payment processing error:', error);
+        console.error('Supabase function error:', error);
+        const classifiedError = classifyPaymentError(error);
+        
         toast({
           title: "Payment Failed",
-          description: error.message || "Payment processing failed. Please try again.",
+          description: classifiedError.message,
           variant: "destructive",
         });
+        
         return {
           success: false,
-          error: error.message || "Payment processing failed",
-          retryable: true,
+          error: classifiedError.message,
+          retryable: classifiedError.retryable,
         };
       }
 
-      if (!data.success) {
+      if (!data || !data.success) {
+        const errorMsg = data?.error || "Payment failed. Please try again.";
+        console.error('Payment data error:', data);
+        
         toast({
           title: "Payment Failed",
-          description: data.error || "Payment failed. Please try again.",
+          description: errorMsg,
           variant: "destructive",
         });
+        
         return {
           success: false,
-          error: data.error || "Payment failed",
-          retryable: false,
+          error: errorMsg,
+          retryable: true,
         };
       }
 
       console.log('Payment processed successfully:', data);
       
       // Show success message based on whether application was auto-approved
-      if (data.auto_approved) {
-        toast({
-          title: "Payment Successful",
-          description: "Your payment has been processed and your application has been approved!",
-        });
-      } else {
-        toast({
-          title: "Payment Successful",
-          description: "Your payment has been processed. Your application is now under review.",
-        });
-      }
+      const successMessage = data.auto_approved 
+        ? "Your payment has been processed and your application has been approved!"
+        : "Your payment has been processed. Your application is now under review.";
+      
+      toast({
+        title: "Payment Successful",
+        description: successMessage,
+      });
 
       return {
         success: true,
@@ -332,16 +343,19 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       };
 
     } catch (error) {
-      console.error('Payment processing error:', error);
+      console.error('Unexpected payment error:', error);
+      const classifiedError = classifyPaymentError(error);
+      
       toast({
         title: "Payment Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: classifiedError.message,
         variant: "destructive",
       });
+      
       return {
         success: false,
-        error: "Payment processing failed",
-        retryable: true,
+        error: classifiedError.message,
+        retryable: classifiedError.retryable,
       };
     } finally {
       setIsProcessingPayment(false);
@@ -356,32 +370,39 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     });
     
     if (!tile || !googlePayMerchantId) {
+      const errorMsg = "Google Pay is not properly configured.";
       toast({
         title: "Error",
-        description: "Google Pay is not properly configured.",
+        description: errorMsg,
         variant: "destructive",
       });
-      return { success: false, error: "Google Pay not configured", retryable: false };
+      return { success: false, error: errorMsg, retryable: false };
     }
 
     // Validate session before processing payment
-    const sessionValid = await ensureValidSession();
-    if (!sessionValid) {
+    try {
+      const sessionValid = await ensureValidSession();
+      if (!sessionValid) {
+        return { success: false, error: "Session validation failed", retryable: false };
+      }
+    } catch (sessionError) {
+      console.error('Session validation error:', sessionError);
       return { success: false, error: "Session validation failed", retryable: false };
     }
 
     if (!serviceFee || totalWithFee <= 0) {
+      const errorMsg = "Service fee calculation failed. Please try again.";
       toast({
         title: "Error",
-        description: "Service fee calculation failed. Please try again.",
+        description: errorMsg,
         variant: "destructive",
       });
-      return { success: false, error: "Invalid payment amount", retryable: false };
+      return { success: false, error: errorMsg, retryable: false };
     }
 
-    try {
-      setIsProcessingPayment(true);
+    setIsProcessingPayment(true);
 
+    try {
       // Configure Google Pay payment request
       const paymentDataRequest = {
         apiVersion: 2,
@@ -419,6 +440,7 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
 
       // Generate idempotency ID for payment safety
       const idempotencyId = generateIdempotencyId('service-app-googlepay', applicationId);
+      console.log('Generated Google Pay idempotency ID:', idempotencyId);
 
       const { data, error } = await supabase.functions.invoke('process-service-application-google-pay', {
         body: {
@@ -432,37 +454,48 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       });
 
       if (error) {
-        console.error('Google Pay processing error:', error);
+        console.error('Google Pay Supabase function error:', error);
+        const classifiedError = classifyPaymentError(error);
+        
         toast({
           title: "Payment Failed",
-          description: error.message || "Google Pay processing failed. Please try again.",
+          description: classifiedError.message,
           variant: "destructive",
         });
+        
         return {
           success: false,
-          error: error.message || "Google Pay processing failed",
-          retryable: true,
+          error: classifiedError.message,
+          retryable: classifiedError.retryable,
         };
       }
 
-      if (!data.success) {
+      if (!data || !data.success) {
+        const errorMsg = data?.error || "Google Pay payment failed. Please try again.";
+        console.error('Google Pay data error:', data);
+        
         toast({
           title: "Payment Failed",
-          description: data.error || "Google Pay payment failed. Please try again.",
+          description: errorMsg,
           variant: "destructive",
         });
+        
         return {
           success: false,
-          error: data.error || "Google Pay payment failed",
-          retryable: false,
+          error: errorMsg,
+          retryable: true,
         };
       }
 
       console.log('Google Pay payment processed successfully:', data);
       
+      const successMessage = data.auto_approved 
+        ? "Your Google Pay payment has been processed and your application has been approved!"
+        : "Your Google Pay payment has been processed. Your application is now under review.";
+      
       toast({
         title: "Payment Successful",
-        description: "Your Google Pay payment has been processed. Your application is now under review.",
+        description: successMessage,
       });
 
       return {
@@ -476,7 +509,7 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       console.error('Google Pay payment error:', error);
       
       // Handle user cancellation
-      if (error.statusCode === 'CANCELED') {
+      if (error?.statusCode === 'CANCELED') {
         return {
           success: false,
           error: "Payment cancelled by user",
@@ -484,15 +517,18 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
       
+      const classifiedError = classifyPaymentError(error);
+      
       toast({
         title: "Payment Failed",
-        description: "An unexpected error occurred with Google Pay. Please try again.",
+        description: classifiedError.message,
         variant: "destructive",
       });
+      
       return {
         success: false,
-        error: "Google Pay payment failed",
-        retryable: true,
+        error: classifiedError.message,
+        retryable: classifiedError.retryable,
       };
     } finally {
       setIsProcessingPayment(false);

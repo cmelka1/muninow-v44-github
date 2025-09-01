@@ -318,7 +318,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     if (!tile || !selectedPaymentMethod || isSubmitting) return;
     
     setIsSubmitting(true);
+    
     try {
+      console.log('Starting payment process for tile:', tile.id);
+      
       // First create the application
       const applicationData = await createApplication.mutateAsync({
         tile_id: tile.id,
@@ -329,42 +332,67 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
       });
 
+      console.log('Application created successfully:', applicationData.id);
+
       // Link uploaded documents to the application
       if (uploadedDocuments.length > 0) {
-        const documentPromises = uploadedDocuments
-          .filter(doc => doc.uploadStatus === 'completed')
-          .map(doc => 
-            supabase.from('service_application_documents').insert({
-              application_id: applicationData.id,
-              user_id: profile?.id || '',
-              customer_id: tile.customer_id,
-              file_name: doc.name,
-              document_type: doc.documentType,
-              description: doc.description || null,
-              storage_path: doc.filePath || '',
-              file_size: doc.size,
-              content_type: doc.type
-            })
-          );
+        try {
+          const documentPromises = uploadedDocuments
+            .filter(doc => doc.uploadStatus === 'completed')
+            .map(doc => 
+              supabase.from('service_application_documents').insert({
+                application_id: applicationData.id,
+                user_id: profile?.id || '',
+                customer_id: tile.customer_id,
+                file_name: doc.name,
+                document_type: doc.documentType,
+                description: doc.description || null,
+                storage_path: doc.filePath || '',
+                file_size: doc.size,
+                content_type: doc.type
+              })
+            );
 
-        await Promise.all(documentPromises);
+          await Promise.all(documentPromises);
+          console.log('Documents linked successfully');
+        } catch (docError) {
+          console.error('Error linking documents:', docError);
+          // Continue with payment even if document linking fails
+        }
       }
 
       // Process payment using the hook
+      console.log('Processing payment for application:', applicationData.id);
       const paymentResult = await handleServicePayment(applicationData.id);
       
-      if (paymentResult.success) {
+      if (paymentResult?.success) {
+        console.log('Payment successful, closing modal');
         onClose();
         // Refresh the page or navigate to show updated status
         window.location.reload();
+      } else {
+        console.error('Payment failed:', paymentResult);
+        // Payment hook already shows error toast, but ensure we don't leave modal in loading state
+        if (!paymentResult?.retryable) {
+          toast({
+            title: "Payment Failed",
+            description: paymentResult?.error || "Payment could not be processed. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
-      // Error handling is done in the payment hook
       
     } catch (error) {
-      console.error('Error during payment:', error);
+      console.error('Error during payment process:', error);
+      
+      // Classify the error for better user feedback
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "An unexpected error occurred during payment processing.";
+      
       toast({
         title: "Payment Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
