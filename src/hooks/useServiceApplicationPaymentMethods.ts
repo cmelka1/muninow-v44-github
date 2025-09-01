@@ -128,6 +128,9 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       const defaultMethod = topPaymentMethods.find(method => method.is_default);
       if (defaultMethod) {
         setSelectedPaymentMethod(defaultMethod.id);
+      } else if (topPaymentMethods.length > 0) {
+        // If no default, select the first available method
+        setSelectedPaymentMethod(topPaymentMethods[0].id);
       }
     }
   }, [topPaymentMethods, selectedPaymentMethod]);

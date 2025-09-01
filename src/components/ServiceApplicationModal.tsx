@@ -65,7 +65,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const [pdfAccessBlocked, setPdfAccessBlocked] = useState(false);
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -89,7 +88,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     serviceFee,
     totalWithFee,
     baseAmount,
-    setSelectedPaymentMethod: setPaymentHookMethod,
+    selectedPaymentMethod,
+    setSelectedPaymentMethod,
     handlePayment: handleServicePayment,
     merchantFeeProfile,
   } = useServiceApplicationPaymentMethods(tile, userDefinedAmount);
@@ -99,7 +99,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // Reset state when modal opens
       setCurrentStep(1);
       setSelectedPaymentMethod(null);
-      setPaymentHookMethod(null);
       setIsSubmitting(false);
       setUploadedDocuments([]);
       setValidationErrors({});
@@ -974,10 +973,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       <PaymentMethodSelector
                         paymentInstruments={paymentInstruments.slice(0, 3)}
                         selectedPaymentMethod={selectedPaymentMethod}
-                        onSelectPaymentMethod={(method) => {
-                          setSelectedPaymentMethod(method);
-                          setPaymentHookMethod(method);
-                        }}
+                        onSelectPaymentMethod={setSelectedPaymentMethod}
                         isLoading={paymentMethodsLoading}
                         maxMethods={3}
                       />
