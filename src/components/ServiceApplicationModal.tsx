@@ -1012,6 +1012,14 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     <ChevronLeft className="h-4 w-4" />
                     Previous
                   </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={onClose}
+                    className="flex items-center gap-2"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </>
             ) : (
