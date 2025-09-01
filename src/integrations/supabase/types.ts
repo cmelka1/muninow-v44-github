@@ -1824,20 +1824,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_municipal_service_applications_customer_id"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
-          {
-            foreignKeyName: "fk_municipal_service_applications_tile_id"
-            columns: ["tile_id"]
-            isOneToOne: false
-            referencedRelation: "municipal_service_tiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "municipal_service_applications_tile_id_fkey"
             columns: ["tile_id"]
             isOneToOne: false
