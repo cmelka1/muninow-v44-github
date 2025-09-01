@@ -1026,7 +1026,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             {!tile.requires_review ? (
               /* Payment Section for Auto-Approve Services */
               <>
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {totalAmount > 0 && (
                     <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
                       <CardHeader className="pb-4">
