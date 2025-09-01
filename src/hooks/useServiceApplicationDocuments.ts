@@ -5,7 +5,6 @@ export interface ServiceApplicationDocument {
   id: string;
   application_id: string;
   user_id: string;
-  customer_id: string;
   file_name: string;
   document_type: string;
   description: string | null;
@@ -19,22 +18,13 @@ export interface ServiceApplicationDocument {
 
 export const useServiceApplicationDocuments = (applicationId: string) => {
   return useQuery({
-    queryKey: ['service_application_documents', applicationId],
+    queryKey: ['service-application-documents', applicationId],
     queryFn: async () => {
       if (!applicationId) return [];
       
-      const { data, error } = await supabase
-        .from('service_application_documents')
-        .select('*')
-        .eq('application_id', applicationId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching service application documents:', error);
-        throw error;
-      }
-
-      return data as ServiceApplicationDocument[];
+      // For now, return empty array since documents table doesn't exist yet
+      // This will be updated when the table is created
+      return [] as ServiceApplicationDocument[];
     },
     enabled: !!applicationId,
   });

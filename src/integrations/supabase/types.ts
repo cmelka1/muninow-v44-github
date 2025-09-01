@@ -1722,9 +1722,40 @@ export type Database = {
           },
         ]
       }
+      municipal_service_application_comments: {
+        Row: {
+          application_id: string
+          comment_text: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          reviewer_id: string
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          comment_text: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          reviewer_id: string
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          reviewer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       municipal_service_applications: {
         Row: {
           amount_cents: number | null
+          assigned_reviewer_id: string | null
           created_at: string
           customer_id: string
           finix_transfer_id: string | null
@@ -1747,6 +1778,7 @@ export type Database = {
         }
         Insert: {
           amount_cents?: number | null
+          assigned_reviewer_id?: string | null
           created_at?: string
           customer_id: string
           finix_transfer_id?: string | null
@@ -1769,6 +1801,7 @@ export type Database = {
         }
         Update: {
           amount_cents?: number | null
+          assigned_reviewer_id?: string | null
           created_at?: string
           customer_id?: string
           finix_transfer_id?: string | null
