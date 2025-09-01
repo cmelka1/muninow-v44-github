@@ -34,7 +34,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
       if (!user?.id) return { applications: [], count: 0 };
 
       // Fetch all application types in parallel
-      const [permits, licenses, taxes, services, customers] = await Promise.all([
+      const [permits, licenses, taxes, services, customers, serviceTiles] = await Promise.all([
         // Permits
         supabase
           .from('permit_applications')
@@ -56,13 +56,18 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         // Municipal Service Applications
         supabase
           .from('municipal_service_applications')
-          .select('id, tile_id, status, payment_status, customer_id, created_at, municipal_service_tiles(title)')
+          .select('id, tile_id, status, payment_status, customer_id, created_at')
           .eq('user_id', user.id),
         
         // Get customer names for municipality lookup
         supabase
           .from('customers')
-          .select('customer_id, legal_entity_name')
+          .select('customer_id, legal_entity_name'),
+        
+        // Get service tiles separately
+        supabase
+          .from('municipal_service_tiles')
+          .select('id, title')
       ]);
 
       if (permits.error) throw permits.error;
@@ -70,10 +75,16 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
       if (taxes.error) throw taxes.error;
       if (services.error) throw services.error;
       if (customers.error) throw customers.error;
+      if (serviceTiles.error) throw serviceTiles.error;
 
       // Create customer lookup map
       const customerMap = new Map(
         customers.data?.map(c => [c.customer_id, c.legal_entity_name]) || []
+      );
+      
+      // Create service tiles lookup map
+      const serviceTilesMap = new Map(
+        serviceTiles.data?.map(t => [t.id, t.title]) || []
       );
 
       // Transform and combine all applications
@@ -123,7 +134,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         ...(services.data || []).map(service => ({
           id: service.id,
           serviceType: 'service' as const,
-          serviceName: (service.municipal_service_tiles as any)?.title || 'Service Application',
+          serviceName: serviceTilesMap.get(service.tile_id) || 'Service Application',
           dateSubmitted: service.created_at,
           municipality: customerMap.get(service.customer_id) || 'Unknown',
           status: service.status,
