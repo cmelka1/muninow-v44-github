@@ -1044,8 +1044,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     </Card>
                   )}
 
-                  {/* Separator */}
-                  {totalAmount > 0 && <div className="border-t border-border"></div>}
 
                   {/* Payment Method Selection */}
                   <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
