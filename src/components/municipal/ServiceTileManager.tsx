@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { ServiceTileForm } from '@/components/municipal/ServiceTileForm';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 
@@ -146,26 +146,15 @@ export function ServiceTileManager({ serviceTiles, isLoading, customerId }: Serv
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(tile)}
-                    className="flex-1 gap-2"
-                  >
-                    <Edit className="h-3 w-3" />
-                    Edit
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                  >
-                    <Copy className="h-3 w-3" />
-                    Duplicate
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(tile)}
+                  className="w-full gap-2"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </Button>
               </CardContent>
             </Card>
           ))}
