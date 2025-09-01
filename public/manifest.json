@@ -1,0 +1,28 @@
+{
+  "name": "MuniNow",
+  "short_name": "MuniNow",
+  "description": "Municipal services platform for residents and businesses",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/lovable-uploads/c2b3d2f7-9a1c-480f-9b7f-eca749490b01.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lovable-uploads/c2b3d2f7-9a1c-480f-9b7f-eca749490b01.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["government", "utilities", "finance"],
+  "lang": "en-US",
+  "prefer_related_applications": false
+}

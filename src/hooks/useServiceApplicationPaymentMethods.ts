@@ -348,22 +348,295 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     }
   };
 
-  const handleGooglePayment = async (): Promise<PaymentResponse> => {
-    // Placeholder implementation for Google Pay
-    toast({
-      title: "Payment Processing",
-      description: "Google Pay for service applications is being implemented.",
+  const handleGooglePayment = async (applicationId: string): Promise<PaymentResponse> => {
+    console.log('Processing Google Pay service application payment:', {
+      applicationId,
+      totalWithFee,
+      serviceFee
     });
-    return { success: false, error: "Not implemented yet" };
+    
+    if (!tile || !googlePayMerchantId) {
+      toast({
+        title: "Error",
+        description: "Google Pay is not properly configured.",
+        variant: "destructive",
+      });
+      return { success: false, error: "Google Pay not configured", retryable: false };
+    }
+
+    // Validate session before processing payment
+    const sessionValid = await ensureValidSession();
+    if (!sessionValid) {
+      return { success: false, error: "Session validation failed", retryable: false };
+    }
+
+    if (!serviceFee || totalWithFee <= 0) {
+      toast({
+        title: "Error",
+        description: "Service fee calculation failed. Please try again.",
+        variant: "destructive",
+      });
+      return { success: false, error: "Invalid payment amount", retryable: false };
+    }
+
+    try {
+      setIsProcessingPayment(true);
+
+      // Configure Google Pay payment request
+      const paymentDataRequest = {
+        apiVersion: 2,
+        apiVersionMinor: 0,
+        allowedPaymentMethods: [{
+          type: 'CARD' as const,
+          parameters: {
+            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+            allowedCardNetworks: ['AMEX', 'DISCOVER', 'INTERAC', 'JCB', 'MASTERCARD', 'VISA']
+          },
+          tokenizationSpecification: {
+            type: 'PAYMENT_GATEWAY' as const,
+            parameters: {
+              gateway: 'finix' as const,
+              gatewayMerchantId: googlePayMerchantId
+            }
+          }
+        }],
+        transactionInfo: {
+          countryCode: 'US',
+          currencyCode: 'USD',
+          totalPrice: (totalWithFee / 100).toFixed(2),
+          totalPriceStatus: 'FINAL' as const
+        },
+        merchantInfo: {
+          merchantId: googlePayMerchantId,
+          merchantName: tile.title
+        }
+      };
+
+      // Load payment data from Google Pay
+      const paymentData = await window.googlePayClient.loadPaymentData(paymentDataRequest);
+      const paymentToken = paymentData.paymentMethodData.tokenizationData.token;
+      const billingAddress = paymentData.paymentMethodData.info?.billingAddress;
+
+      // Generate idempotency ID for payment safety
+      const idempotencyId = generateIdempotencyId('service-app-googlepay', applicationId);
+
+      const { data, error } = await supabase.functions.invoke('process-service-application-google-pay', {
+        body: {
+          application_id: applicationId,
+          google_pay_token: paymentToken,
+          billing_contact: billingAddress,
+          total_amount_cents: totalWithFee,
+          idempotency_id: idempotencyId,
+          fraud_session_id: fraudSessionId,
+        }
+      });
+
+      if (error) {
+        console.error('Google Pay processing error:', error);
+        toast({
+          title: "Payment Failed",
+          description: error.message || "Google Pay processing failed. Please try again.",
+          variant: "destructive",
+        });
+        return {
+          success: false,
+          error: error.message || "Google Pay processing failed",
+          retryable: true,
+        };
+      }
+
+      if (!data.success) {
+        toast({
+          title: "Payment Failed",
+          description: data.error || "Google Pay payment failed. Please try again.",
+          variant: "destructive",
+        });
+        return {
+          success: false,
+          error: data.error || "Google Pay payment failed",
+          retryable: false,
+        };
+      }
+
+      console.log('Google Pay payment processed successfully:', data);
+      
+      toast({
+        title: "Payment Successful",
+        description: "Your Google Pay payment has been processed. Your application is now under review.",
+      });
+
+      return {
+        success: true,
+        payment_id: data.payment_id,
+        transaction_id: data.transfer_id,
+        status: data.payment_status,
+      };
+
+    } catch (error: any) {
+      console.error('Google Pay payment error:', error);
+      
+      // Handle user cancellation
+      if (error.statusCode === 'CANCELED') {
+        return {
+          success: false,
+          error: "Payment cancelled by user",
+          retryable: true,
+        };
+      }
+      
+      toast({
+        title: "Payment Failed",
+        description: "An unexpected error occurred with Google Pay. Please try again.",
+        variant: "destructive",
+      });
+      return {
+        success: false,
+        error: "Google Pay payment failed",
+        retryable: true,
+      };
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
-  const handleApplePayment = async (): Promise<PaymentResponse> => {
-    // Placeholder implementation for Apple Pay
-    toast({
-      title: "Payment Processing", 
-      description: "Apple Pay for service applications is being implemented.",
+  const handleApplePayment = async (applicationId: string): Promise<PaymentResponse> => {
+    console.log('Processing Apple Pay service application payment:', {
+      applicationId,
+      totalWithFee,
+      serviceFee
     });
-    return { success: false, error: "Not implemented yet" };
+    
+    if (!tile) {
+      toast({
+        title: "Error",
+        description: "Service application details not loaded.",
+        variant: "destructive",
+      });
+      return { success: false, error: "Service not loaded", retryable: false };
+    }
+
+    // Check Apple Pay availability
+    if (!window.ApplePaySession || !(window.ApplePaySession as any).canMakePayments()) {
+      toast({
+        title: "Apple Pay Unavailable",
+        description: "Apple Pay is not available on this device.",
+        variant: "destructive",
+      });
+      return { success: false, error: "Apple Pay not available", retryable: false };
+    }
+
+    // Validate session before processing payment
+    const sessionValid = await ensureValidSession();
+    if (!sessionValid) {
+      return { success: false, error: "Session validation failed", retryable: false };
+    }
+
+    if (!serviceFee || totalWithFee <= 0) {
+      toast({
+        title: "Error",
+        description: "Service fee calculation failed. Please try again.",
+        variant: "destructive",
+      });
+      return { success: false, error: "Invalid payment amount", retryable: false };
+    }
+
+    try {
+      setIsProcessingPayment(true);
+
+      // Initialize Apple Pay session
+      const session = await initializeApplePaySession(
+        'merchant.muninow.com',
+        totalWithFee,
+        tile.title,
+        async (event: any) => {
+          // Validate merchant
+          const { data } = await supabase.functions.invoke('validate-apple-pay-merchant', {
+            body: {
+              validation_url: event.validationURL,
+              merchant_id: 'merchant.muninow.com'
+            }
+          });
+          return data.session;
+        },
+        async (event: any) => {
+          try {
+            const paymentToken = event.payment.token;
+            const billingContact = event.payment.billingContact;
+
+            // Generate idempotency ID for payment safety
+            const idempotencyId = generateIdempotencyId('service-app-applepay', applicationId);
+
+            const { data, error } = await supabase.functions.invoke('process-service-application-apple-pay', {
+              body: {
+                application_id: applicationId,
+                apple_pay_token: JSON.stringify(paymentToken),
+                billing_contact: billingContact,
+                total_amount_cents: totalWithFee,
+                idempotency_id: idempotencyId,
+                fraud_session_id: fraudSessionId,
+              }
+            });
+
+            if (error || !data.success) {
+              console.error('Apple Pay processing error:', error || data.error);
+              session.completePayment((window.ApplePaySession as any).STATUS_FAILURE);
+              return {
+                success: false,
+                error: error?.message || data.error || "Apple Pay processing failed",
+                retryable: true,
+              };
+            }
+
+            console.log('Apple Pay payment processed successfully:', data);
+            session.completePayment((window.ApplePaySession as any).STATUS_SUCCESS);
+            
+            toast({
+              title: "Payment Successful",
+              description: "Your Apple Pay payment has been processed. Your application is now under review.",
+            });
+
+            return {
+              success: true,
+              payment_id: data.payment_id,
+              transaction_id: data.transfer_id,
+              status: data.payment_status,
+            };
+
+          } catch (processingError) {
+            console.error('Apple Pay processing error:', processingError);
+            session.completePayment((window.ApplePaySession as any).STATUS_FAILURE);
+            throw processingError;
+          }
+        }
+      );
+
+      // The session handles the payment flow
+      return new Promise((resolve) => {
+        // This will be resolved by the session event handlers
+        session.oncancel = () => {
+          resolve({
+            success: false,
+            error: "Payment cancelled by user",
+            retryable: true,
+          });
+        };
+      });
+
+    } catch (error: any) {
+      console.error('Apple Pay payment error:', error);
+      toast({
+        title: "Payment Failed",
+        description: "An unexpected error occurred with Apple Pay. Please try again.",
+        variant: "destructive",
+      });
+      return {
+        success: false,
+        error: "Apple Pay payment failed",
+        retryable: true,
+      };
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   return {
