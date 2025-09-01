@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit } from 'lucide-react';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,14 +51,13 @@ const DOCUMENT_TYPES = [
   'other'
 ];
 
-type ApplicationStep = 'form' | 'review';
-
 const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   tile,
   isOpen,
   onClose,
 }) => {
-  const [currentStep, setCurrentStep] = useState<ApplicationStep>('form');
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [useAutoPopulate, setUseAutoPopulate] = useState(true);
   const [pdfAccessBlocked, setPdfAccessBlocked] = useState(false);
@@ -66,6 +66,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  const totalSteps = 2;
+  const progress = (currentStep / totalSteps) * 100;
   
   const { profile } = useAuth();
   const createApplication = useCreateServiceApplication();
@@ -78,10 +82,11 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   useEffect(() => {
     if (tile && isOpen) {
       // Reset state when modal opens
-      setCurrentStep('form');
+      setCurrentStep(1);
       setSelectedPaymentMethod(null);
       setIsSubmitting(false);
       setUploadedDocuments([]);
+      setValidationErrors({});
       
       // Initialize form data
       const initialData: Record<string, any> = {};
@@ -170,36 +175,73 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       ...prev,
       [fieldId]: value
     }));
+    // Clear field error when user starts typing
+    clearFieldError(fieldId);
   };
 
-  const validateFormStep = (): boolean => {
-    if (!tile) return false;
+  const validateStep1Fields = () => {
+    if (!tile) return {};
+    
+    const errors: Record<string, string> = {};
 
     // Validate required fields
-    let missingFields: { label: string }[] = tile.form_fields?.filter(field => 
-      field.required && (!formData[field.id] || formData[field.id] === '')
-    ).map(field => ({ label: field.label })) || [];
+    tile.form_fields?.forEach(field => {
+      if (field.required && (!formData[field.id] || formData[field.id] === '')) {
+        errors[field.id] = `${field.label} is required`;
+      }
+    });
 
     // Add amount validation for user-defined amounts
     if (tile.allow_user_defined_amount && (!formData.amount_cents || formData.amount_cents <= 0)) {
-      missingFields = [...missingFields, { label: 'Service Fee Amount' }];
+      errors.amount_cents = 'Service Fee Amount is required';
     }
 
-    if (missingFields.length > 0) {
-      toast({
-        title: 'Missing Required Fields',
-        description: `Please fill in: ${missingFields.map(f => f.label).join(', ')}`,
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    return true;
+    return errors;
   };
 
-  const handleContinueToReview = () => {
-    if (validateFormStep()) {
-      setCurrentStep('review');
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      // Validate step 1 mandatory fields before proceeding
+      const errors = validateStep1Fields();
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        // Scroll to first error field
+        const firstErrorField = document.querySelector(`[data-error="true"]`);
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      } else {
+        setValidationErrors({});
+      }
+    }
+
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
     }
   };
 
@@ -317,6 +359,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             value={formData[id] || ''}
             onChange={(e) => handleInputChange(id, e.target.value)}
             placeholder={placeholder}
+            data-error={validationErrors[id] ? "true" : "false"}
+            className={validationErrors[id] ? "border-destructive" : ""}
           />
         );
     }
@@ -482,29 +526,39 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
+      <DialogContent ref={dialogContentRef} className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
         <DialogHeader className="space-y-4 pb-6 border-b">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <DialogTitle className="text-xl font-semibold">
               {tile.title}
             </DialogTitle>
+            
+            {/* Progress indicator */}
+            <div className="space-y-2">
+              <Progress value={progress} className="h-2" />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Step {currentStep} of {totalSteps}</span>
+                <span className="text-muted-foreground">
+                  {currentStep === 1 ? 'Application Details' : 'Review & Submit'}
+                </span>
+              </div>
+            </div>
+            
             <div className="flex items-center gap-2">
               {totalAmount > 0 && (
                 <Badge variant="secondary" className="text-sm px-3 py-1">
                   {formatCurrency(totalAmount / 100)}
                 </Badge>
               )}
-              <Badge variant="outline" className="text-sm px-3 py-1">
-                Step {currentStep === 'form' ? '1' : '2'} of 2
-              </Badge>
             </div>
           </div>
+          
           <DialogDescription className="text-base leading-relaxed">
-            {currentStep === 'form' ? tile.description : 'Review your application details before submitting'}
+            {currentStep === 1 ? tile.description : 'Review your application details before submitting'}
           </DialogDescription>
         </DialogHeader>
 
-        {currentStep === 'form' ? (
+        {currentStep === 1 ? (
           <>
             {/* Guidance Text Box */}
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
@@ -834,18 +888,23 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 </div>
               )}
 
-              {/* Form Navigation */}
+              {/* Navigation Buttons */}
               <div className="flex gap-3 pt-6 border-t">
-                <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onClose}
+                  className="flex items-center gap-2"
+                >
                   Cancel
                 </Button>
                 <Button 
                   type="button"
-                  onClick={handleContinueToReview}
-                  className="flex-1"
+                  onClick={handleNext}
+                  className="flex-1 flex items-center gap-2"
                 >
-                  Continue to Review
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  Next
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -857,7 +916,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               tile={tile}
               formData={formData}
               uploadedDocuments={uploadedDocuments}
-              onEdit={() => setCurrentStep('form')}
+              onEdit={() => setCurrentStep(1)}
             />
             
             {/* Conditional Payment or Submit Section */}
@@ -903,16 +962,16 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   </CardContent>
                 </Card>
 
-                {/* Payment Actions */}
+                {/* Navigation & Payment Actions */}
                 <div className="flex gap-3 pt-6 border-t">
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setCurrentStep('form')}
+                    onClick={handlePrevious}
                     className="flex items-center gap-2"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
                   </Button>
                   <Button 
                     type="button"
@@ -943,16 +1002,16 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   </CardContent>
                 </Card>
 
-                {/* Submit Actions */}
+                {/* Navigation & Submit Actions */}
                 <div className="flex gap-3 pt-6 border-t">
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setCurrentStep('form')}
+                    onClick={handlePrevious}
                     className="flex items-center gap-2"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
                   </Button>
                   <Button 
                     type="button"
