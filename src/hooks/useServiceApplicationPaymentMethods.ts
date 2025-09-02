@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
+import { useServiceFeeCalculation } from '@/hooks/useServiceFeeCalculation';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceFee, PaymentResponse, GooglePayMerchantResponse } from '@/types/payment';
 import { classifyPaymentError, generateIdempotencyId, initializeApplePaySession } from '@/utils/paymentUtils';
@@ -29,12 +30,28 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     })
     .slice(0, 3);
 
-  // Service fee will be calculated by backend - no frontend calculation
-  const serviceFee: ServiceFee | null = null;
   const baseAmount = tile?.allow_user_defined_amount && userDefinedAmount 
     ? userDefinedAmount * 100 
     : tile?.amount_cents || 0;
-  const totalWithFee = baseAmount; // Use base amount, backend will calculate service fee
+  
+  // Use service fee calculation hook for frontend display
+  const { totalAmount, serviceFee: calculatedServiceFee, isLoading: feeCalculationLoading } = useServiceFeeCalculation(
+    baseAmount, 
+    selectedPaymentMethod
+  );
+  
+  // Convert to legacy format for compatibility
+  const serviceFee: ServiceFee | null = calculatedServiceFee ? {
+    totalFee: calculatedServiceFee,
+    percentageFee: calculatedServiceFee,
+    fixedFee: 50, // Default fixed fee
+    basisPoints: 300, // Default basis points
+    isCard: true, // Will be determined by backend
+    totalAmountToCharge: totalAmount,
+    serviceFeeToDisplay: calculatedServiceFee
+  } : null;
+  
+  const totalWithFee = totalAmount || baseAmount;
 
   // Auto-select default payment method when payment methods load
   useEffect(() => {
@@ -176,8 +193,8 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       return { success: false, error: "Session validation failed", retryable: false };
     }
 
-    if (!serviceFee || totalWithFee <= 0) {
-      const errorMsg = "Service fee calculation failed. Please try again.";
+    if (totalWithFee <= 0) {
+      const errorMsg = "Invalid payment amount. Please try again.";
       toast({
         title: "Error",
         description: errorMsg,
@@ -393,8 +410,8 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       return { success: false, error: "Session validation failed", retryable: false };
     }
 
-    if (!serviceFee || totalWithFee <= 0) {
-      const errorMsg = "Service fee calculation failed. Please try again.";
+    if (totalWithFee <= 0) {
+      const errorMsg = "Invalid payment amount. Please try again.";
       toast({
         title: "Error",
         description: errorMsg,
@@ -570,10 +587,10 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       return { success: false, error: "Session validation failed", retryable: false };
     }
 
-    if (!serviceFee || totalWithFee <= 0) {
+    if (totalWithFee <= 0) {
       toast({
         title: "Error",
-        description: "Service fee calculation failed. Please try again.",
+        description: "Invalid payment amount. Please try again.",
         variant: "destructive",
       });
       return { success: false, error: "Invalid payment amount", retryable: false };
