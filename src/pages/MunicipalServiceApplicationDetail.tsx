@@ -243,20 +243,28 @@ const MunicipalServiceApplicationDetail = () => {
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Full Name</Label>
                   <p className="text-base">
-                    {application.form_data?.firstName} {application.form_data?.lastName}
+                    {application.applicant_name || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                  <p className="text-base">{application.form_data?.email || 'N/A'}</p>
+                  <p className="text-base">{application.applicant_email || 'N/A'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
-                  <p className="text-base">{application.form_data?.phone || 'N/A'}</p>
+                  <p className="text-base">{application.applicant_phone || 'N/A'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Address</Label>
-                  <p className="text-base">{application.form_data?.address || 'N/A'}</p>
+                  <p className="text-base">
+                    {[
+                      application.street_address,
+                      application.apt_number && `Apt ${application.apt_number}`,
+                      application.city,
+                      application.state,
+                      application.zip_code,
+                    ].filter(Boolean).join(', ') || 'N/A'}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -273,7 +281,7 @@ const MunicipalServiceApplicationDetail = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {application.tile.form_fields.map((field: any) => {
-                  const value = application.form_data?.[field.name];
+                  const value = application.service_specific_data?.[field.id] || application.service_specific_data?.[field.name];
                   if (!value && !field.required) return null;
                   
                   return (

@@ -1,409 +1,377 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 interface ProcessServiceApplicationPaymentRequest {
-  application_id: string;
-  payment_instrument_id: string;
-  total_amount_cents: number;
-  idempotency_id: string;
-  fraud_session_id: string;
+  applicationId: string;
+  paymentInstrumentId: string;
+  totalAmount: number;
+  serviceFee: number;
+  fraudSessionId?: string;
+  idempotencyId: string;
+  cardBrand?: string;
+  cardLastFour?: string;
+  bankLastFour?: string;
 }
 
 interface FinixTransferRequest {
-  merchant: string;
-  currency: string;
   amount: number;
+  currency: string;
+  destination: string;
   source: string;
-  idempotency_id: string;
-  fraud_session_id: string;
+  fee?: number;
+  merchant_identity: string;
+  tags?: Record<string, string>;
 }
 
 interface FinixTransferResponse {
-  state: string;
   id: string;
+  amount: number;
+  currency: string;
+  destination: string;
+  source: string;
   fee?: number;
-  amount?: number;
-  currency?: string;
-  trace_id?: string;
-  raw_trace_id?: string;
-  tags?: Record<string, any>;
+  state: string;
+  created_at: string;
+  updated_at: string;
+  application: string;
+  merchant_identity: string;
+  tags?: Record<string, string>;
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
-  console.log(`[PROCESS-SERVICE-APPLICATION-PAYMENT] ${req.method} request received`);
-  
-  if (req.method === "OPTIONS") {
+  console.log(`Processing service application payment request: ${req.method}`);
+
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Initialize Supabase clients
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
-  const supabaseServiceClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
   try {
+    // Initialize Supabase clients
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
     // Authenticate user
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] No authorization header");
-      return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
-        { headers: corsHeaders, status: 401 }
-      );
+      return new Response(JSON.stringify({ error: 'No authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !userData.user) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Authentication failed:", userError);
-      return new Response(
-        JSON.stringify({ error: "Authentication failed" }),
-        { headers: corsHeaders, status: 401 }
-      );
-    }
+    const supabaseAuth = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!);
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
 
-    const user = userData.user;
-    console.log(`[PROCESS-SERVICE-APPLICATION-PAYMENT] User authenticated: ${user.id}`);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Parse request body
     const requestBody: ProcessServiceApplicationPaymentRequest = await req.json();
-    console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Request parsed:", {
-      application_id: requestBody.application_id,
-      total_amount_cents: requestBody.total_amount_cents,
-      idempotency_id: requestBody.idempotency_id,
-    });
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     // Check for duplicate idempotency ID
-    const { data: existingPayment } = await supabaseServiceClient
-      .from("payment_history")
-      .select("id, payment_status")
-      .eq("idempotency_id", requestBody.idempotency_id)
-      .maybeSingle();
+    const { data: existingPayment } = await supabase
+      .from('payment_history')
+      .select('id')
+      .eq('idempotency_id', requestBody.idempotencyId)
+      .single();
 
     if (existingPayment) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Duplicate idempotency ID found");
       return new Response(
-        JSON.stringify({ 
-          error: "Payment already processed",
-          payment_id: existingPayment.id,
-          status: existingPayment.payment_status
-        }),
-        { headers: corsHeaders, status: 409 }
+        JSON.stringify({ error: 'Payment already processed with this idempotency ID' }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // Get service application and validate ownership (separate query like business license)
-    const { data: application, error: appError } = await supabaseServiceClient
-      .from("municipal_service_applications")
-      .select("*")
-      .eq("id", requestBody.application_id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // Get service application details
+    const { data: application, error: applicationError } = await supabase
+      .from('municipal_service_applications')
+      .select(`
+        *,
+        municipal_service_tiles (
+          title,
+          amount_cents,
+          requires_review,
+          customer_id
+        )
+      `)
+      .eq('id', requestBody.applicationId)
+      .eq('user_id', user.id)
+      .single();
 
-    if (appError || !application) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Application not found:", appError);
+    if (applicationError || !application) {
+      console.error('Error fetching application:', applicationError);
       return new Response(
-        JSON.stringify({ error: "Service application not found or unauthorized" }),
-        { headers: corsHeaders, status: 404 }
+        JSON.stringify({ error: 'Service application not found' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // Validate application status
-    if (!["draft", "submitted"].includes(application.status)) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Invalid application status:", application.status);
-      return new Response(
-        JSON.stringify({ error: "Application cannot be paid in current status" }),
-        { headers: corsHeaders, status: 400 }
-      );
-    }
-
-    // Get service tile details (separate query)
-    const { data: tile, error: tileError } = await supabaseServiceClient
-      .from("municipal_service_tiles")
-      .select("*")
-      .eq("id", application.tile_id)
-      .maybeSingle();
-
-    if (tileError || !tile) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Service tile not found:", tileError);
-      return new Response(
-        JSON.stringify({ error: "Service tile not found" }),
-        { headers: corsHeaders, status: 404 }
-      );
-    }
-
-    // Get merchant details (separate query)
-    const { data: merchant, error: merchantError } = await supabaseServiceClient
-      .from("merchants")
-      .select("*")
-      .eq("id", tile.merchant_id)
-      .maybeSingle();
+    // Get merchant details from the application's tile
+    const { data: merchant, error: merchantError } = await supabase
+      .from('merchants')
+      .select('*')
+      .eq('customer_id', application.municipal_service_tiles.customer_id)
+      .single();
 
     if (merchantError || !merchant) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Merchant not found:", merchantError);
+      console.error('Error fetching merchant:', merchantError);
       return new Response(
-        JSON.stringify({ error: "Merchant not found" }),
-        { headers: corsHeaders, status: 404 }
+        JSON.stringify({ error: 'Merchant not found for this municipality' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // Validate merchant configuration
-    if (!merchant.finix_merchant_id) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Missing finix_merchant_id");
+    // Get merchant fee profile
+    const { data: feeProfile, error: feeError } = await supabase
+      .from('merchant_fee_profiles')
+      .select('*')
+      .eq('merchant_id', merchant.id)
+      .single();
+
+    if (feeError || !feeProfile) {
+      console.error('Error fetching fee profile:', feeError);
       return new Response(
-        JSON.stringify({ error: "Merchant payment configuration incomplete" }),
-        { headers: corsHeaders, status: 400 }
+        JSON.stringify({ error: 'Fee profile not found for merchant' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // Get merchant fee profile (separate query)
-    const { data: merchantFeeProfiles, error: feeProfileError } = await supabaseServiceClient
-      .from("merchant_fee_profiles")
-      .select("*")
-      .eq("merchant_id", merchant.id)
-      .limit(1);
-
-    const merchantFeeProfile = merchantFeeProfiles?.[0];
-    if (feeProfileError) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Fee profile error:", feeProfileError);
-    }
-
-    // Validate payment instrument ownership
-    const { data: paymentInstrument, error: piError } = await supabaseServiceClient
-      .from("user_payment_instruments")
-      .select("*")
-      .eq("id", requestBody.payment_instrument_id)
-      .eq("user_id", user.id)
-      .eq("enabled", true)
-      .maybeSingle();
-
-    if (piError || !paymentInstrument) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Payment instrument not found:", piError);
-      return new Response(
-        JSON.stringify({ error: "Payment instrument not found or unauthorized" }),
-        { headers: corsHeaders, status: 404 }
-      );
-    }
-
-    // Calculate service fee (server-side validation)
-    const baseAmount = tile.amount_cents;
-    const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
+    // Calculate service fee
+    let calculatedServiceFee = 0;
     
-    let basisPoints = 0;
-    let fixedFee = 0;
-
-    if (merchantFeeProfile) {
-      if (isCard) {
-        basisPoints = merchantFeeProfile.basis_points || 0;
-        fixedFee = merchantFeeProfile.fixed_fee || 0;
-      } else {
-        basisPoints = merchantFeeProfile.ach_basis_points || 0;
-        fixedFee = merchantFeeProfile.ach_fixed_fee || 0;
-      }
+    // Determine if this is an ACH payment based on payment instrument type
+    const isACH = !requestBody.cardBrand && requestBody.bankLastFour;
+    
+    if (isACH) {
+      calculatedServiceFee = (application.municipal_service_tiles.amount_cents * (feeProfile.ach_basis_points || 0)) / 10000 + (feeProfile.ach_fixed_fee || 0);
+    } else {
+      calculatedServiceFee = (application.municipal_service_tiles.amount_cents * (feeProfile.basis_points || 0)) / 10000 + (feeProfile.fixed_fee || 0);
     }
 
-    // Grossed-up calculation: T = (A + F) / (1 - R)
-    const percentageFee = basisPoints / 10000;
-    const grossedUpAmount = Math.round((baseAmount + fixedFee) / (1 - percentageFee));
-    const serviceFee = grossedUpAmount - baseAmount;
+    const totalCalculated = application.municipal_service_tiles.amount_cents + calculatedServiceFee;
 
-    console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Fee calculation:", {
-      baseAmount,
-      isCard,
-      basisPoints,
-      fixedFee,
-      grossedUpAmount,
-      serviceFee,
-      requestedTotal: requestBody.total_amount_cents
-    });
-
-    // Validate calculated amount matches request (allow 2 cent tolerance for rounding)
-    if (Math.abs(grossedUpAmount - requestBody.total_amount_cents) > 2) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Amount mismatch");
+    // Validate amount
+    if (Math.abs(requestBody.totalAmount - totalCalculated) > 1) {
       return new Response(
         JSON.stringify({ 
-          error: "Amount validation failed",
-          calculated: grossedUpAmount,
-          requested: requestBody.total_amount_cents
+          error: 'Amount mismatch',
+          expected: totalCalculated,
+          received: requestBody.totalAmount 
         }),
-        { headers: corsHeaders, status: 400 }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // Get Finix credentials
-    const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");
-    const finixApiSecret = Deno.env.get("FINIX_API_SECRET");
-    const finixEnvironment = Deno.env.get("FINIX_ENVIRONMENT") || "sandbox";
+    // Get user's Finix identity
+    const { data: finixIdentity, error: identityError } = await supabase
+      .from('finix_identities')
+      .select('finix_identity_id')
+      .eq('user_id', user.id)
+      .single();
 
-    if (!finixApplicationId || !finixApiSecret) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Missing Finix credentials");
+    if (identityError || !finixIdentity) {
+      console.error('Error fetching Finix identity:', identityError);
       return new Response(
-        JSON.stringify({ error: "Payment system configuration error" }),
-        { headers: corsHeaders, status: 500 }
+        JSON.stringify({ error: 'User payment identity not found' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // Determine Finix base URL based on environment
-    const finixBaseUrl = finixEnvironment === "live" 
-      ? "https://finix.payments-api.com" 
-      : "https://finix.sandbox-payments-api.com";
+    // Prepare Finix transfer request
+    const finixApiKey = Deno.env.get('FINIX_API_KEY');
+    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
 
-    // Validate fraud session ID
-    if (!requestBody.fraud_session_id || requestBody.fraud_session_id.trim() === '') {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Warning: Empty fraud session ID");
+    if (!finixApiKey || !finixApplicationId) {
+      return new Response(
+        JSON.stringify({ error: 'Finix credentials not configured' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    // Process payment via Finix
-    const finixTransferData: FinixTransferRequest = {
-      merchant: merchant.finix_merchant_id,
-      currency: "USD",
-      amount: grossedUpAmount,
-      source: paymentInstrument.finix_payment_instrument_id,
-      idempotency_id: requestBody.idempotency_id,
-      fraud_session_id: requestBody.fraud_session_id || "",
+    const transferPayload: FinixTransferRequest = {
+      amount: requestBody.totalAmount,
+      currency: 'USD',
+      destination: merchant.finix_merchant_id,
+      source: requestBody.paymentInstrumentId,
+      fee: calculatedServiceFee,
+      merchant_identity: finixIdentity.finix_identity_id,
+      tags: {
+        application_id: requestBody.applicationId,
+        service_type: 'municipal_service',
+        user_id: user.id,
+        idempotency_id: requestBody.idempotencyId,
+      },
     };
 
-    console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Initiating Finix transfer");
-    const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
-      method: "POST",
+    console.log('Creating Finix transfer with payload:', JSON.stringify(transferPayload, null, 2));
+
+    // Create Finix transfer
+    const finixResponse = await fetch('https://finix.sandbox-payments-api.com/transfers', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Finix-Version": "2022-02-01",
-        "Authorization": `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`,
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(finixApiKey + ':')}`,
+        'Finix-Version': '2018-01-01',
       },
-      body: JSON.stringify(finixTransferData),
+      body: JSON.stringify(transferPayload),
     });
 
-    const finixResult: FinixTransferResponse = await finixResponse.json();
-    console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Finix response:", {
-      status: finixResponse.status,
-      state: finixResult.state,
-      id: finixResult.id
-    });
+    const finixData: FinixTransferResponse = await finixResponse.json();
+    console.log('Finix response:', JSON.stringify(finixData, null, 2));
 
     if (!finixResponse.ok) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Finix transfer failed:", finixResult);
+      console.error('Finix transfer failed:', finixData);
       return new Response(
-        JSON.stringify({ 
-          error: "Payment processing failed", 
-          details: finixResult 
-        }),
-        { headers: corsHeaders, status: 400 }
+        JSON.stringify({ error: 'Payment processing failed', details: finixData }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // Create payment history record
-    const { data: paymentHistory, error: paymentError } = await supabaseServiceClient
-      .from("payment_history")
+    // Record payment in payment_history
+    const { data: paymentRecord, error: paymentError } = await supabase
+      .from('payment_history')
       .insert({
         user_id: user.id,
-        customer_id: tile.customer_id,
-        service_application_id: application.id,
-        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        finix_merchant_id: merchant.finix_merchant_id,
-        finix_transfer_id: finixResult.id,
-        amount_cents: baseAmount,
-        service_fee_cents: serviceFee,
-        total_amount_cents: grossedUpAmount,
-        currency: 'USD',
-        payment_type: isCard ? "Card" : "Bank Account",
-        idempotency_id: requestBody.idempotency_id,
-        fraud_session_id: requestBody.fraud_session_id,
-        transfer_state: finixResult.state,
-        card_brand: paymentInstrument.card_brand,
-        card_last_four: paymentInstrument.card_last_four,
-        bank_last_four: paymentInstrument.bank_last_four,
+        customer_id: application.municipal_service_tiles.customer_id,
+        amount_cents: application.municipal_service_tiles.amount_cents,
+        service_fee_cents: calculatedServiceFee,
+        total_amount_cents: requestBody.totalAmount,
+        payment_type: isACH ? 'ACH' : 'CARD',
+        payment_status: 'pending',
+        payment_method_type: isACH ? 'ACH' : 'CARD',
+        payment_instrument_id: requestBody.paymentInstrumentId,
+        idempotency_id: requestBody.idempotencyId,
+        fraud_session_id: requestBody.fraudSessionId,
+        card_brand: requestBody.cardBrand,
+        card_last_four: requestBody.cardLastFour,
+        bank_last_four: requestBody.bankLastFour,
         merchant_id: merchant.id,
+        finix_merchant_id: merchant.finix_merchant_id,
         merchant_name: merchant.merchant_name,
         category: merchant.category,
         subcategory: merchant.subcategory,
         statement_descriptor: merchant.statement_descriptor,
-        payment_status: finixResult.state === "SUCCEEDED" ? "paid" : "pending",
-        payment_instrument_id: requestBody.payment_instrument_id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        transfer_state: finixData.state,
+        finix_transfer_id: finixData.id,
       })
       .select()
       .single();
 
     if (paymentError) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Payment history creation failed:", paymentError);
+      console.error('Error recording payment:', paymentError);
       return new Response(
-        JSON.stringify({ error: "Failed to record payment" }),
-        { headers: corsHeaders, status: 500 }
+        JSON.stringify({ error: 'Failed to record payment' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
     // Update service application with payment details
-    const updateData: any = {
-      payment_status: finixResult.state === "SUCCEEDED" ? "paid" : "pending",
-      payment_id: paymentHistory.id,
-      service_fee_cents: serviceFee,
-      total_amount_cents: grossedUpAmount,
-      finix_transfer_id: finixResult.id,
-      idempotency_id: requestBody.idempotency_id,
-      fraud_session_id: requestBody.fraud_session_id,
-      updated_at: new Date().toISOString(),
-    };
-
-    // For non-review applications, automatically approve and complete
-    if (!tile.requires_review && finixResult.state === "SUCCEEDED") {
-      updateData.status = "approved";
-      updateData.paid_at = new Date().toISOString();
-    } else if (finixResult.state === "SUCCEEDED") {
-      updateData.status = "submitted";
-    }
-
-    const { error: updateError } = await supabaseServiceClient
-      .from("municipal_service_applications")
-      .update(updateData)
-      .eq("id", application.id);
+    const { error: updateError } = await supabase
+      .from('municipal_service_applications')
+      .update({
+        payment_id: paymentRecord.id,
+        payment_status: 'pending',
+        payment_method_type: isACH ? 'ACH' : 'CARD',
+        payment_instrument_id: requestBody.paymentInstrumentId,
+        finix_transfer_id: finixData.id,
+        fraud_session_id: requestBody.fraudSessionId,
+        idempotency_id: requestBody.idempotencyId,
+        transfer_state: finixData.state,
+        amount_cents: application.municipal_service_tiles.amount_cents,
+        service_fee_cents: calculatedServiceFee,
+        total_amount_cents: requestBody.totalAmount,
+        merchant_id: merchant.id,
+        merchant_name: merchant.merchant_name,
+        finix_merchant_id: merchant.finix_merchant_id,
+        merchant_finix_identity_id: merchant.finix_identity_id,
+        finix_identity_id: finixIdentity.finix_identity_id,
+        merchant_fee_profile_id: feeProfile.id,
+        basis_points: feeProfile.basis_points,
+        fixed_fee: feeProfile.fixed_fee,
+        ach_basis_points: feeProfile.ach_basis_points,
+        ach_fixed_fee: feeProfile.ach_fixed_fee,
+        status: finixData.state === 'SUCCEEDED' ? 'paid' : 'approved',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', requestBody.applicationId);
 
     if (updateError) {
-      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Application update failed:", updateError);
+      console.error('Error updating application:', updateError);
       return new Response(
-        JSON.stringify({ error: "Failed to update application" }),
-        { headers: corsHeaders, status: 500 }
+        JSON.stringify({ error: 'Failed to update application with payment details' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Payment processed successfully");
+    console.log('Service application payment processed successfully');
     
-    // Standardize response format to match tax payment structure
     return new Response(
       JSON.stringify({
         success: true,
-        payment_history_id: paymentHistory.id,
-        service_application_id: application.id,
-        transfer_id: finixResult.id,
-        transfer_state: finixResult.state,
-        amount_cents: grossedUpAmount,
-        redirect_url: '/other-services',
-        auto_approved: !tile.requires_review && finixResult.state === "SUCCEEDED"
+        transferId: finixData.id,
+        paymentId: paymentRecord.id,
+        state: finixData.state,
+        amount: finixData.amount,
+        serviceFee: calculatedServiceFee,
       }),
-      { headers: corsHeaders, status: 200 }
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
 
   } catch (error) {
-    console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Unexpected error:", error);
+    console.error('Unexpected error in service application payment:', error);
     return new Response(
-      JSON.stringify({ 
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error)
-      }),
-      { headers: corsHeaders, status: 500 }
+      JSON.stringify({ error: 'An unexpected error occurred', details: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   }
 });

@@ -39,8 +39,8 @@ export function ApplicationHistoryTable({ applications, serviceTiles, isLoading 
     const matchesSearch = 
       (tile?.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (app.form_data?.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (app.form_data?.lastName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (app.applicant_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (app.applicant_email || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
     
@@ -161,7 +161,7 @@ export function ApplicationHistoryTable({ applications, serviceTiles, isLoading 
                 <TableBody>
                   {filteredApplications.map((application) => {
                     const tile = serviceTiles.find(t => t.id === application.tile_id);
-                    const applicantName = `${application.form_data?.firstName || 'Unknown'} ${application.form_data?.lastName || 'User'}`;
+                    const applicantName = application.applicant_name || 'Unknown User';
                     
                     return (
                       <TableRow key={application.id}>

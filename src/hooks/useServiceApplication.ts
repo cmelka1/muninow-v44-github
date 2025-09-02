@@ -4,15 +4,71 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface ServiceApplicationWithTile {
   id: string;
+  application_number?: string;
   user_id: string;
   tile_id: string;
   customer_id: string;
-  merchant_id?: string;
-  form_data: any;
+  
+  // Applicant Information
+  applicant_name?: string;
+  applicant_email?: string;
+  applicant_phone?: string;
+  business_legal_name?: string;
+  
+  // Address Information
+  street_address?: string;
+  apt_number?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  
+  // Application Status & Workflow
   status: string;
-  payment_id?: string;
-  payment_status?: string;
+  assigned_reviewer_id?: string;
   review_notes?: string;
+  
+  // Workflow Timestamps
+  submitted_at?: string;
+  under_review_at?: string;
+  information_requested_at?: string;
+  approved_at?: string;
+  denied_at?: string;
+  paid_at?: string;
+  completed_at?: string;
+  
+  // Payment Information
+  amount_cents?: number;
+  service_fee_cents?: number;
+  total_amount_cents?: number;
+  payment_status?: string;
+  payment_id?: string;
+  payment_method_type?: string;
+  payment_instrument_id?: string;
+  payment_processed_at?: string;
+  
+  // Finix Integration
+  finix_transfer_id?: string;
+  fraud_session_id?: string;
+  idempotency_id?: string;
+  transfer_state?: string;
+  
+  // Merchant & Fee Fields
+  merchant_id?: string;
+  merchant_name?: string;
+  finix_merchant_id?: string;
+  merchant_finix_identity_id?: string;
+  finix_identity_id?: string;
+  merchant_fee_profile_id?: string;
+  basis_points?: number;
+  fixed_fee?: number;
+  ach_basis_points?: number;
+  ach_fixed_fee?: number;
+  
+  // Additional Information
+  additional_information?: string;
+  service_specific_data?: Record<string, any>;
+  
   created_at: string;
   updated_at: string;
   tile: {

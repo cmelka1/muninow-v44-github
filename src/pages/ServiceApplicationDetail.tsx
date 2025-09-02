@@ -81,25 +81,55 @@ const ServiceApplicationDetail: React.FC = () => {
     }
   };
 
-  const renderFormData = () => {
-    if (!application?.form_data || !application?.tile?.form_fields) {
-      return null;
-    }
+  const renderApplicationData = () => {
+    const applicantData = [
+      { label: 'Applicant Name', value: application?.applicant_name },
+      { label: 'Email', value: application?.applicant_email },
+      { label: 'Phone', value: application?.applicant_phone },
+      { label: 'Business Name', value: application?.business_legal_name },
+      { 
+        label: 'Address', 
+        value: [
+          application?.street_address,
+          application?.apt_number && `Apt ${application.apt_number}`,
+          application?.city,
+          application?.state,
+          application?.zip_code,
+        ].filter(Boolean).join(', ') || undefined 
+      },
+      { label: 'Additional Information', value: application?.additional_information },
+    ];
 
-    return application.tile.form_fields.map((field: any) => {
-      const value = application.form_data[field.id];
-      if (!value) return null;
+    // Service-specific data
+    const serviceData = application?.service_specific_data || {};
+    const formFields = application?.tile?.form_fields || [];
+    
+    const serviceSpecificData = Object.entries(serviceData).map(([key, value]) => {
+      // Skip fields that are already shown in structured data
+      const skipFields = ['name', 'full_name', 'first_name', 'last_name', 'email', 'phone', 'phone_number', 
+                         'business_name', 'business_legal_name', 'company_name', 'address', 'street_address', 
+                         'street', 'apt', 'apt_number', 'apartment', 'city', 'state', 'zip', 'zip_code', 
+                         'postal_code', 'additional_information', 'notes', 'comments'];
+      if (skipFields.includes(key.toLowerCase()) || !value) return null;
+      
+      const field = formFields.find((f: any) => f.id === key);
+      const fieldLabel = field?.label || key;
+      
+      return { label: fieldLabel, value: String(value) };
+    }).filter(Boolean);
+
+    const allData = [...applicantData, ...serviceSpecificData];
+
+    return allData.map((item, index) => {
+      if (!item || !item.value) return null;
 
       return (
-        <div key={field.id}>
+        <div key={index}>
           <Label className="text-sm font-medium text-muted-foreground">
-            {field.label || field.name}
+            {item.label}
           </Label>
           <p className="text-base">
-            {field.type === 'checkbox' 
-              ? (value ? 'Yes' : 'No')
-              : String(value)
-            }
+            {item.value}
           </p>
         </div>
       );
@@ -226,7 +256,7 @@ const ServiceApplicationDetail: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {renderFormData()}
+                {renderApplicationData()}
               </div>
             </CardContent>
           </Card>

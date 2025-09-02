@@ -57,7 +57,6 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
         id: application.id,
         status: newStatus,
         review_notes: reviewNotes.trim() || undefined,
-        review_date: new Date().toISOString(),
       });
       onClose();
     } catch (error) {
@@ -65,9 +64,25 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
     }
   };
 
-  // Parse form data to display
+  // Get applicant information from structured fields
+  const applicantInfo = {
+    'Name': application.applicant_name,
+    'Email': application.applicant_email,
+    'Phone': application.applicant_phone,
+    'Business Name': application.business_legal_name,
+    'Address': [
+      application.street_address,
+      application.apt_number && `Apt ${application.apt_number}`,
+      application.city,
+      application.state,
+      application.zip_code,
+    ].filter(Boolean).join(', '),
+    'Additional Information': application.additional_information,
+  };
+
+  // Parse service-specific data to display
   const formFields = serviceTile?.form_fields || [];
-  const formData = application.form_data || {};
+  const serviceData = application.service_specific_data || {};
 
   return (
     <div className="space-y-6">
@@ -109,10 +124,10 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
                 <span className="text-sm text-muted-foreground">Submitted:</span>
                 <span>{format(new Date(application.created_at), 'MMM d, yyyy h:mm a')}</span>
               </div>
-              {application.review_date && (
+              {application.updated_at !== application.created_at && (
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Last Reviewed:</span>
-                  <span>{format(new Date(application.review_date), 'MMM d, yyyy h:mm a')}</span>
+                  <span className="text-sm text-muted-foreground">Last Updated:</span>
+                  <span>{format(new Date(application.updated_at), 'MMM d, yyyy h:mm a')}</span>
                 </div>
               )}
             </CardContent>
@@ -127,8 +142,32 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {Object.entries(formData).map(([key, value]) => {
+              {/* Structured applicant information */}
+              {Object.entries(applicantInfo).map(([key, value]) => {
                 if (!value) return null;
+                
+                return (
+                  <div key={key} className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      {key}:
+                    </span>
+                    <span className="text-sm font-medium">
+                      {value}
+                    </span>
+                  </div>
+                );
+              })}
+              
+              {/* Service-specific data */}
+              {Object.entries(serviceData).map(([key, value]) => {
+                if (!value) return null;
+                // Skip fields that are already shown in structured data
+                const skipFields = ['name', 'full_name', 'first_name', 'last_name', 'email', 'phone', 'phone_number', 
+                                   'business_name', 'business_legal_name', 'company_name', 'address', 'street_address', 
+                                   'street', 'apt', 'apt_number', 'apartment', 'city', 'state', 'zip', 'zip_code', 
+                                   'postal_code', 'additional_information', 'notes', 'comments'];
+                if (skipFields.includes(key.toLowerCase())) return null;
+                
                 const field = formFields.find(f => f.id === key);
                 const fieldLabel = field?.label || key;
                 

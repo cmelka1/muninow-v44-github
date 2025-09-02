@@ -271,9 +271,20 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         tile_id: tile.id,
         user_id: profile?.id || '',
         customer_id: tile.customer_id,
-        form_data: formData,
         status: 'submitted',
         amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+        // Map form data to structured fields
+        applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
+        applicant_email: formData.email || undefined,
+        applicant_phone: formData.phone || formData.phone_number || undefined,
+        business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
+        street_address: formData.address || formData.street_address || formData.street || undefined,
+        apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
+        city: formData.city || undefined,
+        state: formData.state || undefined,
+        zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+        additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
+        service_specific_data: formData,
       });
 
       // Link uploaded documents to the application
@@ -328,9 +339,20 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         tile_id: tile.id,
         user_id: profile?.id || '',
         customer_id: tile.customer_id,
-        form_data: formData,
         status: 'draft',
         amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+        // Map form data to structured fields
+        applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
+        applicant_email: formData.email || undefined,
+        applicant_phone: formData.phone || formData.phone_number || undefined,
+        business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
+        street_address: formData.address || formData.street_address || formData.street || undefined,
+        apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
+        city: formData.city || undefined,
+        state: formData.state || undefined,
+        zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+        additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
+        service_specific_data: formData,
       });
 
       console.log('Application created successfully:', applicationData.id);

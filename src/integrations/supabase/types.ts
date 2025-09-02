@@ -1756,18 +1756,186 @@ export type Database = {
         Row: {
           ach_basis_points: number | null
           ach_fixed_fee: number | null
+          additional_information: string | null
+          amount_cents: number | null
+          applicant_email: string | null
+          applicant_name: string | null
+          applicant_phone: string | null
+          application_number: string | null
+          approved_at: string | null
+          apt_number: string | null
+          assigned_reviewer_id: string | null
+          basis_points: number | null
+          business_legal_name: string | null
+          city: string | null
+          completed_at: string | null
+          country: string | null
+          created_at: string | null
+          customer_id: string
+          denied_at: string | null
+          finix_identity_id: string | null
+          finix_merchant_id: string | null
+          finix_transfer_id: string | null
+          fixed_fee: number | null
+          fraud_session_id: string | null
+          id: string
+          idempotency_id: string | null
+          information_requested_at: string | null
+          merchant_fee_profile_id: string | null
+          merchant_finix_identity_id: string | null
+          merchant_id: string | null
+          merchant_name: string | null
+          paid_at: string | null
+          payment_id: string | null
+          payment_instrument_id: string | null
+          payment_method_type: string | null
+          payment_processed_at: string | null
+          payment_status: string | null
+          review_notes: string | null
+          service_fee_cents: number | null
+          service_specific_data: Json | null
+          state: string | null
+          status:
+            | Database["public"]["Enums"]["service_application_status_enum"]
+            | null
+          street_address: string | null
+          submitted_at: string | null
+          tile_id: string
+          total_amount_cents: number | null
+          transfer_state: string | null
+          under_review_at: string | null
+          updated_at: string | null
+          user_id: string
+          zip_code: string | null
+        }
+        Insert: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          additional_information?: string | null
+          amount_cents?: number | null
+          applicant_email?: string | null
+          applicant_name?: string | null
+          applicant_phone?: string | null
+          application_number?: string | null
+          approved_at?: string | null
+          apt_number?: string | null
+          assigned_reviewer_id?: string | null
+          basis_points?: number | null
+          business_legal_name?: string | null
+          city?: string | null
+          completed_at?: string | null
+          country?: string | null
+          created_at?: string | null
+          customer_id: string
+          denied_at?: string | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_transfer_id?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          information_requested_at?: string | null
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
+          payment_status?: string | null
+          review_notes?: string | null
+          service_fee_cents?: number | null
+          service_specific_data?: Json | null
+          state?: string | null
+          status?:
+            | Database["public"]["Enums"]["service_application_status_enum"]
+            | null
+          street_address?: string | null
+          submitted_at?: string | null
+          tile_id: string
+          total_amount_cents?: number | null
+          transfer_state?: string | null
+          under_review_at?: string | null
+          updated_at?: string | null
+          user_id: string
+          zip_code?: string | null
+        }
+        Update: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          additional_information?: string | null
+          amount_cents?: number | null
+          applicant_email?: string | null
+          applicant_name?: string | null
+          applicant_phone?: string | null
+          application_number?: string | null
+          approved_at?: string | null
+          apt_number?: string | null
+          assigned_reviewer_id?: string | null
+          basis_points?: number | null
+          business_legal_name?: string | null
+          city?: string | null
+          completed_at?: string | null
+          country?: string | null
+          created_at?: string | null
+          customer_id?: string
+          denied_at?: string | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_transfer_id?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          information_requested_at?: string | null
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
+          payment_status?: string | null
+          review_notes?: string | null
+          service_fee_cents?: number | null
+          service_specific_data?: Json | null
+          state?: string | null
+          status?:
+            | Database["public"]["Enums"]["service_application_status_enum"]
+            | null
+          street_address?: string | null
+          submitted_at?: string | null
+          tile_id?: string
+          total_amount_cents?: number | null
+          transfer_state?: string | null
+          under_review_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      municipal_service_applications_backup: {
+        Row: {
+          ach_basis_points: number | null
+          ach_fixed_fee: number | null
           amount_cents: number | null
           assigned_reviewer_id: string | null
           basis_points: number | null
-          created_at: string
-          customer_id: string
+          created_at: string | null
+          customer_id: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_transfer_id: string | null
           fixed_fee: number | null
           form_data: Json | null
           fraud_session_id: string | null
-          id: string
+          id: string | null
           idempotency_id: string | null
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
@@ -1783,12 +1951,12 @@ export type Database = {
           review_notes: string | null
           reviewed_by: string | null
           service_fee_cents: number | null
-          status: string
-          tile_id: string
+          status: string | null
+          tile_id: string | null
           total_amount_cents: number | null
           transfer_state: string | null
-          updated_at: string
-          user_id: string
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           ach_basis_points?: number | null
@@ -1796,15 +1964,15 @@ export type Database = {
           amount_cents?: number | null
           assigned_reviewer_id?: string | null
           basis_points?: number | null
-          created_at?: string
-          customer_id: string
+          created_at?: string | null
+          customer_id?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_transfer_id?: string | null
           fixed_fee?: number | null
           form_data?: Json | null
           fraud_session_id?: string | null
-          id?: string
+          id?: string | null
           idempotency_id?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
@@ -1820,12 +1988,12 @@ export type Database = {
           review_notes?: string | null
           reviewed_by?: string | null
           service_fee_cents?: number | null
-          status?: string
-          tile_id: string
+          status?: string | null
+          tile_id?: string | null
           total_amount_cents?: number | null
           transfer_state?: string | null
-          updated_at?: string
-          user_id: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           ach_basis_points?: number | null
@@ -1833,15 +2001,15 @@ export type Database = {
           amount_cents?: number | null
           assigned_reviewer_id?: string | null
           basis_points?: number | null
-          created_at?: string
-          customer_id?: string
+          created_at?: string | null
+          customer_id?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_transfer_id?: string | null
           fixed_fee?: number | null
           form_data?: Json | null
           fraud_session_id?: string | null
-          id?: string
+          id?: string | null
           idempotency_id?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
@@ -1857,29 +2025,14 @@ export type Database = {
           review_notes?: string | null
           reviewed_by?: string | null
           service_fee_cents?: number | null
-          status?: string
-          tile_id?: string
+          status?: string | null
+          tile_id?: string | null
           total_amount_cents?: number | null
           transfer_state?: string | null
-          updated_at?: string
-          user_id?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "municipal_service_applications_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
-          {
-            foreignKeyName: "municipal_service_applications_tile_id_fkey"
-            columns: ["tile_id"]
-            isOneToOne: false
-            referencedRelation: "municipal_service_tiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       municipal_service_tiles: {
         Row: {
@@ -2337,13 +2490,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "permit_applications"
             referencedColumns: ["permit_id"]
-          },
-          {
-            foreignKeyName: "payment_history_service_application_id_fkey"
-            columns: ["service_application_id"]
-            isOneToOne: false
-            referencedRelation: "municipal_service_applications"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payment_history_tax_submission_id_fkey"
@@ -3944,6 +4090,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_service_application_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_available_vehicles: {
         Args: { user_id: string }
         Returns: {
@@ -4246,6 +4396,17 @@ export type Database = {
         | "resubmitted"
         | "denied"
         | "withdrawn"
+      service_application_status_enum:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "information_requested"
+        | "approved"
+        | "denied"
+        | "paid"
+        | "completed"
+        | "withdrawn"
+        | "expired"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -4431,6 +4592,18 @@ export const Constants = {
         "resubmitted",
         "denied",
         "withdrawn",
+      ],
+      service_application_status_enum: [
+        "draft",
+        "submitted",
+        "under_review",
+        "information_requested",
+        "approved",
+        "denied",
+        "paid",
+        "completed",
+        "withdrawn",
+        "expired",
       ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
