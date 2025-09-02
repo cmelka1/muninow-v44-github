@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
+import { Badge } from '@/components/ui/badge';
 
 const ServiceApplicationDetail: React.FC = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -378,41 +379,81 @@ const ServiceApplicationDetail: React.FC = () => {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Payment Summary */}
+          {/* Payment Management */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5" />
-                Payment Summary
+                <CreditCard className="h-5 w-5" />
+                Payment Management
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Base Amount</span>
-                  <span className="text-sm">{formatCurrency((application.amount_cents || 0) / 100)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Payment Status</span>
+                  <Badge 
+                    variant={application.payment_status === 'paid' ? 'default' : 'outline'}
+                    className={
+                      application.payment_status === 'paid' 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                        : application.payment_status === 'processing'
+                        ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200'
+                        : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                    }
+                  >
+                    {application.payment_status === 'paid' ? 'Paid' : 
+                     application.payment_status === 'processing' ? 'Processing' : 'Pending'}
+                  </Badge>
                 </div>
-                {application.service_fee_cents && application.service_fee_cents > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Service Fee</span>
-                    <span className="text-sm">{formatCurrency(application.service_fee_cents / 100)}</span>
-                  </div>
-                )}
-                <div className="border-t pt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total Amount</span>
-                    <span className="font-medium">{formatCurrency((application.total_amount_cents || application.amount_cents || 0) / 100)}</span>
-                  </div>
-                </div>
-                {application.payment_status && (
-                  <div className="pt-2">
+              </div>
+              
+              {application.status === 'approved' && application.payment_status !== 'paid' ? (
+                <div className="space-y-4">
+                  {/* Payment Summary */}
+                  <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Payment Status</span>
-                      <ServiceApplicationStatusBadge status={application.payment_status} />
+                      <span className="text-sm text-muted-foreground">Base Amount</span>
+                      <span className="text-sm">{formatCurrency((application.amount_cents || 0) / 100)}</span>
+                    </div>
+                    {application.service_fee_cents && application.service_fee_cents > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Service Fee</span>
+                        <span className="text-sm">{formatCurrency(application.service_fee_cents / 100)}</span>
+                      </div>
+                    )}
+                    <div className="border-t pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Amount</span>
+                        <span className="font-medium">{formatCurrency((application.total_amount_cents || application.amount_cents || 0) / 100)}</span>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                  
+                  <p className="text-xs text-muted-foreground">
+                    Complete payment to process your application
+                  </p>
+                </div>
+              ) : application.payment_status === 'paid' ? (
+                <div className="pt-2 space-y-2">
+                  <Button className="w-full" disabled variant="outline">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Payment Complete
+                  </Button>
+                  
+                  <p className="text-xs text-green-600 mt-2">
+                    Your application fee has been paid
+                  </p>
+                </div>
+              ) : (
+                <div className="pt-2">
+                  <Button className="w-full" disabled variant="outline">
+                    Payment Unavailable
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Payment processing will be available once your application is approved
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -420,30 +461,46 @@ const ServiceApplicationDetail: React.FC = () => {
           {/* Timeline */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Timeline
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Calendar className="h-4 w-4" />
+                Status Timeline
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="font-medium">Application Submitted</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(application.created_at)}</p>
-                  </div>
-                </div>
-                {application.status !== 'draft' && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="font-medium">Status: {application.status}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(application.updated_at)}</p>
-                    </div>
-                  </div>
-                )}
+            <CardContent className="space-y-2">
+              <div className="flex justify-between items-center py-1">
+                <span className="text-sm font-medium">Created</span>
+                <span className="text-xs text-muted-foreground">{formatDate(application.created_at)}</span>
               </div>
+              {application.status === 'submitted' || application.status === 'under_review' || application.status === 'approved' || application.status === 'denied' ? (
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-sm font-medium">Submitted</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(application.created_at)}</span>
+                </div>
+              ) : null}
+              {(application.status === 'under_review' || application.status === 'approved' || application.status === 'denied') && (
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-sm font-medium">Under Review</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(application.updated_at)}</span>
+                </div>
+              )}
+              {application.status === 'approved' && (
+                <div className="flex justify-between items-center py-1 text-green-700">
+                  <span className="text-sm font-medium">Approved</span>
+                  <span className="text-xs">{formatDate(application.updated_at)}</span>
+                </div>
+              )}
+              {application.status === 'denied' && (
+                <div className="flex justify-between items-center py-1 text-red-700">
+                  <span className="text-sm font-medium">Denied</span>
+                  <span className="text-xs">{formatDate(application.updated_at)}</span>
+                </div>
+              )}
+              {application.payment_status === 'paid' && (
+                <div className="flex justify-between items-center py-1 text-emerald-700">
+                  <span className="text-sm font-medium">Payment Complete</span>
+                  <span className="text-xs">{formatDate(application.updated_at)}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
