@@ -247,13 +247,7 @@ serve(async (req) => {
       currency: 'USD',
       destination: serviceTile.finix_merchant_id,
       source: paymentInstrument.finix_payment_instrument_id,
-      merchant_identity: finixIdentity.finix_identity_id,
-      tags: {
-        application_id: requestBody.application_id,
-        service_type: 'municipal_service',
-        user_id: user.id,
-        idempotency_id: requestBody.idempotency_id,
-      },
+      merchant_identity: finixIdentity.finix_identity_id
     };
 
     console.log('Creating Finix transfer with payload:', JSON.stringify(transferPayload, null, 2));
