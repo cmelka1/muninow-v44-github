@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceApplicationDocumentDialog';
+import { ServiceApplicationCommunication } from '@/components/ServiceApplicationCommunication';
 
 const ServiceApplicationDetail: React.FC = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -516,6 +517,9 @@ const ServiceApplicationDetail: React.FC = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Communication */}
+          <ServiceApplicationCommunication applicationId={applicationId || ''} />
         </div>
       </div>
 
