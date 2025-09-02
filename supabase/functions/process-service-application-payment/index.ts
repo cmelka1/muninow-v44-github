@@ -99,7 +99,7 @@ serve(async (req) => {
     const { data: paymentInstrument, error: instrumentError } = await supabase
       .from('user_payment_instruments')
       .select('*')
-      .eq('finix_payment_instrument_id', requestBody.payment_instrument_id)
+      .eq('id', requestBody.payment_instrument_id)
       .eq('user_id', user.id)
       .single();
 
@@ -246,7 +246,7 @@ serve(async (req) => {
       amount: requestBody.total_amount_cents,
       currency: 'USD',
       destination: serviceTile.finix_merchant_id,
-      source: requestBody.payment_instrument_id,
+      source: paymentInstrument.finix_payment_instrument_id,
       merchant_identity: finixIdentity.finix_identity_id,
       tags: {
         application_id: requestBody.application_id,
