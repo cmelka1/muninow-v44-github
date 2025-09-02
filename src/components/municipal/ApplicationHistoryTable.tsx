@@ -97,6 +97,23 @@ export function ApplicationHistoryTable({
     }
   };
 
+  const getPaymentStatusBadge = (paymentStatus: string) => {
+    switch (paymentStatus) {
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'paid':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
+      case 'failed':
+        return <Badge variant="destructive">Failed</Badge>;
+      case 'refunded':
+        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Refunded</Badge>;
+      case 'cancelled':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">{paymentStatus.replace('_', ' ').toUpperCase()}</Badge>;
+    }
+  };
+
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -128,11 +145,6 @@ export function ApplicationHistoryTable({
     }
   };
 
-  const handleViewApplication = (application: ServiceApplication) => {
-    setSelectedApplication(application);
-    setIsDetailModalOpen(true);
-  };
-
   const handleRowClick = (applicationId: string) => {
     const application = applications.find(app => app.id === applicationId);
     if (application) {
@@ -140,7 +152,8 @@ export function ApplicationHistoryTable({
       if (tile?.requires_review) {
         window.location.href = `/municipal/service-application/${application.id}`;
       } else {
-        handleViewApplication(application);
+        setSelectedApplication(application);
+        setIsDetailModalOpen(true);
       }
     }
   };
@@ -219,9 +232,9 @@ export function ApplicationHistoryTable({
                     <TableHead className="hidden md:table-cell">Application #</TableHead>
                     <TableHead className="hidden lg:table-cell">Service</TableHead>
                     <TableHead>Applicant</TableHead>
-                    <TableHead className="hidden xl:table-cell text-center">Status</TableHead>
+                    <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
+                    <TableHead className="hidden xl:table-cell text-center">Payment Status</TableHead>
                     <TableHead className="hidden 2xl:table-cell text-center">Amount</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -255,32 +268,16 @@ export function ApplicationHistoryTable({
                             {applicantName}
                           </span>
                         </TableCell>
-                        <TableCell className="hidden xl:table-cell py-2 text-center">
+                        <TableCell className="hidden lg:table-cell py-2 text-center">
                           {getStatusBadge(application.status)}
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell py-2 text-center">
+                          {getPaymentStatusBadge(application.payment_status || 'pending')}
                         </TableCell>
                         <TableCell className="hidden 2xl:table-cell py-2 text-center">
                           <span className="text-sm font-medium">
                             {tile ? (tile.allow_user_defined_amount ? 'Varies' : formatCurrency(tile.amount_cents)) : 'N/A'}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-center py-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const tile = serviceTiles.find(t => t.id === application.tile_id);
-                              if (tile?.requires_review) {
-                                window.location.href = `/municipal/service-application/${application.id}`;
-                              } else {
-                                handleViewApplication(application);
-                              }
-                            }}
-                            className="gap-2"
-                          >
-                            <Eye className="h-3 w-3" />
-                            {serviceTiles.find(t => t.id === application.tile_id)?.requires_review ? 'Review' : 'View'}
-                          </Button>
                         </TableCell>
                       </TableRow>
                     );
