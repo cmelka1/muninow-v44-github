@@ -215,40 +215,6 @@ const ServiceApplicationDetail: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Service Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Service Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Service Name</Label>
-                <p className="text-base font-medium">{application.tile?.title || 'Service information unavailable'}</p>
-              </div>
-              {application.tile?.description && (
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Description</Label>
-                  <SafeHtmlRenderer 
-                    content={application.tile.description}
-                    fallback="No description provided"
-                  />
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Fee Amount</Label>
-                  <p className="text-base">{formatCurrency((application.tile?.amount_cents || 0) / 100)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Requires Review</Label>
-                  <p className="text-base">{application.tile?.requires_review ? 'Yes' : 'No'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Applicant Information */}
           <Card>
@@ -396,37 +362,6 @@ const ServiceApplicationDetail: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Service Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Service Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Municipality</Label>
-                <p className="text-sm">{application.customer?.legal_entity_name || 'Municipality information unavailable'}</p>
-                <p className="text-xs text-muted-foreground">
-                  {application.customer?.business_city && application.customer?.business_state 
-                    ? `${application.customer.business_city}, ${application.customer.business_state}`
-                    : 'Location information unavailable'
-                  }
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Service Category</Label>
-                <p className="text-sm">Other Services</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Processing Type</Label>
-                <p className="text-sm">
-                  {application.tile?.requires_review ? 'Manual Review Required' : 'Automatic Processing'}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Timeline */}
           <Card>
