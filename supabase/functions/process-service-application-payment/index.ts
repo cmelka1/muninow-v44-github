@@ -119,10 +119,10 @@ serve(async (req) => {
       );
     }
 
-    // Get service tile details using tile_id (second query)
+    // Get service tile details with merchant information (second query)
     const { data: serviceTile, error: tileError } = await supabase
       .from('municipal_service_tiles')
-      .select('title, amount_cents, requires_review, customer_id')
+      .select('title, amount_cents, requires_review, customer_id, finix_merchant_id, merchant_id, merchant_fee_profile_id')
       .eq('id', application.tile_id)
       .single();
 
@@ -137,17 +137,11 @@ serve(async (req) => {
       );
     }
 
-    // Get merchant details from the tile's customer_id
-    const { data: merchant, error: merchantError } = await supabase
-      .from('merchants')
-      .select('*')
-      .eq('customer_id', serviceTile.customer_id)
-      .single();
-
-    if (merchantError || !merchant) {
-      console.error('Error fetching merchant:', merchantError);
+    // Validate that required merchant data exists in the tile
+    if (!serviceTile.finix_merchant_id || !serviceTile.merchant_id || !serviceTile.merchant_fee_profile_id) {
+      console.error('Missing merchant data in service tile:', serviceTile);
       return new Response(
-        JSON.stringify({ error: 'Merchant not found for this municipality' }),
+        JSON.stringify({ error: 'Merchant configuration incomplete for this service' }),
         {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -155,11 +149,11 @@ serve(async (req) => {
       );
     }
 
-    // Get merchant fee profile
+    // Get merchant fee profile directly using tile data
     const { data: feeProfile, error: feeError } = await supabase
       .from('merchant_fee_profiles')
       .select('*')
-      .eq('merchant_id', merchant.id)
+      .eq('id', serviceTile.merchant_fee_profile_id)
       .single();
 
     if (feeError || !feeProfile) {
@@ -237,7 +231,7 @@ serve(async (req) => {
     const transferPayload: FinixTransferRequest = {
       amount: requestBody.total_amount_cents,
       currency: 'USD',
-      destination: merchant.finix_merchant_id,
+      destination: serviceTile.finix_merchant_id,
       source: requestBody.payment_instrument_id,
       fee: calculatedServiceFee,
       merchant_identity: finixIdentity.finix_identity_id,
@@ -294,12 +288,12 @@ serve(async (req) => {
         card_brand: requestBody.cardBrand,
         card_last_four: requestBody.cardLastFour,
         bank_last_four: requestBody.bankLastFour,
-        merchant_id: merchant.id,
-        finix_merchant_id: merchant.finix_merchant_id,
-        merchant_name: merchant.merchant_name,
-        category: merchant.category,
-        subcategory: merchant.subcategory,
-        statement_descriptor: merchant.statement_descriptor,
+        merchant_id: serviceTile.merchant_id,
+        finix_merchant_id: serviceTile.finix_merchant_id,
+        merchant_name: serviceTile.title,
+        category: 'Municipal Services',
+        subcategory: 'Other Services',
+        statement_descriptor: serviceTile.title,
         transfer_state: finixData.state,
         finix_transfer_id: finixData.id,
       })
@@ -332,10 +326,9 @@ serve(async (req) => {
         amount_cents: serviceTile.amount_cents,
         service_fee_cents: calculatedServiceFee,
         total_amount_cents: requestBody.total_amount_cents,
-        merchant_id: merchant.id,
-        merchant_name: merchant.merchant_name,
-        finix_merchant_id: merchant.finix_merchant_id,
-        merchant_finix_identity_id: merchant.finix_identity_id,
+        merchant_id: serviceTile.merchant_id,
+        merchant_name: serviceTile.title,
+        finix_merchant_id: serviceTile.finix_merchant_id,
         finix_identity_id: finixIdentity.finix_identity_id,
         merchant_fee_profile_id: feeProfile.id,
         basis_points: feeProfile.basis_points,
