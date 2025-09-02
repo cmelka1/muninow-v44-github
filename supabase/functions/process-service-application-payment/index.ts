@@ -189,61 +189,135 @@ serve(async (req) => {
       ? 'https://finix.payments-api.com'
       : 'https://finix.sandbox-payments-api.com';
 
-    // First, create application atomically with database function
-    const documentsJsonb = (requestBody.documents || []).map(doc => ({
-      file_name: doc.name,
-      file_size: doc.size,
-      content_type: doc.type,
-      storage_path: doc.storage_path,
-      document_type: doc.document_type || 'general'
-    }));
+    // Create service application record directly
+    const { data: application, error: appError } = await supabase
+      .from('municipal_service_applications')
+      .insert({
+        tile_id: requestBody.tile_id,
+        user_id: user.id,
+        customer_id: serviceTile.customer_id,
+        applicant_name: requestBody.applicant_name || null,
+        applicant_email: requestBody.applicant_email || null,
+        applicant_phone: requestBody.applicant_phone || null,
+        business_legal_name: requestBody.business_legal_name || null,
+        street_address: requestBody.street_address || null,
+        apt_number: requestBody.apt_number || null,
+        city: requestBody.city || null,
+        state: requestBody.state || null,
+        zip_code: requestBody.zip_code || null,
+        additional_information: requestBody.additional_information || null,
+        service_specific_data: requestBody.service_specific_data || {},
+        status: 'draft',
+        payment_status: 'pending',
+        amount_cents: requestBody.amount_cents,
+        service_fee_cents: calculatedServiceFee,
+        total_amount_cents: requestBody.total_amount_cents,
+        payment_instrument_id: requestBody.payment_instrument_id,
+        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+        merchant_id: serviceTile.merchant_id,
+        finix_merchant_id: serviceTile.finix_merchant_id,
+        merchant_name: serviceTile.title,
+        payment_type: isACH ? 'ACH' : 'CARD',
+        fraud_session_id: requestBody.fraud_session_id || null,
+        idempotency_id: requestBody.idempotency_id
+      })
+      .select()
+      .single();
 
-    const { data: atomicResult, error: atomicError } = await supabase
-      .rpc('create_service_application_with_payment', {
-        p_tile_id: requestBody.tile_id,
-        p_user_id: user.id,
-        p_customer_id: serviceTile.customer_id,
-        p_amount_cents: requestBody.amount_cents,
-        p_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        p_total_amount_cents: requestBody.total_amount_cents,
-        p_service_fee_cents: calculatedServiceFee,
-        p_payment_type: isACH ? 'ACH' : 'CARD',
-        p_idempotency_id: requestBody.idempotency_id,
-        p_merchant_id: serviceTile.merchant_id,
-        p_finix_merchant_id: serviceTile.finix_merchant_id,
-        p_merchant_name: serviceTile.title,
-        p_statement_descriptor: serviceTile.title,
-        p_applicant_name: requestBody.applicant_name,
-        p_applicant_email: requestBody.applicant_email,
-        p_applicant_phone: requestBody.applicant_phone,
-        p_business_legal_name: requestBody.business_legal_name,
-        p_street_address: requestBody.street_address,
-        p_apt_number: requestBody.apt_number,
-        p_city: requestBody.city,
-        p_state: requestBody.state,
-        p_zip_code: requestBody.zip_code,
-        p_additional_information: requestBody.additional_information,
-        p_service_specific_data: requestBody.service_specific_data || {},
-        p_documents: documentsJsonb,
-        p_fraud_session_id: requestBody.fraud_session_id,
-        p_card_brand: paymentInstrument.card_brand,
-        p_card_last_four: paymentInstrument.card_last_four,
-        p_bank_last_four: paymentInstrument.bank_last_four
-      });
-
-    if (atomicError || !atomicResult?.success) {
-      console.error('Atomic application creation failed:', atomicError || atomicResult?.error);
+    if (appError || !application) {
+      console.error('Failed to create service application:', appError);
       return new Response(
-        JSON.stringify({ 
-          error: 'Application creation failed',
-          details: atomicError?.message || atomicResult?.error
-        }),
+        JSON.stringify({ error: 'Failed to create service application' }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    const applicationId = atomicResult.application_id;
-    const paymentHistoryId = atomicResult.payment_history_id;
+    console.log('Service application created:', application.id);
+
+    // Create payment history record
+    const { data: paymentHistory, error: phError } = await supabase
+      .from('payment_history')
+      .insert({
+        user_id: user.id,
+        service_application_id: application.id,
+        customer_id: serviceTile.customer_id,
+        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+        finix_merchant_id: serviceTile.finix_merchant_id,
+        amount_cents: requestBody.amount_cents,
+        service_fee_cents: calculatedServiceFee,
+        total_amount_cents: requestBody.total_amount_cents,
+        currency: 'USD',
+        payment_type: isACH ? 'ACH' : 'CARD',
+        idempotency_id: requestBody.idempotency_id,
+        fraud_session_id: requestBody.fraud_session_id || null,
+        transfer_state: 'PENDING',
+        card_brand: paymentInstrument.card_brand,
+        card_last_four: paymentInstrument.card_last_four,
+        bank_last_four: paymentInstrument.bank_last_four,
+        merchant_name: serviceTile.title,
+        category: 'Municipal Services',
+        subcategory: serviceTile.category || 'Other Services',
+        doing_business_as: serviceTile.title,
+        statement_descriptor: serviceTile.title,
+        customer_first_name: requestBody.applicant_name?.split(' ')[0] || null,
+        customer_last_name: requestBody.applicant_name?.split(' ').slice(1).join(' ') || null,
+        customer_email: requestBody.applicant_email || null,
+        customer_street_address: requestBody.street_address || null,
+        customer_apt_number: requestBody.apt_number || null,
+        customer_city: requestBody.city || null,
+        customer_state: requestBody.state || null,
+        customer_zip_code: requestBody.zip_code || null,
+        business_legal_name: requestBody.business_legal_name || null,
+        bill_type: 'service_application',
+        issue_date: new Date().toISOString(),
+        due_date: new Date().toISOString(),
+        original_amount_cents: requestBody.amount_cents,
+        payment_status: 'pending',
+        bill_status: 'unpaid'
+      })
+      .select()
+      .single();
+
+    if (phError || !paymentHistory) {
+      console.error('Failed to create payment history:', phError);
+      // Clean up application record
+      await supabase.from('municipal_service_applications').delete().eq('id', application.id);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create payment record' }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    console.log('Payment history created:', paymentHistory.id);
+
+    // Process documents if provided
+    if (requestBody.documents && requestBody.documents.length > 0) {
+      const documentInserts = requestBody.documents.map(doc => ({
+        application_id: application.id,
+        user_id: user.id,
+        customer_id: serviceTile.customer_id,
+        file_name: doc.name,
+        file_size: doc.size,
+        content_type: doc.type,
+        storage_path: doc.storage_path,
+        document_type: doc.document_type || 'general',
+        description: doc.description || null
+      }));
+
+      const { error: docError } = await supabase
+        .from('service_application_documents')
+        .insert(documentInserts);
+
+      if (docError) {
+        console.error('Failed to create documents:', docError);
+        // Continue with payment processing, documents are not critical
+      } else {
+        console.log('Documents created successfully');
+      }
+    }
+
+    const applicationId = application.id;
+    const paymentHistoryId = paymentHistory.id;
 
     // Now process payment with Finix
     const finixTransferPayload: FinixTransferRequest = {
@@ -277,33 +351,21 @@ serve(async (req) => {
         body: errorText,
       });
 
-      // COMPLETE ROLLBACK: Delete all records when payment fails
-      console.log('Payment failed, performing complete rollback...');
-      const { data: rollbackResult, error: rollbackError } = await supabase
-        .rpc('rollback_service_application_payment', {
-          p_application_id: applicationId,
-          p_payment_history_id: paymentHistoryId
-        });
-
-      if (rollbackError || !rollbackResult?.success) {
-        console.error('Rollback failed:', rollbackError || rollbackResult?.error);
-        // Even if rollback fails, we still return the payment failure
-        return new Response(
-          JSON.stringify({ 
-            error: 'Payment failed and rollback failed - please contact support',
-            details: errorText,
-            rollback_error: rollbackError?.message || rollbackResult?.error
-          }),
-          { status: 500, headers: corsHeaders }
-        );
+      // Simple rollback: Delete application and payment records
+      console.log('Payment failed, cleaning up records...');
+      try {
+        await supabase.from('service_application_documents').delete().eq('application_id', applicationId);
+        await supabase.from('payment_history').delete().eq('id', paymentHistoryId);
+        await supabase.from('municipal_service_applications').delete().eq('id', applicationId);
+        console.log('Cleanup successful');
+      } catch (cleanupError) {
+        console.error('Cleanup failed:', cleanupError);
       }
 
-      console.log('Rollback successful - all records deleted');
       return new Response(
         JSON.stringify({ 
-          error: 'Payment processing failed - application not created',
-          details: errorText,
-          retryable: true 
+          error: 'Payment processing failed',
+          details: errorText
         }),
         { status: 400, headers: corsHeaders }
       );
@@ -338,32 +400,21 @@ serve(async (req) => {
       console.error('Transfer failed:', finixData);
       const errorText = finixData.failure_message || 'Payment processing failed';
       
-      // COMPLETE ROLLBACK: Delete all records when payment fails
-      console.log('Payment failed, performing complete rollback...');
-      const { data: rollbackResult, error: rollbackError } = await supabase
-        .rpc('rollback_service_application_payment', {
-          p_application_id: applicationId,
-          p_payment_history_id: paymentHistoryId
-        });
-
-      if (rollbackError || !rollbackResult?.success) {
-        console.error('Rollback failed:', rollbackError || rollbackResult?.error);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Payment failed and rollback failed - please contact support',
-            details: errorText,
-            rollback_error: rollbackError?.message || rollbackResult?.error
-          }),
-          { status: 500, headers: corsHeaders }
-        );
+      // Simple rollback: Delete application and payment records  
+      console.log('Payment failed, cleaning up records...');
+      try {
+        await supabase.from('service_application_documents').delete().eq('application_id', applicationId);
+        await supabase.from('payment_history').delete().eq('id', paymentHistoryId);
+        await supabase.from('municipal_service_applications').delete().eq('id', applicationId);
+        console.log('Cleanup successful');
+      } catch (cleanupError) {
+        console.error('Cleanup failed:', cleanupError);
       }
 
-      console.log('Rollback successful - all records deleted');
       return new Response(
         JSON.stringify({ 
-          error: 'Payment processing failed - application not created',
-          details: errorText,
-          retryable: true 
+          error: 'Payment processing failed',
+          details: errorText
         }),
         { status: 400, headers: corsHeaders }
       );
