@@ -322,7 +322,7 @@ serve(async (req) => {
       .from('payment_history')
       .update({
         finix_transfer_id: transferData.id,
-        payment_status: transferSuccess ? 'completed' : 'failed',
+        payment_status: transferSuccess ? 'paid' : 'failed',
         finix_raw_response: transferData,
         processed_at: new Date().toISOString(),
         ...(transferData.failure_code && { 

@@ -383,6 +383,7 @@ serve(async (req) => {
         .from('municipal_service_applications')
         .update({ 
           status: 'submitted',
+          payment_status: 'paid',
           payment_processed_at: new Date().toISOString()
         })
         .eq('id', applicationId);
@@ -390,7 +391,7 @@ serve(async (req) => {
       await supabase
         .from('payment_history')
         .update({ 
-          payment_status: 'completed',
+          payment_status: 'paid',
           transfer_state: 'SUCCEEDED',
           finix_transfer_id: finixData.id
         })
