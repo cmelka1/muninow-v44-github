@@ -78,13 +78,13 @@ export const usePaymentMethodOptions = () => {
       const paymentMethods = new Set<string>();
       
       data.forEach(payment => {
-        if (payment.payment_type === 'Google Pay') {
+        if (payment.payment_type === 'GOOGLE_PAY') {
           paymentMethods.add('Google Pay');
-        } else if (payment.payment_type === 'Apple Pay') {
+        } else if (payment.payment_type === 'APPLE_PAY') {
           paymentMethods.add('Apple Pay');
-        } else if (payment.payment_type === 'Bank Account') {
+        } else if (payment.payment_type === 'BANK_ACCOUNT') {
           paymentMethods.add('Bank Account');
-        } else if (payment.payment_type === 'Card' || payment.card_brand) {
+        } else if (payment.payment_type === 'PAYMENT_CARD' || payment.card_brand) {
           paymentMethods.add('Card');
         }
       });

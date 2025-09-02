@@ -25,12 +25,18 @@ const PaymentSuccessContent: React.FC<PaymentSuccessContentProps> = ({
   const totalWithFee = baseAmount + (serviceFee?.totalFee || 0);
 
   const getPaymentMethodDisplay = () => {
-    if (paymentResult?.payment_type === 'card' && paymentResult?.card_brand && paymentResult?.card_last_four) {
+    if (paymentResult?.payment_type === 'PAYMENT_CARD' && paymentResult?.card_brand && paymentResult?.card_last_four) {
       const brandName = paymentResult.card_brand.charAt(0).toUpperCase() + paymentResult.card_brand.slice(1).toLowerCase();
       return `${brandName} •••• ${paymentResult.card_last_four}`;
     }
-    if (paymentResult?.payment_type === 'bank' && paymentResult?.bank_last_four) {
+    if (paymentResult?.payment_type === 'BANK_ACCOUNT' && paymentResult?.bank_last_four) {
       return `Bank •••• ${paymentResult.bank_last_four}`;
+    }
+    if (paymentResult?.payment_type === 'APPLE_PAY') {
+      return 'Apple Pay';
+    }
+    if (paymentResult?.payment_type === 'GOOGLE_PAY') {
+      return 'Google Pay';
     }
     return 'Payment Method';
   };

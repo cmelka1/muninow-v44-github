@@ -36,12 +36,14 @@ export const usePaymentHistory = (params?: PaginationParams) => {
       }
 
       if (filters.paymentMethod) {
-        if (filters.paymentMethod === 'Google Pay' || filters.paymentMethod === 'Apple Pay') {
-          query = query.eq('payment_type', filters.paymentMethod);
+        if (filters.paymentMethod === 'Google Pay') {
+          query = query.eq('payment_type', 'GOOGLE_PAY');
+        } else if (filters.paymentMethod === 'Apple Pay') {
+          query = query.eq('payment_type', 'APPLE_PAY');
         } else if (filters.paymentMethod === 'Bank Account') {
-          query = query.eq('payment_type', 'Bank Account');
+          query = query.eq('payment_type', 'BANK_ACCOUNT');
         } else if (filters.paymentMethod === 'Card') {
-          query = query.eq('payment_type', 'Card');
+          query = query.eq('payment_type', 'PAYMENT_CARD');
         }
       }
 

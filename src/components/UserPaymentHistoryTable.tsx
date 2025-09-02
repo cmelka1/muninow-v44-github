@@ -47,16 +47,16 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
   };
 
   const formatPaymentMethod = (payment: any) => {
-    if (payment.payment_type === 'Google Pay') {
+    if (payment.payment_type === 'GOOGLE_PAY') {
       return 'Google Pay';
     }
-    if (payment.payment_type === 'Apple Pay') {
+    if (payment.payment_type === 'APPLE_PAY') {
       return 'Apple Pay';
     }
-    if (payment.payment_type === 'Bank Account' || payment.bank_last_four) {
+    if (payment.payment_type === 'BANK_ACCOUNT' || payment.bank_last_four) {
       return `Bank Account ${payment.bank_last_four || ''}`;
     }
-    if (payment.payment_type === 'Card' || payment.card_brand) {
+    if (payment.payment_type === 'PAYMENT_CARD' || payment.card_brand) {
       return `${payment.card_brand || 'Card'} ${payment.card_last_four || ''}`;
     }
     return payment.payment_type || 'Payment Method';
