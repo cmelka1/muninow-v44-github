@@ -4234,6 +4234,10 @@ export type Database = {
         Args: { _entity_id?: string; _role_name: string; _user_id: string }
         Returns: boolean
       }
+      rollback_service_application_payment: {
+        Args: { p_application_id: string; p_payment_history_id: string }
+        Returns: Json
+      }
       set_default_user_payment_instrument: {
         Args: { p_id: string }
         Returns: undefined

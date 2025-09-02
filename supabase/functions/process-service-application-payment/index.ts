@@ -277,25 +277,33 @@ serve(async (req) => {
         body: errorText,
       });
 
-      // Update application and payment status to failed
-      await supabase
-        .from('municipal_service_applications')
-        .update({ status: 'payment_failed' })
-        .eq('id', applicationId);
+      // COMPLETE ROLLBACK: Delete all records when payment fails
+      console.log('Payment failed, performing complete rollback...');
+      const { data: rollbackResult, error: rollbackError } = await supabase
+        .rpc('rollback_service_application_payment', {
+          p_application_id: applicationId,
+          p_payment_history_id: paymentHistoryId
+        });
 
-      await supabase
-        .from('payment_history')
-        .update({ 
-          payment_status: 'failed',
-          transfer_state: 'FAILED',
-          failure_message: errorText
-        })
-        .eq('id', paymentHistoryId);
+      if (rollbackError || !rollbackResult?.success) {
+        console.error('Rollback failed:', rollbackError || rollbackResult?.error);
+        // Even if rollback fails, we still return the payment failure
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment failed and rollback failed - please contact support',
+            details: errorText,
+            rollback_error: rollbackError?.message || rollbackResult?.error
+          }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
 
+      console.log('Rollback successful - all records deleted');
       return new Response(
         JSON.stringify({ 
-          error: 'Payment processing failed',
-          details: errorText 
+          error: 'Payment processing failed - application not created',
+          details: errorText,
+          retryable: true 
         }),
         { status: 400, headers: corsHeaders }
       );
@@ -304,36 +312,62 @@ serve(async (req) => {
     const finixData: FinixTransferResponse = await finixResponse.json();
     console.log('Finix response:', JSON.stringify(finixData, null, 2));
 
-    // Handle different transfer states
-    let applicationStatus = 'submitted';
-    let paymentStatus = 'pending';
-    
+    // Handle different transfer states with complete rollback on failure
     if (finixData.state === 'SUCCEEDED') {
-      applicationStatus = serviceTile.requires_review ? 'submitted' : 'approved';
-      paymentStatus = 'completed';
+      console.log('Payment succeeded, updating records...');
+      
+      // Update application and payment status for success
+      await supabase
+        .from('municipal_service_applications')
+        .update({ 
+          status: 'submitted',
+          payment_processed_at: new Date().toISOString()
+        })
+        .eq('id', applicationId);
+
+      await supabase
+        .from('payment_history')
+        .update({ 
+          payment_status: 'completed',
+          transfer_state: 'SUCCEEDED',
+          finix_transfer_id: finixData.id
+        })
+        .eq('id', paymentHistoryId);
+        
     } else if (finixData.state === 'FAILED') {
-      applicationStatus = 'payment_failed';
-      paymentStatus = 'failed';
+      console.error('Transfer failed:', finixData);
+      const errorText = finixData.failure_message || 'Payment processing failed';
+      
+      // COMPLETE ROLLBACK: Delete all records when payment fails
+      console.log('Payment failed, performing complete rollback...');
+      const { data: rollbackResult, error: rollbackError } = await supabase
+        .rpc('rollback_service_application_payment', {
+          p_application_id: applicationId,
+          p_payment_history_id: paymentHistoryId
+        });
+
+      if (rollbackError || !rollbackResult?.success) {
+        console.error('Rollback failed:', rollbackError || rollbackResult?.error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment failed and rollback failed - please contact support',
+            details: errorText,
+            rollback_error: rollbackError?.message || rollbackResult?.error
+          }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      console.log('Rollback successful - all records deleted');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Payment processing failed - application not created',
+          details: errorText,
+          retryable: true 
+        }),
+        { status: 400, headers: corsHeaders }
+      );
     }
-
-    // Update application and payment status
-    await supabase
-      .from('municipal_service_applications')
-      .update({ 
-        status: applicationStatus,
-        payment_processed_at: new Date().toISOString()
-      })
-      .eq('id', applicationId);
-
-    await supabase
-      .from('payment_history')
-      .update({ 
-        payment_status: paymentStatus,
-        transfer_state: finixData.state,
-        finix_transfer_id: finixData.id,
-        failure_message: finixData.failure_message || null
-      })
-      .eq('id', paymentHistoryId);
 
     console.log('Service application payment processed successfully');
 
@@ -342,9 +376,9 @@ serve(async (req) => {
         success: true,
         application_id: applicationId,
         transfer_id: finixData.id,
-        status: applicationStatus,
+        status: 'submitted',
         amount: requestBody.total_amount_cents,
-        payment_status: paymentStatus
+        payment_status: 'completed'
       }),
       { headers: corsHeaders }
     );

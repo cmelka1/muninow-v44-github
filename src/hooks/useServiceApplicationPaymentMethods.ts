@@ -363,7 +363,9 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       };
 
     } catch (error) {
-      console.error('Unexpected payment error:', error);
+      console.error('Service application payment error:', error);
+      // With complete rollback, no partial records exist
+      // Error handling is simpler since failed payments leave no database artifacts
       const classifiedError = classifyPaymentError(error);
       
       toast({
