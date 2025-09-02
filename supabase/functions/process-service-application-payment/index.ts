@@ -2,12 +2,12 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 interface ProcessServiceApplicationPaymentRequest {
-  applicationId: string;
-  paymentInstrumentId: string;
-  totalAmount: number;
-  serviceFee: number;
-  fraudSessionId?: string;
-  idempotencyId: string;
+  application_id: string;
+  payment_instrument_id: string;
+  total_amount_cents: number;
+  service_fee: number;
+  fraud_session_id?: string;
+  idempotency_id: string;
   cardBrand?: string;
   cardLastFour?: string;
   bankLastFour?: string;
@@ -87,7 +87,7 @@ serve(async (req) => {
     const { data: existingPayment } = await supabase
       .from('payment_history')
       .select('id')
-      .eq('idempotency_id', requestBody.idempotencyId)
+      .eq('idempotency_id', requestBody.idempotency_id)
       .single();
 
     if (existingPayment) {
@@ -104,7 +104,7 @@ serve(async (req) => {
     const { data: application, error: applicationError } = await supabase
       .from('municipal_service_applications')
       .select('*')
-      .eq('id', requestBody.applicationId)
+      .eq('id', requestBody.application_id)
       .eq('user_id', user.id)
       .single();
 
@@ -188,12 +188,12 @@ serve(async (req) => {
     const totalCalculated = serviceTile.amount_cents + calculatedServiceFee;
 
     // Validate amount
-    if (Math.abs(requestBody.totalAmount - totalCalculated) > 1) {
+    if (Math.abs(requestBody.total_amount_cents - totalCalculated) > 1) {
       return new Response(
         JSON.stringify({ 
           error: 'Amount mismatch',
           expected: totalCalculated,
-          received: requestBody.totalAmount 
+          received: requestBody.total_amount_cents 
         }),
         {
           status: 400,
@@ -235,17 +235,17 @@ serve(async (req) => {
     }
 
     const transferPayload: FinixTransferRequest = {
-      amount: requestBody.totalAmount,
+      amount: requestBody.total_amount_cents,
       currency: 'USD',
       destination: merchant.finix_merchant_id,
-      source: requestBody.paymentInstrumentId,
+      source: requestBody.payment_instrument_id,
       fee: calculatedServiceFee,
       merchant_identity: finixIdentity.finix_identity_id,
       tags: {
-        application_id: requestBody.applicationId,
+        application_id: requestBody.application_id,
         service_type: 'municipal_service',
         user_id: user.id,
-        idempotency_id: requestBody.idempotencyId,
+        idempotency_id: requestBody.idempotency_id,
       },
     };
 
@@ -284,13 +284,13 @@ serve(async (req) => {
         customer_id: serviceTile.customer_id,
         amount_cents: serviceTile.amount_cents,
         service_fee_cents: calculatedServiceFee,
-        total_amount_cents: requestBody.totalAmount,
+        total_amount_cents: requestBody.total_amount_cents,
         payment_type: isACH ? 'ACH' : 'CARD',
         payment_status: 'pending',
         payment_method_type: isACH ? 'ACH' : 'CARD',
-        payment_instrument_id: requestBody.paymentInstrumentId,
-        idempotency_id: requestBody.idempotencyId,
-        fraud_session_id: requestBody.fraudSessionId,
+        payment_instrument_id: requestBody.payment_instrument_id,
+        idempotency_id: requestBody.idempotency_id,
+        fraud_session_id: requestBody.fraud_session_id,
         card_brand: requestBody.cardBrand,
         card_last_four: requestBody.cardLastFour,
         bank_last_four: requestBody.bankLastFour,
@@ -324,14 +324,14 @@ serve(async (req) => {
         payment_id: paymentRecord.id,
         payment_status: 'pending',
         payment_method_type: isACH ? 'ACH' : 'CARD',
-        payment_instrument_id: requestBody.paymentInstrumentId,
+        payment_instrument_id: requestBody.payment_instrument_id,
         finix_transfer_id: finixData.id,
-        fraud_session_id: requestBody.fraudSessionId,
-        idempotency_id: requestBody.idempotencyId,
+        fraud_session_id: requestBody.fraud_session_id,
+        idempotency_id: requestBody.idempotency_id,
         transfer_state: finixData.state,
         amount_cents: serviceTile.amount_cents,
         service_fee_cents: calculatedServiceFee,
-        total_amount_cents: requestBody.totalAmount,
+        total_amount_cents: requestBody.total_amount_cents,
         merchant_id: merchant.id,
         merchant_name: merchant.merchant_name,
         finix_merchant_id: merchant.finix_merchant_id,
@@ -345,7 +345,7 @@ serve(async (req) => {
         status: finixData.state === 'SUCCEEDED' ? 'paid' : 'approved',
         updated_at: new Date().toISOString(),
       })
-      .eq('id', requestBody.applicationId);
+      .eq('id', requestBody.application_id);
 
     if (updateError) {
       console.error('Error updating application:', updateError);
