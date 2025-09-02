@@ -87,11 +87,11 @@ const ServiceApplicationDetail: React.FC = () => {
     }
 
     return application.tile.form_fields.map((field: any) => {
-      const value = application.form_data[field.name];
+      const value = application.form_data[field.id];
       if (!value) return null;
 
       return (
-        <div key={field.name}>
+        <div key={field.id}>
           <Label className="text-sm font-medium text-muted-foreground">
             {field.label || field.name}
           </Label>
