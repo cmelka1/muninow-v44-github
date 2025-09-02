@@ -195,7 +195,7 @@ const ServiceApplicationDetail: React.FC = () => {
         
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Service Application</h1>
+            <h1 className="text-2xl font-bold">{application.tile?.title || 'Service Application'}</h1>
             <p className="text-muted-foreground">Application #{application.id}</p>
           </div>
           <ServiceApplicationStatusBadge status={application.status} />
