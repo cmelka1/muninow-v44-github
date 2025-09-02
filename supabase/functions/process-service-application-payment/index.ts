@@ -228,19 +228,25 @@ serve(async (req) => {
       );
     }
 
-    // Prepare Finix transfer request
-    const finixApiKey = Deno.env.get('FINIX_API_KEY');
+    // Get Finix credentials
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
+    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
+    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
-    if (!finixApiKey || !finixApplicationId) {
+    if (!finixApplicationId || !finixApiSecret) {
       return new Response(
-        JSON.stringify({ error: 'Finix credentials not configured' }),
+        JSON.stringify({ error: 'Finix API credentials not configured' }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
+
+    // Determine Finix API URL based on environment
+    const finixBaseUrl = finixEnvironment === 'live' 
+      ? 'https://finix.payments-api.com'
+      : 'https://finix.sandbox-payments-api.com';
 
     const transferPayload: FinixTransferRequest = {
       amount: requestBody.total_amount_cents,
@@ -250,15 +256,19 @@ serve(async (req) => {
       merchant_identity: finixIdentity.finix_identity_id
     };
 
+    if (requestBody.fraud_session_id) {
+      transferPayload.tags = { fraud_session_id: requestBody.fraud_session_id };
+    }
+
     console.log('Creating Finix transfer with payload:', JSON.stringify(transferPayload, null, 2));
 
     // Create Finix transfer
-    const finixResponse = await fetch('https://finix.sandbox-payments-api.com/transfers', {
+    const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(finixApiKey + ':')}`,
-        'Finix-Version': '2018-01-01',
+        'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`,
+        'Finix-Version': '2022-02-01',
       },
       body: JSON.stringify(transferPayload),
     });
