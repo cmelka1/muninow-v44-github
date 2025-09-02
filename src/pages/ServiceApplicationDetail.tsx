@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
 import { Badge } from '@/components/ui/badge';
+import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceApplicationDocumentDialog';
 
 const ServiceApplicationDetail: React.FC = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -24,10 +25,11 @@ const ServiceApplicationDetail: React.FC = () => {
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const { data: application, isLoading, error } = useServiceApplication(applicationId || '');
-  const { data: documentsQuery } = useServiceApplicationDocuments(applicationId || '');
+  const { data: documentsQuery, refetch: refetchDocuments } = useServiceApplicationDocuments(applicationId || '');
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
+  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
 
   // Set documents from query
   React.useEffect(() => {
@@ -301,10 +303,21 @@ const ServiceApplicationDetail: React.FC = () => {
           {/* Documents Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Supporting Documents ({documents?.length || 0})
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Supporting Documents ({documents?.length || 0})
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddDocumentOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Document
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {documentsLoading ? (
@@ -505,6 +518,16 @@ const ServiceApplicationDetail: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      <AddServiceApplicationDocumentDialog
+        open={addDocumentOpen}
+        onOpenChange={setAddDocumentOpen}
+        applicationId={applicationId || ''}
+        customerId={application?.customer_id || ''}
+        onSuccess={() => {
+          refetchDocuments();
+        }}
+      />
     </div>
   );
 };
