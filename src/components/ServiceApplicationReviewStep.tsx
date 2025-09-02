@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, FileText, User, Building } from 'lucide-react';
+import { Edit, FileText, User, Building, MessageSquare } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { formatCurrency } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
@@ -65,6 +65,16 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
 
   const completedDocuments = uploadedDocuments.filter(doc => doc.uploadStatus === 'completed');
   const totalAmount = tile.allow_user_defined_amount ? (formData.amount_cents || 0) : (tile.amount_cents || 0);
+  
+  // Find additional information field
+  const additionalInfoField = tile.form_fields?.find(field => 
+    field.id === 'additional_information' || 
+    field.label?.toLowerCase().includes('additional information') ||
+    field.label?.toLowerCase().includes('additional comments')
+  );
+  
+  // Filter out additional information from regular fields
+  const regularFields = tile.form_fields?.filter(field => field.id !== additionalInfoField?.id) || [];
 
   return (
     <div className="space-y-6">
@@ -119,7 +129,7 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
       </Card>
 
       {/* Form Data */}
-      {tile.form_fields && tile.form_fields.length > 0 && (
+      {regularFields && regularFields.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -128,7 +138,7 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {tile.form_fields.map((field) => (
+            {regularFields.map((field) => (
               <div key={field.id} className="border-b border-border last:border-b-0 pb-3 last:pb-0">
                 <span className="font-medium">{field.label}:</span>
                  <div className="mt-1">
@@ -153,6 +163,30 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
                  </div>
               </div>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Additional Information */}
+      {additionalInfoField && formData[additionalInfoField.id] && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MessageSquare className="h-5 w-5" />
+              {additionalInfoField.label || 'Additional Information'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isRichTextContent(formData[additionalInfoField.id]) ? (
+              <SafeHtmlRenderer 
+                content={formData[additionalInfoField.id]} 
+                className="text-sm text-muted-foreground"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {getFieldDisplayValue(additionalInfoField, formData[additionalInfoField.id])}
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
