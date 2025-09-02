@@ -288,7 +288,7 @@ serve(async (req) => {
         service_fee_cents: calculatedServiceFee,
         total_amount_cents: total_amount_cents,
         currency: 'USD',
-        payment_type: 'Google Pay',
+        payment_type: 'GOOGLE_PAY',
         idempotency_id: idempotency_id,
         fraud_session_id: fraud_session_id,
         transfer_state: 'PENDING',

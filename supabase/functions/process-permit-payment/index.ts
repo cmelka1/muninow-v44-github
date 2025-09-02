@@ -165,7 +165,7 @@ serve(async (req) => {
     }
 
     // Determine payment type
-    const paymentType = paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'Card' : 'Bank Account';
+    const paymentType = paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'PAYMENT_CARD' : 'BANK_ACCOUNT';
 
     // Get user profile for payment record
     const { data: userProfile } = await supabaseService
