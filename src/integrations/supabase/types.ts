@@ -1754,17 +1754,30 @@ export type Database = {
       }
       municipal_service_applications: {
         Row: {
+          ach_basis_points: number | null
+          ach_fixed_fee: number | null
           amount_cents: number | null
           assigned_reviewer_id: string | null
+          basis_points: number | null
           created_at: string
           customer_id: string
+          finix_identity_id: string | null
+          finix_merchant_id: string | null
           finix_transfer_id: string | null
+          fixed_fee: number | null
           form_data: Json | null
           fraud_session_id: string | null
           id: string
           idempotency_id: string | null
+          merchant_fee_profile_id: string | null
+          merchant_finix_identity_id: string | null
+          merchant_id: string | null
+          merchant_name: string | null
           paid_at: string | null
           payment_id: string | null
+          payment_instrument_id: string | null
+          payment_method_type: string | null
+          payment_processed_at: string | null
           payment_status: string | null
           review_date: string | null
           review_notes: string | null
@@ -1773,21 +1786,35 @@ export type Database = {
           status: string
           tile_id: string
           total_amount_cents: number | null
+          transfer_state: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
           amount_cents?: number | null
           assigned_reviewer_id?: string | null
+          basis_points?: number | null
           created_at?: string
           customer_id: string
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
           finix_transfer_id?: string | null
+          fixed_fee?: number | null
           form_data?: Json | null
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
           paid_at?: string | null
           payment_id?: string | null
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           review_date?: string | null
           review_notes?: string | null
@@ -1796,21 +1823,35 @@ export type Database = {
           status?: string
           tile_id: string
           total_amount_cents?: number | null
+          transfer_state?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
           amount_cents?: number | null
           assigned_reviewer_id?: string | null
+          basis_points?: number | null
           created_at?: string
           customer_id?: string
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
           finix_transfer_id?: string | null
+          fixed_fee?: number | null
           form_data?: Json | null
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
           paid_at?: string | null
           payment_id?: string | null
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           review_date?: string | null
           review_notes?: string | null
@@ -1819,6 +1860,7 @@ export type Database = {
           status?: string
           tile_id?: string
           total_amount_cents?: number | null
+          transfer_state?: string | null
           updated_at?: string
           user_id?: string
         }
