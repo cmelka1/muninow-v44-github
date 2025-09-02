@@ -248,19 +248,19 @@ serve(async (req) => {
       ? 'https://finix.payments-api.com'
       : 'https://finix.sandbox-payments-api.com';
 
-    const transferPayload: FinixTransferRequest = {
+    const finixRequest: FinixTransferRequest = {
       amount: requestBody.total_amount_cents,
       currency: 'USD',
-      destination: serviceTile.finix_merchant_id,
+      merchant: serviceTile.finix_merchant_id,
       source: paymentInstrument.finix_payment_instrument_id,
-      merchant_identity: finixIdentity.finix_identity_id
+      idempotency_id: requestBody.idempotency_id
     };
 
     if (requestBody.fraud_session_id) {
-      transferPayload.tags = { fraud_session_id: requestBody.fraud_session_id };
+      finixRequest.tags = { fraud_session_id: requestBody.fraud_session_id };
     }
 
-    console.log('Creating Finix transfer with payload:', JSON.stringify(transferPayload, null, 2));
+    console.log('Creating Finix transfer with payload:', JSON.stringify(finixRequest, null, 2));
 
     // Create Finix transfer
     const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
@@ -270,7 +270,7 @@ serve(async (req) => {
         'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`,
         'Finix-Version': '2022-02-01',
       },
-      body: JSON.stringify(transferPayload),
+      body: JSON.stringify(finixRequest),
     });
 
     const finixData: FinixTransferResponse = await finixResponse.json();
