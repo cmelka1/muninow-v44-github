@@ -22,7 +22,6 @@ export interface ServiceApplicationWithTile {
     amount_cents: number;
     form_fields: any[];
     requires_review: boolean;
-    requires_payment: boolean;
     customer_id: string;
     is_active: boolean;
   };
@@ -59,7 +58,7 @@ export const useServiceApplication = (applicationId: string) => {
       if (applicationData.tile_id) {
         const { data: tileData, error: tileError } = await supabase
           .from('municipal_service_tiles')
-          .select('id, title, description, amount_cents, form_fields, requires_review, requires_payment, customer_id, is_active')
+          .select('id, title, description, amount_cents, form_fields, requires_review, customer_id, is_active')
           .eq('id', applicationData.tile_id)
           .single();
         

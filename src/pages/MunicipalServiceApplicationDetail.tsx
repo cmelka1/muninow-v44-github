@@ -223,15 +223,9 @@ const MunicipalServiceApplicationDetail = () => {
                   <p className="text-base">{application.tile.description}</p>
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Requires Review</Label>
-                  <p className="text-base">{application.tile.requires_review ? 'Yes' : 'No'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Requires Payment</Label>
-                  <p className="text-base">{application.tile.requires_payment ? 'Yes' : 'No'}</p>
-                </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Requires Review</Label>
+                <p className="text-base">{application.tile.requires_review ? 'Yes' : 'No'}</p>
               </div>
             </CardContent>
           </Card>
@@ -473,7 +467,7 @@ const MunicipalServiceApplicationDetail = () => {
           </Card>
 
           {/* Payment Summary */}
-          {application.tile.requires_payment && (
+          {application.tile.amount_cents > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
