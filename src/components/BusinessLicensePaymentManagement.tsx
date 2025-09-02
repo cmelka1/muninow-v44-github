@@ -126,7 +126,6 @@ export const BusinessLicensePaymentManagement: React.FC<BusinessLicensePaymentMa
                 <h3 className="text-lg font-semibold">Payment Details</h3>
                 <PermitPaymentSummary
                   baseAmount={license?.base_fee_cents || license?.total_amount_cents || 0}
-                  serviceFee={serviceFee}
                   selectedPaymentMethod={selectedPaymentMethod}
                 />
               </div>

@@ -1056,9 +1056,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                       <PaymentSummary 
+                        <PaymentSummary 
                           baseAmount={baseAmount}
-                          serviceFee={serviceFee}
                           selectedPaymentMethod={selectedPaymentMethod}
                           compact={true}
                         />

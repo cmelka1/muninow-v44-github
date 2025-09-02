@@ -195,7 +195,6 @@ const BillOverview = () => {
               <CardContent>
                 <PaymentSummary
                   baseAmount={bill.total_amount_cents}
-                  serviceFee={serviceFee}
                   selectedPaymentMethod={selectedPaymentMethod}
                 />
               </CardContent>

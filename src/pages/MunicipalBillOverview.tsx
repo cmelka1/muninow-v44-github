@@ -164,7 +164,6 @@ const MunicipalBillOverview = () => {
               <CardContent>
                 <PaymentSummary
                   baseAmount={bill.total_amount_cents}
-                  serviceFee={null}
                   selectedPaymentMethod={null}
                 />
               </CardContent>

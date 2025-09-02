@@ -456,7 +456,6 @@ const PermitDetail = () => {
                   {/* Payment Summary */}
                   <PermitPaymentSummary 
                     baseAmount={(permit.base_fee_cents || permit.total_amount_cents || 0)}
-                    serviceFee={serviceFee}
                     selectedPaymentMethod={selectedPaymentMethod}
                     compact={true}
                   />

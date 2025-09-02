@@ -38,69 +38,9 @@ export const useTaxPaymentMethods = (taxData: {
     })
     .slice(0, 3);
 
-  // Calculate service fee based on payment method using grossed-up formula
-  const calculateServiceFee = useCallback((): ServiceFee => {
-    if (!selectedPaymentMethod || !taxData.amount) {
-      return {
-        totalFee: 0,
-        percentageFee: 0,
-        fixedFee: 0,
-        basisPoints: 0,
-        isCard: true,
-        totalAmountToCharge: taxData.amount,
-        serviceFeeToDisplay: 0
-      };
-    }
-
-    // Find the selected payment method
-    const paymentMethod = paymentInstruments.find(p => p.id === selectedPaymentMethod);
-    const isACH = paymentMethod?.instrument_type === 'BANK_ACCOUNT';
-    
-    let basisPoints = 300; // 3% for cards
-    let fixedFee = 50; // $0.50 fixed fee for cards
-    
-    if (isACH) {
-      basisPoints = 150; // 1.5% for ACH
-      fixedFee = 50; // $0.50 fixed fee for ACH
-    }
-
-    // Convert basis points to decimal percentage (p)
-    const percentageDecimal = basisPoints / 10000;
-    
-    // Prevent division by zero or invalid percentages
-    if (percentageDecimal >= 1) {
-      console.error('Invalid percentage fee for tax: cannot be 100% or higher');
-      return {
-        totalFee: 0,
-        percentageFee: 0,
-        fixedFee,
-        basisPoints,
-        isCard: !isACH,
-        totalAmountToCharge: taxData.amount,
-        serviceFeeToDisplay: 0
-      };
-    }
-    
-    // Apply grossed-up formula: T = (A + f) / (1 - p)
-    const totalAmountToCharge = Math.round((taxData.amount + fixedFee) / (1 - percentageDecimal));
-    const serviceFeeToDisplay = totalAmountToCharge - taxData.amount;
-    
-    // Calculate percentage fee for display purposes
-    const percentageFee = Math.round((taxData.amount * basisPoints) / 10000);
-    
-    return {
-      totalFee: serviceFeeToDisplay, // Legacy compatibility
-      percentageFee,
-      fixedFee,
-      basisPoints,
-      isCard: !isACH,
-      totalAmountToCharge,
-      serviceFeeToDisplay
-    };
-  }, [selectedPaymentMethod, taxData.amount, paymentInstruments]);
-
-  const serviceFee = calculateServiceFee();
-  const totalWithFee = serviceFee.totalAmountToCharge;
+  // Service fee will be calculated by backend - no frontend calculation
+  const serviceFee: ServiceFee | null = null;
+  const totalWithFee = taxData.amount; // Use base amount, backend will calculate service fee
 
   // Auto-select default payment method
   useEffect(() => {

@@ -29,98 +29,12 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     })
     .slice(0, 3);
 
-  const calculateServiceFee = (): ServiceFee | null => {
-    if (!tile || !merchantFeeProfile) return null;
-    
-    // Determine the service amount - use user defined amount if provided and allowed, otherwise use tile amount
-    const serviceAmount = (tile.allow_user_defined_amount && userDefinedAmount) 
-      ? userDefinedAmount * 100 // Convert to cents
-      : tile.amount_cents || 0;
-    
-    if (serviceAmount <= 0) return null;
-    
-    // Get fee data from merchant fee profile
-    const basisPoints = merchantFeeProfile.basis_points;
-    const fixedFee = merchantFeeProfile.fixed_fee; 
-    const achBasisPoints = merchantFeeProfile.ach_basis_points;
-    const achFixedFee = merchantFeeProfile.ach_fixed_fee;
-    
-    // If no fee data available, we can't calculate service fees
-    if (!basisPoints && !achBasisPoints) return null;
-    
-    // Handle Google Pay and Apple Pay as special cases - always use card fees
-    if (selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay') {
-      const cardBasisPoints = basisPoints || 250;
-      const cardFixedFee = fixedFee || 50;
-      
-      // Convert basis points to decimal percentage (p)
-      const percentageDecimal = cardBasisPoints / 10000;
-      
-      // Prevent division by zero or invalid percentages
-      if (percentageDecimal >= 1) {
-        console.error('Invalid percentage fee: cannot be 100% or higher');
-        return null;
-      }
-      
-      // Apply grossed-up formula: T = (A + f) / (1 - p)
-      const totalAmountToCharge = Math.round((serviceAmount + cardFixedFee) / (1 - percentageDecimal));
-      const serviceFeeToDisplay = totalAmountToCharge - serviceAmount;
-      
-      // Calculate percentage fee for display purposes
-      const percentageFee = Math.round((serviceAmount * cardBasisPoints) / 10000);
-
-      return {
-        totalFee: serviceFeeToDisplay, // Legacy compatibility
-        percentageFee,
-        fixedFee: cardFixedFee,
-        basisPoints: cardBasisPoints,
-        isCard: true,
-        totalAmountToCharge,
-        serviceFeeToDisplay
-      };
-    }
-    
-    if (!selectedPaymentMethod) return null;
-    
-    const selectedInstrument = topPaymentMethods.find(instrument => instrument.id === selectedPaymentMethod);
-    if (!selectedInstrument) return null;
-
-    const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
-    const instrumentBasisPoints = isCard ? (basisPoints || 250) : (achBasisPoints || 20);
-    const instrumentFixedFee = isCard ? (fixedFee || 50) : (achFixedFee || 50);
-    
-    // Convert basis points to decimal percentage (p)
-    const percentageDecimal = instrumentBasisPoints / 10000;
-    
-    // Prevent division by zero or invalid percentages
-    if (percentageDecimal >= 1) {
-      console.error('Invalid percentage fee: cannot be 100% or higher');
-      return null;
-    }
-    
-    // Apply grossed-up formula: T = (A + f) / (1 - p)
-    const totalAmountToCharge = Math.round((serviceAmount + instrumentFixedFee) / (1 - percentageDecimal));
-    const serviceFeeToDisplay = totalAmountToCharge - serviceAmount;
-    
-    // Calculate percentage fee for display purposes
-    const percentageFee = Math.round((serviceAmount * instrumentBasisPoints) / 10000);
-
-    return {
-      totalFee: serviceFeeToDisplay, // Legacy compatibility
-      percentageFee,
-      fixedFee: instrumentFixedFee,
-      basisPoints: instrumentBasisPoints,
-      isCard,
-      totalAmountToCharge,
-      serviceFeeToDisplay
-    };
-  };
-
-  const serviceFee = calculateServiceFee();
+  // Service fee will be calculated by backend - no frontend calculation
+  const serviceFee: ServiceFee | null = null;
   const baseAmount = tile?.allow_user_defined_amount && userDefinedAmount 
     ? userDefinedAmount * 100 
     : tile?.amount_cents || 0;
-  const totalWithFee = serviceFee?.totalAmountToCharge || baseAmount;
+  const totalWithFee = baseAmount; // Use base amount, backend will calculate service fee
 
   // Auto-select default payment method when payment methods load
   useEffect(() => {

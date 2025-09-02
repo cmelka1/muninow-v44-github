@@ -413,7 +413,6 @@ const PermitOverview = () => {
                           <h3 className="text-lg font-semibold">Payment Details</h3>
                           <PaymentSummary
                             baseAmount={permit.total_amount_cents}
-                            serviceFee={serviceFee}
                             selectedPaymentMethod={selectedPaymentMethod}
                           />
                         </div>
