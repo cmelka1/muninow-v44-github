@@ -28,30 +28,34 @@ export const useServiceApplicationComments = (applicationId: string) => {
 
       const { data, error } = await supabase
         .from('municipal_service_application_comments')
-        .select(`
-          id,
-          application_id,
-          reviewer_id,
-          comment_text,
-          is_internal,
-          created_at,
-          updated_at,
-          reviewer:profiles!reviewer_id(
-            first_name,
-            last_name,
-            email,
-            account_type
-          )
-        `)
+        .select('*')
         .eq('application_id', applicationId)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching service application comments:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      return data as unknown as ServiceApplicationComment[];
+      // Fetch reviewer details for each comment
+      const commentsWithReviewers = await Promise.all(
+        (data || []).map(async (comment) => {
+          const { data: reviewerData } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email, account_type')
+            .eq('id', comment.reviewer_id)
+            .single();
+
+          return {
+            ...comment,
+            reviewer: reviewerData || {
+              first_name: 'Unknown',
+              last_name: 'User',
+              email: '',
+              account_type: 'unknown'
+            }
+          };
+        })
+      );
+
+      return commentsWithReviewers as ServiceApplicationComment[];
     },
     enabled: !!user && !!applicationId,
   });
