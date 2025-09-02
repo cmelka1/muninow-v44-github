@@ -1775,6 +1775,7 @@ export type Database = {
           denied_at: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
+          finix_payment_instrument_id: string | null
           finix_transfer_id: string | null
           fixed_fee: number | null
           fraud_session_id: string | null
@@ -1793,6 +1794,7 @@ export type Database = {
           payment_status: string | null
           review_notes: string | null
           service_fee_cents: number | null
+          service_name: string | null
           service_specific_data: Json | null
           state: string | null
           status:
@@ -1830,6 +1832,7 @@ export type Database = {
           denied_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
+          finix_payment_instrument_id?: string | null
           finix_transfer_id?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
@@ -1848,6 +1851,7 @@ export type Database = {
           payment_status?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
+          service_name?: string | null
           service_specific_data?: Json | null
           state?: string | null
           status?:
@@ -1885,6 +1889,7 @@ export type Database = {
           denied_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
+          finix_payment_instrument_id?: string | null
           finix_transfer_id?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
@@ -1903,6 +1908,7 @@ export type Database = {
           payment_status?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
+          service_name?: string | null
           service_specific_data?: Json | null
           state?: string | null
           status?:
