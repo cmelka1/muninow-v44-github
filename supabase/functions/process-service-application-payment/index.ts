@@ -8,7 +8,7 @@ interface ProcessServiceApplicationPaymentRequest {
   amount_cents: number;
   payment_instrument_id: string;
   idempotency_id: string;
-  fraud_session_id?: string;
+  fraud_session_id: string;
   applicant_name?: string;
   applicant_email?: string;
   applicant_phone?: string;
@@ -87,8 +87,8 @@ serve(async (req) => {
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     // Validate required fields
-    if (!requestBody.payment_instrument_id || !requestBody.idempotency_id) {
-      throw new Error('Missing required payment fields');
+    if (!requestBody.payment_instrument_id || !requestBody.idempotency_id || !requestBody.fraud_session_id) {
+      throw new Error('Missing required payment fields: payment_instrument_id, idempotency_id, and fraud_session_id are required');
     }
 
     // Check for duplicate idempotency ID to prevent double processing
@@ -229,7 +229,7 @@ serve(async (req) => {
             payment_instrument_id: requestBody.payment_instrument_id,
             finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
             payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
-            fraud_session_id: requestBody.fraud_session_id || null,
+            fraud_session_id: requestBody.fraud_session_id,
             idempotency_id: requestBody.idempotency_id,
             service_fee_cents: calculatedServiceFee,
             total_amount_cents: totalAmountCents,
@@ -275,7 +275,7 @@ serve(async (req) => {
             finix_merchant_id: merchant.finix_merchant_id,
             merchant_name: serviceTile.title,
             payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
-            fraud_session_id: requestBody.fraud_session_id || null,
+            fraud_session_id: requestBody.fraud_session_id,
             idempotency_id: requestBody.idempotency_id,
             approved_at: new Date().toISOString()
           })
@@ -306,7 +306,7 @@ serve(async (req) => {
           currency: 'USD',
           payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
           idempotency_id: requestBody.idempotency_id,
-          fraud_session_id: requestBody.fraud_session_id || null,
+          fraud_session_id: requestBody.fraud_session_id,
           transfer_state: 'PENDING',
           card_brand: paymentInstrument.card_brand,
           card_last_four: paymentInstrument.card_last_four,
@@ -363,7 +363,7 @@ serve(async (req) => {
         merchant: merchant.finix_merchant_id,
         source: paymentInstrument.finix_payment_instrument_id,
         idempotency_id: requestBody.idempotency_id,
-        fraud_session_id: requestBody.fraud_session_id || undefined,
+        fraud_session_id: requestBody.fraud_session_id,
       };
 
       console.log('Creating Finix transfer with payload:', JSON.stringify(finixTransferPayload, null, 2));
