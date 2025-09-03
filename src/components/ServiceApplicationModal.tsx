@@ -19,7 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import PaymentSummary from './PaymentSummary';
 import PaymentMethodSelector from './PaymentMethodSelector';
-import PaymentButtonsContainer from './PaymentButtonsContainer';
+
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
