@@ -11,6 +11,7 @@ import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { useServiceApplication } from '@/hooks/useServiceApplication';
 import { useServiceApplicationDocuments } from '@/hooks/useServiceApplicationDocuments';
 import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
+import { useServiceFeeCalculation } from '@/hooks/useServiceFeeCalculation';
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +53,12 @@ const ServiceApplicationDetail: React.FC = () => {
     handleApplePayment,
     loadPaymentInstruments
   } = useServiceApplicationPaymentMethods(application?.tile as any, application?.amount_cents);
+
+  // Service fee calculation hook
+  const feeCalculation = useServiceFeeCalculation(
+    application?.amount_cents || application?.tile?.amount_cents || 0,
+    selectedPaymentMethod
+  );
 
   // Set documents from query
   React.useEffect(() => {
@@ -500,21 +507,12 @@ const ServiceApplicationDetail: React.FC = () => {
                       
                       <PaymentButtonsContainer
                         bill={application}
-                        totalAmount={totalWithFee || 0}
+                        totalAmount={feeCalculation.totalAmount || 0}
                         merchantId={application?.finix_merchant_id}
                         onGooglePayment={() => handleGooglePayment(applicationId!).then(() => {})}
                         onApplePayment={() => handleApplePayment(applicationId!).then(() => {})}
                         isDisabled={isProcessingPayment}
                       />
-                      
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => setIsAddPaymentDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add New Payment Method
-                      </Button>
                     </div>
                   </div>
                   
@@ -524,11 +522,22 @@ const ServiceApplicationDetail: React.FC = () => {
                       <Button 
                         className="w-full" 
                         onClick={handlePayment}
-                        disabled={isProcessingPayment}
+                        disabled={isProcessingPayment || feeCalculation.isLoading}
                       >
-                        {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
+                        {isProcessingPayment ? 'Processing...' : 
+                         feeCalculation.isLoading ? 'Calculating...' : 
+                         `Pay ${formatCurrency(feeCalculation.totalAmount / 100)}`}
                       </Button>
                     )}
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      onClick={() => setIsAddPaymentDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Payment Method
+                    </Button>
                   </div>
                   
                   <p className="text-xs text-muted-foreground">
