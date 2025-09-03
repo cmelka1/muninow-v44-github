@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -24,7 +23,6 @@ interface PaymentHistoryTableProps {
 const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({ filters = {} }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
-  const navigate = useNavigate();
   
   const { data: paymentData, isLoading, error } = usePaymentHistory({ 
     page: currentPage, 
@@ -76,9 +74,6 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({ filters = {} 
     setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
 
-  const handleRowClick = (paymentId: string) => {
-    navigate(`/payment-confirmation/${paymentId}`);
-  };
 
   if (isLoading) {
     return (
@@ -144,8 +139,7 @@ const PaymentHistoryTable: React.FC<PaymentHistoryTableProps> = ({ filters = {} 
               {payments.map((payment) => (
                 <TableRow 
                   key={payment.id} 
-                  className="h-12 hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => handleRowClick(payment.id)}
+                  className="h-12 hover:bg-muted/50 transition-colors"
                 >
                   <TableCell className="hidden sm:table-cell py-2">
                     <span className="truncate">{formatDate(payment.created_at)}</span>
