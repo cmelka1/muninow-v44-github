@@ -49,7 +49,7 @@ export const getStatusDescription = (status: ServiceApplicationStatus): string =
 export const getValidStatusTransitions = (currentStatus: ServiceApplicationStatus): ServiceApplicationStatus[] => {
   const transitions: Record<ServiceApplicationStatus, ServiceApplicationStatus[]> = {
     draft: ['submitted'],
-    submitted: ['under_review', 'withdrawn'],
+    submitted: ['under_review', 'approved', 'denied', 'withdrawn'],
     under_review: ['information_requested', 'approved', 'denied'],
     information_requested: ['resubmitted', 'withdrawn', 'expired'],
     resubmitted: ['under_review'],
