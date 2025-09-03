@@ -105,7 +105,7 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
           </Badge>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="text-center">
         <Input
           type="number"
           placeholder="0.00"
@@ -114,8 +114,8 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
           className="w-full"
         />
       </TableCell>
-      <TableCell>
-        <div className="flex items-center space-x-2">
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center space-x-2">
           <Switch
             checked={requiresInspection}
             onCheckedChange={setRequiresInspection}
@@ -310,8 +310,8 @@ export const PermitsSettingsTab = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Permit Type</TableHead>
-                    <TableHead>Fee</TableHead>
-                    <TableHead>Inspection Required</TableHead>
+                    <TableHead className="text-center">Fee</TableHead>
+                    <TableHead className="text-center">Inspection Required</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -337,7 +337,7 @@ export const PermitsSettingsTab = () => {
                           </div>
                         </TableCell>
                         
-                        <TableCell>
+                        <TableCell className="text-center">
                           <EditableField
                             value={getFieldValue(permit, 'fee_cents', permit.standard_fee_cents) / 100}
                             onChange={(value) => handleFieldChange(permit.permit_type_id, 'fee_cents', value)}
@@ -348,7 +348,7 @@ export const PermitsSettingsTab = () => {
                           />
                         </TableCell>
                         
-                        <TableCell>
+                        <TableCell className="text-center">
                           <EditableField
                             value={getFieldValue(permit, 'requires_inspection', permit.standard_requires_inspection)}
                             onChange={(value) => handleFieldChange(permit.permit_type_id, 'requires_inspection', value)}
