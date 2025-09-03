@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { useServiceApplication } from '@/hooks/useServiceApplication';
 import { useServiceApplicationDocuments } from '@/hooks/useServiceApplicationDocuments';
+import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +19,10 @@ import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatus
 import { Badge } from '@/components/ui/badge';
 import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceApplicationDocumentDialog';
 import { ServiceApplicationCommunication } from '@/components/ServiceApplicationCommunication';
+import PaymentSummary from '@/components/PaymentSummary';
+import PaymentMethodSelector from '@/components/PaymentMethodSelector';
+import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
+import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 
 const ServiceApplicationDetail: React.FC = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -24,13 +30,28 @@ const ServiceApplicationDetail: React.FC = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
+  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
   const { data: application, isLoading, error } = useServiceApplication(applicationId || '');
   const { data: documentsQuery, refetch: refetchDocuments } = useServiceApplicationDocuments(applicationId || '');
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
-  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+
+  // Payment methods hook
+  const {
+    selectedPaymentMethod,
+    setSelectedPaymentMethod,
+    isProcessingPayment,
+    totalWithFee,
+    paymentInstruments,
+    paymentMethodsLoading,
+    handlePaymentWithData,
+    handleGooglePayment,
+    handleApplePayment,
+    loadPaymentInstruments
+  } = useServiceApplicationPaymentMethods(application?.tile as any, application?.amount_cents);
 
   // Set documents from query
   React.useEffect(() => {
@@ -40,6 +61,41 @@ const ServiceApplicationDetail: React.FC = () => {
       setDocumentsError(null);
     }
   }, [documentsQuery]);
+
+  const handlePayment = async () => {
+    if (!application) return;
+    
+    try {
+      const result = await handlePaymentWithData(application);
+      if (result.success) {
+        toast({
+          title: "Payment successful",
+          description: "Your payment has been processed successfully.",
+        });
+        // Optionally refetch application data to update payment status
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        variant: "destructive",
+        title: "Payment failed",
+        description: "There was an error processing your payment. Please try again.",
+      });
+    }
+  };
+
+  const handleAddPaymentMethodSuccess = () => {
+    loadPaymentInstruments();
+    setIsAddPaymentDialogOpen(false);
+    
+    // Auto-select the newly added payment method
+    setTimeout(() => {
+      if (paymentInstruments && paymentInstruments.length > 0) {
+        const newestMethod = paymentInstruments[0]; // Assuming newest is first
+        setSelectedPaymentMethod(newestMethod.id);
+      }
+    }, 500);
+  };
 
   const handleDocumentDownload = async (document: any) => {
     setDownloadingDocument(document.id);
@@ -424,27 +480,59 @@ const ServiceApplicationDetail: React.FC = () => {
               {application.status === 'approved' && application.payment_status !== 'paid' ? (
                 <div className="space-y-4">
                   {/* Payment Summary */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Base Amount</span>
-                      <span className="text-sm">{formatCurrency((application.amount_cents || 0) / 100)}</span>
-                    </div>
-                    {application.service_fee_cents && application.service_fee_cents > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Service Fee</span>
-                        <span className="text-sm">{formatCurrency(application.service_fee_cents / 100)}</span>
-                      </div>
-                    )}
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Total Amount</span>
-                        <span className="font-medium">{formatCurrency((application.total_amount_cents || application.amount_cents || 0) / 100)}</span>
-                      </div>
+                  <PaymentSummary 
+                    baseAmount={application.amount_cents || application.tile?.amount_cents || 0}
+                    selectedPaymentMethod={selectedPaymentMethod}
+                    compact={true}
+                  />
+                  
+                  {/* Payment Method Selection */}
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Payment Method</Label>
+                    <div className="space-y-3">
+                      <PaymentMethodSelector
+                        paymentInstruments={paymentInstruments}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        onSelectPaymentMethod={setSelectedPaymentMethod}
+                        isLoading={paymentMethodsLoading}
+                        maxMethods={5}
+                      />
+                      
+                      <PaymentButtonsContainer
+                        bill={application}
+                        totalAmount={totalWithFee || 0}
+                        merchantId={application?.finix_merchant_id}
+                        onGooglePayment={() => handleGooglePayment(applicationId!).then(() => {})}
+                        onApplePayment={() => handleApplePayment(applicationId!).then(() => {})}
+                        isDisabled={isProcessingPayment}
+                      />
+                      
+                      <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={() => setIsAddPaymentDialogOpen(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add New Payment Method
+                      </Button>
                     </div>
                   </div>
                   
+                  {/* Payment Buttons */}
+                  <div className="space-y-2">
+                    {selectedPaymentMethod && (
+                      <Button 
+                        className="w-full" 
+                        onClick={handlePayment}
+                        disabled={isProcessingPayment}
+                      >
+                        {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
+                      </Button>
+                    )}
+                  </div>
+                  
                   <p className="text-xs text-muted-foreground">
-                    Complete payment to process your application
+                    Complete payment to finalize your service application
                   </p>
                 </div>
               ) : application.payment_status === 'paid' ? (
@@ -454,9 +542,9 @@ const ServiceApplicationDetail: React.FC = () => {
                     Payment Complete
                   </Button>
                   
-                  <p className="text-xs text-green-600 mt-2">
-                    Your application fee has been paid
-                  </p>
+                   <p className="text-xs text-green-600 mt-2">
+                     Your service application fee has been paid
+                   </p>
                 </div>
               ) : (
                 <div className="pt-2">
@@ -524,13 +612,21 @@ const ServiceApplicationDetail: React.FC = () => {
       </div>
 
       <AddServiceApplicationDocumentDialog
+        applicationId={applicationId!}
+        customerId={application?.customer_id || ''}
         open={addDocumentOpen}
         onOpenChange={setAddDocumentOpen}
-        applicationId={applicationId || ''}
-        customerId={application?.customer_id || ''}
         onSuccess={() => {
           refetchDocuments();
+          setAddDocumentOpen(false);
         }}
+      />
+
+      {/* Add Payment Method Dialog */}
+      <AddPaymentMethodDialog
+        open={isAddPaymentDialogOpen}
+        onOpenChange={setIsAddPaymentDialogOpen}
+        onSuccess={handleAddPaymentMethodSuccess}
       />
     </div>
   );
