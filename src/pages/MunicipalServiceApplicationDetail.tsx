@@ -492,9 +492,44 @@ const MunicipalServiceApplicationDetail = () => {
                      application.payment_status === 'processing' ? 'Processing' : 'Pending'}
                   </Badge>
                  </div>
-                
-                {/* Payment Amount Display */}
-                {application.payment_status === 'paid' ? (
+                 
+                 {/* Payment Confirmation Details for Paid Applications */}
+                 {application.payment_status === 'paid' && (
+                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg space-y-2">
+                     <div className="flex items-center gap-2 text-green-700 mb-2">
+                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                       <span className="text-sm font-medium">Payment Confirmed</span>
+                     </div>
+                     
+                     <div className="space-y-1 text-sm">
+                       {application.paid_at && (
+                         <div className="flex justify-between">
+                           <span className="text-muted-foreground">Payment Date:</span>
+                           <span className="font-medium">{formatDate(application.paid_at)}</span>
+                         </div>
+                       )}
+                       {application.payment_method_type && (
+                         <div className="flex justify-between">
+                           <span className="text-muted-foreground">Payment Method:</span>
+                           <span className="font-medium">
+                             {application.payment_method_type === 'BANK_ACCOUNT' ? 'Bank Transfer' : 'Credit/Debit Card'}
+                           </span>
+                         </div>
+                       )}
+                       {application.finix_transfer_id && (
+                         <div className="flex justify-between">
+                           <span className="text-muted-foreground">Transaction ID:</span>
+                           <span className="font-mono text-xs bg-white px-2 py-1 rounded border">
+                             {application.finix_transfer_id.slice(-8)}
+                           </span>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 )}
+                 
+                 {/* Payment Amount Display */}
+                 {application.payment_status === 'paid' ? (
                   // Detailed breakdown for paid applications
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">

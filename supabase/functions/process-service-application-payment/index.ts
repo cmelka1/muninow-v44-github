@@ -87,7 +87,7 @@ serve(async (req) => {
     const requestBody: ProcessServiceApplicationPaymentRequest = await req.json();
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
-    // Check for duplicate idempotency ID
+    // Check for duplicate idempotency ID in payment history
     const { data: existingPayment } = await supabase
       .from('payment_history')
       .select('id')
@@ -97,6 +97,20 @@ serve(async (req) => {
     if (existingPayment) {
       return new Response(
         JSON.stringify({ error: 'Payment already processed with this idempotency ID' }),
+        { status: 409, headers: corsHeaders }
+      );
+    }
+
+    // Check for duplicate in service applications to prevent double payment
+    const { data: existingApplication } = await supabase
+      .from('municipal_service_applications')
+      .select('id, payment_status')
+      .eq('idempotency_id', requestBody.idempotency_id)
+      .single();
+
+    if (existingApplication && existingApplication.payment_status === 'paid') {
+      return new Response(
+        JSON.stringify({ error: 'Application already paid with this idempotency ID' }),
         { status: 409, headers: corsHeaders }
       );
     }
@@ -367,23 +381,39 @@ serve(async (req) => {
       console.log('Payment succeeded, updating records...');
       
       // Update application and payment status for success
-      await supabase
+      const { error: appUpdateError } = await supabase
         .from('municipal_service_applications')
         .update({ 
           status: 'submitted',
           payment_status: 'paid',
-          payment_processed_at: new Date().toISOString()
+          payment_processed_at: new Date().toISOString(),
+          finix_transfer_id: finixData.id,
+          paid_at: new Date().toISOString(),
+          payment_method_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD'
         })
         .eq('id', applicationId);
 
-      await supabase
+      if (appUpdateError) {
+        console.error('Failed to update application payment status:', appUpdateError);
+      } else {
+        console.log('Application payment status updated successfully');
+      }
+
+      const { error: phUpdateError } = await supabase
         .from('payment_history')
         .update({ 
           payment_status: 'paid',
           transfer_state: 'SUCCEEDED',
-          finix_transfer_id: finixData.id
+          finix_transfer_id: finixData.id,
+          payment_processed_at: new Date().toISOString()
         })
         .eq('id', paymentHistoryId);
+
+      if (phUpdateError) {
+        console.error('Failed to update payment history status:', phUpdateError);
+      } else {
+        console.log('Payment history status updated successfully');
+      }
         
     } else if (finixData.state === 'FAILED') {
       console.error('Transfer failed:', finixData);
