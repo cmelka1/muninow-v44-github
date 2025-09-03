@@ -63,14 +63,13 @@ const EditableField: React.FC<EditableFieldProps> = ({
 };
 
 interface NewPermitTypeRowProps {
-  onAdd: (permitType: { name: string; fee_cents: number; processing_days: number; requires_inspection: boolean }) => void;
+  onAdd: (permitType: { name: string; fee_cents: number; requires_inspection: boolean }) => void;
   isLoading: boolean;
 }
 
 const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading }) => {
   const [name, setName] = useState('');
   const [feeCents, setFeeCents] = useState(0);
-  const [processingDays, setProcessingDays] = useState(30);
   const [requiresInspection, setRequiresInspection] = useState(false);
 
   const handleAdd = () => {
@@ -82,14 +81,12 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
     onAdd({
       name: name.trim(),
       fee_cents: Math.round(feeCents * 100),
-      processing_days: processingDays,
       requires_inspection: requiresInspection,
     });
 
     // Reset form
     setName('');
     setFeeCents(0);
-    setProcessingDays(30);
     setRequiresInspection(false);
   };
 
@@ -114,15 +111,6 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
           placeholder="0.00"
           value={feeCents}
           onChange={(e) => setFeeCents(parseFloat(e.target.value) || 0)}
-          className="w-full"
-        />
-      </TableCell>
-      <TableCell>
-        <Input
-          type="number"
-          placeholder="30"
-          value={processingDays}
-          onChange={(e) => setProcessingDays(parseInt(e.target.value) || 30)}
           className="w-full"
         />
       </TableCell>
@@ -211,9 +199,6 @@ export const PermitsSettingsTab = () => {
           case 'fee_cents':
             acc[permitTypeId].base_fee_cents = Math.round(value * 100);
             break;
-          case 'processing_days':
-            acc[permitTypeId].processing_days = value;
-            break;
           case 'requires_inspection':
             acc[permitTypeId].requires_inspection = value;
             break;
@@ -247,12 +232,12 @@ export const PermitsSettingsTab = () => {
     setIsEditMode(false);
   };
 
-  const handleAddCustomType = async (permitType: { name: string; fee_cents: number; processing_days: number; requires_inspection: boolean }) => {
+  const handleAddCustomType = async (permitType: { name: string; fee_cents: number; requires_inspection: boolean }) => {
     try {
       await createMutation.mutateAsync({
         municipal_label: permitType.name,
         base_fee_cents: permitType.fee_cents,
-        processing_days: permitType.processing_days,
+        processing_days: 30, // Default processing days since column is hidden
         requires_inspection: permitType.requires_inspection,
         is_custom: true,
       });
@@ -326,7 +311,6 @@ export const PermitsSettingsTab = () => {
                   <TableRow>
                     <TableHead>Permit Type</TableHead>
                     <TableHead>Fee</TableHead>
-                    <TableHead>Processing Days</TableHead>
                     <TableHead>Inspection Required</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -360,16 +344,6 @@ export const PermitsSettingsTab = () => {
                             type="number"
                             prefix="$"
                             placeholder={formatCurrency(permit.standard_fee_cents)}
-                            isEditMode={isEditMode}
-                          />
-                        </TableCell>
-                        
-                        <TableCell>
-                          <EditableField
-                            value={getFieldValue(permit, 'processing_days', permit.standard_processing_days)}
-                            onChange={(value) => handleFieldChange(permit.permit_type_id, 'processing_days', value)}
-                            type="number"
-                            placeholder={`${permit.standard_processing_days} days`}
                             isEditMode={isEditMode}
                           />
                         </TableCell>
