@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Data Structures
 interface ProcessServiceApplicationPaymentRequest {
+  application_id?: string; // Add application ID for existing applications
   tile_id: string;
   amount_cents: number;
   payment_instrument_id: string;
@@ -87,6 +88,41 @@ serve(async (req) => {
     const requestBody: ProcessServiceApplicationPaymentRequest = await req.json();
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
+    // First, check if we're paying for an existing application
+    let existingApplication = null;
+    if (requestBody.application_id) {
+      const { data: app, error: appError } = await supabase
+        .from('municipal_service_applications')
+        .select('id, payment_status, status, user_id')
+        .eq('id', requestBody.application_id)
+        .eq('user_id', user.id) // Ensure user owns this application
+        .single();
+
+      if (appError) {
+        console.error('Error fetching existing application:', appError);
+        return new Response(
+          JSON.stringify({ error: 'Application not found or access denied' }),
+          { status: 404, headers: corsHeaders }
+        );
+      }
+
+      if (app.payment_status === 'paid') {
+        return new Response(
+          JSON.stringify({ error: 'Application has already been paid for' }),
+          { status: 409, headers: corsHeaders }
+        );
+      }
+
+      if (app.status !== 'approved') {
+        return new Response(
+          JSON.stringify({ error: 'Application must be approved before payment' }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      existingApplication = app;
+    }
+
     // Check for duplicate idempotency ID in payment history
     const { data: existingPayment } = await supabase
       .from('payment_history')
@@ -97,20 +133,6 @@ serve(async (req) => {
     if (existingPayment) {
       return new Response(
         JSON.stringify({ error: 'Payment already processed with this idempotency ID' }),
-        { status: 409, headers: corsHeaders }
-      );
-    }
-
-    // Check for duplicate in service applications to prevent double payment
-    const { data: existingApplication } = await supabase
-      .from('municipal_service_applications')
-      .select('id, payment_status')
-      .eq('idempotency_id', requestBody.idempotency_id)
-      .single();
-
-    if (existingApplication && existingApplication.payment_status === 'paid') {
-      return new Response(
-        JSON.stringify({ error: 'Application already paid with this idempotency ID' }),
         { status: 409, headers: corsHeaders }
       );
     }
@@ -191,50 +213,83 @@ serve(async (req) => {
       ? 'https://finix.payments-api.com'
       : 'https://finix.sandbox-payments-api.com';
 
-    // Create service application record directly
-    const { data: application, error: appError } = await supabase
-      .from('municipal_service_applications')
-      .insert({
-        tile_id: requestBody.tile_id,
-        user_id: user.id,
-        customer_id: serviceTile.customer_id,
-        applicant_name: requestBody.applicant_name || null,
-        applicant_email: requestBody.applicant_email || null,
-        applicant_phone: requestBody.applicant_phone || null,
-        business_legal_name: requestBody.business_legal_name || null,
-        street_address: requestBody.street_address || null,
-        apt_number: requestBody.apt_number || null,
-        city: requestBody.city || null,
-        state: requestBody.state || null,
-        zip_code: requestBody.zip_code || null,
-        additional_information: requestBody.additional_information || null,
-        service_specific_data: requestBody.service_specific_data || {},
-        status: 'draft',
-        payment_status: 'pending',
-        amount_cents: requestBody.amount_cents,
-        service_fee_cents: calculatedServiceFee,
-        total_amount_cents: totalAmountCents,
-        payment_instrument_id: requestBody.payment_instrument_id,
-        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        merchant_id: serviceTile.merchant_id,
-        finix_merchant_id: serviceTile.finix_merchant_id,
-        merchant_name: serviceTile.title,
-      payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
-        fraud_session_id: requestBody.fraud_session_id || null,
-        idempotency_id: requestBody.idempotency_id
-      })
-      .select()
-      .single();
+    // Use existing application or create new one if not provided
+    let application;
+    if (existingApplication) {
+      // Update existing application with payment details
+      const { data: updatedApp, error: updateError } = await supabase
+        .from('municipal_service_applications')
+        .update({
+          payment_status: 'pending',
+          payment_instrument_id: requestBody.payment_instrument_id,
+          finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+          payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
+          fraud_session_id: requestBody.fraud_session_id || null,
+          idempotency_id: requestBody.idempotency_id,
+          service_fee_cents: calculatedServiceFee,
+          total_amount_cents: totalAmountCents
+        })
+        .eq('id', existingApplication.id)
+        .select()
+        .single();
 
-    if (appError || !application) {
-      console.error('Failed to create service application:', appError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create service application' }),
-        { status: 400, headers: corsHeaders }
-      );
+      if (updateError || !updatedApp) {
+        console.error('Failed to update existing application:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to update application for payment' }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      application = updatedApp;
+      console.log('Updated existing application for payment:', application.id);
+    } else {
+      // Create new service application record
+      const { data: newApp, error: appError } = await supabase
+        .from('municipal_service_applications')
+        .insert({
+          tile_id: requestBody.tile_id,
+          user_id: user.id,
+          customer_id: serviceTile.customer_id,
+          applicant_name: requestBody.applicant_name || null,
+          applicant_email: requestBody.applicant_email || null,
+          applicant_phone: requestBody.applicant_phone || null,
+          business_legal_name: requestBody.business_legal_name || null,
+          street_address: requestBody.street_address || null,
+          apt_number: requestBody.apt_number || null,
+          city: requestBody.city || null,
+          state: requestBody.state || null,
+          zip_code: requestBody.zip_code || null,
+          additional_information: requestBody.additional_information || null,
+          service_specific_data: requestBody.service_specific_data || {},
+          status: 'draft',
+          payment_status: 'pending',
+          amount_cents: requestBody.amount_cents,
+          service_fee_cents: calculatedServiceFee,
+          total_amount_cents: totalAmountCents,
+          payment_instrument_id: requestBody.payment_instrument_id,
+          finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+          merchant_id: serviceTile.merchant_id,
+          finix_merchant_id: serviceTile.finix_merchant_id,
+          merchant_name: serviceTile.title,
+          payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
+          fraud_session_id: requestBody.fraud_session_id || null,
+          idempotency_id: requestBody.idempotency_id
+        })
+        .select()
+        .single();
+
+      if (appError || !newApp) {
+        console.error('Failed to create service application:', appError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to create service application' }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      application = newApp;
+      console.log('Service application created:', application.id);
     }
-
-    console.log('Service application created:', application.id);
 
     // Create payment history record
     const { data: paymentHistory, error: phError } = await supabase

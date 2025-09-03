@@ -206,13 +206,15 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     setIsProcessingPayment(true);
 
     try {
-      // Generate idempotency ID for payment safety
-      const idempotencyId = generateIdempotencyId('service-app', applicationData.tile_id);
+      // Generate idempotency ID for payment safety using application ID if available
+      const uniqueId = applicationData.id || applicationData.tile_id;
+      const idempotencyId = generateIdempotencyId('service-app', uniqueId);
       console.log('Generated idempotency ID:', idempotencyId);
 
       const { data, error } = await supabase.functions.invoke('process-service-application-payment', {
         body: {
           ...applicationData,
+          application_id: applicationData.id, // Pass application ID if paying for existing application
           payment_instrument_id: selectedPaymentMethod,
           amount_cents: baseAmount,
           idempotency_id: idempotencyId,
