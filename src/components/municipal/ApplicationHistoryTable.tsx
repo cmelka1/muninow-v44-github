@@ -79,13 +79,11 @@ export function ApplicationHistoryTable({
   const getPaymentStatusBadge = (paymentStatus: string) => {
     switch (paymentStatus) {
       case 'unpaid':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Unpaid</Badge>;
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Unpaid</Badge>;
       case 'paid':
         return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Paid</Badge>;
-      case 'partially_paid':
-        return <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">Partially Paid</Badge>;
       default:
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Unpaid</Badge>;
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Unpaid</Badge>;
     }
   };
 

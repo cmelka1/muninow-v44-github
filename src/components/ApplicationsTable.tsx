@@ -126,9 +126,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
       case 'paid':
         return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
       case 'unpaid':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800">Unpaid</Badge>;
-      case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+        return <Badge variant="secondary" className="bg-amber-100 text-amber-800">Unpaid</Badge>;
       case 'refunded':
         return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Refunded</Badge>;
       case 'failed':

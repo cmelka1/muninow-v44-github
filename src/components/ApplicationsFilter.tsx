@@ -31,6 +31,7 @@ const ApplicationsFilter: React.FC<ApplicationsFilterProps> = ({ filters, onFilt
     { value: 'denied', label: 'Denied' },
     { value: 'issued', label: 'Issued' },
     { value: 'paid', label: 'Paid' },
+    { value: 'unpaid', label: 'Unpaid' },
   ];
 
   const dateRangeOptions = [

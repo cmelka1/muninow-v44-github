@@ -220,7 +220,7 @@ serve(async (req) => {
       const { data: updatedApp, error: updateError } = await supabase
         .from('municipal_service_applications')
         .update({
-          payment_status: 'pending',
+          payment_status: 'unpaid',
           payment_instrument_id: requestBody.payment_instrument_id,
           finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
           payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
@@ -263,7 +263,7 @@ serve(async (req) => {
           additional_information: requestBody.additional_information || null,
           service_specific_data: requestBody.service_specific_data || {},
           status: 'draft',
-          payment_status: 'pending',
+          payment_status: 'unpaid',
           amount_cents: requestBody.amount_cents,
           service_fee_cents: calculatedServiceFee,
           total_amount_cents: totalAmountCents,
@@ -329,7 +329,7 @@ serve(async (req) => {
         issue_date: new Date().toISOString(),
         due_date: new Date().toISOString(),
         original_amount_cents: requestBody.amount_cents,
-        payment_status: 'pending',
+        payment_status: 'unpaid',
         bill_status: 'unpaid'
       })
       .select()

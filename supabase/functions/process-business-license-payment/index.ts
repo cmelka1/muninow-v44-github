@@ -216,7 +216,7 @@ serve(async (req) => {
         issue_date: license.created_at,
         due_date: license.created_at, // Licenses are due immediately upon approval
         original_amount_cents: baseAmount,
-        payment_status: 'pending',
+        payment_status: 'unpaid',
         bill_status: 'unpaid'
       })
       .select()

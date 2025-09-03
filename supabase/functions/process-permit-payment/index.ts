@@ -217,7 +217,7 @@ serve(async (req) => {
         issue_date: permit.created_at,
         due_date: permit.created_at, // Permits are due immediately upon approval
         original_amount_cents: permitBaseAmount,
-        payment_status: 'pending',
+        payment_status: 'unpaid',
         bill_status: 'unpaid'
       })
       .select()
