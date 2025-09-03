@@ -60,6 +60,11 @@ const navigationItems = [
     title: 'Profile',
     icon: User,
     url: '/municipal/profile'
+  },
+  {
+    title: 'Municipal Settings',
+    icon: Settings,
+    url: '/municipal/municipal-settings'
   }
 ];
 
