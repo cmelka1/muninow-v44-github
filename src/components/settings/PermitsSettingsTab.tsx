@@ -173,8 +173,8 @@ export const PermitsSettingsTab = () => {
           updates.requires_inspection = value;
           break;
         case 'merchant_id':
-          updates.merchant_id = value;
-          updates.merchant_name = merchants.find(m => m.id === value)?.merchant_name || null;
+          updates.merchant_id = value === 'none' ? null : value;
+          updates.merchant_name = value === 'none' ? null : merchants.find(m => m.id === value)?.merchant_name || null;
           break;
         case 'is_active':
           updates.is_active = value;
@@ -212,10 +212,13 @@ export const PermitsSettingsTab = () => {
     }
   };
 
-  const merchantOptions = merchants.map(m => ({
-    value: m.id,
-    label: `${m.merchant_name} (${m.subcategory || 'General'})`
-  }));
+  const merchantOptions = [
+    { value: 'none', label: 'No merchant assigned' },
+    ...merchants.map(m => ({
+      value: m.id,
+      label: `${m.merchant_name} (${m.subcategory || 'General'})`
+    }))
+  ];
 
   const getFieldValue = (permit: any, field: string, defaultValue: any) => {
     const customValue = permit[`custom_${field}`];
@@ -322,13 +325,10 @@ export const PermitsSettingsTab = () => {
                         
                         <TableCell>
                           <InlineEditField
-                            value={permit.merchant_id || ''}
+                            value={permit.merchant_id || 'none'}
                             onSave={(value) => handleFieldUpdate(permit.permit_type_id, 'merchant_id', value)}
                             type="select"
-                            options={[
-                              { value: '', label: 'No merchant assigned' },
-                              ...merchantOptions
-                            ]}
+                            options={merchantOptions}
                             placeholder="Select merchant"
                             isLoading={isFieldLoading(permit.permit_type_id, 'merchant_id')}
                           />
