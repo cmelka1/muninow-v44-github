@@ -4211,7 +4211,9 @@ export type Database = {
         Returns: unknown
       }
       has_permission: {
-        Args: { _entity_id?: string; _permission: string; _user_id: string }
+        Args:
+          | { _entity_id?: string; _permission: string; _user_id: string }
+          | { permission_name: string }
         Returns: boolean
       }
       has_role: {
