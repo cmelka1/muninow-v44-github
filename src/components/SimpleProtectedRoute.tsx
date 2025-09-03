@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/SimpleAuthContext';
 interface SimpleProtectedRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
-  requireAccountType?: 'resident' | 'municipal' | 'superadmin';
+  requireAccountType?: 'resident' | 'municipal' | 'superAdmin';
   requireCustomerId?: boolean;
 }
 

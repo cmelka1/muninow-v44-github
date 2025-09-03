@@ -16,7 +16,7 @@ export const useUserRole = (): UseUserRoleReturn => {
     const roleMapping: Record<string, string[]> = {
       'residentUser': ['resident'],
       'residentAdmin': ['resident'],
-      'superAdmin': ['superadmin'],
+      'superAdmin': ['superAdmin'], // Fixed: Use camelCase to match database
       'municipalUser': ['municipal'],
       'municipalAdmin': ['municipal']
     };

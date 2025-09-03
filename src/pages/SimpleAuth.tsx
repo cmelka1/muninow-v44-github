@@ -31,9 +31,10 @@ const SimpleAuth = () => {
   // Dynamic navigation based on user type
   useEffect(() => {
     if (user && profile) {
+      console.log('Navigation check - user:', user.id, 'profile:', profile);
       if (profile.account_type === 'municipal') {
         navigate('/municipal/dashboard');
-      } else if (profile.account_type === 'superadmin') {
+      } else if (profile.account_type === 'superAdmin') { // Fixed: Use camelCase
         navigate('/superadmin/dashboard');
       } else {
         navigate('/dashboard');

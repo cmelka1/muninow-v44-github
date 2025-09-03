@@ -41,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadProfile = async (userId: string) => {
     try {
+      console.log('Loading profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -53,12 +54,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
+        console.log('Profile loaded:', data);
         setProfile({
           user_id: data.id,
           account_type: data.account_type || 'resident',
           customer_id: data.customer_id,
           ...data
         });
+      } else {
+        console.log('No profile found for user');
+        setProfile(null);
       }
     } catch (err) {
       console.error('Profile loading error:', err);
@@ -66,38 +71,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let profileLoading = false;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Load profile in a setTimeout to avoid potential deadlocks
-          setTimeout(() => {
-            loadProfile(session.user.id);
-          }, 0);
-        } else {
+        if (session?.user && !profileLoading) {
+          profileLoading = true;
+          await loadProfile(session.user.id);
+          profileLoading = false;
+        } else if (!session?.user) {
           setProfile(null);
         }
         
-        setIsLoading(false);
+        // Only set loading to false after profile is loaded (or no user)
+        if (!session?.user || profile !== null) {
+          setIsLoading(false);
+        }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Initial session check:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
-      if (session?.user) {
-        setTimeout(() => {
-          loadProfile(session.user.id);
-        }, 0);
+      if (session?.user && !profileLoading) {
+        profileLoading = true;
+        await loadProfile(session.user.id);
+        profileLoading = false;
       }
       
       setIsLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     return () => subscription.unsubscribe();
   }, []);

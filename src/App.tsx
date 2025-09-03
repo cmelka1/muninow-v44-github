@@ -177,32 +177,32 @@ const App = () => (
                 <Route path="/cookies" element={<CookiesPolicy />} />
                 <Route path="/accessibility" element={<Accessibility />} />
                 <Route path="/superadmin/dashboard" element={
-                  <SimpleProtectedRoute requireAccountType="superadmin">
+                  <SimpleProtectedRoute requireAccountType="superAdmin">
                     <SuperAdminDashboard />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/superadmin/profile" element={
-                  <SimpleProtectedRoute requireAccountType="superadmin">
+                  <SimpleProtectedRoute requireAccountType="superAdmin">
                     <SuperAdminProfile />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/superadmin/notifications" element={
-                  <SimpleProtectedRoute requireAccountType="superadmin">
+                  <SimpleProtectedRoute requireAccountType="superAdmin">
                     <Notifications />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/superadmin/customers" element={
-                  <SimpleProtectedRoute requireAccountType="superadmin">
+                  <SimpleProtectedRoute requireAccountType="superAdmin">
                     <SuperAdminCustomers />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/superadmin/customers/:customerId" element={
-                  <SimpleProtectedRoute requireAccountType="superadmin">
+                  <SimpleProtectedRoute requireAccountType="superAdmin">
                     <SuperAdminCustomerDetail />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/superadmin/customers/:customerId/merchants/:merchantId" element={
-                  <SimpleProtectedRoute requireAccountType="superadmin">
+                  <SimpleProtectedRoute requireAccountType="superAdmin">
                     <SuperAdminMerchantDetail />
                   </SimpleProtectedRoute>
                 } />
