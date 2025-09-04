@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
-import { Edit2, Save, X, Upload, Plus, FileText, ExternalLink } from 'lucide-react';
+import { Edit2, Save, X, Upload, Plus, FileText, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -211,6 +211,31 @@ export const TaxesSettingsTab = () => {
     }
   };
 
+  const handleDocumentDownload = async (documentPath: string) => {
+    try {
+      const { data } = supabase.storage
+        .from('tax-instructions')
+        .getPublicUrl(documentPath);
+      
+      if (data?.publicUrl) {
+        // Create a temporary anchor element to trigger download
+        const link = document.createElement('a');
+        link.href = data.publicUrl;
+        link.download = documentPath.split('/').pop() || 'document';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        title: "Download Error",
+        description: "Failed to download the document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleFileUpload = async (file: File, taxTypeId: string) => {
     try {
       const filePath = await uploadDocumentMutation.mutateAsync({ file, taxTypeId });
@@ -308,17 +333,10 @@ export const TaxesSettingsTab = () => {
                               <Button 
                                 size="sm" 
                                 variant="ghost" 
-                                onClick={() => {
-                                  const { data } = supabase.storage
-                                    .from('tax-instructions')
-                                    .getPublicUrl(taxType.instructions_document_path);
-                                  if (data?.publicUrl) {
-                                    window.open(data.publicUrl, '_blank');
-                                  }
-                                }}
+                                onClick={() => handleDocumentDownload(taxType.instructions_document_path!)}
                                 className="h-6 px-2"
                               >
-                                <ExternalLink className="h-3 w-3" />
+                                <Download className="h-3 w-3" />
                               </Button>
                             </div>
                           ) : (
