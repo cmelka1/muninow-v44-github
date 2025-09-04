@@ -1422,7 +1422,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                   <div>
                     <Label className="text-xs text-muted-foreground">Estimated Value</Label>
                     <p className="text-sm font-medium">
-                      {propertyInfo.estimatedValue ? formatCurrency(propertyInfo.estimatedValue / 100) : 'Not provided'}
+                      {propertyInfo.estimatedValue ? formatCurrency(propertyInfo.estimatedValue) : 'Not provided'}
                     </p>
                   </div>
                 </div>
