@@ -19,6 +19,7 @@ export interface MunicipalBusinessLicenseType {
 
 interface CreateMunicipalBusinessLicenseTypeData {
   customer_id: string;
+  business_license_type_id?: string;
   merchant_id: string | null;
   merchant_name: string | null;
   municipal_label: string;
@@ -40,15 +41,16 @@ export const useMunicipalBusinessLicenseTypes = (customerId?: string) => {
     queryFn: async () => {
       if (!customerId) return [];
 
-      const { data, error } = await supabase
-        .rpc('get_municipal_business_license_types', { p_customer_id: customerId });
+      const { data, error } = await supabase.rpc('get_municipal_business_license_types', { 
+        p_customer_id: customerId 
+      });
 
       if (error) {
         console.error('Error fetching municipal business license types:', error);
         throw error;
       }
 
-      return (data as any[]) || [];
+      return (data as MunicipalBusinessLicenseType[]) || [];
     },
     enabled: !!customerId,
   });
@@ -60,11 +62,16 @@ export const useCreateMunicipalBusinessLicenseType = () => {
 
   return useMutation({
     mutationFn: async (data: CreateMunicipalBusinessLicenseTypeData) => {
-      const { data: result, error } = await supabase
-        .from('municipal_business_license_types')
-        .insert([data])
-        .select()
-        .single();
+      const { data: result, error } = await supabase.rpc('create_municipal_business_license_type', {
+        p_customer_id: data.customer_id,
+        p_business_license_type_id: data.business_license_type_id || null,
+        p_merchant_id: data.merchant_id,
+        p_merchant_name: data.merchant_name,
+        p_municipal_label: data.municipal_label,
+        p_base_fee_cents: data.base_fee_cents,
+        p_is_custom: data.is_custom ?? true,
+        p_display_order: data.display_order ?? 999
+      });
 
       if (error) throw error;
       return result;
@@ -95,19 +102,21 @@ export const useUpdateMunicipalBusinessLicenseType = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateMunicipalBusinessLicenseTypeData }) => {
-      const { data: result, error } = await supabase
-        .from('municipal_business_license_types')
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single();
+      const { data: result, error } = await supabase.rpc('update_municipal_business_license_type', {
+        p_id: id,
+        p_municipal_label: data.municipal_label || null,
+        p_base_fee_cents: data.base_fee_cents || null,
+        p_is_active: data.is_active ?? null,
+        p_display_order: data.display_order || null
+      });
 
       if (error) throw error;
       return result;
     },
-    onSuccess: (result) => {
+    onSuccess: (_, variables) => {
+      // Invalidate all municipal business license types queries since we don't have customer_id here
       queryClient.invalidateQueries({
-        queryKey: ['municipal_business_license_types', result.customer_id]
+        queryKey: ['municipal_business_license_types']
       });
       toast({
         title: 'Success',
@@ -131,19 +140,20 @@ export const useDeleteMunicipalBusinessLicenseType = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data: result, error } = await supabase
-        .from('municipal_business_license_types')
-        .update({ is_active: false })
-        .eq('id', id)
-        .select()
-        .single();
+      const { data: result, error } = await supabase.rpc('update_municipal_business_license_type', {
+        p_id: id,
+        p_municipal_label: null,
+        p_base_fee_cents: null,
+        p_is_active: false,
+        p_display_order: null
+      });
 
       if (error) throw error;
       return result;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['municipal_business_license_types', result.customer_id]
+        queryKey: ['municipal_business_license_types']
       });
       toast({
         title: 'Success',
@@ -155,6 +165,39 @@ export const useDeleteMunicipalBusinessLicenseType = () => {
       toast({
         title: 'Error',
         description: 'Failed to delete business license type.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useInitializeMunicipalBusinessLicenseTypes = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (customerId: string) => {
+      const { data: result, error } = await supabase.rpc('initialize_standard_business_license_types', {
+        p_customer_id: customerId
+      });
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: (_, customerId) => {
+      queryClient.invalidateQueries({
+        queryKey: ['municipal_business_license_types', customerId]
+      });
+      toast({
+        title: 'Success',
+        description: 'Standard business license types initialized successfully.',
+      });
+    },
+    onError: (error) => {
+      console.error('Error initializing business license types:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to initialize business license types.',
         variant: 'destructive',
       });
     },

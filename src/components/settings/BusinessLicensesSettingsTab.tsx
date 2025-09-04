@@ -1,55 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Pencil, Trash2, Plus } from 'lucide-react';
-import { useCustomer } from '@/hooks/useCustomer';
+import { Pencil, Trash2, Plus, Save, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useBusinessLicensesMerchant } from '@/hooks/useBusinessLicensesMerchant';
-import { useMunicipalBusinessLicenseTypes, useCreateMunicipalBusinessLicenseType, useUpdateMunicipalBusinessLicenseType, useDeleteMunicipalBusinessLicenseType } from '@/hooks/useMunicipalBusinessLicenseTypes';
-import { useBusinessLicenseTypes } from '@/hooks/useBusinessLicenseTypes';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  useMunicipalBusinessLicenseTypes, 
+  useCreateMunicipalBusinessLicenseType, 
+  useUpdateMunicipalBusinessLicenseType, 
+  useDeleteMunicipalBusinessLicenseType,
+  useInitializeMunicipalBusinessLicenseTypes,
+  type MunicipalBusinessLicenseType
+} from '@/hooks/useMunicipalBusinessLicenseTypes';
+import { formatCurrency } from '@/lib/formatters';
 
 export const BusinessLicensesSettingsTab = () => {
-  const { customer } = useCustomer();
-  const { data: businessLicensesMerchant } = useBusinessLicensesMerchant(customer?.customer_id);
-  const { data: municipalTypes = [] } = useMunicipalBusinessLicenseTypes(customer?.customer_id);
-  const { data: standardTypes = [] } = useBusinessLicenseTypes({ customerId: customer?.customer_id });
+  const { profile } = useAuth();
+  const { data: businessLicensesMerchant } = useBusinessLicensesMerchant(profile?.customer_id);
+  const { data: municipalTypes = [], isLoading } = useMunicipalBusinessLicenseTypes(profile?.customer_id);
   
   const createMutation = useCreateMunicipalBusinessLicenseType();
   const updateMutation = useUpdateMunicipalBusinessLicenseType();
   const deleteMutation = useDeleteMunicipalBusinessLicenseType();
+  const initializeMutation = useInitializeMunicipalBusinessLicenseTypes();
   
-  const { toast } = useToast();
-  
-  const [editingType, setEditingType] = useState<any>(null);
+  const [editingType, setEditingType] = useState<MunicipalBusinessLicenseType | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     municipal_label: '',
     base_fee_cents: 0,
   });
 
-  // Initialize municipal types from standard types if none exist
-  React.useEffect(() => {
-    if (customer?.customer_id && businessLicensesMerchant && municipalTypes.length === 0 && standardTypes.length > 0) {
-      // Create municipal entries for each standard type
-      standardTypes.forEach((standardType, index) => {
-        createMutation.mutate({
-          customer_id: customer.customer_id,
-          merchant_id: businessLicensesMerchant.id,
-          merchant_name: businessLicensesMerchant.merchant_name,
-          municipal_label: standardType.name,
-          base_fee_cents: standardType.base_fee_cents,
-          is_custom: false,
-          display_order: index,
-        });
-      });
+  // Initialize standard types if none exist
+  useEffect(() => {
+    if (profile?.customer_id && municipalTypes.length === 0 && !isLoading && businessLicensesMerchant) {
+      initializeMutation.mutate(profile.customer_id);
     }
-  }, [customer, businessLicensesMerchant, municipalTypes, standardTypes]);
+  }, [profile?.customer_id, municipalTypes.length, isLoading, businessLicensesMerchant, initializeMutation]);
 
-  const handleEdit = (type: any) => {
+  const handleEdit = (type: MunicipalBusinessLicenseType) => {
     setEditingType(type);
     setFormData({
       municipal_label: type.municipal_label,
@@ -66,42 +59,43 @@ export const BusinessLicensesSettingsTab = () => {
         municipal_label: formData.municipal_label,
         base_fee_cents: formData.base_fee_cents,
       }
+    }, {
+      onSuccess: () => {
+        setEditingType(null);
+      }
     });
-    setEditingType(null);
   };
 
-  const handleDelete = (type: any) => {
+  const handleCancelEdit = () => {
+    setEditingType(null);
+    setFormData({ municipal_label: '', base_fee_cents: 0 });
+  };
+
+  const handleDelete = (type: MunicipalBusinessLicenseType) => {
+    if (!type.is_custom) return; // Only allow deletion of custom types
+    
     if (window.confirm(`Are you sure you want to delete "${type.municipal_label}"?`)) {
       deleteMutation.mutate(type.id);
     }
   };
 
   const handleCreate = () => {
-    if (!customer?.customer_id || !businessLicensesMerchant) {
-      toast({
-        title: 'Error',
-        description: 'Unable to create business license type. Missing customer or merchant information.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    if (!profile?.customer_id || !businessLicensesMerchant) return;
 
     createMutation.mutate({
-      customer_id: customer.customer_id,
+      customer_id: profile.customer_id,
       merchant_id: businessLicensesMerchant.id,
       merchant_name: businessLicensesMerchant.merchant_name,
       municipal_label: formData.municipal_label,
       base_fee_cents: formData.base_fee_cents,
       is_custom: true,
       display_order: municipalTypes.length,
+    }, {
+      onSuccess: () => {
+        setFormData({ municipal_label: '', base_fee_cents: 0 });
+        setIsCreateDialogOpen(false);
+      }
     });
-    
-    setFormData({ municipal_label: '', base_fee_cents: 0 });
-    setIsCreateDialogOpen(false);
-  };
-
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
   };
 
   const parseCurrencyToCents = (value: string) => {
@@ -109,7 +103,7 @@ export const BusinessLicensesSettingsTab = () => {
     return Math.round((isNaN(numericValue) ? 0 : numericValue) * 100);
   };
 
-  if (!customer) {
+  if (!profile?.customer_id) {
     return (
       <div className="space-y-6">
         <Card>
@@ -181,9 +175,16 @@ export const BusinessLicensesSettingsTab = () => {
           </Dialog>
         </CardHeader>
         <CardContent>
-          {municipalTypes.length === 0 ? (
+          {isLoading || initializeMutation.isPending ? (
             <p className="text-muted-foreground text-center py-8">
-              No business license types configured yet. Standard types will be loaded automatically.
+              {initializeMutation.isPending 
+                ? 'Initializing standard business license types...' 
+                : 'Loading business license types...'
+              }
+            </p>
+          ) : municipalTypes.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              No business license types configured yet.
             </p>
           ) : (
             <Table>
@@ -222,7 +223,7 @@ export const BusinessLicensesSettingsTab = () => {
                           />
                         </div>
                       ) : (
-                        <span className="font-mono">{formatCurrency(type.base_fee_cents)}</span>
+                        <span className="font-mono">{formatCurrency(type.base_fee_cents / 100)}</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -232,7 +233,7 @@ export const BusinessLicensesSettingsTab = () => {
                             <Button size="sm" onClick={handleSaveEdit}>
                               Save
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => setEditingType(null)}>
+                            <Button size="sm" variant="outline" onClick={handleCancelEdit}>
                               Cancel
                             </Button>
                           </>

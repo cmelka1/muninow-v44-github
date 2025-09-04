@@ -3987,6 +3987,19 @@ export type Database = {
         Args: { p_staging_id: string; p_tax_submission_id: string }
         Returns: undefined
       }
+      create_municipal_business_license_type: {
+        Args: {
+          p_base_fee_cents: number
+          p_business_license_type_id: string
+          p_customer_id: string
+          p_display_order?: number
+          p_is_custom?: boolean
+          p_merchant_id: string
+          p_merchant_name: string
+          p_municipal_label: string
+        }
+        Returns: string
+      }
       create_municipal_team_invitation: {
         Args: {
           p_customer_id: string
@@ -4176,6 +4189,23 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_municipal_business_license_types: {
+        Args: { p_customer_id: string }
+        Returns: {
+          base_fee_cents: number
+          business_license_type_id: string
+          created_at: string
+          customer_id: string
+          display_order: number
+          id: string
+          is_active: boolean
+          is_custom: boolean
+          merchant_id: string
+          merchant_name: string
+          municipal_label: string
+          updated_at: string
+        }[]
+      }
       get_municipal_questions: {
         Args: { p_customer_id: string; p_merchant_id?: string }
         Returns: {
@@ -4339,6 +4369,10 @@ export type Database = {
         Args: { _entity_id?: string; _role: string; _user_id: string }
         Returns: boolean
       }
+      initialize_standard_business_license_types: {
+        Args: { p_customer_id: string }
+        Returns: boolean
+      }
       is_business_admin: {
         Args: { business_id: string }
         Returns: boolean
@@ -4401,6 +4435,16 @@ export type Database = {
       smart_bill_matching: {
         Args: { input_bill_id: string }
         Returns: undefined
+      }
+      update_municipal_business_license_type: {
+        Args: {
+          p_base_fee_cents?: number
+          p_display_order?: number
+          p_id: string
+          p_is_active?: boolean
+          p_municipal_label?: string
+        }
+        Returns: boolean
       }
       update_municipal_team_member_role: {
         Args: { p_customer_id: string; p_member_id: string; p_new_role: string }
