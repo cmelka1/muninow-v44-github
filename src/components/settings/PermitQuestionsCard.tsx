@@ -71,7 +71,7 @@ const NewQuestionRow: React.FC<{
       <TableCell className="text-center">
         <Switch checked={true} disabled />
       </TableCell>
-      <TableCell>
+      <TableCell className="text-center">
         <Button 
           onClick={handleAdd} 
           size="sm" 
