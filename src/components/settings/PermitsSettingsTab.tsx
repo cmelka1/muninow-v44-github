@@ -16,6 +16,7 @@ import { Edit2, Save, X, Plus } from 'lucide-react';
 import { usePermitTypesWithCustomizations, useUpsertMunicipalPermitType, useCreateMunicipalPermitType, useMunicipalPermitTypes } from '@/hooks/useMunicipalPermitTypes';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
+import { PermitQuestionsCard } from './PermitQuestionsCard';
 
 interface EditableFieldProps {
   value: string | number | boolean;
@@ -375,6 +376,8 @@ export const PermitsSettingsTab = () => {
           )}
         </CardContent>
       </Card>
+      
+      <PermitQuestionsCard />
     </div>
   );
 };
