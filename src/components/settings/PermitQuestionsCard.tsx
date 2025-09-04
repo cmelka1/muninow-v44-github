@@ -123,7 +123,7 @@ const NewQuestionRow: React.FC<{
   const [questionText, setQuestionText] = useState('');
   const [questionType, setQuestionType] = useState('text');
   const [isRequired, setIsRequired] = useState(false);
-  const [merchantId, setMerchantId] = useState('');
+  const [merchantId, setMerchantId] = useState('all');
   const [helpText, setHelpText] = useState('');
 
   const handleAdd = () => {
@@ -133,7 +133,7 @@ const NewQuestionRow: React.FC<{
       question_text: questionText,
       question_type: questionType,
       is_required: isRequired,
-      merchant_id: merchantId || null,
+      merchant_id: merchantId === 'all' ? null : merchantId,
       help_text: helpText || null,
       display_order: nextDisplayOrder,
       is_active: true,
@@ -143,7 +143,7 @@ const NewQuestionRow: React.FC<{
     setQuestionText('');
     setQuestionType('text');
     setIsRequired(false);
-    setMerchantId('');
+    setMerchantId('all');
     setHelpText('');
   };
 
@@ -183,7 +183,7 @@ const NewQuestionRow: React.FC<{
             <SelectValue placeholder="All Merchants" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Merchants</SelectItem>
+            <SelectItem value="all">All Merchants</SelectItem>
             {merchants.map(merchant => (
               <SelectItem key={merchant.id} value={merchant.id}>
                 {merchant.merchant_name}
