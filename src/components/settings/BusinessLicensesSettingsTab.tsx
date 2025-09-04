@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Pencil, Trash2, Plus, Save, X } from 'lucide-react';
+import { Edit2, Save, X, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBusinessLicensesMerchant } from '@/hooks/useBusinessLicensesMerchant';
 import { 
@@ -17,6 +16,108 @@ import {
   type MunicipalBusinessLicenseType
 } from '@/hooks/useMunicipalBusinessLicenseTypes';
 import { formatCurrency } from '@/lib/formatters';
+import { toast } from 'sonner';
+
+interface EditableFieldProps {
+  value: string | number;
+  onChange: (value: any) => void;
+  type: 'text' | 'number';
+  placeholder?: string;
+  prefix?: string;
+  isEditMode: boolean;
+  className?: string;
+}
+
+const EditableField: React.FC<EditableFieldProps> = ({
+  value,
+  onChange,
+  type,
+  placeholder,
+  prefix,
+  isEditMode,
+  className
+}) => {
+  if (!isEditMode) {
+    return (
+      <span className="text-sm">
+        {`${prefix || ''}${value || placeholder}`}
+      </span>
+    );
+  }
+
+  return (
+    <Input
+      type={type === 'number' ? 'number' : 'text'}
+      value={String(value)}
+      onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
+      placeholder={placeholder}
+      className={`w-full ${className || ''}`}
+    />
+  );
+};
+
+interface NewBusinessLicenseTypeRowProps {
+  onAdd: (licenseType: { name: string; fee_cents: number }) => void;
+  isLoading: boolean;
+}
+
+const NewBusinessLicenseTypeRow: React.FC<NewBusinessLicenseTypeRowProps> = ({ onAdd, isLoading }) => {
+  const [name, setName] = useState('');
+  const [feeCents, setFeeCents] = useState(0);
+
+  const handleAdd = () => {
+    if (!name.trim()) {
+      toast.error('Please enter a license type name');
+      return;
+    }
+    
+    onAdd({
+      name: name.trim(),
+      fee_cents: Math.round(feeCents * 100),
+    });
+
+    // Reset form
+    setName('');
+    setFeeCents(0);
+  };
+
+  return (
+    <TableRow className="bg-muted/10">
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Input
+            placeholder="Enter license type name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full"
+          />
+          <Badge variant="outline" className="text-xs shrink-0">
+            Custom
+          </Badge>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Input
+            type="number"
+            placeholder="0.00"
+            value={feeCents}
+            onChange={(e) => setFeeCents(parseFloat(e.target.value) || 0)}
+            className="w-full text-right"
+          />
+          <Button
+            onClick={handleAdd}
+            disabled={isLoading || !name.trim()}
+            size="sm"
+            variant="outline"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
 
 export const BusinessLicensesSettingsTab = () => {
   const { profile } = useAuth();
@@ -28,12 +129,9 @@ export const BusinessLicensesSettingsTab = () => {
   const deleteMutation = useDeleteMunicipalBusinessLicenseType();
   const initializeMutation = useInitializeMunicipalBusinessLicenseTypes();
   
-  const [editingType, setEditingType] = useState<MunicipalBusinessLicenseType | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    municipal_label: '',
-    base_fee_cents: 0,
-  });
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [changes, setChanges] = useState<Record<string, any>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   // Initialize standard types if none exist and prevent infinite retries
   useEffect(() => {
@@ -47,65 +145,91 @@ export const BusinessLicensesSettingsTab = () => {
     }
   }, [profile?.customer_id, municipalTypes.length, isLoading, businessLicensesMerchant, initializeMutation.isPending, initializeMutation.isError]);
 
-  const handleEdit = (type: MunicipalBusinessLicenseType) => {
-    setEditingType(type);
-    setFormData({
-      municipal_label: type.municipal_label,
-      base_fee_cents: type.base_fee_cents,
-    });
+  const formatCurrencyValue = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100);
   };
 
-  const handleSaveEdit = () => {
-    if (!editingType) return;
-    
-    updateMutation.mutate({
-      id: editingType.id,
-      data: {
-        municipal_label: formData.municipal_label,
-        base_fee_cents: formData.base_fee_cents,
-      }
-    }, {
-      onSuccess: () => {
-        setEditingType(null);
-      }
-    });
+  const handleFieldChange = (licenseTypeId: string, field: string, value: any) => {
+    setChanges(prev => ({
+      ...prev,
+      [`${licenseTypeId}-${field}`]: value
+    }));
   };
 
-  const handleCancelEdit = () => {
-    setEditingType(null);
-    setFormData({ municipal_label: '', base_fee_cents: 0 });
+  const getFieldValue = (licenseType: MunicipalBusinessLicenseType, field: string, defaultValue: any) => {
+    const changeKey = `${licenseType.id}-${field}`;
+    if (changes[changeKey] !== undefined) {
+      return changes[changeKey];
+    }
+    return defaultValue;
   };
 
-  const handleDelete = (type: MunicipalBusinessLicenseType) => {
-    if (!type.is_custom) return; // Only allow deletion of custom types
-    
-    if (window.confirm(`Are you sure you want to delete "${type.municipal_label}"?`)) {
-      deleteMutation.mutate(type.id);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const updates = Object.entries(changes).reduce((acc, [key, value]) => {
+        const [licenseTypeId, field] = key.split('-');
+        if (!acc[licenseTypeId]) acc[licenseTypeId] = {};
+        
+        switch (field) {
+          case 'municipal_label':
+            acc[licenseTypeId].municipal_label = value;
+            break;
+          case 'fee_cents':
+            acc[licenseTypeId].base_fee_cents = Math.round(value * 100);
+            break;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Save all updates
+      await Promise.all(
+        Object.entries(updates).map(([licenseTypeId, updateData]) =>
+          updateMutation.mutateAsync({
+            id: licenseTypeId,
+            data: updateData,
+          })
+        )
+      );
+
+      setChanges({});
+      setIsEditMode(false);
+      toast.success('Business license types updated successfully');
+    } catch (error) {
+      toast.error('Failed to update business license types');
+      console.error('Error updating business license types:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleCreate = () => {
-    if (!profile?.customer_id || !businessLicensesMerchant) return;
-
-    createMutation.mutate({
-      customer_id: profile.customer_id,
-      merchant_id: businessLicensesMerchant.id,
-      merchant_name: businessLicensesMerchant.merchant_name,
-      municipal_label: formData.municipal_label,
-      base_fee_cents: formData.base_fee_cents,
-      is_custom: true,
-      display_order: municipalTypes.length,
-    }, {
-      onSuccess: () => {
-        setFormData({ municipal_label: '', base_fee_cents: 0 });
-        setIsCreateDialogOpen(false);
-      }
-    });
+  const handleCancel = () => {
+    setChanges({});
+    setIsEditMode(false);
   };
 
-  const parseCurrencyToCents = (value: string) => {
-    const numericValue = parseFloat(value.replace(/[^0-9.]/g, ''));
-    return Math.round((isNaN(numericValue) ? 0 : numericValue) * 100);
+  const handleAddCustomType = async (licenseType: { name: string; fee_cents: number }) => {
+    if (!profile?.customer_id || !businessLicensesMerchant) return;
+
+    try {
+      await createMutation.mutateAsync({
+        customer_id: profile.customer_id,
+        merchant_id: businessLicensesMerchant.id,
+        merchant_name: businessLicensesMerchant.merchant_name,
+        municipal_label: licenseType.name,
+        base_fee_cents: licenseType.fee_cents,
+        is_custom: true,
+        display_order: municipalTypes.length,
+      });
+      
+      toast.success('Custom business license type added successfully');
+    } catch (error) {
+      toast.error('Failed to add custom business license type');
+      console.error('Error adding custom business license type:', error);
+    }
   };
 
   if (!profile?.customer_id) {
@@ -128,56 +252,42 @@ export const BusinessLicensesSettingsTab = () => {
             <CardTitle>Business License Types</CardTitle>
             <CardDescription>
               Configure business license fees for your municipality.
+              {isEditMode && ' Make changes and click Save to apply them.'}
               {businessLicensesMerchant && ` Associated with ${businessLicensesMerchant.merchant_name}.`}
             </CardDescription>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Custom Type
+          <div className="flex items-center space-x-2">
+            {!isEditMode ? (
+              <Button
+                onClick={() => setIsEditMode(true)}
+                variant="outline"
+                size="sm"
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Custom Business License Type</DialogTitle>
-                <DialogDescription>
-                  Create a new business license type specific to your municipality.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="create-label">Business License Type</Label>
-                  <Input
-                    id="create-label"
-                    value={formData.municipal_label}
-                    onChange={(e) => setFormData(prev => ({ ...prev, municipal_label: e.target.value }))}
-                    placeholder="Enter license type name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="create-fee">Fee</Label>
-                  <Input
-                    id="create-fee"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.base_fee_cents / 100}
-                    onChange={(e) => setFormData(prev => ({ ...prev, base_fee_cents: parseCurrencyToCents(e.target.value) }))}
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            ) : (
+              <>
+                <Button
+                  onClick={handleCancel}
+                  variant="outline"
+                  size="sm"
+                  disabled={isSaving}
+                >
+                  <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Button>
-                <Button onClick={handleCreate} disabled={!formData.municipal_label.trim()}>
-                  Create Type
+                <Button
+                  onClick={handleSave}
+                  size="sm"
+                  disabled={isSaving || Object.keys(changes).length === 0}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading || initializeMutation.isPending ? (
@@ -205,74 +315,56 @@ export const BusinessLicensesSettingsTab = () => {
               No business license types configured yet.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Business License Type</TableHead>
-                  <TableHead>Fee</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {municipalTypes.map((type) => (
-                  <TableRow key={type.id}>
-                    <TableCell>
-                      {editingType?.id === type.id ? (
-                        <Input
-                          value={formData.municipal_label}
-                          onChange={(e) => setFormData(prev => ({ ...prev, municipal_label: e.target.value }))}
-                          className="w-full"
-                        />
-                      ) : (
-                        <span className="font-medium">{type.municipal_label}</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingType?.id === type.id ? (
-                        <div className="flex items-center space-x-1">
-                          <span className="text-muted-foreground">$</span>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={formData.base_fee_cents / 100}
-                            onChange={(e) => setFormData(prev => ({ ...prev, base_fee_cents: parseCurrencyToCents(e.target.value) }))}
-                            className="w-24"
-                          />
-                        </div>
-                      ) : (
-                        <span className="font-mono">{formatCurrency(type.base_fee_cents / 100)}</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {editingType?.id === type.id ? (
-                          <>
-                            <Button size="sm" onClick={handleSaveEdit}>
-                              Save
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                              Cancel
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(type)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            {type.is_custom && (
-                              <Button size="sm" variant="ghost" onClick={() => handleDelete(type)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Business License Type</TableHead>
+                    <TableHead>Fee</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {municipalTypes.map((type) => (
+                    <TableRow key={type.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center space-x-2">
+                          <EditableField
+                            value={getFieldValue(type, 'municipal_label', type.municipal_label)}
+                            onChange={(value) => handleFieldChange(type.id, 'municipal_label', value)}
+                            type="text"
+                            placeholder={type.municipal_label}
+                            isEditMode={isEditMode}
+                          />
+                          {type.is_custom && (
+                            <Badge variant="default" className="text-xs">
+                              Custom
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <EditableField
+                          value={getFieldValue(type, 'fee_cents', type.base_fee_cents) / 100}
+                          onChange={(value) => handleFieldChange(type.id, 'fee_cents', value)}
+                          type="number"
+                          prefix="$"
+                          placeholder={formatCurrencyValue(type.base_fee_cents)}
+                          isEditMode={isEditMode}
+                          className="text-right"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  
+                  {isEditMode && (
+                    <NewBusinessLicenseTypeRow
+                      onAdd={handleAddCustomType}
+                      isLoading={createMutation.isPending}
+                    />
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
