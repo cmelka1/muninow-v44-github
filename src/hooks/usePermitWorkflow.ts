@@ -52,7 +52,7 @@ export const getStatusDescription = (status: PermitStatus): string => {
 export const getValidStatusTransitions = (currentStatus: PermitStatus): PermitStatus[] => {
   const transitions: Record<PermitStatus, PermitStatus[]> = {
     draft: ['submitted'],
-    submitted: ['under_review', 'withdrawn'],
+    submitted: ['approved', 'under_review', 'withdrawn'],
     under_review: ['information_requested', 'approved', 'denied', 'rejected'],
     information_requested: ['resubmitted', 'withdrawn', 'expired'],
     resubmitted: ['under_review'],
