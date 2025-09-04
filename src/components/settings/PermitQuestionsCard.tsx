@@ -30,13 +30,15 @@ import {
   useUpdateMunicipalPermitQuestion,
   useDeleteMunicipalPermitQuestion,
 } from '@/hooks/useMunicipalPermitQuestionsMutations';
+import { useBuildingPermitsMerchant } from '@/hooks/useBuildingPermitsMerchant';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const NewQuestionRow: React.FC<{
   onAdd: (question: any) => void;
   nextDisplayOrder: number;
-}> = ({ onAdd, nextDisplayOrder }) => {
+  merchantId: string | null;
+}> = ({ onAdd, nextDisplayOrder, merchantId }) => {
   const [questionText, setQuestionText] = useState('');
 
   const handleAdd = () => {
@@ -46,7 +48,7 @@ const NewQuestionRow: React.FC<{
       question_text: questionText,
       question_type: 'checkbox', // Hardcoded to checkbox for yes/no questions
       is_required: false, // Not needed for yes/no questions
-      merchant_id: null, // Applies to all merchants
+      merchant_id: merchantId, // Assigned to Building Permits merchant
       help_text: null,
       display_order: nextDisplayOrder,
       is_active: true, // Auto-active when added
@@ -108,7 +110,13 @@ export const PermitQuestionsCard: React.FC = () => {
     fetchCustomerId();
   }, [user]);
 
-  const { data: questions = [], isLoading } = useMunicipalPermitQuestions(customerId);
+  // Get Building Permits merchant for this customer
+  const { data: buildingPermitsMerchant, isLoading: isMerchantLoading } = useBuildingPermitsMerchant(customerId);
+  
+  const { data: questions = [], isLoading } = useMunicipalPermitQuestions(
+    customerId, 
+    buildingPermitsMerchant?.id
+  );
   
   const createMutation = useCreateMunicipalPermitQuestion();
   const updateMutation = useUpdateMunicipalPermitQuestion();
@@ -167,12 +175,12 @@ export const PermitQuestionsCard: React.FC = () => {
 
   const nextDisplayOrder = Math.max(0, ...questions.map(q => q.display_order)) + 1;
 
-  if (isLoading) {
+  if (isLoading || isMerchantLoading) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Permit Questions</CardTitle>
-          <CardDescription>Loading questions...</CardDescription>
+          <CardDescription>Loading questions and merchant information...</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -285,6 +293,7 @@ export const PermitQuestionsCard: React.FC = () => {
               <NewQuestionRow
                 onAdd={handleAddQuestion}
                 nextDisplayOrder={nextDisplayOrder}
+                merchantId={buildingPermitsMerchant?.id || null}
               />
             )}
           </TableBody>
@@ -292,7 +301,10 @@ export const PermitQuestionsCard: React.FC = () => {
         
         {questions.length === 0 && !isEditMode && (
           <div className="text-center py-8 text-muted-foreground">
-            No permit questions configured. Click "Edit Questions" to add some.
+            {buildingPermitsMerchant 
+              ? 'No permit questions configured. Click "Edit Questions" to add some.'
+              : 'No Building Permits merchant found for this customer. Please create one first.'
+            }
           </div>
         )}
       </CardContent>
