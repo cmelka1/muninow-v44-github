@@ -38,8 +38,8 @@ interface FinixTransferRequest {
   currency: string;
   amount: number;
   source: string;
-  fraud_session_id?: string;
   idempotency_id: string;
+  fraud_session_id: string;
 }
 
 interface FinixTransferResponse {
@@ -157,9 +157,9 @@ serve(async (req) => {
       throw new Error(`Amount calculation error: base (${base_amount_cents}) + fee (${service_fee_cents}) != total (${total_amount_cents})`);
     }
 
-    // fraud_session_id is optional - if empty, we'll still proceed but log a warning
+    // Validate fraud session ID is required
     if (!fraud_session_id || fraud_session_id.trim() === '') {
-      console.warn("No fraud session ID provided for tax payment");
+      throw new Error("Fraud session ID is required for payment processing");
     }
 
     // Check for duplicate idempotency_id
@@ -243,12 +243,9 @@ serve(async (req) => {
       currency: "USD",
       amount: total_amount_cents,
       source: paymentInstrument.finix_payment_instrument_id,
-      idempotency_id: idempotency_id
+      idempotency_id: idempotency_id,
+      fraud_session_id: fraud_session_id
     };
-
-    if (fraud_session_id) {
-      finixRequest.fraud_session_id = fraud_session_id;
-    }
 
     // Get Finix credentials
     const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");
