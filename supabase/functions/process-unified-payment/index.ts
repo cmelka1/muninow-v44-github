@@ -103,6 +103,23 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get payment instrument and validate ownership
+    const { data: paymentInstrument, error: piError } = await supabase
+      .from('user_payment_instruments')  
+      .select('*')
+      .eq('id', payment_instrument_id)
+      .eq('user_id', user.id)
+      .eq('enabled', true)
+      .single();
+
+    if (piError || !paymentInstrument) {
+      console.error('Payment instrument fetch error:', piError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Payment instrument not found or access denied', retryable: false }),
+        { status: 404, headers: corsHeaders }
+      );
+    }
+
     // Generate idempotency ID
     const idempotency_id = generateIdempotencyId('unified_payment', entity_id);
     
@@ -185,7 +202,7 @@ Deno.serve(async (req) => {
       merchant: transactionData.finix_merchant_id,
       currency: 'USD',
       amount: transactionData.total_amount_cents,
-      source: payment_instrument_id,
+      source: paymentInstrument.finix_payment_instrument_id,
       idempotency_id: idempotency_id,
       ...(fraud_session_id && { fraud_session_id })
     };
