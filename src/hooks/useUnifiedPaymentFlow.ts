@@ -38,7 +38,8 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [serviceFee, setServiceFee] = useState<UnifiedServiceFee | null>(null);
   const [googlePayMerchantId, setGooglePayMerchantId] = useState<string | null>(null);
-  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+  const [lastPaymentAttempt, setLastPaymentAttempt] = useState<number | null>(null);
+  const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
 
   // Load Google Pay merchant ID
   useEffect(() => {
@@ -117,15 +118,29 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       throw new Error('Missing payment information');
     }
 
-    // Prevent duplicate requests
-    const requestId = generateIdempotencyId('payment_request');
-    if (processingRequestId === requestId || isProcessingPayment) {
+    // Prevent duplicate requests with multiple protection layers
+    const now = Date.now();
+    
+    // 1. Check if payment is already processing
+    if (isProcessingPayment) {
       console.log('Payment already in progress, ignoring duplicate request');
       throw new Error('Payment already in progress');
     }
 
+    // 2. Implement cooldown period to prevent rapid successive attempts
+    if (lastPaymentAttempt && (now - lastPaymentAttempt) < 2000) {
+      console.log('Payment attempted too soon after previous attempt');
+      throw new Error('Please wait before attempting another payment');
+    }
+
+    // Generate or reuse session ID for this payment session
+    const sessionId = paymentSessionId || generateIdempotencyId('payment_session');
+    if (!paymentSessionId) {
+      setPaymentSessionId(sessionId);
+    }
+
     setIsProcessingPayment(true);
-    setProcessingRequestId(requestId);
+    setLastPaymentAttempt(now);
 
     try {
       // Refresh auth token to ensure it's valid
@@ -153,7 +168,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           ? selectedPaymentMethod 
           : paymentInstrument?.id || selectedPaymentMethod,
         payment_type: paymentType,
-        fraud_session_id: generateIdempotencyId('fraud_session'),
+        fraud_session_id: `${sessionId}_${now}`, // Use session-based fraud ID
         card_brand: paymentInstrument?.card_brand,
         card_last_four: paymentInstrument?.card_last_four,
         bank_last_four: paymentInstrument?.bank_last_four,
@@ -162,13 +177,18 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         user_email: user.email
       };
 
-      console.log('Processing unified payment:', requestBody);
+      console.log('Processing unified payment:', { 
+        ...requestBody, 
+        sessionId,
+        attempt_time: new Date(now).toISOString()
+      });
 
       const { data, error } = await supabase.functions.invoke('process-unified-payment', {
         body: requestBody
       });
 
       if (error) {
+        console.error('Payment API error:', error);
         // Distinguish between auth errors and payment errors
         if (error.message?.includes('JWT') || error.message?.includes('401') || error.message?.includes('unauthorized')) {
           throw new Error('Authentication expired. Please refresh the page and try again.');
@@ -189,6 +209,8 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           description: `Your payment of $${(serviceFee.totalAmountToCharge / 100).toFixed(2)} has been processed successfully.`,
         });
 
+        // Clear session ID after successful payment
+        setPaymentSessionId(null);
         params.onSuccess?.(response);
         return response;
       } else {
@@ -199,26 +221,35 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       
       const classifiedError = classifyPaymentError(error);
       
-      toast({
-        title: "Payment Failed",
-        description: classifiedError.message,
-        variant: "destructive",
-      });
+      // Only show toast for non-auth errors to avoid duplicate error messages
+      if (!classifiedError.message.includes('Authentication expired')) {
+        toast({
+          title: "Payment Failed",
+          description: classifiedError.message,
+          variant: "destructive",
+        });
+      }
 
       params.onError?.(classifiedError);
       throw classifiedError;
     } finally {
       setIsProcessingPayment(false);
-      setProcessingRequestId(null);
+      // Don't clear session ID here - only clear on success or after cooldown
     }
   };
 
   const handleGooglePayment = async (): Promise<PaymentResponse> => {
+    if (isProcessingPayment) {
+      throw new Error('Payment already in progress');
+    }
     setSelectedPaymentMethod('google-pay');
     return handlePayment();
   };
 
   const handleApplePayment = async (): Promise<PaymentResponse> => {
+    if (isProcessingPayment) {
+      throw new Error('Payment already in progress');
+    }
     setSelectedPaymentMethod('apple-pay');
     return handlePayment();
   };
