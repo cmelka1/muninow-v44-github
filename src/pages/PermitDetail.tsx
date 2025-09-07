@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePermit } from '@/hooks/usePermit';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
+import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
 import { usePermitPaymentMethods } from '@/hooks/usePermitPaymentMethods';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
