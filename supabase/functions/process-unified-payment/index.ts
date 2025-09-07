@@ -186,13 +186,7 @@ Deno.serve(async (req) => {
       currency: 'USD',
       amount: transactionData.total_amount_cents,
       source: payment_instrument_id,
-      tags: {
-        entity_type,
-        entity_id,
-        payment_history_id: transactionData.payment_history_id,
-        customer_id,
-        user_id: user.id
-      },
+      idempotency_id: idempotency_id,
       ...(fraud_session_id && { fraud_session_id })
     };
 
@@ -202,9 +196,8 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${finixCredentials}`,
-        'Content-Type': 'application/vnd.json+api',
-        'Finix-Version': '2022-02-01',
-        'Idempotency-ID': idempotency_id
+        'Content-Type': 'application/json',
+        'Finix-Version': '2022-02-01'
       },
       body: JSON.stringify(transferPayload)
     });
