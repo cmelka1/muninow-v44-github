@@ -4361,27 +4361,6 @@ export type Database = {
               p_base_amount_cents: number
               p_card_brand?: string
               p_card_last_four?: string
-              p_category?: string
-              p_customer_id: string
-              p_entity_id: string
-              p_entity_type: string
-              p_fraud_session_id?: string
-              p_idempotency_id: string
-              p_merchant_id: string
-              p_merchant_name?: string
-              p_payment_instrument_id: string
-              p_payment_type: string
-              p_service_fee_cents: number
-              p_statement_descriptor?: string
-              p_subcategory?: string
-              p_total_amount_cents: number
-              p_user_id: string
-            }
-          | {
-              p_bank_last_four?: string
-              p_base_amount_cents: number
-              p_card_brand?: string
-              p_card_last_four?: string
               p_customer_id: string
               p_entity_id: string
               p_entity_type: string
