@@ -25,9 +25,8 @@ interface UnifiedPaymentRequest {
 
 interface UnifiedPaymentResponse {
   success: boolean;
-  payment_history_id?: string;
-  finix_transfer_id?: string;
   transaction_id?: string;
+  finix_transfer_id?: string;
   service_fee_cents?: number;
   total_amount_cents?: number;
   error?: string;
@@ -207,12 +206,12 @@ Deno.serve(async (req) => {
 
     serviceFeeFromDB = feeCalcResult.service_fee_cents;
     totalAmountFromDB = feeCalcResult.total_amount_cents;
-    const paymentHistoryId = feeCalcResult.payment_history_id;
+    const transactionId = feeCalcResult.transaction_id;
 
     console.log('Database fee calculation:', {
       service_fee: serviceFeeFromDB,
       total_amount: totalAmountFromDB,
-      payment_history_id: paymentHistoryId
+      transaction_id: transactionId
     });
 
     // Create Finix transfer
@@ -243,12 +242,12 @@ Deno.serve(async (req) => {
     if (!finixResponse.ok) {
       console.error('Finix transfer failed:', finixData);
       
-      // ROLLBACK: Delete the payment history record since Finix failed
-      console.log('Rolling back payment history record:', paymentHistoryId);
+      // ROLLBACK: Delete the payment transaction record since Finix failed
+      console.log('Rolling back payment transaction record:', transactionId);
       await supabase
-        .from('payment_history')
+        .from('payment_transactions')
         .delete()
-        .eq('id', paymentHistoryId);
+        .eq('id', transactionId);
       
       // Classify the error for appropriate handling
       const classifiedError = classifyPaymentError(finixData);
@@ -271,17 +270,16 @@ Deno.serve(async (req) => {
     
     const finalPaymentStatus = finixData.state === 'SUCCEEDED' ? 'paid' : 'unpaid';
     
-    // Update payment history with Finix results
+    // Update payment transaction with Finix results
     const { error: updateError } = await supabase
-      .from('payment_history')
+      .from('payment_transactions')
       .update({
         payment_status: finalPaymentStatus,
         transfer_state: finixData.state,
         finix_transfer_id: finixData.id,
-        finix_response: finixData,
-        updated_at: new Date().toISOString()
+        raw_finix_response: finixData
       })
-      .eq('id', paymentHistoryId);
+      .eq('id', transactionId);
 
     if (updateError) {
       console.error('Failed to update payment status:', updateError);
@@ -367,9 +365,8 @@ Deno.serve(async (req) => {
 
     const response: UnifiedPaymentResponse = {
       success: true,
-      payment_history_id: paymentHistoryId,
+      transaction_id: transactionId,
       finix_transfer_id: finixData.id,
-      transaction_id: finixData.id,
       service_fee_cents: serviceFeeFromDB,
       total_amount_cents: totalAmountFromDB
     };

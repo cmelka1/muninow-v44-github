@@ -2568,6 +2568,102 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          bank_last_four: string | null
+          base_amount_cents: number
+          bill_id: string | null
+          business_license_id: string | null
+          card_brand: string | null
+          card_last_four: string | null
+          created_at: string
+          customer_id: string
+          failure_code: string | null
+          failure_message: string | null
+          finix_merchant_id: string | null
+          finix_payment_instrument_id: string | null
+          finix_transfer_id: string | null
+          fraud_session_id: string | null
+          id: string
+          idempotency_id: string
+          merchant_id: string
+          payment_instrument_id: string
+          payment_status: string
+          payment_type: string
+          permit_id: string | null
+          raw_finix_response: Json | null
+          service_application_id: string | null
+          service_fee_cents: number
+          tax_submission_id: string | null
+          total_amount_cents: number
+          transfer_state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_last_four?: string | null
+          base_amount_cents: number
+          bill_id?: string | null
+          business_license_id?: string | null
+          card_brand?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          customer_id: string
+          failure_code?: string | null
+          failure_message?: string | null
+          finix_merchant_id?: string | null
+          finix_payment_instrument_id?: string | null
+          finix_transfer_id?: string | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id: string
+          merchant_id: string
+          payment_instrument_id: string
+          payment_status?: string
+          payment_type: string
+          permit_id?: string | null
+          raw_finix_response?: Json | null
+          service_application_id?: string | null
+          service_fee_cents?: number
+          tax_submission_id?: string | null
+          total_amount_cents: number
+          transfer_state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_last_four?: string | null
+          base_amount_cents?: number
+          bill_id?: string | null
+          business_license_id?: string | null
+          card_brand?: string | null
+          card_last_four?: string | null
+          created_at?: string
+          customer_id?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          finix_merchant_id?: string | null
+          finix_payment_instrument_id?: string | null
+          finix_transfer_id?: string | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string
+          merchant_id?: string
+          payment_instrument_id?: string
+          payment_status?: string
+          payment_type?: string
+          permit_id?: string | null
+          raw_finix_response?: Json | null
+          service_application_id?: string | null
+          service_fee_cents?: number
+          tax_submission_id?: string | null
+          total_amount_cents?: number
+          transfer_state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       permit_applications: {
         Row: {
           ach_basis_points: number | null
@@ -4325,6 +4421,25 @@ export type Database = {
               p_statement_descriptor?: string
               p_subcategory?: string
               p_total_amount_cents: number
+              p_user_id: string
+            }
+          | {
+              p_bank_last_four?: string
+              p_base_amount_cents: number
+              p_card_brand?: string
+              p_card_last_four?: string
+              p_customer_id: string
+              p_entity_id: string
+              p_entity_type: string
+              p_finix_merchant_id?: string
+              p_first_name?: string
+              p_fraud_session_id: string
+              p_idempotency_id: string
+              p_last_name?: string
+              p_merchant_id: string
+              p_payment_instrument_id: string
+              p_payment_type: string
+              p_user_email?: string
               p_user_id: string
             }
           | {
