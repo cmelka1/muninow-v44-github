@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePermit } from '@/hooks/usePermit';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
-import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
+import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { useUnifiedPaymentFlow } from '@/hooks/useUnifiedPaymentFlow';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
@@ -34,7 +34,7 @@ const PermitDetail = () => {
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
   
@@ -58,7 +58,6 @@ const PermitDetail = () => {
         description: "Your permit payment has been processed successfully.",
       });
       refetchPermit();
-      setShowPaymentDialog(false);
     },
     onError: (error) => {
       console.error('Payment error:', error);
@@ -444,26 +443,17 @@ const PermitDetail = () => {
               </div>
               
               {permit.application_status === 'approved' && permit.payment_status !== 'paid' ? (
-                <div className="space-y-4">
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Permit Fee</span>
-                      <span className="font-semibold">{formatCurrency((permit.base_fee_cents || permit.total_amount_cents || 0) / 100)}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Complete payment to receive your permit
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    className="w-full" 
-                    onClick={() => setShowPaymentDialog(true)}
-                    disabled={unifiedPaymentFlow?.isProcessingPayment}
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Pay Now
-                  </Button>
-                </div>
+                <InlinePaymentFlow
+                  entityType="permit"
+                  entityId={permit.permit_id}
+                  entityName={`${permit.permit_type} - ${permit.permit_number}`}
+                  customerId={permit.customer_id}
+                  merchantId={permit.merchant_id}
+                  baseAmountCents={permit.base_fee_cents || permit.total_amount_cents || 0}
+                  onPaymentSuccess={unifiedPaymentFlow.handlePayment}
+                  onPaymentError={(error) => console.error('Payment error:', error)}
+                  onAddPaymentMethod={() => navigate('/profile?tab=payment-methods')}
+                />
               ) : permit.payment_status === 'paid' ? (
                 <div className="pt-2 space-y-2">
                   <Button className="w-full" disabled variant="outline">
@@ -582,21 +572,6 @@ const PermitDetail = () => {
         document={selectedDocument}
       />
       
-      {/* Unified Payment Dialog */}
-      {permit && (
-        <UnifiedPaymentDialog
-          open={showPaymentDialog}
-          onOpenChange={setShowPaymentDialog}
-          entityType="permit"
-          entityId={permit.permit_id}
-          entityName={`${permit.permit_type} - ${permit.permit_number}`}
-          customerId={permit.customer_id}
-          merchantId={permit.merchant_id}
-          baseAmountCents={permit.base_fee_cents || permit.total_amount_cents || 0}
-          onPaymentSuccess={unifiedPaymentFlow.handlePayment}
-          onPaymentError={(error) => console.error('Payment error:', error)}
-        />
-      )}
     </div>
   );
 };
