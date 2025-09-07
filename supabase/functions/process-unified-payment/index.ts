@@ -324,7 +324,6 @@ Deno.serve(async (req) => {
             if (permit.application_status === 'approved') {
               permitUpdate.application_status = 'issued';
               permitUpdate.issued_at = new Date().toISOString();
-              permitUpdate.municipal_review_status = 'issued';
               console.log('Auto-issuing permit after successful payment');
             }
             
@@ -448,7 +447,24 @@ Deno.serve(async (req) => {
 
         if (entityUpdateError) {
           console.error(`Failed to update ${entity_type} status:`, entityUpdateError);
-          // Continue anyway - the payment went through
+          
+          // Mark payment transaction as failed due to entity update error
+          await supabase
+            .from('payment_transactions')
+            .update({
+              payment_status: 'failed',
+              error_details: entityUpdateError
+            })
+            .eq('id', transactionId);
+            
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: `Payment succeeded but failed to update ${entity_type}: ${entityUpdateError.message}`,
+              retryable: false
+            }),
+            { status: 500, headers: corsHeaders }
+          );
         } else {
           console.log(`Successfully updated ${entity_type} status to paid and auto-issued if applicable`);
         }
