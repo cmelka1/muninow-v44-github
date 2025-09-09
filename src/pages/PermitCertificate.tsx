@@ -23,6 +23,27 @@ const PermitCertificate = () => {
     window.print();
   };
 
+  const cleanHtmlForPdf = (htmlContent: string | null): string => {
+    if (!htmlContent) return 'See application for details';
+    
+    // Create a temporary div to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // Convert to plain text while preserving basic formatting
+    let textContent = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // Remove extra whitespace and normalize line breaks
+    textContent = textContent.trim();
+    
+    // If the content is empty or just whitespace, return fallback
+    if (!textContent || textContent === 'None' || textContent.length === 0) {
+      return 'See application for details';
+    }
+    
+    return textContent;
+  };
+
   const renderPDFVersion = (permit: any) => {
     return (
       <div className="max-w-4xl mx-auto bg-white border-2 border-gray-300 shadow-xl" style={{ width: '8.5in', minHeight: '11in' }}>
@@ -82,7 +103,7 @@ const PermitCertificate = () => {
             <div>
               <p className="font-medium text-blue-600 mb-4">SCOPE OF WORK</p>
               <div className="text-base leading-relaxed whitespace-pre-wrap">
-                {permit.scope_of_work || 'See application for details'}
+                {cleanHtmlForPdf(permit.scope_of_work)}
               </div>
             </div>
           </div>
