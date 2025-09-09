@@ -98,69 +98,89 @@ const App = () => (
                 <Route path="/permits" element={<Permits />} />
                 <Route path="/business-licenses" element={<BusinessLicenses />} />
                 <Route path="/business-license/:id" element={
-                  <SidebarProvider>
-                    <div className="min-h-screen flex w-full">
-                      <AppSidebar />
-                      <main className="flex-1 overflow-auto">
-                        <BusinessLicenseDetail />
-                      </main>
-                    </div>
-                  </SidebarProvider>
+                  <SimpleProtectedRoute requireAccountType="resident">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <BusinessLicenseDetail />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </SimpleProtectedRoute>
                 } />
                 <Route path="/business-license/:licenseId/certificate" element={
-                  <SidebarProvider>
-                    <div className="min-h-screen flex w-full">
-                      <AppSidebar />
-                      <main className="flex-1 overflow-auto">
-                        <BusinessLicenseCertificate />
-                      </main>
-                    </div>
-                  </SidebarProvider>
+                  <SimpleProtectedRoute requireAccountType="resident">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <BusinessLicenseCertificate />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </SimpleProtectedRoute>
                 } />
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/tax/:submissionId" element={
-                  <SidebarProvider>
-                    <div className="min-h-screen flex w-full">
-                      <AppSidebar />
-                      <main className="flex-1 overflow-auto">
-                        <TaxDetail />
-                      </main>
-                    </div>
-                  </SidebarProvider>
+                  <SimpleProtectedRoute requireAccountType="resident">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <TaxDetail />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </SimpleProtectedRoute>
                 } />
           <Route path="/other-services" element={<OtherServices />} />
           <Route path="/service-application/:applicationId" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <main className="flex-1 overflow-auto">
-                  <ServiceApplicationDetail />
-                </main>
-              </div>
-            </SidebarProvider>
+            <SimpleProtectedRoute requireAccountType="resident">
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <main className="flex-1 overflow-auto">
+                    <ServiceApplicationDetail />
+                  </main>
+                </div>
+              </SidebarProvider>
+            </SimpleProtectedRoute>
           } />
                 <Route path="/permit/:permitId" element={
-                  <SidebarProvider>
-                    <div className="min-h-screen flex w-full">
-                      <AppSidebar />
-                      <main className="flex-1 overflow-auto">
-                        <PermitDetail />
-                      </main>
-                    </div>
-                  </SidebarProvider>
+                  <SimpleProtectedRoute requireAccountType="resident">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <PermitDetail />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </SimpleProtectedRoute>
                 } />
                 <Route path="/permit/:permitId/certificate" element={
-                  <SidebarProvider>
-                    <div className="min-h-screen flex w-full">
-                      <AppSidebar />
-                      <main className="flex-1 overflow-auto">
-                        <PermitCertificate />
-                      </main>
-                    </div>
-                  </SidebarProvider>
+                  <SimpleProtectedRoute requireAccountType="resident">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <PermitCertificate />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </SimpleProtectedRoute>
                 } />
-                <Route path="/bill/:billId" element={<BillOverview />} />
-                <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
+                <Route path="/bill/:billId" element={
+                  <SimpleProtectedRoute requireAccountType="resident">
+                    <BillOverview />
+                  </SimpleProtectedRoute>
+                } />
+                <Route path="/payment-confirmation/:paymentHistoryId" element={
+                  <SimpleProtectedRoute requireAccountType="resident">
+                    <PaymentConfirmation />
+                  </SimpleProtectedRoute>
+                } />
                 <Route path="/members" element={<Members />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
