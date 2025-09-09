@@ -5,7 +5,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { PersonalTab } from '@/components/profile/PersonalTab';
-import { VehiclesTab } from '@/components/profile/VehiclesTab';
+
 import { PaymentMethodsTab } from '@/components/profile/PaymentMethodsTab';
 import { SecurityTab } from '@/components/profile/SecurityTab';
 import { NotificationsTab } from '@/components/profile/NotificationsTab';
@@ -60,18 +60,12 @@ const Profile = () => {
 
             {/* Tab Navigation */}
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-white border border-slate-200 rounded-lg">
+              <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-white border border-slate-200 rounded-lg">
                 <TabsTrigger 
                   value="personal" 
                   className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   Personal
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="vehicles" 
-                  className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  Vehicles
                 </TabsTrigger>
                 <TabsTrigger 
                   value="payment" 
@@ -98,9 +92,6 @@ const Profile = () => {
                   <PersonalTab />
                 </TabsContent>
 
-                <TabsContent value="vehicles" className="space-y-6">
-                  <VehiclesTab />
-                </TabsContent>
 
                 <TabsContent value="payment" className="space-y-6">
                   <PaymentMethodsTab />
