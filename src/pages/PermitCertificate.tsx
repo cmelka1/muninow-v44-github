@@ -1,6 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,11 +15,177 @@ const PermitCertificate = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   
   const handlePrint = () => {
     window.print();
+  };
+
+  const renderPDFVersion = (permit: any) => {
+    return (
+      <div style={{ width: '8.5in', backgroundColor: 'white', padding: '0.5in', fontFamily: 'Arial, sans-serif' }}>
+        {/* Header */}
+        <div style={{ backgroundColor: '#1a73e8', color: 'white', padding: '32px', textAlign: 'center', borderBottom: '4px solid #0d47a1' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0' }}>BUILDING PERMIT CERTIFICATE</h1>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', margin: '0' }}>{permit.merchant_name}</h2>
+        </div>
+
+        {/* Certificate Body */}
+        <div style={{ padding: '32px 0' }}>
+          {/* Permit Information */}
+          <div style={{ textAlign: 'center', borderBottom: '2px solid #e0e0e0', paddingBottom: '24px', marginBottom: '32px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a73e8', margin: '0 0 24px 0' }}>PERMIT AUTHORIZED</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px' }}>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '600', color: '#666', margin: '0 0 4px 0' }}>PERMIT NUMBER</p>
+                <p style={{ fontSize: '18px', fontFamily: 'monospace', fontWeight: 'bold', margin: '0' }}>{permit.permit_number}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '600', color: '#666', margin: '0 0 4px 0' }}>PERMIT TYPE</p>
+                <p style={{ fontSize: '16px', fontWeight: '600', margin: '0' }}>{permit.permit_type}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '600', color: '#666', margin: '0 0 4px 0' }}>CONSTRUCTION VALUE</p>
+                <p style={{ fontSize: '16px', fontWeight: '600', margin: '0' }}>
+                  {permit.estimated_construction_value_cents 
+                    ? formatCurrency(permit.estimated_construction_value_cents / 100)
+                    : 'Not specified'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Property and Permit Information */}
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <p style={{ fontWeight: '600', color: '#1a73e8', margin: '0 0 8px 0' }}>PROPERTY ADDRESS</p>
+              <p style={{ fontSize: '16px', margin: '0' }}>{permit.property_address}</p>
+            </div>
+            
+            <div style={{ marginBottom: '24px' }}>
+              <p style={{ fontWeight: '600', color: '#1a73e8', margin: '0 0 8px 0' }}>PERMIT HOLDER</p>
+              <p style={{ fontSize: '16px', margin: '0 0 4px 0' }}>{permit.applicant_full_name}</p>
+              <p style={{ fontSize: '14px', color: '#666', margin: '0' }}>{permit.applicant_email}</p>
+            </div>
+            
+            <div style={{ marginBottom: '24px' }}>
+              <p style={{ fontWeight: '600', color: '#1a73e8', margin: '0 0 8px 0' }}>DATE ISSUED</p>
+              <p style={{ fontSize: '16px', margin: '0' }}>{formatDate(permit.issued_at)}</p>
+            </div>
+          </div>
+
+          {/* Scope of Work */}
+          <div style={{ borderTop: '2px solid #e0e0e0', paddingTop: '24px', marginBottom: '32px' }}>
+            <p style={{ fontWeight: '600', color: '#1a73e8', margin: '0 0 16px 0' }}>SCOPE OF WORK</p>
+            <div style={{ fontSize: '14px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+              {permit.scope_of_work || 'See application for details'}
+            </div>
+          </div>
+
+          {/* Legal Notice */}
+          <div style={{ backgroundColor: '#f5f5f5', border: '2px solid #e0e0e0', padding: '24px', borderRadius: '4px', marginBottom: '32px' }}>
+            <h4 style={{ fontWeight: 'bold', textAlign: 'center', fontSize: '16px', margin: '0 0 16px 0' }}>IMPORTANT NOTICE</h4>
+            <div style={{ fontSize: '12px', lineHeight: '1.4' }}>
+              <p style={{ margin: '0 0 12px 0' }}>
+                <strong>• DISPLAY REQUIREMENT:</strong> This permit must be displayed in a conspicuous location 
+                on or near the job site where it can be easily seen by inspectors and officials.
+              </p>
+              <p style={{ margin: '0 0 12px 0' }}>
+                <strong>• INSPECTION REQUIRED:</strong> Work performed under this permit may require inspections. 
+                Contact the issuing authority before beginning work to schedule required inspections.
+              </p>
+              <p style={{ margin: '0 0 12px 0' }}>
+                <strong>• VALIDITY:</strong> This permit is valid only for the work described in the approved application. 
+                Any changes or additional work may require a separate permit.
+              </p>
+              <p style={{ margin: '0' }}>
+                <strong>• COMPLIANCE:</strong> All work must comply with applicable building codes, zoning ordinances, 
+                and other regulations in effect at the time of permit issuance.
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ borderTop: '2px solid #e0e0e0', paddingTop: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div>
+                <p style={{ fontWeight: '600', color: '#1a73e8', margin: '0 0 8px 0' }}>ISSUING AUTHORITY</p>
+                <p style={{ fontSize: '14px', margin: '0 0 4px 0' }}>{permit.merchant_name}</p>
+                <p style={{ fontSize: '14px', color: '#666', margin: '0' }}>Building Department</p>
+              </div>
+              <div>
+                <p style={{ fontWeight: '600', color: '#1a73e8', margin: '0 0 8px 0' }}>VERIFICATION</p>
+                <p style={{ fontSize: '14px', margin: '0' }}>
+                  This permit can be verified online at muninow.com using permit number: {permit.permit_number}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!permit) return;
+    
+    setIsGeneratingPDF(true);
+    
+    try {
+      // Create a temporary container for the PDF version
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.width = '8.5in';
+      tempContainer.style.height = 'auto';
+      
+      // Render the PDF version into the container
+      const pdfElement = document.createElement('div');
+      pdfElement.innerHTML = renderPDFVersion(permit).props.children.map((child: any) => {
+        if (typeof child === 'string') return child;
+        return child.props ? `<div>${child.props.children}</div>` : '';
+      }).join('');
+      
+      tempContainer.appendChild(pdfElement);
+      document.body.appendChild(tempContainer);
+      
+      // Capture the element as an image
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 816, // 8.5in at 96dpi
+        height: 1056, // 11in at 96dpi
+      });
+      
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate dimensions to fit the page
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      
+      // Download the PDF
+      pdf.save(`permit-certificate-${permit.permit_number}.pdf`);
+      
+      // Clean up
+      document.body.removeChild(tempContainer);
+      
+      toast.success('Certificate PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   if (isLoading) {
@@ -190,13 +359,25 @@ const PermitCertificate = () => {
               Back to Permit Details
             </Button>
             
-            <Button
-              onClick={handlePrint}
-              className="flex items-center gap-2"
-            >
-              <Printer className="h-4 w-4" />
-              Print Certificate
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handlePrint}
+                className="flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                Print Certificate
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+              </Button>
+            </div>
           </div>
         </div>
         
