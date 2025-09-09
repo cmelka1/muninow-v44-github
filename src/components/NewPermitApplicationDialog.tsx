@@ -917,7 +917,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       PIN Number <span className="text-muted-foreground">(Optional)</span>
                     </Label>
                     <p className="text-xs text-muted-foreground mb-2">
-                      Property Identification Number if available
+                      Parcel Number if available
                     </p>
                     <Input
                       id="pin-number"
