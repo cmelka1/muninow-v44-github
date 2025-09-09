@@ -12,6 +12,7 @@ const PermitCertificate = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
   
+  // Force refresh - PDF generation simplified to use browser print
   const { data: permit, isLoading, error } = usePermit(permitId!);
   
   const handlePrint = () => {
