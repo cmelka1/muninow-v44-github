@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2, Award } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -467,27 +467,16 @@ export const BusinessLicenseDetail = () => {
               </Button>
             )}
             {license.application_status === 'issued' && license.payment_status === 'paid' && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/business-license/${license.id}/certificate`)}
-                  className="flex items-center gap-2"
-                >
-                  <Award className="h-4 w-4" />
-                  View Certificate
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadPDF}
-                  disabled={isGeneratingPDF || municipalityLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
-                </Button>
-              </>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF || municipalityLoading}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+              </Button>
             )}
             {canWithdraw && (
               <Button
