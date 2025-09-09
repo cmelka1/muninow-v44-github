@@ -213,6 +213,7 @@ const PermitDetail = () => {
             <p className="text-gray-600">{permit.permit_number}</p>
           </div>
           <div className="flex items-center gap-3">
+            <PermitStatusBadge status={permit.application_status as PermitStatus} />
             {permit.application_status === 'issued' && permit.payment_status === 'paid' && (
               <Button 
                 variant="outline" 
@@ -224,7 +225,6 @@ const PermitDetail = () => {
                 View Permit
               </Button>
             )}
-            <PermitStatusBadge status={permit.application_status as PermitStatus} />
           </div>
         </div>
       </div>
