@@ -249,50 +249,94 @@ const PermitCertificate = () => {
     toast.loading('Generating PDF certificate...');
     
     try {
-      // Create PDF using jsPDF's html method for better page break handling
+      // Create a temporary container for PDF generation
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '816px'; // 8.5in at 96dpi
+      document.body.appendChild(tempContainer);
+
+      // Render the PDF version
+      const root = document.createElement('div');
+      tempContainer.appendChild(root);
+      
+      // Use React to render the PDF version
+      const { createRoot } = await import('react-dom/client');
+      const reactRoot = createRoot(root);
+      
+      await new Promise<void>((resolve) => {
+        reactRoot.render(renderPDFVersion(permit));
+        setTimeout(resolve, 1000); // Allow time for rendering
+      });
+
+      // Generate canvas from the rendered content - let it capture full height
+      const canvas = await html2canvas(root, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 816,
+        // Remove fixed height to capture full content
+      });
+
+      // Create PDF
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'in',
         format: 'letter'
       });
 
-      // Create a temporary container for PDF generation
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '8.5in';
-      tempContainer.style.backgroundColor = 'white';
-      document.body.appendChild(tempContainer);
-
-      // Render the PDF version directly in the container
-      const { createRoot } = await import('react-dom/client');
-      const reactRoot = createRoot(tempContainer);
+      const imgData = canvas.toDataURL('image/png');
       
-      await new Promise<void>((resolve) => {
-        reactRoot.render(renderPDFVersion(permit));
-        setTimeout(resolve, 1500); // Allow time for rendering
-      });
-
-      // Use jsPDF's html method which respects CSS page breaks
-      await pdf.html(tempContainer, {
-        callback: function (doc) {
-          // Download the PDF
-          const filename = `Permit-Certificate-${permit.permit_number}.pdf`;
-          doc.save(filename);
-        },
-        x: 0,
-        y: 0,
-        width: 8.5, // Letter width in inches
-        windowWidth: 816, // 8.5 inches at 96 DPI
-        margin: [0.5, 0.5, 0.5, 0.5], // top, left, bottom, right margins
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
+      // Calculate dimensions
+      const pageWidth = 8.5;
+      const pageHeight = 11;
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      
+      // If content fits on one page, add it normally
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        // Split content across multiple pages
+        const totalPages = Math.ceil(imgHeight / pageHeight);
+        
+        for (let i = 0; i < totalPages; i++) {
+          if (i > 0) {
+            pdf.addPage();
+          }
+          
+          // Calculate the portion of the image for this page
+          const sourceY = (i * pageHeight * canvas.width) / pageWidth;
+          const sourceHeight = Math.min(
+            (pageHeight * canvas.width) / pageWidth,
+            canvas.height - sourceY
+          );
+          
+          // Create a canvas for this page portion
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sourceHeight;
+          
+          const pageCtx = pageCanvas.getContext('2d');
+          if (pageCtx) {
+            pageCtx.drawImage(
+              canvas,
+              0, sourceY, canvas.width, sourceHeight,
+              0, 0, canvas.width, sourceHeight
+            );
+            
+            const pageImgData = pageCanvas.toDataURL('image/png');
+            const pageImgHeight = (sourceHeight * pageWidth) / canvas.width;
+            pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, pageImgHeight);
+          }
         }
-      });
+      }
+
+      // Download the PDF
+      const filename = `Permit-Certificate-${permit.permit_number}.pdf`;
+      pdf.save(filename);
 
       // Cleanup
       reactRoot.unmount();
