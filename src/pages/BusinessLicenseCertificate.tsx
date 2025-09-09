@@ -41,10 +41,10 @@ const BusinessLicenseCertificate = () => {
         {/* Certificate Border */}
         <div className="border-4 border-primary/20 p-6 relative flex-1 flex flex-col">
           {/* Decorative Corner Elements */}
-          <div className="absolute top-3 left-3 w-12 h-12 border-l-2 border-t-2 border-primary/30"></div>
-          <div className="absolute top-3 right-3 w-12 h-12 border-r-2 border-t-2 border-primary/30"></div>
-          <div className="absolute bottom-3 left-3 w-12 h-12 border-l-2 border-b-2 border-primary/30"></div>
-          <div className="absolute bottom-3 right-3 w-12 h-12 border-r-2 border-b-2 border-primary/30"></div>
+          <div className="absolute top-2 left-2 w-12 h-12 border-l-2 border-t-2 border-primary/30"></div>
+          <div className="absolute top-2 right-2 w-12 h-12 border-r-2 border-t-2 border-primary/30"></div>
+          <div className="absolute bottom-2 left-2 w-12 h-12 border-l-2 border-b-2 border-primary/30"></div>
+          <div className="absolute bottom-2 right-2 w-12 h-12 border-r-2 border-b-2 border-primary/30"></div>
 
           {/* Header */}
           <div className="text-center mb-6">
@@ -373,10 +373,10 @@ const BusinessLicenseCertificate = () => {
               {/* Certificate Border */}
               <div className="border-4 border-primary/20 p-8 relative">
                 {/* Decorative Corner Elements */}
-                <div className="absolute top-3 left-3 w-8 h-8 border-l-2 border-t-2 border-primary/30"></div>
-                <div className="absolute top-3 right-3 w-8 h-8 border-r-2 border-t-2 border-primary/30"></div>
-                <div className="absolute bottom-3 left-3 w-8 h-8 border-l-2 border-b-2 border-primary/30"></div>
-                <div className="absolute bottom-3 right-3 w-8 h-8 border-r-2 border-b-2 border-primary/30"></div>
+                <div className="absolute top-2 left-2 w-8 h-8 border-l-2 border-t-2 border-primary/30"></div>
+                <div className="absolute top-2 right-2 w-8 h-8 border-r-2 border-t-2 border-primary/30"></div>
+                <div className="absolute bottom-2 left-2 w-8 h-8 border-l-2 border-b-2 border-primary/30"></div>
+                <div className="absolute bottom-2 right-2 w-8 h-8 border-r-2 border-b-2 border-primary/30"></div>
 
                 {/* Header */}
                 <div className="text-center mb-8">
