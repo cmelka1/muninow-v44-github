@@ -331,9 +331,6 @@ export const NotificationsTab = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-slate-800">Enable Paperless Billing</h4>
-                <p className="text-sm text-slate-600">
-                  Receive all bills and statements electronically instead of by mail
-                </p>
               </div>
               <Switch
                 checked={preferences.paperlessBilling}
