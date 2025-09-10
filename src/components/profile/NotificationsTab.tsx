@@ -8,6 +8,9 @@ import { Bell, Mail, Smartphone, FileText, DollarSign, Edit2, Save, X } from 'lu
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+// Feature flag to control paperless billing visibility
+const SHOW_PAPERLESS_BILLING = false;
+
 interface NotificationPreferences {
   serviceUpdates: {
     email: boolean;
@@ -263,8 +266,8 @@ export const NotificationsTab = () => {
         </CardContent>
       </Card>
 
-      {/* Paperless Billing Section - Hidden for municipal users */}
-      {user && (
+      {/* Paperless Billing Section - Currently hidden via feature flag */}
+      {SHOW_PAPERLESS_BILLING && user && (
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
