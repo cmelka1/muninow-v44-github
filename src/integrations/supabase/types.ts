@@ -3275,7 +3275,6 @@ export type Database = {
           last_name: string
           original_address: Json | null
           phone: string | null
-          role: string
           standardized_address: Json | null
           state: string | null
           street_address: string | null
@@ -3297,7 +3296,6 @@ export type Database = {
           last_name: string
           original_address?: Json | null
           phone?: string | null
-          role?: string
           standardized_address?: Json | null
           state?: string | null
           street_address?: string | null
@@ -3319,7 +3317,6 @@ export type Database = {
           last_name?: string
           original_address?: Json | null
           phone?: string | null
-          role?: string
           standardized_address?: Json | null
           state?: string | null
           street_address?: string | null
