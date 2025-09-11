@@ -331,18 +331,13 @@ export const PermitsSettingsTab = () => {
                     const isCustom = permit.is_custom;
                     
                     return (
-                      <TableRow key={permit.permit_type_id} className={isCustomized ? 'bg-muted/20' : ''}>
+                      <TableRow key={permit.permit_type_id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
                             <span>{permit.permit_type_name}</span>
                             {isCustom && (
                               <Badge variant="default" className="text-xs">
                                 Custom
-                              </Badge>
-                            )}
-                            {isCustomized && !isCustom && (
-                              <Badge variant="secondary" className="text-xs">
-                                Customized
                               </Badge>
                             )}
                           </div>
