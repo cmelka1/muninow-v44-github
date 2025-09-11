@@ -216,7 +216,8 @@ export const PermitsSettingsTab = () => {
         return acc;
       }, {} as Record<string, any>);
 
-      // Save all updates
+      // Save all updates - use upsert for both standard and custom permit types
+      // The upsert mutation handles the logic of whether to create or update
       await Promise.all(
         Object.entries(updates).map(([permitTypeId, updateData]) =>
           upsertMutation.mutateAsync({
