@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
-import { Edit2, Save, X, Upload, Plus, FileText, Download } from 'lucide-react';
+import { Edit2, Save, X, Upload, Plus, FileText, Download, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import {
   useUpdateMunicipalTaxTypes,
   useCreateMunicipalTaxType,
   useUploadTaxInstructionDocument,
+  useDeleteMunicipalTaxType,
   type MunicipalTaxType,
 } from '@/hooks/useMunicipalTaxTypes';
 
@@ -78,7 +79,7 @@ const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading }) => {
             className="w-full"
           />
           <Badge variant="outline" className="text-xs shrink-0">
-            Custom
+            New
           </Badge>
         </div>
       </TableCell>
@@ -92,6 +93,7 @@ const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading }) => {
           <Plus className="h-4 w-4" />
         </Button>
       </TableCell>
+      <TableCell />
     </TableRow>
   );
 };
@@ -108,6 +110,7 @@ export const TaxesSettingsTab = () => {
   const updateTaxTypesMutation = useUpdateMunicipalTaxTypes();
   const createTaxTypeMutation = useCreateMunicipalTaxType();
   const uploadDocumentMutation = useUploadTaxInstructionDocument();
+  const deleteTaxTypeMutation = useDeleteMunicipalTaxType();
 
   // Auto-enable edit mode when there are no tax types
   React.useEffect(() => {
@@ -254,6 +257,28 @@ export const TaxesSettingsTab = () => {
     }
   };
 
+  const handleDelete = async (taxTypeId: string, taxTypeName: string) => {
+    if (!confirm(`Are you sure you want to delete "${taxTypeName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteTaxTypeMutation.mutateAsync(taxTypeId);
+      
+      toast({
+        title: "Tax type deleted",
+        description: `"${taxTypeName}" has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.error('Error deleting tax type:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete tax type. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -262,7 +287,8 @@ export const TaxesSettingsTab = () => {
             <CardTitle>Tax Types</CardTitle>
             <CardDescription>
               Configure tax types and upload instruction documents for your municipality.
-              Documents are saved immediately upon upload. Other changes require clicking Save.
+              New tax types are saved immediately when created. Documents are saved immediately upon upload. 
+              Other changes require clicking Save to apply them.
               {isEditMode && ' Make changes and click Save to apply them.'}
             </CardDescription>
           </div>
@@ -311,6 +337,7 @@ export const TaxesSettingsTab = () => {
                   <TableRow>
                     <TableHead>Tax Type</TableHead>
                     <TableHead>Instructions Document</TableHead>
+                    {isEditMode && <TableHead className="w-20">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -369,6 +396,19 @@ export const TaxesSettingsTab = () => {
                           )}
                         </div>
                       </TableCell>
+                      {isEditMode && (
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(taxType.id, taxType.tax_type_name)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={deleteTaxTypeMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                   
