@@ -94,7 +94,7 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
             <SelectTrigger id={`contractor-type-${contractor.id}`}>
               <SelectValue placeholder="Select contractor type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent side="top" sideOffset={4} collisionPadding={10}>
               {contractorTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
