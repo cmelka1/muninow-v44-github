@@ -32,7 +32,7 @@ const SimpleAuth = () => {
   useEffect(() => {
     if (user && profile) {
       console.log('Navigation check - user:', user.id, 'profile:', profile);
-      if (profile.account_type === 'municipal') {
+      if (profile.account_type.startsWith('municipal')) {
         navigate('/municipal/dashboard');
       } else if (profile.account_type === 'superadmin') { // Fixed: Use lowercase
         navigate('/superadmin/dashboard');
