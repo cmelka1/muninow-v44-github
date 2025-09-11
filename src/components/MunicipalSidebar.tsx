@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomer } from '@/hooks/useCustomer';
 import { NotificationDropdown } from '@/components/NotificationDropdown';
+import { formatAccountType } from '@/lib/formatters';
 
 const navigationItems = [
   {
@@ -179,8 +180,8 @@ export function MunicipalSidebar() {
                   : user?.email?.split('@')[0] || 'User'
                 }
               </span>
-              <span className="text-xs text-muted-foreground capitalize">
-                Municipal account
+              <span className="text-xs text-muted-foreground">
+                {formatAccountType(profile?.account_type)}
               </span>
             </div>
           </div>
