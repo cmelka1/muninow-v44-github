@@ -71,17 +71,17 @@ const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading }) => {
   return (
     <TableRow className="bg-muted/10">
       <TableCell>
-        <div className="flex items-center space-x-2">
-          <Input
-            placeholder="Enter tax type name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full"
-          />
-          <Badge variant="outline" className="text-xs shrink-0">
-            New
-          </Badge>
-        </div>
+        <Input
+          placeholder="Enter tax type name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full"
+        />
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className="text-xs">
+          New
+        </Badge>
       </TableCell>
       <TableCell>
         <Button
@@ -93,7 +93,6 @@ const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading }) => {
           <Plus className="h-4 w-4" />
         </Button>
       </TableCell>
-      <TableCell />
     </TableRow>
   );
 };
