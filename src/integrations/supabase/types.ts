@@ -4595,10 +4595,22 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      has_business_access_to_customer: {
+        Args: { customer_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      has_municipal_access_to_customer: {
+        Args: { customer_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       has_permission: {
         Args:
           | { _entity_id?: string; _permission: string; _user_id: string }
           | { permission_name: string }
+        Returns: boolean
+      }
+      has_resident_access_to_customer: {
+        Args: { customer_uuid: string; user_uuid: string }
         Returns: boolean
       }
       has_role: {
@@ -4613,6 +4625,10 @@ export type Database = {
         Args: { business_id: string }
         Returns: boolean
       }
+      is_business_user: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
       is_current_user_super_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -4623,6 +4639,14 @@ export type Database = {
       }
       is_municipal_admin: {
         Args: { municipal_id?: string }
+        Returns: boolean
+      }
+      is_municipal_user: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      is_resident_user: {
+        Args: { user_uuid?: string }
         Returns: boolean
       }
       log_address2_event: {
