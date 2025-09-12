@@ -130,13 +130,13 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const dialogContentRef = useRef<HTMLDivElement>(null);
   
   // Only load permit types after municipality is selected
-  const { data: permitTypes, isLoading: isLoadingPermitTypes } = useMunicipalPermitTypes();
+  const { data: permitTypes, isLoading: isLoadingPermitTypes } = useMunicipalPermitTypes(
+    selectedMunicipality?.customer_id
+  );
   
-  // Filter permit types based on selected municipality
+  // Filter permit types based on selected municipality (merchant filtering)
   const filteredPermitTypes = permitTypes?.filter(pt => 
-    pt.customer_id === selectedMunicipality?.customer_id &&
-    pt.is_active &&
-    (pt.merchant_id === selectedMunicipality?.id || pt.merchant_id === null)
+    pt.merchant_id === selectedMunicipality?.id || pt.merchant_id === null
   ) || [];
   const { toast } = useToast();
   const { data: municipalQuestions, isLoading: isLoadingQuestions } = useMunicipalPermitQuestions(

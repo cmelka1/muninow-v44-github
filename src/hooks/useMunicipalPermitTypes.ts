@@ -61,13 +61,16 @@ export interface CreateMunicipalPermitTypeRequest {
   display_order?: number;
 }
 
-export const useMunicipalPermitTypes = () => {
+export const useMunicipalPermitTypes = (customerId?: string) => {
   const { profile } = useAuth();
   
+  // Use provided customerId or fall back to user's profile customer_id
+  const targetCustomerId = customerId || profile?.customer_id;
+  
   return useQuery({
-    queryKey: ['municipal-permit-types', profile?.customer_id],
+    queryKey: ['municipal-permit-types', targetCustomerId],
     queryFn: async () => {
-      if (!profile?.customer_id) {
+      if (!targetCustomerId) {
         throw new Error('Customer ID required');
       }
 
@@ -84,7 +87,8 @@ export const useMunicipalPermitTypes = () => {
             requires_inspection
           )
         `)
-        .eq('customer_id', profile.customer_id)
+        .eq('customer_id', targetCustomerId)
+        .eq('is_active', true)
         .order('display_order', { ascending: true })
         .order('municipal_label', { ascending: true });
 
@@ -94,7 +98,7 @@ export const useMunicipalPermitTypes = () => {
 
       return data as MunicipalPermitType[];
     },
-    enabled: !!profile?.customer_id,
+    enabled: !!targetCustomerId,
   });
 };
 
