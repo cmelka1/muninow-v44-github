@@ -492,28 +492,40 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         throw error;
       }
 
+      // Parse response if it's a string (handle edge function response format)
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+          console.log('🔧 Parsed string response to JSON:', parsedData);
+        } catch (parseError) {
+          console.error('Failed to parse Google Pay response:', parseError);
+          parsedData = data;
+        }
+      }
+
       // Enhanced success detection with multiple fallbacks for Google Pay
-      const isSuccess = data?.success === true || 
-                       (data?.finix_transfer_id && !data?.error) ||
-                       (data?.status === 'completed' || data?.payment_status === 'paid') ||
-                       (data?.transaction_id && !data?.error);
+      const isSuccess = parsedData?.success === true || 
+                       (parsedData?.finix_transfer_id && !parsedData?.error) ||
+                       (parsedData?.status === 'completed' || parsedData?.payment_status === 'paid') ||
+                       (parsedData?.transaction_id && !parsedData?.error);
 
       console.log('🔍 Google Pay success detection:', {
-        'data?.success': data?.success,
-        'has_finix_transfer_id': !!data?.finix_transfer_id,
-        'has_transaction_id': !!data?.transaction_id,
-        'no_error': !data?.error,
-        'status_completed': data?.status === 'completed',
-        'payment_status_paid': data?.payment_status === 'paid',
+        'parsedData?.success': parsedData?.success,
+        'has_finix_transfer_id': !!parsedData?.finix_transfer_id,
+        'has_transaction_id': !!parsedData?.transaction_id,
+        'no_error': !parsedData?.error,
+        'status_completed': parsedData?.status === 'completed',
+        'payment_status_paid': parsedData?.payment_status === 'paid',
         'final_isSuccess': isSuccess
       });
 
       if (isSuccess) {
-        console.log('✅ Google Pay payment successful:', data);
+        console.log('✅ Google Pay payment successful:', parsedData);
         const response: PaymentResponse = {
           success: true,
-          transaction_id: data.finix_transfer_id,
-          payment_id: data.transaction_id,
+          transaction_id: parsedData.finix_transfer_id,
+          payment_id: parsedData.transaction_id,
           status: 'completed'
         };
         
@@ -529,13 +541,14 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       } else {
         console.error('❌ Google Pay failed - detailed analysis:', {
           data,
+          parsedData,
           error,
-          successCheck: data?.success,
-          hasTransferId: !!data?.finix_transfer_id,
-          hasTransactionId: !!data?.transaction_id,
-          hasError: !!data?.error
+          successCheck: parsedData?.success,
+          hasTransferId: !!parsedData?.finix_transfer_id,
+          hasTransactionId: !!parsedData?.transaction_id,
+          hasError: !!parsedData?.error
         });
-        throw new Error(data?.error || data?.message || 'Google Pay payment failed');
+        throw new Error(parsedData?.error || parsedData?.message || 'Google Pay payment failed');
       }
     } catch (error) {
       console.error('💥 Google Pay error:', error);

@@ -322,7 +322,19 @@ export const usePermitPaymentMethods = (permit: any) => {
         throw error;
       }
 
-      if (data?.success) {
+      // Parse response if it's a string (handle edge function response format)
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+          console.log('🔧 Parsed string response to JSON:', parsedData);
+        } catch (parseError) {
+          console.error('Failed to parse Google Pay response:', parseError);
+          parsedData = data;
+        }
+      }
+
+      if (parsedData?.success) {
         toast({
           title: "Payment Successful",
           description: "Your Google Pay permit payment has been processed successfully.",
@@ -331,9 +343,9 @@ export const usePermitPaymentMethods = (permit: any) => {
         // Redirect to certificate page
         window.location.href = `/permit/${permit.permit_id}/certificate`;
         
-        return { success: true, ...data };
+        return { success: true, ...parsedData };
       } else {
-        throw new Error(data?.error || 'Payment failed');
+        throw new Error(parsedData?.error || 'Payment failed');
       }
 
     } catch (error) {
