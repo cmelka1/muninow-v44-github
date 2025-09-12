@@ -260,16 +260,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
           <Plus className="h-4 w-4 mr-2" />
           Add New Payment Method
         </Button>
-
-        <Button
-          variant="ghost"
-          onClick={() => setIsExpanded(false)}
-          disabled={isProcessingPayment}
-          className="w-full"
-          size="sm"
-        >
-          Cancel
-        </Button>
       </div>
     </div>
   );
