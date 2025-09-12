@@ -34,7 +34,7 @@ export const verifyPaymentInDatabase = async (
         if (entityType === 'permit') {
           const result = await (supabase as any)
             .from('permit_applications')
-            .select('status, payment_status')
+            .select('application_status, payment_status')
             .eq('permit_id', entityId)
             .limit(1);
           data = result.data?.[0] || null;
@@ -42,8 +42,16 @@ export const verifyPaymentInDatabase = async (
         } else if (entityType === 'business_license') {
           const result = await (supabase as any)
             .from('business_license_applications') 
-            .select('status, payment_status')
-            .eq('license_id', entityId)
+            .select('application_status, payment_status')
+            .eq('id', entityId)
+            .limit(1);
+          data = result.data?.[0] || null;
+          error = result.error;
+        } else if (entityType === 'service_application') {
+          const result = await (supabase as any)
+            .from('service_applications')
+            .select('application_status, payment_status')
+            .eq('id', entityId)
             .limit(1);
           data = result.data?.[0] || null;
           error = result.error;
@@ -80,7 +88,7 @@ export const verifyPaymentInDatabase = async (
 
       // Check for successful payment status
       const paymentStatus = data.payment_status;
-      const entityStatus = data.status;
+      const entityStatus = data.application_status;
       
       const isPaymentSuccessful = paymentStatus === 'paid' || 
                                  paymentStatus === 'completed' ||
