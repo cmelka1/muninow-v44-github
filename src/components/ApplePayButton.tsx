@@ -7,13 +7,15 @@ interface ApplePayButtonProps {
   totalAmount: number;
   isDisabled?: boolean;
   onPaymentComplete: (success: boolean, error?: string) => void;
+  onAvailabilityChange?: (isAvailable: boolean) => void;
 }
 
 const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   bill,
   totalAmount,
   isDisabled = false,
-  onPaymentComplete
+  onPaymentComplete,
+  onAvailabilityChange
 }) => {
   const [isApplePayReady, setIsApplePayReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,19 +27,23 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
         // Check if Apple Pay is available
         if (!window.ApplePaySession) {
           setIsLoading(false);
+          onAvailabilityChange?.(false);
           return;
         }
 
         // Check if device supports Apple Pay
         if (!window.ApplePaySession.canMakePayments()) {
           setIsLoading(false);
+          onAvailabilityChange?.(false);
           return;
         }
 
         setIsApplePayReady(true);
+        onAvailabilityChange?.(true);
       } catch (error) {
         console.error('Error checking Apple Pay availability:', error);
         setIsApplePayReady(false);
+        onAvailabilityChange?.(false);
       } finally {
         setIsLoading(false);
       }

@@ -7,6 +7,7 @@ interface GooglePayButtonProps {
   totalAmount: number;
   merchantId?: string;
   isDisabled?: boolean;
+  onAvailabilityChange?: (isAvailable: boolean) => void;
 }
 
 const GooglePayButton: React.FC<GooglePayButtonProps> = ({
@@ -14,7 +15,8 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   bill,
   totalAmount,
   merchantId,
-  isDisabled = false
+  isDisabled = false,
+  onAvailabilityChange
 }) => {
   const [isGooglePayReady, setIsGooglePayReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,9 +50,11 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
 
         const response = await paymentsClient.isReadyToPay(isReadyToPayRequest);
         setIsGooglePayReady(response.result);
+        onAvailabilityChange?.(response.result);
       } catch (error) {
         console.error('Error checking Google Pay availability:', error);
         setIsGooglePayReady(false);
+        onAvailabilityChange?.(false);
       } finally {
         setIsLoading(false);
       }
