@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { PaymentResponse, PaymentError } from '@/types/payment';
 import { classifyPaymentError, generateIdempotencyId } from '@/utils/paymentUtils';
+import type { PaymentDataRequest } from '@/types/googlepay';
 
 export type EntityType = 'permit' | 'business_license' | 'tax_submission' | 'service_application';
 
@@ -40,6 +41,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   const [googlePayMerchantId, setGooglePayMerchantId] = useState<string | null>(null);
   const [lastPaymentAttempt, setLastPaymentAttempt] = useState<number | null>(null);
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
+  const [ongoingPaymentPromise, setOngoingPaymentPromise] = useState<Promise<PaymentResponse> | null>(null);
 
   // Load Google Pay merchant ID
   useEffect(() => {
@@ -140,6 +142,13 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       throw new Error('Missing payment information');
     }
 
+    // Single-flight pattern: return existing promise if payment is in progress
+    if (ongoingPaymentPromise) {
+      console.log('⚠️ Returning existing payment promise (single-flight protection)');
+      console.groupEnd();
+      return ongoingPaymentPromise;
+    }
+
     // Prevent duplicate requests with multiple protection layers
     const now = Date.now();
     
@@ -171,23 +180,29 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
     setIsProcessingPayment(true);
     setLastPaymentAttempt(now);
 
-    try {
-      // Log current auth state before payment
-      const { data: authData, error: authError } = await supabase.auth.getSession();
-      console.log('📋 Current auth session:', {
-        hasSession: !!authData.session,
-        hasUser: !!authData.session?.user,
-        accessToken: authData.session?.access_token ? 'Present (hidden)' : 'Missing',
-        refreshToken: authData.session?.refresh_token ? 'Present (hidden)' : 'Missing',
-        expiresAt: authData.session?.expires_at,
-        currentTime: Math.floor(Date.now() / 1000),
-        timeUntilExpiry: authData.session?.expires_at ? authData.session.expires_at - Math.floor(Date.now() / 1000) : 'N/A',
-        authError: authError?.message || 'None'
-      });
-      const paymentInstrument = paymentInstruments.find(p => p.id === selectedPaymentMethod);
-      const paymentType = paymentInstrument ? 
-        (paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'card' : 'ach') : 
-        selectedPaymentMethod; // For google-pay/apple-pay
+    // Create stable idempotency ID based on session and entity
+    const clientIdempotencyId = `${sessionId}_${params.entityId}_${selectedPaymentMethod}`;
+    console.log('💎 Using client-provided idempotency ID:', clientIdempotencyId);
+
+    // Create the payment promise and store it for single-flight protection
+    const paymentPromise = (async () => {
+      try {
+        // Log current auth state before payment
+        const { data: authData, error: authError } = await supabase.auth.getSession();
+        console.log('📋 Current auth session:', {
+          hasSession: !!authData.session,
+          hasUser: !!authData.session?.user,
+          accessToken: authData.session?.access_token ? 'Present (hidden)' : 'Missing',
+          refreshToken: authData.session?.refresh_token ? 'Present (hidden)' : 'Missing',
+          expiresAt: authData.session?.expires_at,
+          currentTime: Math.floor(Date.now() / 1000),
+          timeUntilExpiry: authData.session?.expires_at ? authData.session.expires_at - Math.floor(Date.now() / 1000) : 'N/A',
+          authError: authError?.message || 'None'
+        });
+        const paymentInstrument = paymentInstruments.find(p => p.id === selectedPaymentMethod);
+        const paymentType = paymentInstrument ? 
+          (paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'card' : 'ach') : 
+          selectedPaymentMethod; // For google-pay/apple-pay
 
       const requestBody = {
         entity_type: params.entityType,
@@ -205,7 +220,8 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         bank_last_four: paymentInstrument?.bank_last_four,
         first_name: user.user_metadata?.first_name,
         last_name: user.user_metadata?.last_name,
-        user_email: user.email
+        user_email: user.email,
+        idempotency_id: clientIdempotencyId // Client-provided idempotency ID
       };
 
       console.log('📤 Sending payment request:', { 
@@ -359,16 +375,151 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
     } finally {
       console.log('🧹 Cleaning up payment state');
       setIsProcessingPayment(false);
+      setOngoingPaymentPromise(null);
       // Don't clear session ID here - only clear on success or after cooldown
     }
+    })();
+
+    // Store the promise for single-flight protection
+    setOngoingPaymentPromise(paymentPromise);
+    
+    return paymentPromise;
   };
 
   const handleGooglePayment = async (): Promise<PaymentResponse> => {
-    if (isProcessingPayment) {
+    console.group('💰 GOOGLE_PAY_FLOW_START');
+    console.log('Google Pay initiated with merchant ID:', googlePayMerchantId);
+    
+    if (isProcessingPayment || ongoingPaymentPromise) {
+      console.log('⚠️ Payment already in progress - ignoring Google Pay request');
+      console.groupEnd();
       throw new Error('Payment already in progress');
     }
-    setSelectedPaymentMethod('google-pay');
-    return handlePayment();
+
+    if (!googlePayMerchantId) {
+      console.error('❌ Google Pay merchant ID not available');
+      console.groupEnd();
+      throw new Error('Google Pay not available for this merchant');
+    }
+
+    try {
+      // Check if Google Pay is available
+      if (!window.google || !window.google.payments) {
+        console.error('❌ Google Pay API not loaded');
+        console.groupEnd();
+        throw new Error('Google Pay is not available');
+      }
+
+      // Initialize Google Pay client
+      const paymentsClient = new window.google.payments.api.PaymentsClient({
+        environment: 'TEST' // Change to 'PRODUCTION' for live
+      });
+
+      const paymentRequest: PaymentDataRequest = {
+        apiVersion: 2,
+        apiVersionMinor: 0,
+        allowedPaymentMethods: [{
+          type: 'CARD' as const,
+          parameters: {
+            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'] as const,
+            allowedCardNetworks: ['MASTERCARD', 'VISA'] as const
+          },
+          tokenizationSpecification: {
+            type: 'PAYMENT_GATEWAY' as const,
+            parameters: {
+              gateway: 'finix',
+              gatewayMerchantId: googlePayMerchantId
+            }
+          }
+        }],
+        merchantInfo: {
+          merchantId: googlePayMerchantId,
+          merchantName: 'Muni Now'
+        },
+        transactionInfo: {
+          totalPriceStatus: 'FINAL' as const,
+          totalPrice: (serviceFee?.totalAmountToCharge || params.baseAmountCents / 100).toFixed(2),
+          currencyCode: 'USD',
+          countryCode: 'US'
+        }
+      };
+
+      console.log('🔄 Loading Google Pay payment data...');
+      const paymentData = await paymentsClient.loadPaymentData(paymentRequest);
+      console.log('✅ Google Pay data loaded successfully');
+
+      // Generate idempotency ID for Google Pay
+      const sessionId = paymentSessionId || generateIdempotencyId('payment_session');
+      if (!paymentSessionId) {
+        setPaymentSessionId(sessionId);
+      }
+      const clientIdempotencyId = `${sessionId}_${params.entityId}_google-pay`;
+
+      // Extract the payment token
+      const paymentToken = paymentData.paymentMethodData.tokenizationData.token;
+      
+      setIsProcessingPayment(true);
+      console.log('📤 Sending Google Pay payment to backend...');
+
+      const { data, error } = await supabase.functions.invoke('process-unified-google-pay', {
+        body: {
+          entity_type: params.entityType,
+          entity_id: params.entityId,
+          customer_id: params.customerId,
+          merchant_id: params.merchantId,
+          base_amount_cents: params.baseAmountCents,
+          google_pay_token: paymentToken,
+          fraud_session_id: `${sessionId}_${Date.now()}`,
+          first_name: user?.user_metadata?.first_name,
+          last_name: user?.user_metadata?.last_name,
+          user_email: user?.email,
+          idempotency_id: clientIdempotencyId
+        }
+      });
+
+      if (error) {
+        console.error('❌ Google Pay backend error:', error);
+        throw error;
+      }
+
+      if (data?.success) {
+        console.log('✅ Google Pay payment successful:', data);
+        const response: PaymentResponse = {
+          success: true,
+          transaction_id: data.finix_transfer_id,
+          payment_id: data.transaction_id,
+          status: 'completed'
+        };
+        
+        toast({
+          title: "Google Pay Successful",
+          description: `Your payment of $${(serviceFee?.totalAmountToCharge || params.baseAmountCents / 100).toFixed(2)} has been processed successfully.`,
+        });
+
+        setPaymentSessionId(null);
+        console.groupEnd();
+        params.onSuccess?.(response);
+        return response;
+      } else {
+        console.error('❌ Google Pay failed:', data);
+        throw new Error(data?.error || 'Google Pay payment failed');
+      }
+    } catch (error) {
+      console.error('💥 Google Pay error:', error);
+      const classifiedError = classifyPaymentError(error);
+      
+      toast({
+        title: "Google Pay Failed",
+        description: classifiedError.message,
+        variant: "destructive",
+      });
+
+      console.groupEnd();
+      params.onError?.(classifiedError);
+      throw classifiedError;
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const handleApplePayment = async (): Promise<PaymentResponse> => {

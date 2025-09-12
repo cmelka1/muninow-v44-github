@@ -193,7 +193,11 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
           <div className={isApplePayAvailable ? "flex-1" : "w-full"}>
             <GooglePayButton
               onPayment={async () => {
-                await handleGooglePayment();
+                try {
+                  await handleGooglePayment();
+                } catch (error) {
+                  console.error('Google Pay error in button:', error);
+                }
               }}
               bill={{ id: entityId, name: entityName }}
               totalAmount={totalWithFee}

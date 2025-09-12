@@ -21,6 +21,7 @@ interface UnifiedPaymentRequest {
   first_name?: string;
   last_name?: string;
   user_email?: string;
+  idempotency_id?: string; // Optional client-provided idempotency ID
 }
 
 interface UnifiedPaymentResponse {
@@ -65,7 +66,8 @@ Deno.serve(async (req) => {
       bank_last_four,
       first_name,
       last_name,
-      user_email
+      user_email,
+      idempotency_id: clientIdempotencyId
     } = body;
 
     // Validate required fields
@@ -140,9 +142,49 @@ Deno.serve(async (req) => {
       finixPaymentInstrumentId = paymentInstrument.finix_payment_instrument_id;
     }
 
-    // Generate idempotency ID
-    const idempotency_id = generateIdempotencyId('unified_payment', entity_id);
-    console.log('Generated idempotency ID:', idempotency_id);
+    // Use client-provided idempotency ID or generate one
+    const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_payment', entity_id);
+    console.log('Using idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
+
+    // Check for existing payment transaction with this idempotency ID
+    const { data: existingTransaction, error: existingError } = await supabase
+      .from('payment_transactions')
+      .select('id, payment_status, finix_transfer_id, service_fee_cents, total_amount_cents')
+      .eq('idempotency_id', idempotency_id)
+      .single();
+
+    if (existingTransaction && !existingError) {
+      console.log('Found existing transaction with idempotency ID:', existingTransaction);
+      
+      // If payment is already completed, return the existing result
+      if (['paid', 'completed'].includes(existingTransaction.payment_status)) {
+        console.log('Returning existing successful payment result');
+        return new Response(
+          JSON.stringify({
+            success: true,
+            transaction_id: existingTransaction.id,
+            finix_transfer_id: existingTransaction.finix_transfer_id,
+            service_fee_cents: existingTransaction.service_fee_cents,
+            total_amount_cents: existingTransaction.total_amount_cents,
+            duplicate_prevented: true
+          }),
+          { status: 200, headers: corsHeaders }
+        );
+      }
+      
+      // If payment is still pending, return error to prevent duplicate attempts
+      if (existingTransaction.payment_status === 'pending') {
+        console.log('Found pending payment with same idempotency ID');
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Payment with this identifier is already being processed',
+            retryable: false
+          }),
+          { status: 409, headers: corsHeaders }
+        );
+      }
+    }
 
     // STEP 1: Call Finix API first (fail fast if payment fails)
     console.log('=== CALLING FINIX API FIRST ===');
