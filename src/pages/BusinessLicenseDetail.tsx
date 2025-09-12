@@ -66,14 +66,14 @@ export const BusinessLicenseDetail = () => {
   };
 
 
-  const handleDocumentDownload = async (document: any) => {
-    setDownloadingDocument(document.id);
+  const handleDocumentDownload = async (docItem: any) => {
+    setDownloadingDocument(docItem.id);
     try {
-      const url = await getDocumentUrl(document.storage_path);
+      const url = await getDocumentUrl(docItem.storage_path);
       if (url) {
         const link = document.createElement('a');
         link.href = url;
-        link.download = document.file_name;
+        link.download = docItem.file_name;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
