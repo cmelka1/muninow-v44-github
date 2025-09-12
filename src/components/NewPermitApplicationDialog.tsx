@@ -900,6 +900,23 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     {validationErrors.permitType && (
                       <p className="text-sm text-destructive mt-1">{validationErrors.permitType}</p>
                     )}
+                    
+                    {/* Permit Fee Display */}
+                    {selectedPermitType && (
+                      <div className="mt-3 p-3 bg-muted/50 rounded-lg border">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-foreground">
+                            Base Permit Fee:
+                          </span>
+                          <span className="text-sm font-semibold text-primary">
+                            {formatCurrency(selectedPermitType.base_fee_cents)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Additional fees may apply based on project scope
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
