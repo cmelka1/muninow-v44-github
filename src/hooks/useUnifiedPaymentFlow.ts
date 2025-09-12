@@ -415,6 +415,10 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         environment: 'TEST' // Change to 'PRODUCTION' for live
       });
 
+      // Normalize Google Pay total amount calculation
+      const totalCentsForGooglePay = serviceFee?.totalAmountToCharge ?? params.baseAmountCents;
+      const totalPriceDollars = (totalCentsForGooglePay / 100).toFixed(2);
+
       const paymentRequest: PaymentDataRequest = {
         apiVersion: 2,
         apiVersionMinor: 0,
@@ -438,12 +442,13 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         },
         transactionInfo: {
           totalPriceStatus: 'FINAL' as const,
-          totalPrice: (serviceFee?.totalAmountToCharge / 100 || params.baseAmountCents / 100).toFixed(2),
+          totalPrice: totalPriceDollars,
           currencyCode: 'USD',
           countryCode: 'US'
         }
       };
 
+      console.log('Google Pay total (cents, dollars):', { totalCentsForGooglePay, totalPriceDollars });
       console.log('🔄 Loading Google Pay payment data...');
       const paymentData = await paymentsClient.loadPaymentData(paymentRequest);
       console.log('✅ Google Pay data loaded successfully');
@@ -493,7 +498,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         
         toast({
           title: "Google Pay Successful",
-          description: `Your payment of $${(serviceFee?.totalAmountToCharge || params.baseAmountCents / 100).toFixed(2)} has been processed successfully.`,
+          description: `Your payment of $${totalPriceDollars} has been processed successfully.`,
         });
 
         setPaymentSessionId(null);
