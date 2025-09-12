@@ -438,7 +438,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         },
         transactionInfo: {
           totalPriceStatus: 'FINAL' as const,
-          totalPrice: (serviceFee?.totalAmountToCharge || params.baseAmountCents / 100).toFixed(2),
+          totalPrice: (serviceFee?.totalAmountToCharge / 100 || params.baseAmountCents / 100).toFixed(2),
           currencyCode: 'USD',
           countryCode: 'US'
         }
