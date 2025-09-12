@@ -476,18 +476,7 @@ const MunicipalPermitDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Communication */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Communication
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PermitCommunication permitId={permitId!} isMunicipalUser={true} />
-            </CardContent>
-          </Card>
+          <PermitCommunication permitId={permitId!} isMunicipalUser={true} />
 
         </div>
       </div>
