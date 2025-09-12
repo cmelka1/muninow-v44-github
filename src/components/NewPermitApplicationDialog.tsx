@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
-import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
+import { useMunicipalPermitTypes, MunicipalPermitType } from '@/hooks/useMunicipalPermitTypes';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { formatCurrency } from '@/lib/formatters';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
@@ -39,11 +39,13 @@ interface SelectedMunicipality {
 
 interface SelectedPermitType {
   id: string;
-  name: string;
-  description: string;
+  municipal_label: string;
+  description: string | null;
   base_fee_cents: number;
   processing_days: number;
   requires_inspection: boolean;
+  merchant_id: string | null;
+  merchant_name: string | null;
 }
 
 interface PropertyInformation {
@@ -127,7 +129,15 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   
   const dialogContentRef = useRef<HTMLDivElement>(null);
   
-  const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
+  // Only load permit types after municipality is selected
+  const { data: permitTypes, isLoading: isLoadingPermitTypes } = useMunicipalPermitTypes();
+  
+  // Filter permit types based on selected municipality
+  const filteredPermitTypes = permitTypes?.filter(pt => 
+    pt.customer_id === selectedMunicipality?.customer_id &&
+    pt.is_active &&
+    (pt.merchant_id === selectedMunicipality?.id || pt.merchant_id === null)
+  ) || [];
   const { toast } = useToast();
   const { data: municipalQuestions, isLoading: isLoadingQuestions } = useMunicipalPermitQuestions(
     selectedMunicipality?.customer_id,
@@ -372,7 +382,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           user_id: profile.id,
           customer_id: selectedMunicipality!.customer_id,
           merchant_id: selectedMunicipality!.id,
-          permit_type: selectedPermitType!.name,
+          permit_type: selectedPermitType!.municipal_label,
           property_address: propertyInfo.address,
           property_pin: propertyInfo.pinNumber || null,
           estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
@@ -465,20 +475,23 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
 
   const handleMunicipalitySelect = (municipality: SelectedMunicipality) => {
     setSelectedMunicipality(municipality);
-    // Reset question responses when municipality changes
+    // Reset question responses and permit type when municipality changes
     setQuestionResponses({});
+    setSelectedPermitType(null);
   };
 
   const handlePermitTypeSelect = (permitTypeId: string) => {
-    const permitType = permitTypes?.find(pt => pt.id === permitTypeId);
+    const permitType = filteredPermitTypes?.find(pt => pt.id === permitTypeId);
     if (permitType) {
       setSelectedPermitType({
         id: permitType.id,
-        name: permitType.name,
+        municipal_label: permitType.municipal_label,
         description: permitType.description,
         base_fee_cents: permitType.base_fee_cents,
         processing_days: permitType.processing_days,
         requires_inspection: permitType.requires_inspection,
+        merchant_id: permitType.merchant_id,
+        merchant_name: permitType.merchant_name,
       });
     }
   };
@@ -885,14 +898,19 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     <Select onValueChange={(value) => {
                       handlePermitTypeSelect(value);
                       clearFieldError('permitType');
-                    }} disabled={isLoadingPermitTypes}>
+                    }} disabled={isLoadingPermitTypes || !selectedMunicipality}>
                       <SelectTrigger className={`mt-1 ${validationErrors.permitType ? 'ring-2 ring-destructive border-destructive' : ''}`} data-error={!!validationErrors.permitType}>
-                        <SelectValue placeholder={isLoadingPermitTypes ? "Loading permit types..." : "Select a permit type"} />
+                        <SelectValue placeholder={
+                          !selectedMunicipality ? "Select a municipality first" :
+                          isLoadingPermitTypes ? "Loading permit types..." : 
+                          filteredPermitTypes.length === 0 ? "No permit types available" :
+                          "Select a permit type"
+                        } />
                       </SelectTrigger>
                       <SelectContent>
-                        {permitTypes?.map((permitType) => (
+                        {filteredPermitTypes?.map((permitType) => (
                           <SelectItem key={permitType.id} value={permitType.id}>
-                            {permitType.name}
+                            {permitType.municipal_label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1463,7 +1481,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Permit Type</Label>
-                    <p className="text-sm font-medium">{selectedPermitType?.name || 'Not selected'}</p>
+                    <p className="text-sm font-medium">{selectedPermitType?.municipal_label || 'Not selected'}</p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Property Address</Label>
