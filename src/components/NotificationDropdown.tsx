@@ -1,4 +1,4 @@
-import { Bell, MessageCircle, DollarSign, AlertCircle } from "lucide-react";
+import { Bell, MessageCircle, DollarSign, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,6 +44,9 @@ export function NotificationDropdown() {
     }
     
     if (notification.update_type === 'status_change') {
+      if (notification.status_change_to === 'approved' || notification.status_change_to === 'issued') {
+        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+      }
       return <AlertCircle className="h-4 w-4 text-orange-600" />;
     }
     
