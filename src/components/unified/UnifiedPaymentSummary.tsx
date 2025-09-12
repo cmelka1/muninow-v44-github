@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Building, DollarSign, Calculator } from 'lucide-react';
+import { CreditCard, Building, DollarSign } from 'lucide-react';
 
 interface UnifiedPaymentSummaryProps {
   entityType: 'permit' | 'business_license' | 'tax_submission' | 'service_application';
@@ -78,10 +78,7 @@ export const UnifiedPaymentSummary: React.FC<UnifiedPaymentSummaryProps> = ({
           
           {serviceFee > 0 && (
             <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <Calculator className="h-3 w-3 text-muted-foreground" />
-                <span className="text-muted-foreground">Service Fee</span>
-              </div>
+              <span className="text-muted-foreground">Service Fee</span>
               <span className="font-medium">${(serviceFee / 100).toFixed(2)}</span>
             </div>
           )}
