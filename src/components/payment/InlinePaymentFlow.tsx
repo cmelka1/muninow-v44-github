@@ -4,6 +4,8 @@ import { Separator } from '@/components/ui/separator';
 import { CreditCard, Plus, Loader2 } from 'lucide-react';
 import { InlinePaymentSummary } from './InlinePaymentSummary';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
+import GooglePayButton from '@/components/GooglePayButton';
+import ApplePayButton from '@/components/ApplePayButton';
 import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow';
 import { PaymentResponse } from '@/types/payment';
 
@@ -186,32 +188,29 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
 
         {/* Digital Payment Options */}
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (!isProcessingPayment) {
-                handleGooglePayment();
-              }
-            }}
-            disabled={!googlePayMerchantId || isProcessingPayment}
-            className="flex-1 text-xs"
-            size="sm"
-          >
-            {isProcessingPayment ? 'Processing...' : 'Google Pay'}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (!isProcessingPayment) {
-                handleApplePayment();
-              }
-            }}
-            disabled={isProcessingPayment}
-            className="flex-1 text-xs"
-            size="sm"
-          >
-            {isProcessingPayment ? 'Processing...' : 'Apple Pay'}
-          </Button>
+          <div className="flex-1">
+            <GooglePayButton
+              onPayment={async () => {
+                await handleGooglePayment();
+              }}
+              bill={{ id: entityId, name: entityName }}
+              totalAmount={totalWithFee}
+              merchantId={googlePayMerchantId || ''}
+              isDisabled={!googlePayMerchantId || isProcessingPayment}
+            />
+          </div>
+          <div className="flex-1">
+            <ApplePayButton
+              bill={{ id: entityId, name: entityName }}
+              totalAmount={totalWithFee}
+              isDisabled={isProcessingPayment}
+              onPaymentComplete={async (success: boolean, error?: string) => {
+                if (success) {
+                  await handleApplePayment();
+                }
+              }}
+            />
+          </div>
         </div>
       </div>
 
