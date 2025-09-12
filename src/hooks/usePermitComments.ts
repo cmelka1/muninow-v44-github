@@ -63,17 +63,15 @@ export const useCreateComment = () => {
       comment_text: string;
       is_internal?: boolean;
     }) => {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('permit_review_comments')
         .insert({
           ...comment,
           reviewer_id: (await supabase.auth.getUser()).data.user?.id,
-        })
-        .select('*')
-        .single();
+        });
 
       if (error) throw error;
-      return data;
+      return comment; // Return the original comment data for cache invalidation
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['permit_comments', data.permit_id] });
