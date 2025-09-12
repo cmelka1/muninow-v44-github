@@ -357,7 +357,7 @@ Deno.serve(async (req) => {
     
     const paymentInstrumentRequest: FinixPaymentInstrumentRequest = {
       identity: userIdentity.finix_identity_id,
-      merchant_identity: merchant.finix_identity_id,
+      merchant_identity: merchant.finix_merchant_id,
       third_party_token: google_pay_token,
       type: "GOOGLE_PAY"
     };
