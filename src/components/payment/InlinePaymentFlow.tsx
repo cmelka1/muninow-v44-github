@@ -189,39 +189,33 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         />
 
         {/* Digital Payment Options */}
-        {(isGooglePayAvailable || isApplePayAvailable) && (
-          <div className={`flex gap-2 ${isGooglePayAvailable && isApplePayAvailable ? '' : 'justify-center'}`}>
-            {isGooglePayAvailable && (
-              <div className={isApplePayAvailable ? "flex-1" : "w-full max-w-sm"}>
-                <GooglePayButton
-                  onPayment={async () => {
-                    await handleGooglePayment();
-                  }}
-                  bill={{ id: entityId, name: entityName }}
-                  totalAmount={totalWithFee}
-                  merchantId={googlePayMerchantId || ''}
-                  isDisabled={!googlePayMerchantId || isProcessingPayment}
-                  onAvailabilityChange={setIsGooglePayAvailable}
-                />
-              </div>
-            )}
-            {isApplePayAvailable && (
-              <div className={isGooglePayAvailable ? "flex-1" : "w-full max-w-sm"}>
-                <ApplePayButton
-                  bill={{ id: entityId, name: entityName }}
-                  totalAmount={totalWithFee}
-                  isDisabled={isProcessingPayment}
-                  onPaymentComplete={async (success: boolean, error?: string) => {
-                    if (success) {
-                      await handleApplePayment();
-                    }
-                  }}
-                  onAvailabilityChange={setIsApplePayAvailable}
-                />
-              </div>
-            )}
+        <div className={`flex gap-2 ${isGooglePayAvailable && isApplePayAvailable ? '' : 'justify-center'}`}>
+          <div className={isApplePayAvailable ? "flex-1" : "w-full max-w-sm"}>
+            <GooglePayButton
+              onPayment={async () => {
+                await handleGooglePayment();
+              }}
+              bill={{ id: entityId, name: entityName }}
+              totalAmount={totalWithFee}
+              merchantId={googlePayMerchantId || ''}
+              isDisabled={!googlePayMerchantId || isProcessingPayment}
+              onAvailabilityChange={setIsGooglePayAvailable}
+            />
           </div>
-        )}
+          <div className={isGooglePayAvailable ? "flex-1" : "w-full max-w-sm"}>
+            <ApplePayButton
+              bill={{ id: entityId, name: entityName }}
+              totalAmount={totalWithFee}
+              isDisabled={isProcessingPayment}
+              onPaymentComplete={async (success: boolean, error?: string) => {
+                if (success) {
+                  await handleApplePayment();
+                }
+              }}
+              onAvailabilityChange={setIsApplePayAvailable}
+            />
+          </div>
+        </div>
       </div>
 
       <Separator />
