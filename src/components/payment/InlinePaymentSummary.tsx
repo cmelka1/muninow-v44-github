@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Building } from 'lucide-react';
 
 interface InlinePaymentSummaryProps {
+  entityType: 'permit' | 'business_license' | 'service_application' | 'tax_submission';
   entityName: string;
   baseAmount: number;
   serviceFee?: number;
@@ -13,7 +14,18 @@ interface InlinePaymentSummaryProps {
   className?: string;
 }
 
+const getFeeLabel = (entityType: string): string => {
+  const labels = {
+    permit: 'Permit Fee',
+    business_license: 'License Fee',
+    service_application: 'Application Fee',
+    tax_submission: 'Tax Fee'
+  };
+  return labels[entityType as keyof typeof labels] || 'Fee';
+};
+
 export const InlinePaymentSummary: React.FC<InlinePaymentSummaryProps> = ({
+  entityType,
   entityName,
   baseAmount,
   serviceFee = 0,
@@ -26,7 +38,7 @@ export const InlinePaymentSummary: React.FC<InlinePaymentSummaryProps> = ({
     <div className={`bg-muted/30 rounded-lg p-4 space-y-3 ${className}`}>
       <div className="flex items-center justify-between">
         <Badge variant="secondary" className="text-xs">
-          Permit Fee
+          {getFeeLabel(entityType)}
         </Badge>
       </div>
       
