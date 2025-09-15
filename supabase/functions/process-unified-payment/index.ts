@@ -413,30 +413,19 @@ Deno.serve(async (req) => {
             break;
 
           case 'service_application':
-            // Get current service application status
-            const { data: serviceApp, error: serviceFetchError } = await supabase
-              .from('municipal_service_applications')
-              .select('status')
-              .eq('id', entity_id)
-              .single();
+            console.log('Updating service application payment status');
             
-            if (serviceFetchError) {
-              console.error('Failed to fetch service application status:', serviceFetchError);
-              entityUpdateError = serviceFetchError;
-              break;
-            }
-            
-            // Prepare update data - align with permit structure
+            // Prepare unified update data (same pattern as permits/licenses)
             const serviceUpdate: any = {
               payment_status: 'paid',
-              paid_at: new Date().toISOString(),
               payment_processed_at: new Date().toISOString(),
               finix_transfer_id: finixData.id
             };
             
-            // Auto-issue if approved
-            if (serviceApp.status === 'approved') {
+            // Auto-issue if approved (same logic as permits/licenses) 
+            if (entityStatus === 'approved') {
               serviceUpdate.status = 'issued';
+              serviceUpdate.issued_at = new Date().toISOString();
               console.log('Auto-issuing service application after successful payment');
             }
             

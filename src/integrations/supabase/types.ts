@@ -1911,6 +1911,7 @@ export type Database = {
           id: string
           idempotency_id: string | null
           information_requested_at: string | null
+          issued_at: string | null
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
           merchant_id: string | null
@@ -1969,6 +1970,7 @@ export type Database = {
           id?: string
           idempotency_id?: string | null
           information_requested_at?: string | null
+          issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -2027,6 +2029,7 @@ export type Database = {
           id?: string
           idempotency_id?: string | null
           information_requested_at?: string | null
+          issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
