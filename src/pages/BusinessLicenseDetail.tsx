@@ -756,7 +756,7 @@ export const BusinessLicenseDetail = () => {
                 />
               )}
 
-              {license.payment_status === 'paid' && (
+              {license.payment_status === 'paid' ? (
                 <div className="pt-2 space-y-2">
                   <Button className="w-full" disabled variant="outline">
                     <CreditCard className="h-4 w-4 mr-2" />
@@ -767,9 +767,7 @@ export const BusinessLicenseDetail = () => {
                     Your business license fee has been paid
                   </p>
                 </div>
-              )}
-
-              {license.application_status !== 'approved' && (
+              ) : license.application_status !== 'approved' ? (
                 <div className="pt-2">
                   <Button className="w-full" disabled variant="outline">
                     Payment Unavailable
@@ -778,7 +776,7 @@ export const BusinessLicenseDetail = () => {
                     Payment processing will be available once your application is approved
                   </p>
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
 
