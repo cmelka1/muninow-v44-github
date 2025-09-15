@@ -4821,6 +4821,7 @@ export type Database = {
         | "withdrawn"
         | "expired"
         | "issued"
+        | "rejected"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -5037,6 +5038,7 @@ export const Constants = {
         "withdrawn",
         "expired",
         "issued",
+        "rejected",
       ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
