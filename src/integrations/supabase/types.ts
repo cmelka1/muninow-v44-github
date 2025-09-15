@@ -1911,7 +1911,6 @@ export type Database = {
           id: string
           idempotency_id: string | null
           information_requested_at: string | null
-          issued_at: string | null
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
           merchant_id: string | null
@@ -1923,7 +1922,6 @@ export type Database = {
           payment_processed_at: string | null
           payment_status: string | null
           payment_type: Database["public"]["Enums"]["payment_type_enum"] | null
-          resubmitted_at: string | null
           review_notes: string | null
           service_fee_cents: number | null
           service_name: string | null
@@ -1971,7 +1969,6 @@ export type Database = {
           id?: string
           idempotency_id?: string | null
           information_requested_at?: string | null
-          issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -1983,7 +1980,6 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
-          resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
           service_name?: string | null
@@ -2031,7 +2027,6 @@ export type Database = {
           id?: string
           idempotency_id?: string | null
           information_requested_at?: string | null
-          issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -2043,7 +2038,6 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
-          resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
           service_name?: string | null
@@ -4804,7 +4798,6 @@ export type Database = {
         | "withdrawn"
         | "expired"
         | "issued"
-        | "resubmitted"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -5009,7 +5002,6 @@ export const Constants = {
         "withdrawn",
         "expired",
         "issued",
-        "resubmitted",
       ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
