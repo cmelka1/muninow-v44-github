@@ -426,9 +426,10 @@ Deno.serve(async (req) => {
               break;
             }
             
-            // Prepare update data
+            // Prepare update data - align with permit structure
             const serviceUpdate: any = {
               payment_status: 'paid',
+              paid_at: new Date().toISOString(),
               payment_processed_at: new Date().toISOString(),
               finix_transfer_id: finixData.id
             };
@@ -439,10 +440,16 @@ Deno.serve(async (req) => {
               console.log('Auto-issuing service application after successful payment');
             }
             
+            console.log('Updating service application with:', serviceUpdate);
+            
             const { error: serviceError } = await supabase
               .from('municipal_service_applications')
               .update(serviceUpdate)
               .eq('id', entity_id);
+            
+            if (serviceError) {
+              console.error('Service application update error:', serviceError);
+            }
             entityUpdateError = serviceError;
             break;
 
