@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -29,7 +28,6 @@ export const ServiceApplicationStatusChangeDialog: React.FC<ServiceApplicationSt
   onStatusChange
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<ServiceApplicationStatus | ''>('');
-  const [reason, setReason] = useState('');
   const { updateApplicationStatus, isUpdating } = useServiceApplicationWorkflow();
 
   const validTransitions = getValidStatusTransitions(currentStatus);
@@ -39,19 +37,15 @@ export const ServiceApplicationStatusChangeDialog: React.FC<ServiceApplicationSt
 
     const success = await updateApplicationStatus(
       applicationId,
-      selectedStatus as ServiceApplicationStatus,
-      reason.trim() || undefined
+      selectedStatus as ServiceApplicationStatus
     );
 
     if (success) {
       onStatusChange?.();
       onClose();
       setSelectedStatus('');
-      setReason('');
     }
   };
-
-  const requiresReason = selectedStatus === 'denied' || selectedStatus === 'information_requested';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -88,35 +82,13 @@ export const ServiceApplicationStatusChangeDialog: React.FC<ServiceApplicationSt
             )}
           </div>
 
-          {selectedStatus && (
-            <div>
-              <Label htmlFor="reason">
-                {requiresReason ? 'Reason (Required)' : 'Notes (Optional)'}
-              </Label>
-              <Textarea
-                id="reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder={
-                  selectedStatus === 'denied' 
-                    ? 'Please explain why the application was denied...'
-                    : selectedStatus === 'information_requested'
-                    ? 'Please specify what additional information is needed...'
-                    : 'Add any notes about this status change...'
-                }
-                className="mt-1"
-                rows={3}
-              />
-            </div>
-          )}
-
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={onClose} disabled={isUpdating}>
               Cancel
             </Button>
             <Button 
               onClick={handleSubmit} 
-              disabled={!selectedStatus || (requiresReason && !reason.trim()) || isUpdating}
+              disabled={!selectedStatus || isUpdating}
             >
               {isUpdating ? 'Updating...' : 'Update Status'}
             </Button>
