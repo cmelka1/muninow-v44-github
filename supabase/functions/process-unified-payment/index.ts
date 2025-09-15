@@ -436,7 +436,6 @@ Deno.serve(async (req) => {
             // Auto-issue if approved
             if (serviceApp.status === 'approved') {
               serviceUpdate.status = 'issued';
-              serviceUpdate.issued_at = new Date().toISOString();
               console.log('Auto-issuing service application after successful payment');
             }
             
