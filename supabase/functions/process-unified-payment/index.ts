@@ -415,30 +415,37 @@ Deno.serve(async (req) => {
           case 'service_application':
             console.log('Updating service application payment status');
             
-            // Prepare unified update data (same pattern as permits/licenses)
+            // Fetch current status to decide auto-issue
+            const { data: serviceApp, error: serviceFetchError } = await supabase
+              .from('municipal_service_applications')
+              .select('status')
+              .eq('id', entity_id)
+              .single();
+            if (serviceFetchError) {
+              console.error('Failed to fetch service application status:', serviceFetchError);
+              entityUpdateError = serviceFetchError;
+              break;
+            }
+            
+            // Prepare update data
             const serviceUpdate: any = {
               payment_status: 'paid',
               payment_processed_at: new Date().toISOString(),
-              finix_transfer_id: finixData.id
+              finix_transfer_id: finixData.id,
+              transfer_state: 'SUCCEEDED'
             };
             
-            // Auto-issue if approved (same logic as permits/licenses) 
-            if (entityStatus === 'approved') {
+            // Auto-issue if approved
+            if (serviceApp.status === 'approved') {
               serviceUpdate.status = 'issued';
               serviceUpdate.issued_at = new Date().toISOString();
               console.log('Auto-issuing service application after successful payment');
             }
             
-            console.log('Updating service application with:', serviceUpdate);
-            
             const { error: serviceError } = await supabase
               .from('municipal_service_applications')
               .update(serviceUpdate)
               .eq('id', entity_id);
-            
-            if (serviceError) {
-              console.error('Service application update error:', serviceError);
-            }
             entityUpdateError = serviceError;
             break;
 
