@@ -1900,6 +1900,7 @@ export type Database = {
           country: string | null
           created_at: string | null
           customer_id: string
+          denial_reason: string | null
           denied_at: string | null
           expired_at: string | null
           finix_identity_id: string | null
@@ -1910,6 +1911,7 @@ export type Database = {
           fraud_session_id: string | null
           id: string
           idempotency_id: string | null
+          information_request_reason: string | null
           information_requested_at: string | null
           issued_at: string | null
           merchant_fee_profile_id: string | null
@@ -1938,6 +1940,7 @@ export type Database = {
           under_review_at: string | null
           updated_at: string | null
           user_id: string
+          withdrawal_reason: string | null
           withdrawn_at: string | null
           zip_code: string | null
         }
@@ -1959,6 +1962,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           customer_id: string
+          denial_reason?: string | null
           denied_at?: string | null
           expired_at?: string | null
           finix_identity_id?: string | null
@@ -1969,6 +1973,7 @@ export type Database = {
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          information_request_reason?: string | null
           information_requested_at?: string | null
           issued_at?: string | null
           merchant_fee_profile_id?: string | null
@@ -1997,6 +2002,7 @@ export type Database = {
           under_review_at?: string | null
           updated_at?: string | null
           user_id: string
+          withdrawal_reason?: string | null
           withdrawn_at?: string | null
           zip_code?: string | null
         }
@@ -2018,6 +2024,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           customer_id?: string
+          denial_reason?: string | null
           denied_at?: string | null
           expired_at?: string | null
           finix_identity_id?: string | null
@@ -2028,6 +2035,7 @@ export type Database = {
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          information_request_reason?: string | null
           information_requested_at?: string | null
           issued_at?: string | null
           merchant_fee_profile_id?: string | null
@@ -2056,6 +2064,7 @@ export type Database = {
           under_review_at?: string | null
           updated_at?: string | null
           user_id?: string
+          withdrawal_reason?: string | null
           withdrawn_at?: string | null
           zip_code?: string | null
         }
@@ -4789,6 +4798,18 @@ export type Database = {
         | "resubmitted"
         | "denied"
         | "withdrawn"
+      service_application_status:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "information_requested"
+        | "resubmitted"
+        | "approved"
+        | "denied"
+        | "rejected"
+        | "withdrawn"
+        | "expired"
+        | "issued"
       service_application_status_enum:
         | "draft"
         | "submitted"
@@ -4991,6 +5012,19 @@ export const Constants = {
         "resubmitted",
         "denied",
         "withdrawn",
+      ],
+      service_application_status: [
+        "draft",
+        "submitted",
+        "under_review",
+        "information_requested",
+        "resubmitted",
+        "approved",
+        "denied",
+        "rejected",
+        "withdrawn",
+        "expired",
+        "issued",
       ],
       service_application_status_enum: [
         "draft",

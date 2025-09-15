@@ -9,7 +9,8 @@ export type ServiceApplicationStatus =
   | 'information_requested' 
   | 'resubmitted' 
   | 'approved' 
-  | 'denied' 
+  | 'denied'
+  | 'rejected'
   | 'withdrawn' 
   | 'expired'
   | 'issued';
@@ -23,6 +24,7 @@ export const getStatusDisplayName = (status: ServiceApplicationStatus): string =
     resubmitted: 'Resubmitted',
     approved: 'Approved',
     denied: 'Denied',
+    rejected: 'Rejected',
     withdrawn: 'Withdrawn',
     expired: 'Expired',
     issued: 'Issued'
@@ -39,6 +41,7 @@ export const getStatusDescription = (status: ServiceApplicationStatus): string =
     resubmitted: 'Applicant has submitted the requested follow-up information',
     approved: 'Application has been approved and is ready for issuance',
     denied: 'Application was reviewed but did not meet requirements. Explanation provided',
+    rejected: 'Application was reviewed but did not meet requirements. Explanation provided',
     withdrawn: 'Applicant has voluntarily withdrawn the application',
     expired: 'Application has been inactive past the allowable time window',
     issued: 'Service has been issued and is active'
@@ -49,12 +52,13 @@ export const getStatusDescription = (status: ServiceApplicationStatus): string =
 export const getValidStatusTransitions = (currentStatus: ServiceApplicationStatus): ServiceApplicationStatus[] => {
   const transitions: Record<ServiceApplicationStatus, ServiceApplicationStatus[]> = {
     draft: ['submitted'],
-    submitted: ['under_review', 'approved', 'denied', 'withdrawn'],
-    under_review: ['information_requested', 'approved', 'denied'],
+    submitted: ['under_review', 'approved', 'rejected', 'withdrawn'],
+    under_review: ['information_requested', 'approved', 'rejected'],
     information_requested: ['resubmitted', 'withdrawn', 'expired'],
     resubmitted: ['under_review'],
     approved: ['issued'],
     denied: [],
+    rejected: [],
     withdrawn: [],
     expired: [],
     issued: []
@@ -77,12 +81,15 @@ export const useServiceApplicationWorkflow = () => {
         updated_at: new Date().toISOString()
       };
 
-      // Add reason fields for specific statuses
-      if (newStatus === 'denied' && reason) {
-        updateData.review_notes = reason;
+      // Add reason fields for specific statuses (aligned with permits/licenses)
+      if ((newStatus === 'denied' || newStatus === 'rejected') && reason) {
+        updateData.denial_reason = reason;
       }
       if (newStatus === 'information_requested' && reason) {
-        updateData.review_notes = reason;
+        updateData.information_request_reason = reason;
+      }
+      if (newStatus === 'withdrawn' && reason) {
+        updateData.withdrawal_reason = reason;
       }
 
       const { error } = await supabase
