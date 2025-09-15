@@ -184,7 +184,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
   return (
     <div className="space-y-4">
       <InlinePaymentSummary
-        entityType={entityType}
         entityName={entityName}
         baseAmount={baseAmountCents}
         serviceFee={serviceFee?.serviceFeeToDisplay || 0}
