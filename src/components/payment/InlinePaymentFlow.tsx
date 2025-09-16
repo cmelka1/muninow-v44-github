@@ -8,6 +8,7 @@ import GooglePayButton from '@/components/GooglePayButton';
 import ApplePayButton from '@/components/ApplePayButton';
 import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow';
 import { PaymentResponse } from '@/types/payment';
+import { formatCurrency } from '@/lib/formatters';
 
 interface InlinePaymentFlowProps {
   entityType: EntityType;
@@ -29,7 +30,7 @@ const getEntityLabels = (entityType: EntityType) => {
     case 'business_license':
       return { feeLabel: 'License Fee', completionText: 'Complete payment to receive your license' };
     case 'service_application':
-      return { feeLabel: 'Service Fee', completionText: 'Complete payment to process your application' };
+      return { feeLabel: 'Application Fee', completionText: 'Complete payment to process your application' };
     case 'tax_submission':
       return { feeLabel: 'Tax Payment', completionText: 'Complete payment to submit your tax' };
     default:
@@ -147,7 +148,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
             <div>
               <h3 className="font-semibold text-foreground">Payment Successful!</h3>
               <p className="text-sm text-muted-foreground">
-                Payment of ${(totalWithFee / 100).toFixed(2)} processed successfully.
+                Payment of {formatCurrency(totalWithFee / 100)} processed successfully.
               </p>
             </div>
           </div>
@@ -162,7 +163,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">{feeLabel}</span>
-            <span className="font-semibold">${(baseAmountCents / 100).toFixed(2)}</span>
+            <span className="font-semibold">{formatCurrency(baseAmountCents / 100)}</span>
           </div>
           <p className="text-xs text-muted-foreground">
             {completionText}
@@ -271,7 +272,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
               Processing Payment...
             </>
           ) : (
-            `Pay $${(totalWithFee / 100).toFixed(2)}`
+            `Pay ${formatCurrency(totalWithFee / 100)}`
           )}
         </Button>
 
