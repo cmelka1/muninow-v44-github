@@ -30,7 +30,7 @@ const ServiceApplicationDetail: React.FC = () => {
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
-  const { data: application, isLoading, error } = useServiceApplication(applicationId || '');
+  const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId || '');
   const { data: documentsQuery, refetch: refetchDocuments } = useServiceApplicationDocuments(applicationId || '');
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
@@ -446,7 +446,7 @@ const ServiceApplicationDetail: React.FC = () => {
                       title: "Payment Successful",
                       description: "Your service application payment has been processed successfully.",
                     });
-                    window.location.reload();
+                    refetch();
                   }}
                   onPaymentError={(error) => {
                     console.error('Payment error:', error);
