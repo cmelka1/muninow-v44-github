@@ -13,7 +13,7 @@ import { usePermit } from '@/hooks/usePermit';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
-import { useUnifiedPaymentFlow } from '@/hooks/useUnifiedPaymentFlow';
+
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
@@ -45,24 +45,27 @@ const PermitDetail = () => {
     permit?.merchant_id
   );
 
-  // Unified payment flow hook - always call, never conditional
-  const unifiedPaymentFlow = useUnifiedPaymentFlow({
-    entityType: 'permit',
-    entityId: permit?.permit_id || '',
-    customerId: permit?.customer_id || '',
-    merchantId: permit?.merchant_id || '',
-    baseAmountCents: permit?.base_fee_cents || permit?.total_amount_cents || 0,
-    onSuccess: () => {
-      toast({
-        title: "Payment Successful",
-        description: "Your permit payment has been processed successfully.",
-      });
-      refetchPermit();
-    },
-    onError: (error) => {
-      console.error('Payment error:', error);
-    },
-  });
+  // Payment callback functions
+  const handlePaymentSuccess = () => {
+    toast({
+      title: "Payment Successful",
+      description: "Your permit payment has been processed successfully.",
+    });
+    refetchPermit();
+  };
+
+  const handlePaymentError = (error: any) => {
+    console.error('Payment error:', error);
+    toast({
+      variant: "destructive",
+      title: "Payment Failed",
+      description: "Your payment could not be processed. Please try again.",
+    });
+  };
+
+  const handleAddPaymentMethod = () => {
+    setIsAddPaymentDialogOpen(true);
+  };
 
 
   const handleDocumentDownload = async (document: any) => {
@@ -453,9 +456,9 @@ const PermitDetail = () => {
                   merchantId={permit.merchant_id}
                   baseAmountCents={permit.base_fee_cents || permit.total_amount_cents || 0}
                   initialExpanded={true}
-                  onPaymentSuccess={unifiedPaymentFlow.handlePayment}
-                  onPaymentError={(error) => console.error('Payment error:', error)}
-                  onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                  onAddPaymentMethod={handleAddPaymentMethod}
                 />
               ) : permit.payment_status === 'paid' ? (
                 <div className="pt-2 space-y-2">
@@ -564,8 +567,6 @@ const PermitDetail = () => {
         open={isAddPaymentDialogOpen}
         onOpenChange={setIsAddPaymentDialogOpen}
         onSuccess={() => {
-          // Refresh payment instruments
-          unifiedPaymentFlow.loadPaymentInstruments();
           setIsAddPaymentDialogOpen(false);
         }}
       />
