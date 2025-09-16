@@ -17,7 +17,7 @@ import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import PaymentSummary from './PaymentSummary';
+import { InlinePaymentSummary } from './payment/InlinePaymentSummary';
 import PaymentMethodSelector from './PaymentMethodSelector';
 
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
@@ -608,7 +608,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           onSubmit={currentStep === 2 ? (tile.requires_review ? handleSubmitApplication : handlePayment) : undefined}
           onPrevious={currentStep === 2 ? handlePrevious : undefined}
           isNextDisabled={currentStep === 1 && Object.keys(validateStep1Fields()).length > 0}
-          isSubmitDisabled={isSubmitting || (currentStep === 2 && !tile.requires_review && !selectedPaymentMethod)}
+          isSubmitDisabled={isSubmitting || (currentStep === 2 && !tile.requires_review && !formData.payment_method_id)}
           currentStep={currentStep}
           totalSteps={2}
         >
@@ -1018,10 +1018,11 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <PaymentSummary 
+                        <InlinePaymentSummary 
+                          entityName={tile.title}
                           baseAmount={baseAmountCents}
-                selectedPaymentMethod={null}
-                          compact={true}
+                          totalAmount={baseAmountCents}
+                          feeLabel="Service Fee"
                         />
                       </CardContent>
                     </Card>
