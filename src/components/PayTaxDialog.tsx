@@ -562,7 +562,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                               </SelectItem>
                             ))}
                             {availableTaxTypes.length === 0 && selectedMunicipality && (
-                              <SelectItem value="" disabled>
+                              <SelectItem value="no-tax-types" disabled>
                                 No tax types available for this municipality
                               </SelectItem>
                             )}
