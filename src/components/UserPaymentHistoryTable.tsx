@@ -128,7 +128,7 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Paid Date</TableHead>
-                <TableHead>Service Type</TableHead>
+                <TableHead className="text-center">Service Type</TableHead>
                 <TableHead className="hidden md:table-cell text-center">Category</TableHead>
                 <TableHead className="text-center">Amount Paid</TableHead>
                 <TableHead className="hidden md:table-cell text-center">Payment Method</TableHead>
@@ -143,8 +143,8 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
                   <TableCell className="hidden sm:table-cell py-2">
                     <span className="truncate">{formatDate(payment.created_at)}</span>
                   </TableCell>
-                  <TableCell className="py-2">
-                    <span className="truncate block max-w-[200px]" title={payment.serviceType}>
+                  <TableCell className="py-2 text-center">
+                    <span className="truncate block max-w-[200px] mx-auto" title={payment.serviceType}>
                       {payment.serviceType || 'Unknown'}
                     </span>
                   </TableCell>
