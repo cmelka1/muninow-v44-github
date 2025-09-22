@@ -2,40 +2,44 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const useMerchantOptions = () => {
+export const useServiceTypeOptions = () => {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['payment-history-merchant-options', user?.id],
+    queryKey: ['payment-history-service-type-options', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
 
       const { data: transactions, error } = await supabase
         .from('payment_transactions')
-        .select('merchant_id')
-        .eq('user_id', user.id)
-        .not('merchant_id', 'is', null);
+        .select('permit_id, business_license_id, service_application_id, tax_submission_id, bill_id')
+        .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error fetching merchant options:', error);
+        console.error('Error fetching service type options:', error);
         throw error;
       }
 
       if (!transactions || transactions.length === 0) return [];
 
-      // Get unique merchant IDs
-      const merchantIds = [...new Set(transactions.map(t => t.merchant_id).filter(Boolean))];
+      // Determine service types from transactions
+      const serviceTypes = new Set<string>();
       
-      // Fetch merchant names
-      const { data: merchants } = await supabase
-        .from('merchants')
-        .select('merchant_name')
-        .in('id', merchantIds)
-        .not('merchant_name', 'is', null);
+      transactions.forEach(transaction => {
+        if (transaction.permit_id) {
+          serviceTypes.add('Building Permit');
+        } else if (transaction.business_license_id) {
+          serviceTypes.add('Business License');
+        } else if (transaction.service_application_id) {
+          serviceTypes.add('Service');
+        } else if (transaction.tax_submission_id) {
+          serviceTypes.add('Tax');
+        } else if (transaction.bill_id) {
+          serviceTypes.add('Bill');
+        }
+      });
 
-      // Get unique merchants
-      const uniqueMerchants = [...new Set(merchants?.map(m => m.merchant_name).filter(Boolean) || [])];
-      return uniqueMerchants.sort();
+      return Array.from(serviceTypes).sort();
     },
     enabled: !!user?.id,
   });
@@ -51,9 +55,8 @@ export const useCategoryOptions = () => {
 
       const { data: transactions, error } = await supabase
         .from('payment_transactions')
-        .select('merchant_id')
-        .eq('user_id', user.id)
-        .not('merchant_id', 'is', null);
+        .select('permit_id, business_license_id, service_application_id, tax_submission_id, bill_id, merchant_id')
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching category options:', error);
@@ -62,19 +65,62 @@ export const useCategoryOptions = () => {
 
       if (!transactions || transactions.length === 0) return [];
 
-      // Get unique merchant IDs
-      const merchantIds = [...new Set(transactions.map(t => t.merchant_id).filter(Boolean))];
-      
-      // Fetch merchant categories
-      const { data: merchants } = await supabase
-        .from('merchants')
-        .select('category')
-        .in('id', merchantIds)
-        .not('category', 'is', null);
+      const categories = new Set<string>();
 
-      // Get unique categories
-      const uniqueCategories = [...new Set(merchants?.map(m => m.category).filter(Boolean) || [])];
-      return uniqueCategories.sort();
+      // Get service names for each transaction type
+      for (const transaction of transactions) {
+        if (transaction.permit_id) {
+          const { data: permit } = await supabase
+            .from('permit_applications')
+            .select('permit_type')
+            .eq('permit_id', transaction.permit_id)
+            .single();
+          if (permit?.permit_type) categories.add(permit.permit_type);
+        } else if (transaction.business_license_id) {
+          const { data: license } = await supabase
+            .from('business_license_applications')
+            .select('business_type')
+            .eq('id', transaction.business_license_id)
+            .single();
+          if (license?.business_type) categories.add(license.business_type);
+        } else if (transaction.service_application_id) {
+          const { data: serviceApp } = await supabase
+            .from('municipal_service_applications')
+            .select('tile_id')
+            .eq('id', transaction.service_application_id)
+            .single();
+          
+          if (serviceApp?.tile_id) {
+            const { data: tile } = await supabase
+              .from('municipal_service_tiles')
+              .select('title')
+              .eq('id', serviceApp.tile_id)
+              .single();
+            if (tile?.title) categories.add(tile.title);
+          }
+        } else if (transaction.tax_submission_id) {
+          const { data: tax } = await supabase
+            .from('tax_submissions')
+            .select('tax_type')
+            .eq('id', transaction.tax_submission_id)
+            .single();
+          if (tax?.tax_type) {
+            const formattedTaxType = tax.tax_type.includes('_') 
+              ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
+              : tax.tax_type;
+            categories.add(formattedTaxType);
+          }
+        } else if (transaction.bill_id && transaction.merchant_id) {
+          const { data: merchant } = await supabase
+            .from('merchants')
+            .select('subcategory')
+            .eq('id', transaction.merchant_id)
+            .single();
+          if (merchant?.subcategory) categories.add(merchant.subcategory);
+        }
+      }
+
+      return Array.from(categories).sort();
     },
     enabled: !!user?.id,
   });

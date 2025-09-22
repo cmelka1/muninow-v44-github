@@ -91,35 +91,88 @@ export const usePaymentHistory = (params?: PaginationParams) => {
         return { data: [], count: count || 0 };
       }
 
-      // Get unique merchant IDs from transactions
-      const merchantIds = [...new Set(transactions.map(t => t.merchant_id).filter(Boolean))];
-      
-      // Fetch merchant data for these IDs
-      const { data: merchants } = await supabase
-        .from('merchants')
-        .select('id, merchant_name, category, subcategory')
-        .in('id', merchantIds);
+      // Get service details for transactions
+      const getServiceDetails = async (transaction: any) => {
+        let serviceType = 'Unknown';
+        let serviceName = 'Unknown Service';
 
-      // Create a map for quick lookups
-      const merchantMap = new Map(merchants?.map(m => [m.id, m]) || []);
+        if (transaction.permit_id) {
+          const { data: permit } = await supabase
+            .from('permit_applications')
+            .select('permit_type')
+            .eq('permit_id', transaction.permit_id)
+            .single();
+          serviceType = 'Building Permit';
+          serviceName = permit?.permit_type || 'Building Permit';
+        } else if (transaction.business_license_id) {
+          const { data: license } = await supabase
+            .from('business_license_applications')
+            .select('business_type')
+            .eq('id', transaction.business_license_id)
+            .single();
+          serviceType = 'Business License';
+          serviceName = license?.business_type || 'Business License';
+        } else if (transaction.service_application_id) {
+          const { data: serviceApp } = await supabase
+            .from('municipal_service_applications')
+            .select('tile_id')
+            .eq('id', transaction.service_application_id)
+            .single();
+          
+          if (serviceApp?.tile_id) {
+            const { data: tile } = await supabase
+              .from('municipal_service_tiles')
+              .select('title')
+              .eq('id', serviceApp.tile_id)
+              .single();
+            serviceType = 'Service';
+            serviceName = tile?.title || 'Service Application';
+          }
+        } else if (transaction.tax_submission_id) {
+          const { data: tax } = await supabase
+            .from('tax_submissions')
+            .select('tax_type')
+            .eq('id', transaction.tax_submission_id)
+            .single();
+          serviceType = 'Tax';
+          serviceName = tax?.tax_type?.includes('_') 
+            ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
+            : tax?.tax_type || 'Tax Submission';
+        } else if (transaction.bill_id) {
+          // For bills, get merchant info for service type
+          const { data: merchant } = await supabase
+            .from('merchants')
+            .select('subcategory')
+            .eq('id', transaction.merchant_id)
+            .single();
+          serviceType = 'Bill';
+          serviceName = merchant?.subcategory || 'Bill Payment';
+        }
 
-      // Merge transaction data with merchant data
-      const enrichedData = transactions.map(transaction => ({
-        ...transaction,
-        merchant_name: merchantMap.get(transaction.merchant_id)?.merchant_name || 'Unknown Merchant',
-        category: merchantMap.get(transaction.merchant_id)?.category || null,
-        subcategory: merchantMap.get(transaction.merchant_id)?.subcategory || null,
-      }));
+        return { serviceType, serviceName };
+      };
 
-      // Apply merchant and category filters after enrichment
+      // Enrich transactions with service data
+      const enrichedData = await Promise.all(
+        transactions.map(async (transaction) => {
+          const { serviceType, serviceName } = await getServiceDetails(transaction);
+          return {
+            ...transaction,
+            serviceType,
+            serviceName,
+          };
+        })
+      );
+
+      // Apply service type and category filters after enrichment
       let filteredData = enrichedData;
       
-      if (filters.merchant) {
-        filteredData = filteredData.filter(t => t.merchant_name === filters.merchant);
+      if (filters.serviceType) {
+        filteredData = filteredData.filter(t => t.serviceType === filters.serviceType);
       }
       
       if (filters.category) {
-        filteredData = filteredData.filter(t => t.category === filters.category);
+        filteredData = filteredData.filter(t => t.serviceName === filters.category);
       }
 
       return { data: filteredData, count: count || 0 };

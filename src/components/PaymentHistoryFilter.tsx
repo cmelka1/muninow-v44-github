@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useMerchantOptions, useCategoryOptions, usePaymentMethodOptions } from '@/hooks/usePaymentHistoryFilterOptions';
+import { useServiceTypeOptions, useCategoryOptions, usePaymentMethodOptions } from '@/hooks/usePaymentHistoryFilterOptions';
 
 export interface PaymentHistoryFilters {
-  merchant?: string;
+  serviceType?: string;
   category?: string;
   paymentMethod?: string;
   paymentDateRange?: string;
@@ -19,7 +19,7 @@ interface PaymentHistoryFilterProps {
 }
 
 const PaymentHistoryFilter: React.FC<PaymentHistoryFilterProps> = ({ filters, onFiltersChange }) => {
-  const { data: merchantOptions = [], isLoading: merchantsLoading } = useMerchantOptions();
+  const { data: serviceTypeOptions = [], isLoading: serviceTypesLoading } = useServiceTypeOptions();
   const { data: categoryOptions = [], isLoading: categoriesLoading } = useCategoryOptions();
   const { data: paymentMethodOptions = [], isLoading: paymentMethodsLoading } = usePaymentMethodOptions();
 
@@ -106,21 +106,21 @@ const PaymentHistoryFilter: React.FC<PaymentHistoryFilterProps> = ({ filters, on
             </Select>
           </div>
 
-          {/* Merchant - Hidden on mobile (Priority 2) */}
+          {/* Service Type - Hidden on mobile (Priority 2) */}
           <div className="hidden sm:block space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Merchant</label>
-            <Select value={filters.merchant || 'all'} onValueChange={(value) => updateFilter('merchant', value)}>
+            <label className="text-sm font-medium text-muted-foreground">Service Type</label>
+            <Select value={filters.serviceType || 'all'} onValueChange={(value) => updateFilter('serviceType', value)}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Merchant" />
+                <SelectValue placeholder="Service Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Merchants</SelectItem>
-                {merchantsLoading ? (
+                <SelectItem value="all">All Service Types</SelectItem>
+                {serviceTypesLoading ? (
                   <SelectItem value="loading" disabled>Loading...</SelectItem>
                 ) : (
-                  merchantOptions.map((merchant) => (
-                    <SelectItem key={merchant} value={merchant}>
-                      {merchant}
+                  serviceTypeOptions.map((serviceType) => (
+                    <SelectItem key={serviceType} value={serviceType}>
+                      {serviceType}
                     </SelectItem>
                   ))
                 )}
