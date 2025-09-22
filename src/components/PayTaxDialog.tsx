@@ -771,6 +771,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                             setTotalAmountDue(e.target.value);
                             clearFieldError('totalAmountDue');
                           }}
+                          onWheel={(e) => e.currentTarget.blur()}
+                          onWheelCapture={(e) => e.currentTarget.blur()}
+                          inputMode="decimal"
                           placeholder="0.00"
                           className={cn(errors.totalAmountDue && "border-destructive")}
                         />
