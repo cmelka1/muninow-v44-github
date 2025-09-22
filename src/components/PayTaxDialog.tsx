@@ -318,7 +318,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         p_tax_period_end: getCurrentTaxPeriodEnd(),
         p_tax_year: getCurrentTaxYear(),
         p_amount_cents: getTaxAmountInCents(),
-        p_calculation_data: calculationData,
+        p_calculation_notes: calculationNotes,
+        p_total_amount_due_cents: getTaxAmountInCents(),
         p_payment_instrument_id: '', // Will be set by unified payment
         p_finix_merchant_id: selectedMunicipality.finix_merchant_id,
         p_service_fee_cents: 0, // Will be calculated by unified payment
