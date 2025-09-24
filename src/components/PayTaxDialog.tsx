@@ -760,7 +760,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Tax Calculation - {taxType}
+                        Tax Calculation - {selectedTaxTypeData?.name || taxType}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
