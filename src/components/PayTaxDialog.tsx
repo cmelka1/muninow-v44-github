@@ -380,10 +380,31 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   };
 
   const handleSubmit = async () => {
-    if (!selectedMunicipality || !taxType || !amount) {
+    // Enhanced validation with specific field checking
+    const missingFields = [];
+    
+    if (!selectedMunicipality) missingFields.push("Municipality");
+    if (!taxType) missingFields.push("Tax type");
+    if (!totalAmountDue) missingFields.push("Total amount due");
+    if (!payerName) missingFields.push("Payer name");
+    if (!payerEmail) missingFields.push("Payer email");
+    if (!payerAddress) missingFields.push("Payer address");
+    if (!calculationNotes) missingFields.push("Calculation details");
+    
+    if (missingFields.length > 0) {
+      console.log("Missing fields validation:", { missingFields, 
+        selectedMunicipality: !!selectedMunicipality,
+        taxType,
+        totalAmountDue,
+        payerName,
+        payerEmail,
+        payerAddress: !!payerAddress,
+        calculationNotes
+      });
+      
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields before submitting.",
+        description: `Please complete: ${missingFields.join(", ")}`,
         variant: "destructive",
       });
       return;
