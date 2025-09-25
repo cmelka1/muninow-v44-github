@@ -219,7 +219,7 @@ This is a no-reply message. Please log into your MuniNow account to view and pay
         }
       } catch (error) {
         console.error('Email error:', error);
-        errors.push(`Email: ${error.message}`);
+        errors.push(`Email: ${error instanceof Error ? error.message : 'Unknown email error'}`);
       }
     }
 
@@ -263,7 +263,7 @@ This is a no-reply message. Please log into your MuniNow account to view and pay
         }
       } catch (error) {
         console.error('SMS error:', error);
-        errors.push(`SMS: ${error.message}`);
+        errors.push(`SMS: ${error instanceof Error ? error.message : 'Unknown SMS error'}`);
       }
     }
 
@@ -306,7 +306,7 @@ This is a no-reply message. Please log into your MuniNow account to view and pay
   } catch (error) {
     console.error('Notification error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error occurred' }),
       { 
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders } 

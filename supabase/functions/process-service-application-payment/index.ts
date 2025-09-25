@@ -525,8 +525,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
-        retryable: error.message.includes('network') || error.message.includes('timeout')
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        retryable: error instanceof Error ? (error.message.includes('network') || error.message.includes('timeout')) : false
       }),
       { 
         status: 500,

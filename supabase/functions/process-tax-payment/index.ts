@@ -458,7 +458,7 @@ serve(async (req) => {
           error: "Payment processed successfully but database recording failed. Please contact support.",
           transfer_id: finixData.id,
           finix_state: finixData.state,
-          internal_error: dbError.message
+          internal_error: dbError instanceof Error ? dbError.message : 'Database error occurred'
         }),
         { 
           status: 500,
@@ -486,7 +486,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || "An unexpected error occurred"
+        error: error instanceof Error ? error.message : "An unexpected error occurred"
       }),
       { 
         status: 500,
