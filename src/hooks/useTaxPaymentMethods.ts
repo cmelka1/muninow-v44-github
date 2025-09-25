@@ -38,9 +38,47 @@ export const useTaxPaymentMethods = (taxData: {
     })
     .slice(0, 3);
 
-  // Service fee will be calculated by backend - no frontend calculation
-  const serviceFee: ServiceFee | null = null;
-  const totalWithFee = taxData.amount; // Use base amount, backend will calculate service fee
+  // Service fee state
+  const [serviceFee, setServiceFee] = useState<ServiceFee | null>(null);
+  const [totalWithFee, setTotalWithFee] = useState(taxData.amount);
+
+  // Calculate service fee when payment method changes
+  useEffect(() => {
+    const calculateServiceFee = async () => {
+      if (!selectedPaymentMethod || !taxData.amount) return;
+
+      try {
+        const { data, error } = await supabase.functions.invoke('calculate-service-fee', {
+          body: {
+            baseAmountCents: taxData.amount,
+            paymentInstrumentId: selectedPaymentMethod
+          }
+        });
+
+        if (error) {
+          console.error('Service fee calculation error:', error);
+          return;
+        }
+
+        if (data) {
+          setServiceFee({
+            totalFee: data.totalServiceFeeCents,
+            percentageFee: data.serviceFeePercentageCents,
+            fixedFee: data.serviceFeeFixedCents,
+            basisPoints: data.basisPoints,
+            isCard: data.isCard,
+            totalAmountToCharge: data.totalChargeCents,
+            serviceFeeToDisplay: data.totalServiceFeeCents
+          });
+          setTotalWithFee(data.totalChargeCents);
+        }
+      } catch (error) {
+        console.error('Failed to calculate service fee:', error);
+      }
+    };
+
+    calculateServiceFee();
+  }, [selectedPaymentMethod, taxData.amount]);
 
   // Auto-select default payment method
   useEffect(() => {
@@ -207,7 +245,7 @@ export const useTaxPaymentMethods = (taxData: {
         finalAmountCents,
         idempotencyId,
         fraudSessionId: validFraudSessionId,
-        serviceFee: serviceFee.totalFee
+        serviceFee: serviceFee?.totalFee || 0
       });
 
       const paymentData = {
@@ -219,7 +257,7 @@ export const useTaxPaymentMethods = (taxData: {
         merchant_id: taxData.municipality?.finix_merchant_id,
         payment_instrument_id: selectedPaymentMethod,
         base_amount_cents: taxData.amount, // Original tax amount (base)
-        service_fee_cents: serviceFee.serviceFeeToDisplay, // Calculated service fee
+        service_fee_cents: serviceFee?.serviceFeeToDisplay || 0, // Calculated service fee
         total_amount_cents: finalAmountCents, // Grossed-up total
         idempotency_id: idempotencyId,
         fraud_session_id: validFraudSessionId,
@@ -337,7 +375,7 @@ export const useTaxPaymentMethods = (taxData: {
           taxType: taxData.taxType,
           municipality: taxData.municipality,
           amount: taxData.amount,
-          serviceFee: serviceFee.totalFee,
+          serviceFee: serviceFee?.totalFee || 0,
           totalAmount: totalWithFee,
           fraudSessionId,
           finixFingerprint,
@@ -396,7 +434,7 @@ export const useTaxPaymentMethods = (taxData: {
           taxType: taxData.taxType,
           municipality: taxData.municipality,
           amount: taxData.amount,
-          serviceFee: serviceFee.totalFee,
+          serviceFee: serviceFee?.totalFee || 0,
           totalAmount: totalWithFee,
           fraudSessionId,
           finixFingerprint,
