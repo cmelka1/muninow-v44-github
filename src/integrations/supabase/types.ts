@@ -4227,6 +4227,10 @@ export type Database = {
         Args: { p_staging_id: string; p_tax_submission_id: string }
         Returns: undefined
       }
+      confirm_staged_tax_documents_for_transaction: {
+        Args: { p_transaction_id: string }
+        Returns: Json
+      }
       create_municipal_business_license_type: {
         Args:
           | {
@@ -4340,46 +4344,30 @@ export type Database = {
         }
         Returns: Json
       }
+      create_tax_submission_with_unified_payment: {
+        Args: { p_finix_transfer_id: string; p_transaction_id: string }
+        Returns: Json
+      }
       create_unified_payment_transaction: {
-        Args:
-          | {
-              p_bank_last_four?: string
-              p_base_amount_cents: number
-              p_card_brand?: string
-              p_card_last_four?: string
-              p_customer_id: string
-              p_entity_id: string
-              p_entity_type: string
-              p_first_name?: string
-              p_fraud_session_id?: string
-              p_idempotency_id: string
-              p_is_card: boolean
-              p_last_name?: string
-              p_merchant_id: string
-              p_payment_instrument_id: string
-              p_payment_type: string
-              p_user_email?: string
-              p_user_id: string
-            }
-          | {
-              p_bank_last_four?: string
-              p_base_amount_cents: number
-              p_card_brand?: string
-              p_card_last_four?: string
-              p_customer_id: string
-              p_entity_id: string
-              p_entity_type: string
-              p_first_name?: string
-              p_fraud_session_id?: string
-              p_idempotency_id?: string
-              p_is_card?: boolean
-              p_last_name?: string
-              p_merchant_id: string
-              p_payment_instrument_id: string
-              p_payment_type: string
-              p_user_email?: string
-              p_user_id: string
-            }
+        Args: {
+          p_bank_last_four?: string
+          p_base_amount_cents: number
+          p_card_brand?: string
+          p_card_last_four?: string
+          p_customer_id: string
+          p_entity_id: string
+          p_entity_type: string
+          p_first_name?: string
+          p_fraud_session_id?: string
+          p_idempotency_id?: string
+          p_is_card?: boolean
+          p_last_name?: string
+          p_merchant_id: string
+          p_payment_instrument_id: string
+          p_payment_type: string
+          p_user_email?: string
+          p_user_id: string
+        }
         Returns: Json
       }
       disable_user_payment_instrument: {
