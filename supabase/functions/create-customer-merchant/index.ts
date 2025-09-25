@@ -127,8 +127,8 @@ serve(async (req) => {
       processing_status: 'merchant_created',
       
       // Store complete Finix response for audit purposes
-      finix_raw_response: merchant.finix_raw_response ? 
-        { ...merchant.finix_raw_response, merchant: finixData } : 
+      finix_raw_response: (merchant as any).finix_raw_response ? 
+        { ...(merchant as any).finix_raw_response, merchant: finixData } : 
         { merchant: finixData },
       
       updated_at: new Date().toISOString()
@@ -165,10 +165,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error creating Finix merchant:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: errorMessage
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

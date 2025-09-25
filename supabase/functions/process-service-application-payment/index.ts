@@ -113,7 +113,7 @@ serve(async (req) => {
     }
 
     // Get application details and validate ownership
-    let application = null;
+    let application: any = null;
     if (requestBody.application_id) {
       const { data: app, error: appError } = await supabaseAdmin
         .from('municipal_service_applications')

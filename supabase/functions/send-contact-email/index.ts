@@ -54,10 +54,11 @@ serve(async (req: Request) => {
     );
   } catch (error) {
     console.error("Error processing contact form:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return new Response(
       JSON.stringify({ 
-        error: error.message || "Error processing your request" 
+        error: errorMessage
       }),
       { 
         status: 500,
