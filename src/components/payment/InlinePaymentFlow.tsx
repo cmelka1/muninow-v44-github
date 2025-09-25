@@ -17,6 +17,7 @@ interface InlinePaymentFlowProps {
   customerId: string;
   merchantId: string;
   baseAmountCents: number;
+  initialExpanded?: boolean;
   onPaymentSuccess?: (response: PaymentResponse) => void;
   onPaymentError?: (error: any) => void;
   onAddPaymentMethod?: () => void;
@@ -44,10 +45,12 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
   customerId,
   merchantId,
   baseAmountCents,
+  initialExpanded = false,
   onPaymentSuccess,
   onPaymentError,
   onAddPaymentMethod,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isGooglePayAvailable, setIsGooglePayAvailable] = useState(false);
   const [isApplePayAvailable, setIsApplePayAvailable] = useState(false);
@@ -74,6 +77,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
       console.group('🎊 INLINE_PAYMENT_SUCCESS');
       console.log('Payment success response:', response);
       console.log('Component state before success:', { 
+        isExpanded, 
         showSuccess,
         timestamp: new Date().toISOString()
       });
@@ -84,6 +88,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
       setTimeout(() => {
         console.log('🎊 Success timeout elapsed - hiding success message');
         setShowSuccess(false);
+        setIsExpanded(false);
       }, 3000);
     },
     onError: (error) => {
@@ -96,6 +101,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         timestamp: new Date().toISOString()
       });
       console.log('Component state when error occurred:', {
+        isExpanded,
         showSuccess,
         selectedPaymentMethod,
         isProcessingPayment
@@ -147,6 +153,31 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!isExpanded) {
+    return (
+      <div className="space-y-4">
+        <div className="p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">{feeLabel}</span>
+            <span className="font-semibold">{formatCurrency(baseAmountCents / 100)}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {completionText}
+          </p>
+        </div>
+        
+        <Button 
+          className="w-full" 
+          onClick={() => setIsExpanded(true)}
+          disabled={isProcessingPayment}
+        >
+          <CreditCard className="h-4 w-4 mr-2" />
+          Pay Now
+        </Button>
       </div>
     );
   }

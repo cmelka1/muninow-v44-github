@@ -111,18 +111,9 @@ Deno.serve(async (req) => {
     }
 
     if (!merchant.finix_merchant_id || !merchant.finix_identity_id) {
-      console.error('Merchant missing Finix IDs:', {
-        merchant_id,
-        finix_merchant_id: !!merchant.finix_merchant_id,
-        finix_identity_id: !!merchant.finix_identity_id,
-        merchant_name: merchant.merchant_name
-      });
+      console.error('Merchant missing Finix IDs');
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Merchant not configured for payments. Please contact support for merchant setup.',
-          retryable: false 
-        }),
+        JSON.stringify({ success: false, error: 'Merchant not properly configured', retryable: false }),
         { status: 400, headers: corsHeaders }
       );
     }
@@ -153,12 +144,7 @@ Deno.serve(async (req) => {
 
     // Use client-provided idempotency ID or generate one
     const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_payment', entity_id);
-    console.log('🔗 CORRELATION_ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)', {
-      entity_type,
-      entity_id,
-      user_id: user.id,
-      timestamp: new Date().toISOString()
-    });
+    console.log('Using idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
 
     // Check for existing payment transaction with this idempotency ID
     const { data: existingTransaction, error: existingError } = await supabase
@@ -227,34 +213,6 @@ Deno.serve(async (req) => {
     
     // Calculate if this is a card payment
     const isCard = ['card', 'google-pay', 'apple-pay'].includes(payment_type);
-
-    // Validate entity_id for types that require a persisted UUID record
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const isEntityUUID = uuidRegex.test(entity_id);
-    console.log('🔍 Entity validation:', {
-      entity_type,
-      entity_id,
-      isEntityUUID,
-      entityIdLength: entity_id?.length,
-      correlation_id: idempotency_id
-    });
-    
-    if (entity_type === 'tax_submission' && !isEntityUUID) {
-      console.error('❌ Invalid entity ID for tax submission:', {
-        entity_id,
-        isUUID: isEntityUUID,
-        expected: 'UUID format (36 characters)',
-        correlation_id: idempotency_id
-      });
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Invalid tax submission ID - please create your submission before paying.',
-          retryable: false
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
     
     // Get fee calculation from database to match exactly
     const { data: feeCalcResult, error: feeCalcError } = await supabase.rpc(

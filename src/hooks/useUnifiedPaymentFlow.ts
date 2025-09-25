@@ -64,7 +64,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
     }
   }, [params.merchantId]);
 
-  // Calculate service fee when payment method changes with fallback
+  // Calculate service fee when payment method changes
   useEffect(() => {
     const calculateServiceFee = async () => {
       if (!selectedPaymentMethod || !params.baseAmountCents) {
@@ -100,38 +100,12 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         }
       } catch (error) {
         console.error('Service fee calculation error:', error);
-        
-        // Fallback to local calculation to keep payment flow working
-        const { calculateServiceFee } = await import('@/utils/feeCalculation');
-        const isCard = ['google-pay', 'apple-pay'].includes(selectedPaymentMethod) || 
-                      paymentInstruments.find(p => p.id === selectedPaymentMethod)?.instrument_type === 'PAYMENT_CARD';
-        
-        const fallbackFee = calculateServiceFee({
-          baseAmountCents: params.baseAmountCents,
-          isCard,
-          cardBasisPoints: 290, // Default fallback values
-          cardFixedFeeCents: 30,
-          achBasisPoints: 100,
-          achFixedFeeCents: 100
-        });
-        
-        setServiceFee({
-          serviceFeeToDisplay: fallbackFee.totalServiceFeeCents,
-          totalAmountToCharge: fallbackFee.totalChargeCents,
-          basisPoints: fallbackFee.basisPoints,
-          isCard: fallbackFee.isCard
-        });
-        
-        toast({
-          title: "Using default fee calculation",
-          description: "Fee service unavailable, using standard rates.",
-          variant: "default",
-        });
+        setServiceFee(null);
       }
     };
 
     calculateServiceFee();
-  }, [selectedPaymentMethod, params.baseAmountCents, paymentInstruments, toast]);
+  }, [selectedPaymentMethod, params.baseAmountCents, paymentInstruments]);
 
   // Set default payment method
   useEffect(() => {
@@ -166,26 +140,6 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       });
       console.groupEnd();
       throw new Error('Missing payment information');
-    }
-
-    // Validate entity ID for flows that require a persisted entity
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const isEntityUUID = uuidRegex.test(params.entityId);
-    if (params.entityType === 'tax_submission' && !isEntityUUID) {
-      const errorMsg = 'Create submission first - Invalid tax submission ID';
-      console.error('❌ Entity validation failed:', {
-        entityType: params.entityType,
-        entityId: params.entityId,
-        isUUID: isEntityUUID,
-        entityIdLength: params.entityId?.length
-      });
-      toast({
-        title: "Create submission first",
-        description: "Please create your tax submission before paying.",
-        variant: "destructive",
-      });
-      console.groupEnd();
-      throw new Error(errorMsg);
     }
 
     // Single-flight pattern: return existing promise if payment is in progress

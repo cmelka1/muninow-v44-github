@@ -29,8 +29,6 @@ import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
 import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
-import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
-import { PaymentReadinessChecklist } from '@/components/PaymentReadinessChecklist';
 import type { PaymentResponse } from '@/types/payment';
 
 // PayTax Dialog Component - Updated to use direct download instead of modal viewer
@@ -398,16 +396,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     if (!payerAddress) missingFields.push("Payer address");
     if (!calculationNotes) missingFields.push("Calculation details");
     
-    // Check municipality configuration
-    if (selectedMunicipality && (!selectedMunicipality.customer_id || !selectedMunicipality.finix_merchant_id)) {
-      missingFields.push("Municipality not properly configured for payments");
-    }
-    
     if (missingFields.length > 0) {
       console.log("Missing fields validation:", { missingFields, 
         selectedMunicipality: !!selectedMunicipality,
-        municipalityFinixId: selectedMunicipality?.finix_merchant_id,
-        municipalityCustomerId: selectedMunicipality?.customer_id,
         taxType,
         totalAmountDue,
         payerName,
@@ -463,13 +454,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         throw new Error(result?.error || 'Failed to create tax submission');
       }
 
-      const taxSubmissionId = result.tax_submission_id;
-      if (!taxSubmissionId || taxSubmissionId.length !== 36) {
-        throw new Error('Invalid tax submission ID received. Please try again.');
-      }
-
       // Store the created tax submission ID
-      setCreatedTaxSubmissionId(taxSubmissionId);
+      setCreatedTaxSubmissionId(result.tax_submission_id || '');
       
       // Now open payment dialog with real UUID
       setIsUnifiedPaymentOpen(true);
@@ -1068,55 +1054,28 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment Management */}
+                  {/* Payment Instructions */}
                   <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
                     <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Payment Management
+                        Complete Payment
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-{createdTaxSubmissionId ? (
-  <InlinePaymentFlow
-    entityType="tax_submission"
-    entityId={createdTaxSubmissionId}
-    entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
-    customerId={selectedMunicipality?.customer_id || ''}
-    merchantId={selectedMunicipality?.id || ''}
-    baseAmountCents={getTaxAmountInCents()}
-    onPaymentSuccess={(paymentResponse: PaymentResponse) => {
-      setIsUnifiedPaymentOpen(false);
-      resetForm();
-      handleDialogOpenChange(false);
-    }}
-    onPaymentError={(error: any) => {
-      console.error('Payment error:', error);
-      toast({
-        title: "Payment Error",
-        description: error.message || "Payment processing failed. Please try again.",
-        variant: "destructive",
-      });
-    }}
-    onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
-  />
-) : (
-  <div className="space-y-3">
-    <p className="text-sm text-muted-foreground">
-      Create your tax submission to proceed to payment. This will save your details and prepare the payment.
-    </p>
-    <Button onClick={handleSubmit} disabled={isSubmitting}>
-      {isSubmitting ? (
-        <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Creating Submission...
-        </>
-      ) : (
-        'Create Submission & Continue to Payment'
-      )}
-    </Button>
-  </div>
-)}
+                      <div className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          Review your tax submission details above and click "Pay Now" to proceed with payment.
+                        </p>
+                        <Button 
+                          className="w-full" 
+                          size="lg"
+                          onClick={handleSubmit}
+                          disabled={!selectedMunicipality || !getTaxAmountInCents()}
+                        >
+                          Pay Now
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>

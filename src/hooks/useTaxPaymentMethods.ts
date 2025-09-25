@@ -42,38 +42,23 @@ export const useTaxPaymentMethods = (taxData: {
   const [serviceFee, setServiceFee] = useState<ServiceFee | null>(null);
   const [totalWithFee, setTotalWithFee] = useState(taxData.amount);
 
-  // Helper function to validate UUID format
-  const isValidUUID = (str: string): boolean => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(str);
-  };
-
   // Calculate service fee when payment method changes
   useEffect(() => {
     const calculateServiceFee = async () => {
-      if (!selectedPaymentMethod || !taxData.amount) {
-        setServiceFee(null);
-        return;
-      }
+      if (!selectedPaymentMethod || !taxData.amount) return;
 
       try {
-        const isDigitalPayment = ['google-pay', 'apple-pay'].includes(selectedPaymentMethod);
-        const isValidPaymentInstrument = isValidUUID(selectedPaymentMethod);
-
-        // Only pass paymentInstrumentId if it's a valid UUID (stored payment instrument)
-        // For digital payments or invalid UUIDs, use paymentMethodType instead
-        const paymentInstrumentId = (!isDigitalPayment && isValidPaymentInstrument) ? selectedPaymentMethod : null;
-        const paymentMethodType = (isDigitalPayment || !isValidPaymentInstrument) ? 'card' : null;
-
         const { data, error } = await supabase.functions.invoke('calculate-service-fee', {
           body: {
             baseAmountCents: taxData.amount,
-            paymentInstrumentId,
-            paymentMethodType
+            paymentInstrumentId: selectedPaymentMethod
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Service fee calculation error:', error);
+          return;
+        }
 
         if (data) {
           setServiceFee({
@@ -88,8 +73,7 @@ export const useTaxPaymentMethods = (taxData: {
           setTotalWithFee(data.totalChargeCents);
         }
       } catch (error) {
-        console.error('Service fee calculation error:', error);
-        setServiceFee(null);
+        console.error('Failed to calculate service fee:', error);
       }
     };
 

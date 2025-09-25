@@ -455,7 +455,7 @@ const PermitDetail = () => {
                   customerId={permit.customer_id}
                   merchantId={permit.merchant_id}
                   baseAmountCents={permit.base_fee_cents || permit.total_amount_cents || 0}
-                  
+                  initialExpanded={true}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
                   onAddPaymentMethod={handleAddPaymentMethod}
