@@ -4211,6 +4211,10 @@ export type Database = {
         Args: { email_input: string }
         Returns: boolean
       }
+      cleanup_abandoned_tax_drafts: {
+        Args: { p_hours_threshold?: number }
+        Returns: number
+      }
       cleanup_expired_verification_codes: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -4306,29 +4310,43 @@ export type Database = {
         Returns: Json
       }
       create_tax_submission_before_payment: {
-        Args: {
-          p_amount_cents: number
-          p_calculation_notes: string
-          p_customer_id: string
-          p_first_name?: string
-          p_last_name?: string
-          p_merchant_id: string
-          p_payer_business_name?: string
-          p_payer_city?: string
-          p_payer_ein?: string
-          p_payer_phone?: string
-          p_payer_state?: string
-          p_payer_street_address?: string
-          p_payer_zip_code?: string
-          p_staging_id?: string
-          p_tax_period_end: string
-          p_tax_period_start: string
-          p_tax_type: string
-          p_tax_year: number
-          p_total_amount_due_cents: number
-          p_user_email?: string
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_amount_cents: number
+              p_calculation_notes: string
+              p_customer_id: string
+              p_first_name?: string
+              p_last_name?: string
+              p_merchant_id: string
+              p_payer_business_name?: string
+              p_payer_city?: string
+              p_payer_ein?: string
+              p_payer_phone?: string
+              p_payer_state?: string
+              p_payer_street_address?: string
+              p_payer_zip_code?: string
+              p_staging_id?: string
+              p_tax_period_end: string
+              p_tax_period_start: string
+              p_tax_type: string
+              p_tax_year: number
+              p_total_amount_due_cents: number
+              p_user_email?: string
+              p_user_id: string
+            }
+          | {
+              p_amount_cents: number
+              p_calculation_notes: string
+              p_customer_id: string
+              p_merchant_id: string
+              p_staging_id?: string
+              p_tax_period_end: string
+              p_tax_period_start: string
+              p_tax_type: string
+              p_tax_year: number
+              p_total_amount_due_cents: number
+              p_user_id: string
+            }
         Returns: Json
       }
       create_tax_submission_with_payment: {

@@ -36,7 +36,8 @@ export const useMunicipalTaxSubmissions = (params?: UseMunicipalTaxSubmissionsPa
       let query = supabase
         .from('tax_submissions')
         .select('*', { count: 'exact' })
-        .eq('customer_id', profile.customer_id);
+        .eq('customer_id', profile.customer_id)
+        .neq('submission_status', 'draft');
 
       // Apply filters
       if (filters.taxType) {
