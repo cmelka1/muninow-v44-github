@@ -30,6 +30,7 @@ import { TaxDocumentUpload } from './TaxDocumentUpload';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
+import { DocumentViewerModal } from './DocumentViewerModal';
 
 
 interface PayTaxDialogProps {
@@ -120,6 +121,15 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
+  
+  // Document viewer modal state
+  const [isDocumentViewerOpen, setIsDocumentViewerOpen] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<{
+    id: string;
+    file_name: string;
+    storage_path: string;
+    file_size: number;
+  } | null>(null);
 
   // Document upload functionality - using new staging system
   const { 
@@ -467,6 +477,22 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     });
   };
 
+  const handleViewInstructions = () => {
+    if (selectedTaxTypeData?.instructions_document_path) {
+      // Extract filename from path
+      const pathParts = selectedTaxTypeData.instructions_document_path.split('/');
+      const fileName = pathParts[pathParts.length - 1] || 'Tax Instructions.pdf';
+      
+      setViewingDocument({
+        id: crypto.randomUUID(),
+        file_name: fileName,
+        storage_path: selectedTaxTypeData.instructions_document_path,
+        file_size: 0 // Size will be determined by the viewer
+      });
+      setIsDocumentViewerOpen(true);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" ref={contentRef}>
@@ -581,7 +607,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                             <p className="text-xs text-muted-foreground mb-2">
                               Instructions document available for {selectedTaxTypeData.name}
                             </p>
-                            <Button size="sm" variant="outline" className="h-7 text-xs">
+                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleViewInstructions}>
                               View Instructions
                             </Button>
                           </div>
@@ -1108,6 +1134,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         open={isAddPaymentMethodOpen}
         onOpenChange={setIsAddPaymentMethodOpen}
         onSuccess={handleAddPaymentMethodSuccess}
+      />
+      
+      <DocumentViewerModal
+        isOpen={isDocumentViewerOpen}
+        onClose={() => setIsDocumentViewerOpen(false)}
+        document={viewingDocument}
+        bucketName="tax-instructions"
       />
     </Dialog>
   );
