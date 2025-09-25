@@ -122,7 +122,7 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/taxes" element={<Taxes />} />
-                <Route path="/tax/:submissionId" element={
+                <Route path="/tax/:taxId" element={
                   <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
