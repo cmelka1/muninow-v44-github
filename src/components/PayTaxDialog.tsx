@@ -349,8 +349,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           p_tax_year: getCurrentTaxYear(),
           p_amount_cents: getTaxAmountInCents(),
           p_calculation_notes: calculationNotes,
-          p_total_amount_due_cents: getTaxAmountInCents(),
-          p_staging_id: stagingId,
           p_first_name: payerName.split(' ')[0] || '',
           p_last_name: payerName.split(' ').slice(1).join(' ') || '',
           p_user_email: payerEmail,
