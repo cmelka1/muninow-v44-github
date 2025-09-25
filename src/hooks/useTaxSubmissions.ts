@@ -33,8 +33,7 @@ export const useTaxSubmissions = (params?: UseTaxSubmissionsParams) => {
       let query = supabase
         .from('tax_submissions')
         .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-        .eq('payment_status', 'paid');
+        .eq('user_id', user.id);
 
       // Apply filters
       if (filters.taxType) {
