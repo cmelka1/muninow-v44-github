@@ -440,7 +440,7 @@ const ServiceApplicationDetail: React.FC = () => {
                   merchantId={application.merchant_id || ''}
                   baseAmountCents={application.amount_cents || application.tile?.amount_cents || 0}
                   entityName={application.tile?.title || 'Service Application'}
-                  initialExpanded={true}
+                  
                   onPaymentSuccess={() => {
                     toast({
                       title: "Payment Successful",

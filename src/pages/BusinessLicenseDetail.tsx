@@ -741,7 +741,7 @@ export const BusinessLicenseDetail = () => {
                   customerId={license.customer_id}
                   merchantId={license.merchant_id || ''}
                   baseAmountCents={license.base_fee_cents || license.total_amount_cents || 0}
-                  initialExpanded={true}
+                  
                   onPaymentSuccess={() => {
                     toast({
                       title: "Payment Successful",

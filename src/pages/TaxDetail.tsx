@@ -447,7 +447,6 @@ const TaxDetail = () => {
                   customerId={taxSubmission.customer_id}
                   merchantId={taxSubmission.merchant_id}
                   baseAmountCents={taxSubmission.amount_cents || 0}
-                  initialExpanded={true}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
                   onAddPaymentMethod={handleAddPaymentMethod}
