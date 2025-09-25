@@ -375,9 +375,14 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setCalculationNotes('');
     setTotalAmountDue('');
     
+    // Reset created tax submission ID
+    setCreatedTaxSubmissionId(null);
+    
     setErrors({});
     setIsSubmitting(false);
   };
+
+  const [createdTaxSubmissionId, setCreatedTaxSubmissionId] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     // Enhanced validation with specific field checking
@@ -410,7 +415,61 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
       return;
     }
 
-    setIsUnifiedPaymentOpen(true);
+    setIsSubmitting(true);
+
+    try {
+      // Create tax submission first
+      const { data, error } = await supabase.rpc('create_tax_submission_before_payment', {
+        p_user_id: profile?.id,
+        p_customer_id: selectedMunicipality.customer_id,
+        p_merchant_id: selectedMunicipality.id,
+        p_tax_type: taxType,
+        p_tax_period_start: getCurrentTaxPeriodStart(),
+        p_tax_period_end: getCurrentTaxPeriodEnd(),
+        p_tax_year: getCurrentTaxYear(),
+        p_amount_cents: getTaxAmountInCents(),
+        p_calculation_notes: calculationNotes,
+        p_total_amount_due_cents: getTaxAmountInCents(),
+        p_staging_id: stagingId,
+        p_first_name: payerName.split(' ')[0] || '',
+        p_last_name: payerName.split(' ').slice(1).join(' ') || '',
+        p_user_email: payerEmail,
+        p_payer_ein: payerEin,
+        p_payer_phone: payerPhone,
+        p_payer_street_address: payerAddress?.streetAddress,
+        p_payer_city: payerAddress?.city,
+        p_payer_state: payerAddress?.state,
+        p_payer_zip_code: payerAddress?.zipCode,
+        p_payer_business_name: payerName.includes('LLC') || payerName.includes('Inc') || payerName.includes('Corp') ? payerName : null
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to create tax submission');
+      }
+
+      // Type assertion for the response
+      const result = data as { success: boolean; tax_submission_id?: string; error?: string };
+
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to create tax submission');
+      }
+
+      // Store the created tax submission ID
+      setCreatedTaxSubmissionId(result.tax_submission_id || '');
+      
+      // Now open payment dialog with real UUID
+      setIsUnifiedPaymentOpen(true);
+
+    } catch (error: any) {
+      console.error('Tax submission creation error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create tax submission. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
@@ -1060,30 +1119,32 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         onSuccess={handleAddPaymentMethodSuccess}
       />
       
-      <UnifiedPaymentDialog
-        open={isUnifiedPaymentOpen}
-        onOpenChange={setIsUnifiedPaymentOpen}
-        entityType="tax_submission"
-        entityId={`tax-${selectedMunicipality?.id || 'unknown'}-${Date.now()}`}
-        entityName={`${taxType} Tax Payment`}
-        customerId={selectedMunicipality?.customer_id || ''}
-        merchantId={selectedMunicipality?.id || ''}
-        baseAmountCents={getTaxAmountInCents()}
-        onPaymentSuccess={(response: PaymentResponse) => {
-          toast({
-            title: "Payment Successful",
-            description: "Your tax payment has been processed successfully.",
-          });
-          onOpenChange(false);
-        }}
-        onPaymentError={(error: any) => {
-          toast({
-            title: "Payment Failed", 
-            description: error.message || "There was an error processing your payment.",
-            variant: "destructive",
-          });
-        }}
-      />
+      {createdTaxSubmissionId && (
+        <UnifiedPaymentDialog
+          open={isUnifiedPaymentOpen}
+          onOpenChange={setIsUnifiedPaymentOpen}
+          entityType="tax_submission"
+          entityId={createdTaxSubmissionId}
+          entityName={`${taxType} Tax Payment`}
+          customerId={selectedMunicipality?.customer_id || ''}
+          merchantId={selectedMunicipality?.id || ''}
+          baseAmountCents={getTaxAmountInCents()}
+          onPaymentSuccess={(response: PaymentResponse) => {
+            toast({
+              title: "Payment Successful",
+              description: "Your tax payment has been processed successfully.",
+            });
+            onOpenChange(false);
+          }}
+          onPaymentError={(error: any) => {
+            toast({
+              title: "Payment Failed", 
+              description: error.message || "There was an error processing your payment.",
+              variant: "destructive",
+            });
+          }}
+        />
+      )}
     </Dialog>
   );
 };
