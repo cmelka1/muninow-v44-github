@@ -446,7 +446,7 @@ const TaxDetail = () => {
                   entityName={`${formatTaxType(taxSubmission.tax_type)} Tax - ${formatPeriod(taxSubmission.tax_period_start, taxSubmission.tax_period_end)}`}
                   customerId={taxSubmission.customer_id}
                   merchantId={taxSubmission.merchant_id}
-                  baseAmountCents={taxSubmission.amount_cents || taxSubmission.total_amount_cents || 0}
+                  baseAmountCents={taxSubmission.amount_cents || 0}
                   initialExpanded={true}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
