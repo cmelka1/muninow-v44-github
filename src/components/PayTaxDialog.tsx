@@ -30,6 +30,7 @@ import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
 import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
+import { PaymentReadinessChecklist } from '@/components/PaymentReadinessChecklist';
 import type { PaymentResponse } from '@/types/payment';
 
 // PayTax Dialog Component - Updated to use direct download instead of modal viewer
@@ -397,9 +398,16 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     if (!payerAddress) missingFields.push("Payer address");
     if (!calculationNotes) missingFields.push("Calculation details");
     
+    // Check municipality configuration
+    if (selectedMunicipality && (!selectedMunicipality.customer_id || !selectedMunicipality.finix_merchant_id)) {
+      missingFields.push("Municipality not properly configured for payments");
+    }
+    
     if (missingFields.length > 0) {
       console.log("Missing fields validation:", { missingFields, 
         selectedMunicipality: !!selectedMunicipality,
+        municipalityFinixId: selectedMunicipality?.finix_merchant_id,
+        municipalityCustomerId: selectedMunicipality?.customer_id,
         taxType,
         totalAmountDue,
         payerName,
@@ -455,8 +463,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         throw new Error(result?.error || 'Failed to create tax submission');
       }
 
+      const taxSubmissionId = result.tax_submission_id;
+      if (!taxSubmissionId || taxSubmissionId.length !== 36) {
+        throw new Error('Invalid tax submission ID received. Please try again.');
+      }
+
       // Store the created tax submission ID
-      setCreatedTaxSubmissionId(result.tax_submission_id || '');
+      setCreatedTaxSubmissionId(taxSubmissionId);
       
       // Now open payment dialog with real UUID
       setIsUnifiedPaymentOpen(true);
