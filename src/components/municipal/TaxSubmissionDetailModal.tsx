@@ -227,7 +227,7 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
                 </div>
                 <div className="flex justify-between border-t pt-2">
                   <span className="text-sm text-muted-foreground font-medium">Total Paid:</span>
-                  <span className="font-bold text-green-600">{formatCurrency(submission.total_amount_cents)}</span>
+                  <span className="font-bold text-green-600">{formatCurrency(submission.total_amount_due_cents)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Payment Method:</span>

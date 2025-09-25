@@ -434,7 +434,7 @@ const MunicipalTaxDetail = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-base font-medium">Total Paid</span>
                   <span className="text-base font-bold">
-                    {formatCurrency((submission.total_amount_cents || 0) / 100)}
+                    {formatCurrency((submission.total_amount_due_cents || 0) / 100)}
                   </span>
                 </div>
               </div>

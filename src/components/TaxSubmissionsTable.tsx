@@ -168,9 +168,9 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
                       {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center font-medium py-2">
-                    {formatAmount(submission.total_amount_cents)}
-                  </TableCell>
+                   <TableCell className="text-center font-medium py-2">
+                     {formatAmount(submission.total_amount_due_cents)}
+                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>

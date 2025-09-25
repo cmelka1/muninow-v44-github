@@ -155,9 +155,9 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     <TableCell>
                       {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
                     </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatAmount(submission.total_amount_cents)}
-                    </TableCell>
+                     <TableCell className="text-right font-medium">
+                       {formatAmount(submission.total_amount_due_cents)}
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

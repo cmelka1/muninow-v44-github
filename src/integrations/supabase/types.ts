@@ -3618,7 +3618,6 @@ export type Database = {
           tax_period_start: string
           tax_type: string
           tax_year: number
-          total_amount_cents: number
           total_amount_due_cents: number
           transfer_state: string | null
           updated_at: string
@@ -3671,7 +3670,6 @@ export type Database = {
           tax_period_start: string
           tax_type: string
           tax_year: number
-          total_amount_cents: number
           total_amount_due_cents: number
           transfer_state?: string | null
           updated_at?: string
@@ -3724,7 +3722,6 @@ export type Database = {
           tax_period_start?: string
           tax_type?: string
           tax_year?: number
-          total_amount_cents?: number
           total_amount_due_cents?: number
           transfer_state?: string | null
           updated_at?: string
