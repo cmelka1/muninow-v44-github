@@ -6,16 +6,15 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import TaxSubmissionsFilter, { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
 import TaxSubmissionsTable from '@/components/TaxSubmissionsTable';
-import { TaxSelectionDialog } from '@/components/TaxSelectionDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { PayTaxDialog } from '@/components/PayTaxDialog';
 
 const Taxes = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
   const [filters, setFilters] = useState<TaxSubmissionFilters>({});
   const [isPayTaxOpen, setIsPayTaxOpen] = useState(false);
-  
   // Redirect unauthenticated users or municipal users
   useEffect(() => {
     if (!isLoading && !user) {
@@ -77,10 +76,7 @@ const Taxes = () => {
               }
             />
 
-            <TaxSelectionDialog 
-              open={isPayTaxOpen} 
-              onOpenChange={setIsPayTaxOpen} 
-            />
+            <PayTaxDialog open={isPayTaxOpen} onOpenChange={setIsPayTaxOpen} />
           </div>
         </SidebarInset>
       </div>
