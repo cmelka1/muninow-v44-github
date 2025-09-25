@@ -33,6 +33,7 @@ import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
 
+// PayTax Dialog Component - Updated to use direct download instead of modal viewer
 
 interface PayTaxDialogProps {
   open: boolean;
