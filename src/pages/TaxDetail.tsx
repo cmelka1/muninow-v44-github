@@ -26,6 +26,7 @@ import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
 import { TaxSubmissionCommunication } from '@/components/TaxSubmissionCommunication';
 import { AddTaxSubmissionDocumentDialog } from '@/components/AddTaxSubmissionDocumentDialog';
+import { TaxSubmissionStatusBadge } from '@/components/TaxSubmissionStatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 
 const TaxDetail = () => {
@@ -65,18 +66,6 @@ const TaxDetail = () => {
     return `${start} - ${end}`;
   };
 
-  const getStatusVariant = (status: string | undefined) => {
-    switch (status) {
-      case 'paid':
-        return 'default';
-      case 'pending':
-        return 'secondary';
-      case 'failed':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
 
   const handleDocumentDownload = async (storagePath: string, fileName: string) => {
     try {
@@ -162,9 +151,7 @@ const TaxDetail = () => {
               </p>
             </div>
           </div>
-          <Badge variant={getStatusVariant(submission.payment_status)}>
-            {submission.payment_status?.toUpperCase()}
-          </Badge>
+          <TaxSubmissionStatusBadge status={submission.submission_status || 'draft'} />
         </div>
 
         {/* Main Content Grid */}
@@ -197,9 +184,7 @@ const TaxDetail = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <Badge variant={getStatusVariant(submission.payment_status)}>
-                      {submission.payment_status?.toUpperCase()}
-                    </Badge>
+                    <TaxSubmissionStatusBadge status={submission.submission_status || 'draft'} />
                   </div>
                 </div>
               </CardContent>
