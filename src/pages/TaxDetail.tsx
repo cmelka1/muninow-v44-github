@@ -13,7 +13,8 @@ import {
   FileText, 
   DollarSign,
   Download,
-  Clock
+  Clock,
+  Upload
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
@@ -24,19 +25,37 @@ import { formatCurrency } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
 import { TaxSubmissionCommunication } from '@/components/TaxSubmissionCommunication';
+import { AddTaxSubmissionDocumentDialog } from '@/components/AddTaxSubmissionDocumentDialog';
 import { supabase } from '@/integrations/supabase/client';
 
 const TaxDetail = () => {
   const { taxId } = useParams<{ taxId: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const [showAddDocumentDialog, setShowAddDocumentDialog] = useState(false);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
   
   const { data: submission, isLoading, error } = useTaxSubmissionDetail(taxId || null);
   const { getDocuments } = useTaxSubmissionDocuments();
-  
-  // For now, we'll use empty array for documents until we have proper query for confirmed documents
-  const documents: any[] = [];
-  const documentsLoading = false;
+
+  const loadDocuments = async () => {
+    if (!submission?.id) return;
+    
+    setDocumentsLoading(true);
+    try {
+      const docs = await getDocuments(submission.id);
+      setDocuments(docs || []);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    loadDocuments();
+  }, [submission?.id]);
 
   const formatTaxType = (taxType: string | undefined) => {
     if (!taxType) return 'Unknown';
@@ -284,11 +303,20 @@ const TaxDetail = () => {
 
             {/* Supporting Documents */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   <CardTitle>Supporting Documents</CardTitle>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddDocumentDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Add Document
+                </Button>
               </CardHeader>
               <CardContent>
                 {documentsLoading ? (
@@ -401,6 +429,17 @@ const TaxDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Document Dialog */}
+      <AddTaxSubmissionDocumentDialog
+        open={showAddDocumentDialog}
+        onOpenChange={setShowAddDocumentDialog}
+        taxSubmissionId={submission.id}
+        onSuccess={() => {
+          // Refresh documents
+          loadDocuments();
+        }}
+      />
     </div>
   );
 
