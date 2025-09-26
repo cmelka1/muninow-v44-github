@@ -253,7 +253,7 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/tax/:submissionId" element={
-                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalTaxDetail />
                     </MunicipalLayout>

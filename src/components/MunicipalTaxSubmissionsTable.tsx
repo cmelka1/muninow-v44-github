@@ -61,10 +61,12 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
   const endIndex = Math.min(currentPage * pageSize, data?.count || 0);
 
   const handleViewDetails = (submissionId: string) => {
+    console.log('Navigating to:', `/municipal/tax/${submissionId}`);
     navigate(`/municipal/tax/${submissionId}`);
   };
 
   const handleRowClick = (submissionId: string) => {
+    console.log('Row clicked, submission ID:', submissionId);
     handleViewDetails(submissionId);
   };
 
