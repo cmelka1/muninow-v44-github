@@ -17,7 +17,7 @@ interface BillingAddress {
 }
 
 interface UnifiedGooglePayRequest {
-  entity_type: 'permit'; // Only permit for now - will expand later
+  entity_type: 'permit' | 'tax_submission' | 'business_license' | 'service_application';
   entity_id: string;
   customer_id: string;
   merchant_id: string;
@@ -137,12 +137,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Only support permits for now
-    if (entity_type !== 'permit') {
+    // Validate entity type
+    const supportedEntityTypes = ['permit', 'tax_submission', 'business_license', 'service_application'];
+    if (!supportedEntityTypes.includes(entity_type)) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Only permit payments are supported in this version',
+          error: `Unsupported entity type: ${entity_type}. Supported types: ${supportedEntityTypes.join(', ')}`,
           retryable: false
         }),
         { status: 400, headers: corsHeaders }
@@ -185,32 +186,120 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get permit details and validate ownership
-    const { data: permit, error: permitError } = await supabase
-      .from('permit_applications')
-      .select('*')
-      .eq('permit_id', entity_id)
-      .eq('user_id', user.id)
-      .single();
+    // Entity validation based on type
+    let entityData: any = null;
+    
+    if (entity_type === 'permit') {
+      const { data: permit, error: permitError } = await supabase
+        .from('permit_applications')
+        .select('*')
+        .eq('permit_id', entity_id)
+        .eq('user_id', user.id)
+        .single();
 
-    if (permitError || !permit) {
-      console.error('Permit fetch error:', permitError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Permit not found or access denied', retryable: false }),
-        { status: 404, headers: corsHeaders }
-      );
-    }
+      if (permitError || !permit) {
+        console.error('Permit fetch error:', permitError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Permit not found or access denied', retryable: false }),
+          { status: 404, headers: corsHeaders }
+        );
+      }
 
-    // Validate permit is in payable state (approved)
-    if (permit.application_status !== 'approved') {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Permit must be approved before payment can be processed',
-          retryable: false
-        }),
-        { status: 400, headers: corsHeaders }
-      );
+      if (permit.application_status !== 'approved') {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Permit must be approved before payment can be processed',
+            retryable: false
+          }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      entityData = permit;
+      
+    } else if (entity_type === 'tax_submission') {
+      const { data: taxSubmission, error: taxError } = await supabase
+        .from('tax_submissions')
+        .select('*')
+        .eq('id', entity_id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (taxError || !taxSubmission) {
+        console.error('Tax submission fetch error:', taxError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Tax submission not found or access denied', retryable: false }),
+          { status: 404, headers: corsHeaders }
+        );
+      }
+
+      if (taxSubmission.payment_status === 'paid') {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Tax submission has already been paid',
+            retryable: false
+          }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      entityData = taxSubmission;
+      
+    } else if (entity_type === 'business_license') {
+      const { data: businessLicense, error: licenseError } = await supabase
+        .from('business_license_applications')
+        .select('*')
+        .eq('id', entity_id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (licenseError || !businessLicense) {
+        console.error('Business license fetch error:', licenseError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Business license not found or access denied', retryable: false }),
+          { status: 404, headers: corsHeaders }
+        );
+      }
+
+      if (businessLicense.application_status !== 'approved') {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Business license must be approved before payment can be processed',
+            retryable: false
+          }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      entityData = businessLicense;
+      
+    } else if (entity_type === 'service_application') {
+      const { data: serviceApplication, error: serviceError } = await supabase
+        .from('municipal_service_applications')
+        .select('*')
+        .eq('id', entity_id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (serviceError || !serviceApplication) {
+        console.error('Service application fetch error:', serviceError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Service application not found or access denied', retryable: false }),
+          { status: 404, headers: corsHeaders }
+        );
+      }
+
+      if (serviceApplication.status !== 'approved') {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Service application must be approved before payment can be processed',
+            retryable: false
+          }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      entityData = serviceApplication;
     }
 
     // Get user's Finix identity
@@ -501,55 +590,111 @@ Deno.serve(async (req) => {
       // Continue anyway - the payment went through
     }
 
-    // STEP 6: Update permit status if payment succeeded
+    // STEP 6: Update entity status if payment succeeded
     if (finixData.state === 'SUCCEEDED') {
-      console.log('=== UPDATING PERMIT STATUS ===');
+      console.log(`=== UPDATING ${entity_type.toUpperCase()} STATUS ===`);
       
       try {
-        // Prepare update data
-        const permitUpdate: any = {
-          payment_status: 'paid',
-          payment_processed_at: new Date().toISOString(),
-          finix_transfer_id: finixData.id,
-          transfer_state: 'SUCCEEDED'
-        };
-        
-        // Auto-issue permit since it's already approved and payment succeeded
-        permitUpdate.application_status = 'issued';
-        permitUpdate.issued_at = new Date().toISOString();
-        console.log('Auto-issuing permit after successful Google Pay payment');
-        
-        const { error: permitUpdateError } = await supabase
-          .from('permit_applications')
-          .update(permitUpdate)
-          .eq('permit_id', entity_id);
+        if (entity_type === 'permit') {
+          const permitUpdate: any = {
+            payment_status: 'paid',
+            payment_processed_at: new Date().toISOString(),
+            finix_transfer_id: finixData.id,
+            transfer_state: 'SUCCEEDED',
+            application_status: 'issued',
+            issued_at: new Date().toISOString()
+          };
           
-        if (permitUpdateError) {
-          console.error('Failed to update permit status:', permitUpdateError);
-          
-          // Mark payment transaction as failed due to entity update error
-          await supabase
-            .from('payment_transactions')
-            .update({
-              payment_status: 'failed',
-              error_details: permitUpdateError
-            })
-            .eq('id', transactionId);
+          const { error: permitUpdateError } = await supabase
+            .from('permit_applications')
+            .update(permitUpdate)
+            .eq('permit_id', entity_id);
             
+          if (permitUpdateError) {
+            console.error('Failed to update permit status:', permitUpdateError);
+            throw permitUpdateError;
+          }
+          console.log('Successfully updated permit status to issued after Google Pay payment');
+          
+        } else if (entity_type === 'tax_submission') {
+          const taxUpdate = {
+            payment_status: 'paid',
+            submission_status: 'submitted',
+            transfer_state: 'SUCCEEDED',
+            finix_transfer_id: finixData.id
+          };
+          
+          const { error: taxUpdateError } = await supabase
+            .from('tax_submissions')
+            .update(taxUpdate)
+            .eq('id', entity_id);
+            
+          if (taxUpdateError) {
+            console.error('Failed to update tax submission status:', taxUpdateError);
+            throw taxUpdateError;
+          }
+          console.log('Successfully updated tax submission status to submitted after Google Pay payment');
+          
+        } else if (entity_type === 'business_license') {
+          const licenseUpdate = {
+            payment_status: 'paid',
+            payment_processed_at: new Date().toISOString(),
+            finix_transfer_id: finixData.id,
+            transfer_state: 'SUCCEEDED',
+            application_status: 'issued'
+          };
+          
+          const { error: licenseUpdateError } = await supabase
+            .from('business_license_applications')
+            .update(licenseUpdate)
+            .eq('id', entity_id);
+            
+          if (licenseUpdateError) {
+            console.error('Failed to update business license status:', licenseUpdateError);
+            throw licenseUpdateError;
+          }
+          console.log('Successfully updated business license status to issued after Google Pay payment');
+          
+        } else if (entity_type === 'service_application') {
+          const serviceUpdate = {
+            payment_status: 'paid',
+            payment_processed_at: new Date().toISOString(),
+            finix_transfer_id: finixData.id,
+            transfer_state: 'SUCCEEDED'
+          };
+          
+          const { error: serviceUpdateError } = await supabase
+            .from('municipal_service_applications')
+            .update(serviceUpdate)
+            .eq('id', entity_id);
+            
+          if (serviceUpdateError) {
+            console.error('Failed to update service application status:', serviceUpdateError);
+            throw serviceUpdateError;
+          }
+          console.log('Successfully updated service application payment status after Google Pay payment');
+        }
+        
+      } catch (entityError) {
+        console.error(`Error updating ${entity_type} status:`, entityError);
+        
+        // Mark payment transaction as failed due to entity update error
+        await supabase
+          .from('payment_transactions')
+          .update({
+            payment_status: 'failed',
+            error_details: entityError
+          })
+          .eq('id', transactionId);
+          
           return new Response(
             JSON.stringify({ 
               success: false, 
-              error: `Payment succeeded but failed to update permit: ${permitUpdateError.message}`,
+              error: `Payment succeeded but failed to update ${entity_type}: ${entityError instanceof Error ? entityError.message : 'Unknown error'}`,
               retryable: false
             }),
             { status: 500, headers: corsHeaders }
           );
-        } else {
-          console.log('Successfully updated permit status to issued after Google Pay payment');
-        }
-      } catch (entityError) {
-        console.error('Error updating permit status:', entityError);
-        // Continue anyway - the payment went through
       }
     }
 
