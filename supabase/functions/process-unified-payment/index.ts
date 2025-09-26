@@ -542,14 +542,16 @@ Deno.serve(async (req) => {
 
           case 'tax_submission':
             // Update existing draft tax submission with payment data
+            console.log('Updating total_amount_due_cents instead of total_amount_cents for tax submission');
             const taxUpdate = {
               payment_status: 'paid',
               submission_status: 'filed',
               transfer_state: finixData.state || 'PENDING',
               finix_transfer_id: finixData.id,
               service_fee_cents: serviceFeeFromDB,
-              total_amount_cents: totalAmountFromDB,
+              total_amount_due_cents: totalAmountFromDB,
               payment_processed_at: new Date().toISOString(),
+              filed_at: new Date().toISOString(),
               payment_type: payment_type,
               payment_instrument_id: finixPaymentInstrumentId
             };
