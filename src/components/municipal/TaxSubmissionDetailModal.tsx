@@ -9,6 +9,7 @@ import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { format } from 'date-fns';
+import { formatTaxType as formatTaxTypeUtil, formatCurrency } from '@/lib/formatters';
 
 interface TaxSubmissionDetailModalProps {
   submissionId: string | null;
@@ -43,21 +44,7 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
     }
   };
 
-  const formatTaxType = (taxType: string) => {
-    const typeMap: Record<string, string> = {
-      'food_beverage': 'Food & Beverage',
-      'hotel_motel': 'Hotel & Motel',
-      'amusement': 'Amusement'
-    };
-    return typeMap[taxType] || taxType;
-  };
-
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(cents / 100);
-  };
+  const formatCurrencyLocal = (cents: number) => formatCurrency(cents);
 
   const formatPeriod = (startDate: string, endDate: string) => {
     const start = new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -111,7 +98,7 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
         {/* Submission Header */}
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-xl font-semibold">{formatTaxType(submission.tax_type)} Tax Submission</h3>
+            <h3 className="text-xl font-semibold">{formatTaxTypeUtil(submission.tax_type)} Tax Submission</h3>
             <p className="text-sm text-muted-foreground">
               Submission ID: {submission.id}
             </p>
@@ -132,7 +119,7 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Tax Type:</span>
-                  <span className="font-medium">{formatTaxType(submission.tax_type)}</span>
+                  <span className="font-medium">{formatTaxTypeUtil(submission.tax_type)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Tax Period:</span>
@@ -219,15 +206,15 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Tax Amount:</span>
-                  <span className="font-medium">{formatCurrency(submission.amount_cents)}</span>
+                  <span className="font-medium">{formatCurrencyLocal(submission.amount_cents)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Service Fee:</span>
-                  <span className="font-medium">{formatCurrency(submission.service_fee_cents)}</span>
+                  <span className="font-medium">{formatCurrencyLocal(submission.service_fee_cents)}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
                   <span className="text-sm text-muted-foreground font-medium">Total Paid:</span>
-                  <span className="font-bold text-green-600">{formatCurrency(submission.total_amount_due_cents)}</span>
+                  <span className="font-bold text-green-600">{formatCurrencyLocal(submission.total_amount_due_cents)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Payment Method:</span>

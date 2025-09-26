@@ -1,8 +1,8 @@
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amountCents: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format(amount);
+  }).format(amountCents / 100);
 };
 
 export const formatDate = (dateString: string | null): string => {
@@ -164,4 +164,22 @@ export const getAccountTypeBadgeVariant = (accountType: string | null | undefine
   } else {
     return 'outline'; // Outline for resident users and others
   }
+};
+
+/**
+ * Formats tax type codes into professional display names
+ */
+export const formatTaxType = (taxType: string | null | undefined): string => {
+  if (!taxType) return 'Unknown';
+  
+  const typeMap: Record<string, string> = {
+    'motor_fuel': 'Motor Fuel',
+    'packaged_liquor': 'Packaged Liquor',
+    'food___beverage': 'Food & Beverage',
+    'food_beverage': 'Food & Beverage',
+    'hotel_motel': 'Hotel & Motel',
+    'amusement': 'Amusement'
+  };
+  
+  return typeMap[taxType.toLowerCase()] || taxType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };

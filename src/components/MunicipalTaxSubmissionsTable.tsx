@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMunicipalTaxSubmissions } from '@/hooks/useMunicipalTaxSubmissions';
 import { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
+import { formatTaxType as formatTaxTypeUtil, formatCurrency, formatDate } from '@/lib/formatters';
 
 interface MunicipalTaxSubmissionsTableProps {
   filters?: TaxSubmissionFilters;
@@ -30,29 +31,8 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
     filters,
   });
 
-  const formatTaxType = (taxType: string) => {
-    const typeMap: Record<string, string> = {
-      'food_beverage': 'Food & Beverage',
-      'hotel_motel': 'Hotel & Motel',
-      'amusement': 'Amusement'
-    };
-    return typeMap[taxType] || taxType;
-  };
-
-  const formatAmount = (amountCents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amountCents / 100);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const formatAmount = (amountCents: number) => formatCurrency(amountCents);
+  const formatDateLocal = (dateString: string) => formatDate(dateString);
 
   const formatPeriod = (startDate: string, endDate: string) => {
     const start = new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -146,12 +126,12 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     onClick={() => handleRowClick(submission.id)}
                   >
                     <TableCell className="font-medium">
-                      {formatDate(submission.submission_date)}
+                      {formatDateLocal(submission.submission_date)}
                     </TableCell>
                     <TableCell>
                       {submission.payer_business_name || `${submission.first_name} ${submission.last_name}`}
                     </TableCell>
-                    <TableCell>{formatTaxType(submission.tax_type)}</TableCell>
+                    <TableCell>{formatTaxTypeUtil(submission.tax_type)}</TableCell>
                     <TableCell>
                       {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
                     </TableCell>

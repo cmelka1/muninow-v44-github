@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTaxSubmissions } from '@/hooks/useTaxSubmissions';
 import { TaxSubmissionFilters } from './TaxSubmissionsFilter';
+import { formatTaxType as formatTaxTypeUtil, formatCurrency, formatDate } from '@/lib/formatters';
 
 interface TaxSubmissionsTableProps {
   filters?: TaxSubmissionFilters;
@@ -30,29 +31,8 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
     filters,
   });
 
-  const formatTaxType = (taxType: string) => {
-    const typeMap: Record<string, string> = {
-      'food_beverage': 'Food & Beverage',
-      'hotel_motel': 'Hotel & Motel',
-      'amusement': 'Amusement'
-    };
-    return typeMap[taxType] || taxType;
-  };
-
-  const formatAmount = (amountCents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amountCents / 100);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const formatAmount = (amountCents: number) => formatCurrency(amountCents);
+  const formatDateLocal = (dateString: string) => formatDate(dateString);
 
   const formatPeriod = (startDate: string, endDate: string) => {
     const start = new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -157,11 +137,11 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
                 >
                   <TableCell className="hidden sm:table-cell py-2">
                     <span className="text-sm text-muted-foreground">
-                      {formatDate(submission.submission_date)}
+                      {formatDateLocal(submission.submission_date)}
                     </span>
                   </TableCell>
                   <TableCell className="py-2 text-center">
-                    <span className="font-medium">{formatTaxType(submission.tax_type)}</span>
+                    <span className="font-medium">{formatTaxTypeUtil(submission.tax_type)}</span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
                     <span className="text-sm">
