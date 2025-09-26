@@ -163,12 +163,25 @@ Deno.serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    // Get merchant information
+    // Get merchant information and fee profile
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
       .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory')
       .eq('id', merchant_id)
       .single();
+
+    // Get merchant fee profile for ACH fee limit support
+    const { data: feeProfile, error: feeError } = await supabase
+      .from('merchant_fee_profiles')
+      .select('ach_basis_points_fee_limit, basis_points, fixed_fee, ach_basis_points, ach_fixed_fee')
+      .eq('merchant_id', merchant_id)
+      .single();
+
+    if (feeError && feeError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.warn('Failed to fetch merchant fee profile:', feeError);
+    }
+
+    console.log('Fee profile for merchant:', feeProfile);
 
     if (merchantError || !merchant) {
       console.error('Merchant fetch error:', merchantError);
@@ -378,7 +391,7 @@ Deno.serve(async (req) => {
         p_payment_type: 'google-pay',
         p_fraud_session_id: fraud_session_id || null,
         p_idempotency_id: idempotency_id,
-        p_is_card: true, // Google Pay is considered a card payment
+        p_is_card: true, // Google Pay is treated as card payment (uses card fee rates & no ACH fee limit)
         p_card_brand: null, // Will be updated after payment instrument creation
         p_card_last_four: null,
         p_bank_last_four: null,
