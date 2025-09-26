@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
     // Get merchant information
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory')
+      .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory, statement_descriptor')
       .eq('id', merchant_id)
       .single();
 
@@ -205,6 +205,18 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: false, error: 'Merchant not properly configured', retryable: false }),
         { status: 400, headers: corsHeaders }
       );
+    }
+
+    // Get merchant fee profile for fee structure
+    const { data: feeProfile, error: feeProfileError } = await supabase
+      .from('merchant_fee_profiles')
+      .select('basis_points, fixed_fee, ach_basis_points, ach_fixed_fee')
+      .eq('merchant_id', merchant_id)
+      .single();
+
+    if (feeProfileError) {
+      console.log('Warning: Could not fetch fee profile:', feeProfileError);
+      // Continue without fee profile data - not critical for payment processing
     }
 
     // Get user's Finix payment instrument ID
@@ -555,7 +567,23 @@ Deno.serve(async (req) => {
               payment_processed_at: new Date().toISOString(),
               filed_at: new Date().toISOString(),
               payment_type: payment_type,
-              payment_instrument_id: finixPaymentInstrumentId
+              payment_instrument_id: finixPaymentInstrumentId,
+              // Add missing Finix and merchant data
+              finix_merchant_id: merchant.finix_merchant_id,
+              finix_identity_id: merchant.finix_identity_id,
+              merchant_name: merchant.merchant_name,
+              fraud_session_id: fraud_session_id,
+              idempotency_id: idempotency_id,
+              raw_finix_response: JSON.stringify(finixData),
+              subcategory: merchant.subcategory,
+              statement_descriptor: merchant.statement_descriptor || merchant.merchant_name,
+              // Add fee structure fields if available
+              ...(feeProfile && {
+                basis_points: feeProfile.basis_points,
+                fixed_fee: feeProfile.fixed_fee,
+                ach_basis_points: feeProfile.ach_basis_points,
+                ach_fixed_fee: feeProfile.ach_fixed_fee
+              })
             };
 
             console.log('Updating existing tax submission with payment data');
