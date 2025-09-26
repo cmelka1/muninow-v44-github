@@ -499,6 +499,36 @@ export type Database = {
           },
         ]
       }
+      business_license_number_sequences: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          municipality_code: string
+          next_sequence: number
+          updated_at: string | null
+          year_code: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          municipality_code: string
+          next_sequence?: number
+          updated_at?: string | null
+          year_code: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          municipality_code?: string
+          next_sequence?: number
+          updated_at?: string | null
+          year_code?: string
+        }
+        Relationships: []
+      }
       business_license_types: {
         Row: {
           base_fee_cents: number
@@ -3596,7 +3626,6 @@ export type Database = {
           last_name: string | null
           merchant_id: string | null
           merchant_name: string | null
-          paid_at: string | null
           payer_business_name: string | null
           payer_city: string | null
           payer_ein: string | null
@@ -3605,6 +3634,7 @@ export type Database = {
           payer_street_address: string | null
           payer_zip_code: string | null
           payment_instrument_id: string | null
+          payment_processed_at: string | null
           payment_status: string | null
           payment_type: string | null
           raw_finix_response: Json | null
@@ -3648,7 +3678,6 @@ export type Database = {
           last_name?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
-          paid_at?: string | null
           payer_business_name?: string | null
           payer_city?: string | null
           payer_ein?: string | null
@@ -3657,6 +3686,7 @@ export type Database = {
           payer_street_address?: string | null
           payer_zip_code?: string | null
           payment_instrument_id?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
           raw_finix_response?: Json | null
@@ -3700,7 +3730,6 @@ export type Database = {
           last_name?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
-          paid_at?: string | null
           payer_business_name?: string | null
           payer_city?: string | null
           payer_ein?: string | null
@@ -3709,6 +3738,7 @@ export type Database = {
           payer_street_address?: string | null
           payer_zip_code?: string | null
           payment_instrument_id?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
           raw_finix_response?: Json | null
@@ -4400,7 +4430,7 @@ export type Database = {
         Returns: undefined
       }
       generate_license_number: {
-        Args: Record<PropertyKey, never>
+        Args: { p_customer_id: string }
         Returns: string
       }
       generate_permit_number: {
