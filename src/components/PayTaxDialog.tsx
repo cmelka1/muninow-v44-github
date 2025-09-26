@@ -967,7 +967,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                             </div>
                             <div className="flex justify-between font-medium pt-2 border-t">
                               <span>Total Amount Due:</span>
-                              <span>{formatCurrency(parseFormattedNumber(totalAmountDue) || 0)}</span>
+                              <span>{formatCurrency((parseFormattedNumber(totalAmountDue) || 0) * 100)}</span>
                             </div>
                           </div>
                         </div>
