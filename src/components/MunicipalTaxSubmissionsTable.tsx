@@ -114,6 +114,7 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                   <TableHead>Date</TableHead>
                   <TableHead>Taxpayer Name</TableHead>
                   <TableHead>Tax Type</TableHead>
+                  <TableHead className="text-left">Company</TableHead>
                   <TableHead>Tax Period</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
@@ -132,6 +133,9 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                       {submission.payer_business_name || `${submission.first_name} ${submission.last_name}`}
                     </TableCell>
                     <TableCell>{formatTaxTypeUtil(submission.tax_type)}</TableCell>
+                    <TableCell className="text-left">
+                      {submission.payer_business_name || ''}
+                    </TableCell>
                     <TableCell>
                       {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
                     </TableCell>

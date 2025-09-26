@@ -124,6 +124,7 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Submission Date</TableHead>
                 <TableHead className="text-center">Tax Type</TableHead>
+                <TableHead className="text-left hidden md:table-cell">Company</TableHead>
                 <TableHead className="hidden md:table-cell">Tax Period</TableHead>
                 <TableHead className="text-center">Amount</TableHead>
               </TableRow>
@@ -142,6 +143,11 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
                   </TableCell>
                   <TableCell className="py-2 text-center">
                     <span className="font-medium">{formatTaxTypeUtil(submission.tax_type)}</span>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell py-2 text-left">
+                    <span className="text-sm">
+                      {submission.payer_business_name || ''}
+                    </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
                     <span className="text-sm">
