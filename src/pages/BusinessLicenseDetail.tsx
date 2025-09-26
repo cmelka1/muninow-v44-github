@@ -724,61 +724,63 @@ export const BusinessLicenseDetail = () => {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Payment Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Payment Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {license.application_status === 'approved' && license.payment_status !== 'paid' && (
-                <InlinePaymentFlow
-                  entityType="business_license"
-                  entityId={license.id}
-                  entityName={`Business License - ${license.business_legal_name}`}
-                  customerId={license.customer_id}
-                  merchantId={license.merchant_id || ''}
-                  baseAmountCents={license.base_fee_cents || license.total_amount_cents || 0}
-                  initialExpanded={true}
-                  onPaymentSuccess={() => {
-                    toast({
-                      title: "Payment Successful",
-                      description: "Your business license payment has been processed successfully.",
-                    });
-                    refetch();
-                  }}
-                  onPaymentError={(error) => {
-                    console.error('Payment error:', error);
-                  }}
-                  onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
-                />
-              )}
+          {/* Payment Management - Only show for business users */}
+          {!isMunicipalUser && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {license.application_status === 'approved' && license.payment_status !== 'paid' && (
+                  <InlinePaymentFlow
+                    entityType="business_license"
+                    entityId={license.id}
+                    entityName={`Business License - ${license.business_legal_name}`}
+                    customerId={license.customer_id}
+                    merchantId={license.merchant_id || ''}
+                    baseAmountCents={license.base_fee_cents || license.total_amount_cents || 0}
+                    initialExpanded={true}
+                    onPaymentSuccess={() => {
+                      toast({
+                        title: "Payment Successful",
+                        description: "Your business license payment has been processed successfully.",
+                      });
+                      refetch();
+                    }}
+                    onPaymentError={(error) => {
+                      console.error('Payment error:', error);
+                    }}
+                    onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
+                  />
+                )}
 
-              {license.payment_status === 'paid' ? (
-                <div className="pt-2 space-y-2">
-                  <Button className="w-full" disabled variant="outline">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Payment Complete
-                  </Button>
-                  
-                  <p className="text-xs text-green-600 mt-2">
-                    Your business license fee has been paid
-                  </p>
-                </div>
-              ) : license.application_status !== 'approved' ? (
-                <div className="pt-2">
-                  <Button className="w-full" disabled variant="outline">
-                    Payment Unavailable
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Payment processing will be available once your application is approved
-                  </p>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
+                {license.payment_status === 'paid' ? (
+                  <div className="pt-2 space-y-2">
+                    <Button className="w-full" disabled variant="outline">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Payment Complete
+                    </Button>
+                    
+                    <p className="text-xs text-green-600 mt-2">
+                      Your business license fee has been paid
+                    </p>
+                  </div>
+                ) : license.application_status !== 'approved' ? (
+                  <div className="pt-2">
+                    <Button className="w-full" disabled variant="outline">
+                      Payment Unavailable
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Payment processing will be available once your application is approved
+                    </p>
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Status Timeline */}
           <Card>
