@@ -14,6 +14,7 @@ const calculateServiceFeeUtil = (params: {
   cardFixedFeeCents?: number;
   achBasisPoints?: number;
   achFixedFeeCents?: number;
+  achBasisPointsFeeLimitCents?: number;
 }) => {
   const {
     baseAmountCents,
@@ -21,13 +22,20 @@ const calculateServiceFeeUtil = (params: {
     cardBasisPoints = 300,
     cardFixedFeeCents = 50,
     achBasisPoints = 150,
-    achFixedFeeCents = 50
+    achFixedFeeCents = 50,
+    achBasisPointsFeeLimitCents
   } = params;
 
   const basisPoints = isCard ? cardBasisPoints : achBasisPoints;
   const fixedFeeCents = isCard ? cardFixedFeeCents : achFixedFeeCents;
 
-  const serviceFeePercentageCents = Math.round((baseAmountCents * basisPoints) / 10000);
+  let serviceFeePercentageCents = Math.round((baseAmountCents * basisPoints) / 10000);
+  
+  // Apply ACH basis points fee limit if applicable
+  if (!isCard && achBasisPointsFeeLimitCents && serviceFeePercentageCents > achBasisPointsFeeLimitCents) {
+    serviceFeePercentageCents = achBasisPointsFeeLimitCents;
+  }
+  
   const totalServiceFeeCents = serviceFeePercentageCents + fixedFeeCents;
   const totalChargeCents = baseAmountCents + totalServiceFeeCents;
 
@@ -100,10 +108,36 @@ serve(async (req) => {
       }
     }
 
+    // Get fee profile for merchant if we have payment instrument context
+    let achBasisPointsFeeLimitCents;
+    if (paymentInstrumentId) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Try to get merchant fee profile through the payment instrument user
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('customer_id')
+        .eq('id', (await supabase.from('user_payment_instruments').select('user_id').eq('id', paymentInstrumentId).single()).data?.user_id)
+        .single();
+
+      if (userProfile?.customer_id) {
+        const { data: feeProfile } = await supabase
+          .from('merchant_fee_profiles')
+          .select('ach_basis_points_fee_limit')
+          .eq('merchant_id', (await supabase.from('merchants').select('id').eq('customer_id', userProfile.customer_id).eq('subcategory', 'Other').single()).data?.id)
+          .single();
+        
+        achBasisPointsFeeLimitCents = feeProfile?.ach_basis_points_fee_limit;
+      }
+    }
+
     // Calculate service fee using unified formula
     const feeCalculation = calculateServiceFeeUtil({
       baseAmountCents,
-      isCard
+      isCard,
+      achBasisPointsFeeLimitCents
     });
 
     console.log('Fee calculation result:', feeCalculation);

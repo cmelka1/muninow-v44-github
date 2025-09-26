@@ -9,6 +9,7 @@ export interface FeeCalculationParams {
   cardFixedFeeCents?: number;
   achBasisPoints?: number;
   achFixedFeeCents?: number;
+  achBasisPointsFeeLimitCents?: number;
 }
 
 export interface FeeCalculationResult {
@@ -33,7 +34,8 @@ export function calculateServiceFee(params: FeeCalculationParams): FeeCalculatio
     cardBasisPoints = 300,
     cardFixedFeeCents = 50,
     achBasisPoints = 150,
-    achFixedFeeCents = 50
+    achFixedFeeCents = 50,
+    achBasisPointsFeeLimitCents
   } = params;
 
   // Select appropriate fee structure based on payment method
@@ -41,7 +43,12 @@ export function calculateServiceFee(params: FeeCalculationParams): FeeCalculatio
   const fixedFeeCents = isCard ? cardFixedFeeCents : achFixedFeeCents;
 
   // Calculate percentage fee: (Base Amount × Fee Percentage)
-  const serviceFeePercentageCents = Math.round((baseAmountCents * basisPoints) / 10000);
+  let serviceFeePercentageCents = Math.round((baseAmountCents * basisPoints) / 10000);
+  
+  // Apply ACH basis points fee limit if applicable
+  if (!isCard && achBasisPointsFeeLimitCents && serviceFeePercentageCents > achBasisPointsFeeLimitCents) {
+    serviceFeePercentageCents = achBasisPointsFeeLimitCents;
+  }
   
   // Calculate total service fee: Percentage Fee + Fixed Fee
   const totalServiceFeeCents = serviceFeePercentageCents + fixedFeeCents;
@@ -71,7 +78,8 @@ export function validateTotalAmount(
   cardBasisPoints?: number,
   cardFixedFeeCents?: number,
   achBasisPoints?: number,
-  achFixedFeeCents?: number
+  achFixedFeeCents?: number,
+  achBasisPointsFeeLimitCents?: number
 ): { isValid: boolean; expectedTotal: number; difference: number } {
   const calculation = calculateServiceFee({
     baseAmountCents,
@@ -79,7 +87,8 @@ export function validateTotalAmount(
     cardBasisPoints,
     cardFixedFeeCents,
     achBasisPoints,
-    achFixedFeeCents
+    achFixedFeeCents,
+    achBasisPointsFeeLimitCents
   });
 
   const difference = Math.abs(providedTotalCents - calculation.totalChargeCents);
