@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments, UserPaymentInstrument } from './useUserPaymentInstruments';
+import { useUnifiedPaymentFlow } from './useUnifiedPaymentFlow';
 import { ServiceFee, PaymentResponse, GooglePayMerchantResponse } from '@/types/payment';
-import { classifyPaymentError, generateIdempotencyId } from '@/utils/paymentUtils';
 import { useSessionValidation } from '@/hooks/useSessionValidation';
 
 export const useTaxPaymentMethods = (taxData: {
@@ -23,11 +23,27 @@ export const useTaxPaymentMethods = (taxData: {
   const { paymentInstruments, isLoading: paymentMethodsLoading, loadPaymentInstruments } = useUserPaymentInstruments();
   const { ensureValidSession } = useSessionValidation();
   
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [finixFingerprint, setFinixFingerprint] = useState<string>('');
-  const [fraudSessionId, setFraudSessionId] = useState<string>('');
-  const [googlePayMerchantId, setGooglePayMerchantId] = useState<string | null>(null);
+  // State for tax submission ID once created
+  const [taxSubmissionId, setTaxSubmissionId] = useState<string | null>(null);
+  
+  // Use unified payment flow for tax submissions
+  const unifiedPayment = useUnifiedPaymentFlow({
+    entityType: 'tax_submission',
+    entityId: taxSubmissionId || 'temp-id', // Will be updated when tax submission is created
+    customerId: taxData.municipality?.customer_id || '',
+    merchantId: taxData.municipality?.merchant_id || '',
+    baseAmountCents: taxData.amount,
+    onSuccess: (response) => {
+      console.log('Tax payment successful:', response);
+      toast({
+        title: "Payment Successful",
+        description: "Your tax payment has been processed successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Tax payment failed:', error);
+    }
+  });
 
   // Get top 3 payment methods, with default first
   const topPaymentMethods = paymentInstruments
@@ -38,141 +54,25 @@ export const useTaxPaymentMethods = (taxData: {
     })
     .slice(0, 3);
 
-  // Service fee state
-  const [serviceFee, setServiceFee] = useState<ServiceFee | null>(null);
-  const [totalWithFee, setTotalWithFee] = useState(taxData.amount);
+  // Map unified payment flow state to legacy interface
+  const selectedPaymentMethod = unifiedPayment.selectedPaymentMethod;
+  const setSelectedPaymentMethod = unifiedPayment.setSelectedPaymentMethod;
+  const isProcessingPayment = unifiedPayment.isProcessingPayment;
+  const serviceFee = unifiedPayment.serviceFee ? {
+    totalFee: unifiedPayment.serviceFee.serviceFeeToDisplay,
+    percentageFee: 0,
+    fixedFee: 0,
+    basisPoints: unifiedPayment.serviceFee.basisPoints,
+    isCard: unifiedPayment.serviceFee.isCard,
+    totalAmountToCharge: unifiedPayment.serviceFee.totalAmountToCharge,
+    serviceFeeToDisplay: unifiedPayment.serviceFee.serviceFeeToDisplay
+  } : null;
+  const totalWithFee = unifiedPayment.serviceFee?.totalAmountToCharge || taxData.amount;
+  const googlePayMerchantId = unifiedPayment.googlePayMerchantId;
 
-  // Calculate service fee when payment method changes
-  useEffect(() => {
-    const calculateServiceFee = async () => {
-      if (!selectedPaymentMethod || !taxData.amount) return;
+  // Service fee calculation and payment method selection is handled by unified payment flow
 
-      try {
-        const { data, error } = await supabase.functions.invoke('calculate-service-fee', {
-          body: {
-            baseAmountCents: taxData.amount,
-            paymentInstrumentId: selectedPaymentMethod
-          }
-        });
-
-        if (error) {
-          console.error('Service fee calculation error:', error);
-          return;
-        }
-
-        if (data) {
-          setServiceFee({
-            totalFee: data.totalServiceFeeCents,
-            percentageFee: data.serviceFeePercentageCents,
-            fixedFee: data.serviceFeeFixedCents,
-            basisPoints: data.basisPoints,
-            isCard: data.isCard,
-            totalAmountToCharge: data.totalChargeCents,
-            serviceFeeToDisplay: data.totalServiceFeeCents
-          });
-          setTotalWithFee(data.totalChargeCents);
-        }
-      } catch (error) {
-        console.error('Failed to calculate service fee:', error);
-      }
-    };
-
-    calculateServiceFee();
-  }, [selectedPaymentMethod, taxData.amount]);
-
-  // Auto-select default payment method
-  useEffect(() => {
-    if (paymentInstruments.length > 0 && !selectedPaymentMethod) {
-      const defaultMethod = paymentInstruments.find(p => p.is_default);
-      if (defaultMethod) {
-        setSelectedPaymentMethod(defaultMethod.id);
-      } else {
-        setSelectedPaymentMethod(paymentInstruments[0].id);
-      }
-    }
-  }, [paymentInstruments, selectedPaymentMethod]);
-
-  // Initialize Finix fraud detection
-  useEffect(() => {
-    const initializeFinixAuth = () => {
-      // Check if Finix library is loaded and municipality has merchant data
-      if (typeof window !== 'undefined' && window.Finix && taxData.municipality?.finix_merchant_id) {
-        try {
-          const finixMerchantId = taxData.municipality.finix_merchant_id;
-          console.log('Initializing Finix Auth for tax payments with merchant ID:', finixMerchantId);
-          
-          // Use proper Finix Auth initialization (same pattern as permits)
-          const auth = window.Finix.Auth(
-            "sandbox", // Environment
-            finixMerchantId, // Merchant ID from municipality data
-            (sessionKey: string) => {
-              console.log('Finix Auth initialized with session key for tax payments:', sessionKey);
-              setFraudSessionId(sessionKey);
-            }
-          );
-          
-          // Also try to get session key immediately if available
-          try {
-            const immediateSessionKey = auth.getSessionKey();
-            if (immediateSessionKey) {
-              setFraudSessionId(immediateSessionKey);
-              console.log('Got immediate session key for tax payments');
-            }
-          } catch (error) {
-            console.log('Session key not immediately available for tax payments, will wait for callback');
-          }
-        } catch (error) {
-          console.error('Error initializing Finix Auth for tax payments:', error);
-          // Fallback session ID generation on error
-          const fallbackSessionId = `tax-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          setFraudSessionId(fallbackSessionId);
-          setFinixFingerprint('tax-fingerprint-error');
-        }
-      } else {
-        console.warn('Finix library not loaded or no merchant ID, using fallback session ID for tax payments');
-        // Fallback for when Finix library is not available
-        const fallbackSessionId = `tax-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        setFraudSessionId(fallbackSessionId);
-        setFinixFingerprint('tax-fingerprint-fallback');
-      }
-    };
-
-    if (user && taxData.municipality?.finix_merchant_id) {
-      initializeFinixAuth();
-    }
-  }, [user, taxData.municipality?.finix_merchant_id]);
-
-  // Fetch Google Pay merchant ID automatically on mount
-  useEffect(() => {
-    const fetchGooglePayMerchantId = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id', {
-          body: { merchant_id: taxData.municipality?.merchant_id }
-        });
-        
-        if (error) {
-          console.error('Error fetching Google Pay merchant ID:', error);
-          return;
-        }
-        
-        const response = data as GooglePayMerchantResponse;
-        if (response?.merchant_id) {
-          setGooglePayMerchantId(response.merchant_id);
-          console.log('Google Pay merchant ID fetched for tax payments:', response.merchant_id);
-        } else {
-          console.warn('Google Pay merchant ID not configured for tax payments');
-        }
-      } catch (error) {
-        console.error('Failed to fetch Google Pay merchant ID for tax payments:', error);
-      }
-    };
-
-    if (taxData.municipality?.merchant_id) {
-      fetchGooglePayMerchantId();
-    }
-  }, [taxData.municipality?.merchant_id]);
-
-  // Handle regular payment processing
+  // Handle regular payment processing using unified payment flow
   const handlePayment = async (): Promise<{ taxSubmissionId?: string } | void> => {
     if (!selectedPaymentMethod || !user) {
       toast({
@@ -190,8 +90,8 @@ export const useTaxPaymentMethods = (taxData: {
       return;
     }
 
-    // Validate municipality has Finix merchant ID
-    if (!taxData.municipality?.finix_merchant_id) {
+    // Validate municipality configuration
+    if (!taxData.municipality?.customer_id || !taxData.municipality?.merchant_id) {
       toast({
         title: "Configuration Error",
         description: "This municipality is not configured for online payments. Please contact support.",
@@ -210,111 +110,53 @@ export const useTaxPaymentMethods = (taxData: {
       return;
     }
 
-    setIsProcessingPayment(true);
-    
     try {
-      // Always use totalWithFee as the primary amount (includes service fees)
-      // This is the grossed-up amount that includes the service fee
-      const finalAmountCents = totalWithFee;
-
-      // Generate idempotency ID with validation
-      let idempotencyId: string;
-      try {
-        idempotencyId = generateIdempotencyId('tax');
-        if (!idempotencyId || idempotencyId.trim() === '') {
-          throw new Error('Failed to generate idempotency ID');
+      // First create a tax submission record to get the entity ID
+      const { data: taxSubmission, error: taxError } = await supabase.functions.invoke('create-tax-submission-with-payment', {
+        body: {
+          user_id: user.id,
+          customer_id: taxData.municipality.customer_id,
+          merchant_id: taxData.municipality.merchant_id,
+          tax_type: taxData.taxType,
+          tax_period_start: taxData.taxPeriodStart,
+          tax_period_end: taxData.taxPeriodEnd,
+          tax_year: taxData.taxYear,
+          amount_cents: taxData.amount,
+          calculation_notes: taxData.calculationData?.calculationNotes || '',
+          total_amount_due_cents: totalWithFee,
+          service_fee_cents: serviceFee?.serviceFeeToDisplay || 0,
+          total_amount_cents: totalWithFee,
+          payer_first_name: taxData.payer?.firstName || '',
+          payer_last_name: taxData.payer?.lastName || '',
+          payer_email: taxData.payer?.email || '',
+          payer_ein: taxData.payer?.ein || '',
+          payer_phone: taxData.payer?.phone || '',
+          payer_business_name: taxData.payer?.businessName || '',
+          payer_street_address: taxData.payer?.address?.street || '',
+          payer_city: taxData.payer?.address?.city || '',
+          payer_state: taxData.payer?.address?.state || '',
+          payer_zip_code: taxData.payer?.address?.zipCode || ''
         }
-      } catch (error) {
-        console.error('Idempotency ID generation failed:', error);
-        toast({
-          title: "System Error",
-          description: "Failed to generate payment identifier. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Validate fraud session ID
-      let validFraudSessionId = fraudSessionId;
-      if (!validFraudSessionId || validFraudSessionId.trim() === '') {
-        console.warn('No fraud session ID available, generating fallback');
-        validFraudSessionId = `tax-fallback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      }
-
-      console.log('Payment data preparation:', {
-        finalAmountCents,
-        idempotencyId,
-        fraudSessionId: validFraudSessionId,
-        serviceFee: serviceFee?.totalFee || 0
       });
 
-      const paymentData = {
-        tax_type: taxData.taxType,
-        tax_period_start: taxData.taxPeriodStart,
-        tax_period_end: taxData.taxPeriodEnd,
-        tax_year: taxData.taxYear,
-        customer_id: taxData.municipality?.customer_id,
-        merchant_id: taxData.municipality?.finix_merchant_id,
-        payment_instrument_id: selectedPaymentMethod,
-        base_amount_cents: taxData.amount, // Original tax amount (base)
-        service_fee_cents: serviceFee?.serviceFeeToDisplay || 0, // Calculated service fee
-        total_amount_cents: finalAmountCents, // Grossed-up total
-        idempotency_id: idempotencyId,
-        fraud_session_id: validFraudSessionId,
-        calculation_notes: taxData.calculationData?.calculationNotes || '',
-        staging_id: taxData.stagingId, // Pass staging ID for document confirmation
-        // Flatten payer object into individual fields - fix field mapping
-        payer_first_name: taxData.payer?.firstName || '',
-        payer_last_name: taxData.payer?.lastName || '',
-        payer_email: taxData.payer?.email || '',
-        payer_ein: taxData.payer?.ein || '',
-        payer_phone: taxData.payer?.phone || '',
-        payer_business_name: taxData.payer?.businessName || '',
-        payer_street_address: taxData.payer?.address?.street || '',
-        payer_city: taxData.payer?.address?.city || '',
-        payer_state: taxData.payer?.address?.state || '',
-        payer_zip_code: taxData.payer?.address?.zipCode || ''
-      };
-
-      const { data, error } = await supabase.functions.invoke('process-tax-payment', {
-        body: paymentData
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "Payment Successful",
-          description: "Your tax payment has been processed successfully.",
-        });
-        return { taxSubmissionId: data.tax_submission_id };
-      } else {
-        throw new Error(data.error || 'Payment failed');
+      if (taxError || !taxSubmission?.tax_submission_id) {
+        throw new Error(taxError?.message || 'Failed to create tax submission');
       }
+
+      // Update tax submission ID for subsequent unified payment call
+      setTaxSubmissionId(taxSubmission.tax_submission_id);
+
+      // Process payment using unified flow
+      const response = await unifiedPayment.handlePayment();
+      return { taxSubmissionId: taxSubmission.tax_submission_id };
     } catch (error: any) {
-      console.error('Payment processing error:', error);
-      toast({
-        title: "Payment Failed",
-        description: error.message || "There was an error processing your payment. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Tax payment error:', error);
       throw error;
-    } finally {
-      setIsProcessingPayment(false);
     }
   };
 
-  // Handle Google Pay payment
+  // Handle Google Pay payment using unified flow
   const handleGooglePayment = async (): Promise<void> => {
-    if (!taxData.municipality?.finix_merchant_id) {
-      toast({
-        title: "Error",
-        description: "Google Pay is not available for this municipality.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     // Validate session before processing payment
     const sessionValid = await ensureValidSession();
     
@@ -331,84 +173,17 @@ export const useTaxPaymentMethods = (taxData: {
       return;
     }
 
-    setIsProcessingPayment(true);
-
     try {
-      const paymentsClient = new window.google.payments.api.PaymentsClient({
-        environment: 'TEST'
-      });
-
-      const paymentDataRequest = {
-        apiVersion: 2,
-        apiVersionMinor: 0,
-        allowedPaymentMethods: [{
-          type: 'CARD' as const,
-          parameters: {
-            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-            allowedCardNetworks: ['AMEX', 'DISCOVER', 'INTERAC', 'JCB', 'MASTERCARD', 'VISA']
-          },
-          tokenizationSpecification: {
-            type: 'PAYMENT_GATEWAY' as const,
-            parameters: {
-              gateway: 'finix' as const,
-              gatewayMerchantId: taxData.municipality.finix_merchant_id
-            }
-          }
-        }],
-        transactionInfo: {
-          countryCode: 'US',
-          currencyCode: 'USD',
-          totalPrice: (totalWithFee / 100).toFixed(2),
-          totalPriceStatus: 'FINAL' as const
-        },
-        merchantInfo: {
-          merchantId: googlePayMerchantId,
-          merchantName: taxData.municipality.merchant_name || 'Municipality Tax Payment'
-        }
-      };
-
-      const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest);
-
-      const { data, error } = await supabase.functions.invoke('process-google-pay-transfer', {
-        body: {
-          paymentData,
-          taxType: taxData.taxType,
-          municipality: taxData.municipality,
-          amount: taxData.amount,
-          serviceFee: serviceFee?.totalFee || 0,
-          totalAmount: totalWithFee,
-          fraudSessionId,
-          finixFingerprint,
-          idempotencyId: `tax-gpay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "Payment Successful",
-          description: "Your Google Pay tax payment has been processed successfully.",
-        });
-      } else {
-        throw new Error(data.error || 'Google Pay payment failed');
-      }
+      // Set payment method to google-pay to trigger unified flow
+      setSelectedPaymentMethod('google-pay');
+      await unifiedPayment.handleGooglePayment();
     } catch (error: any) {
       console.error('Google Pay payment error:', error);
-      if (!error.message?.includes('cancelled')) {
-        toast({
-          title: "Payment Failed",
-          description: error.message || "There was an error processing your Google Pay payment.",
-          variant: "destructive",
-        });
-      }
-      throw error;
-    } finally {
-      setIsProcessingPayment(false);
+      // Error handling is done in unified payment flow
     }
   };
 
-  // Handle Apple Pay payment
+  // Handle Apple Pay payment using unified flow
   const handleApplePayment = async (): Promise<void> => {
     if (!window.ApplePaySession?.canMakePayments()) {
       toast({
@@ -426,44 +201,13 @@ export const useTaxPaymentMethods = (taxData: {
       return;
     }
 
-    setIsProcessingPayment(true);
-
     try {
-      const { data, error } = await supabase.functions.invoke('process-apple-pay-transfer', {
-        body: {
-          taxType: taxData.taxType,
-          municipality: taxData.municipality,
-          amount: taxData.amount,
-          serviceFee: serviceFee?.totalFee || 0,
-          totalAmount: totalWithFee,
-          fraudSessionId,
-          finixFingerprint,
-          idempotencyId: `tax-apay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "Payment Successful",
-          description: "Your Apple Pay tax payment has been processed successfully.",
-        });
-      } else {
-        throw new Error(data.error || 'Apple Pay payment failed');
-      }
+      // Set payment method to apple-pay to trigger unified flow
+      setSelectedPaymentMethod('apple-pay');
+      await unifiedPayment.handleApplePayment();
     } catch (error: any) {
       console.error('Apple Pay payment error:', error);
-      if (!error.message?.includes('cancelled')) {
-        toast({
-          title: "Payment Failed",
-          description: error.message || "There was an error processing your Apple Pay payment.",
-          variant: "destructive",
-        });
-      }
-      throw error;
-    } finally {
-      setIsProcessingPayment(false);
+      // Error handling is done in unified payment flow
     }
   };
 
