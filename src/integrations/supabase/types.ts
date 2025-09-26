@@ -2367,249 +2367,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_history: {
-        Row: {
-          amount_cents: number
-          bank_last_four: string | null
-          bill_id: string | null
-          bill_status: string | null
-          bill_type: string | null
-          business_address_line1: string | null
-          business_city: string | null
-          business_legal_name: string | null
-          business_license_id: string | null
-          business_state: string | null
-          business_zip_code: string | null
-          card_brand: string | null
-          card_last_four: string | null
-          category: string | null
-          created_at: string
-          currency: string
-          customer_apt_number: string | null
-          customer_city: string | null
-          customer_email: string | null
-          customer_first_name: string | null
-          customer_id: string | null
-          customer_last_name: string | null
-          customer_state: string | null
-          customer_street_address: string | null
-          customer_zip_code: string | null
-          data_source_system: string | null
-          doing_business_as: string | null
-          due_date: string | null
-          entity_type: string | null
-          external_account_number: string | null
-          external_bill_number: string | null
-          external_business_name: string | null
-          external_customer_address_line1: string | null
-          external_customer_city: string | null
-          external_customer_name: string | null
-          external_customer_state: string | null
-          external_customer_zip_code: string | null
-          failure_code: string | null
-          failure_message: string | null
-          finix_created_at: string | null
-          finix_merchant_id: string
-          finix_payment_instrument_id: string
-          finix_transfer_id: string | null
-          finix_updated_at: string | null
-          fraud_session_id: string | null
-          id: string
-          idempotency_id: string
-          issue_date: string | null
-          merchant_id: string | null
-          merchant_name: string | null
-          original_amount_cents: number | null
-          payment_instrument_id: string | null
-          payment_processed_at: string | null
-          payment_status: string | null
-          payment_type: string
-          permit_id: string | null
-          raw_finix_response: Json | null
-          service_application_id: string | null
-          service_fee_cents: number
-          statement_descriptor: string | null
-          subcategory: string | null
-          tax_submission_id: string | null
-          total_amount_cents: number
-          transfer_state: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount_cents: number
-          bank_last_four?: string | null
-          bill_id?: string | null
-          bill_status?: string | null
-          bill_type?: string | null
-          business_address_line1?: string | null
-          business_city?: string | null
-          business_legal_name?: string | null
-          business_license_id?: string | null
-          business_state?: string | null
-          business_zip_code?: string | null
-          card_brand?: string | null
-          card_last_four?: string | null
-          category?: string | null
-          created_at?: string
-          currency?: string
-          customer_apt_number?: string | null
-          customer_city?: string | null
-          customer_email?: string | null
-          customer_first_name?: string | null
-          customer_id?: string | null
-          customer_last_name?: string | null
-          customer_state?: string | null
-          customer_street_address?: string | null
-          customer_zip_code?: string | null
-          data_source_system?: string | null
-          doing_business_as?: string | null
-          due_date?: string | null
-          entity_type?: string | null
-          external_account_number?: string | null
-          external_bill_number?: string | null
-          external_business_name?: string | null
-          external_customer_address_line1?: string | null
-          external_customer_city?: string | null
-          external_customer_name?: string | null
-          external_customer_state?: string | null
-          external_customer_zip_code?: string | null
-          failure_code?: string | null
-          failure_message?: string | null
-          finix_created_at?: string | null
-          finix_merchant_id: string
-          finix_payment_instrument_id: string
-          finix_transfer_id?: string | null
-          finix_updated_at?: string | null
-          fraud_session_id?: string | null
-          id?: string
-          idempotency_id: string
-          issue_date?: string | null
-          merchant_id?: string | null
-          merchant_name?: string | null
-          original_amount_cents?: number | null
-          payment_instrument_id?: string | null
-          payment_processed_at?: string | null
-          payment_status?: string | null
-          payment_type: string
-          permit_id?: string | null
-          raw_finix_response?: Json | null
-          service_application_id?: string | null
-          service_fee_cents: number
-          statement_descriptor?: string | null
-          subcategory?: string | null
-          tax_submission_id?: string | null
-          total_amount_cents: number
-          transfer_state?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount_cents?: number
-          bank_last_four?: string | null
-          bill_id?: string | null
-          bill_status?: string | null
-          bill_type?: string | null
-          business_address_line1?: string | null
-          business_city?: string | null
-          business_legal_name?: string | null
-          business_license_id?: string | null
-          business_state?: string | null
-          business_zip_code?: string | null
-          card_brand?: string | null
-          card_last_four?: string | null
-          category?: string | null
-          created_at?: string
-          currency?: string
-          customer_apt_number?: string | null
-          customer_city?: string | null
-          customer_email?: string | null
-          customer_first_name?: string | null
-          customer_id?: string | null
-          customer_last_name?: string | null
-          customer_state?: string | null
-          customer_street_address?: string | null
-          customer_zip_code?: string | null
-          data_source_system?: string | null
-          doing_business_as?: string | null
-          due_date?: string | null
-          entity_type?: string | null
-          external_account_number?: string | null
-          external_bill_number?: string | null
-          external_business_name?: string | null
-          external_customer_address_line1?: string | null
-          external_customer_city?: string | null
-          external_customer_name?: string | null
-          external_customer_state?: string | null
-          external_customer_zip_code?: string | null
-          failure_code?: string | null
-          failure_message?: string | null
-          finix_created_at?: string | null
-          finix_merchant_id?: string
-          finix_payment_instrument_id?: string
-          finix_transfer_id?: string | null
-          finix_updated_at?: string | null
-          fraud_session_id?: string | null
-          id?: string
-          idempotency_id?: string
-          issue_date?: string | null
-          merchant_id?: string | null
-          merchant_name?: string | null
-          original_amount_cents?: number | null
-          payment_instrument_id?: string | null
-          payment_processed_at?: string | null
-          payment_status?: string | null
-          payment_type?: string
-          permit_id?: string | null
-          raw_finix_response?: Json | null
-          service_application_id?: string | null
-          service_fee_cents?: number
-          statement_descriptor?: string | null
-          subcategory?: string | null
-          tax_submission_id?: string | null
-          total_amount_cents?: number
-          transfer_state?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_history_bill_id_fkey"
-            columns: ["bill_id"]
-            isOneToOne: false
-            referencedRelation: "master_bills"
-            referencedColumns: ["bill_id"]
-          },
-          {
-            foreignKeyName: "payment_history_business_license_id_fkey"
-            columns: ["business_license_id"]
-            isOneToOne: false
-            referencedRelation: "business_license_applications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_history_merchant_id_fkey"
-            columns: ["merchant_id"]
-            isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_history_permit_id_fkey"
-            columns: ["permit_id"]
-            isOneToOne: false
-            referencedRelation: "permit_applications"
-            referencedColumns: ["permit_id"]
-          },
-          {
-            foreignKeyName: "payment_history_tax_submission_id_fkey"
-            columns: ["tax_submission_id"]
-            isOneToOne: false
-            referencedRelation: "tax_submissions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payment_transactions: {
         Row: {
           bank_last_four: string | null
@@ -3397,7 +3154,6 @@ export type Database = {
           original_amount_cents: number
           original_due_date: string | null
           original_issue_date: string | null
-          payment_history_id: string | null
           payment_transaction_id: string | null
           payment_type: string | null
           processed_at: string | null
@@ -3429,7 +3185,6 @@ export type Database = {
           original_amount_cents: number
           original_due_date?: string | null
           original_issue_date?: string | null
-          payment_history_id?: string | null
           payment_transaction_id?: string | null
           payment_type?: string | null
           processed_at?: string | null
@@ -3461,7 +3216,6 @@ export type Database = {
           original_amount_cents?: number
           original_due_date?: string | null
           original_issue_date?: string | null
-          payment_history_id?: string | null
           payment_transaction_id?: string | null
           payment_type?: string | null
           processed_at?: string | null
