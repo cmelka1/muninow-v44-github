@@ -263,11 +263,11 @@ const TaxDetail = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Base Amount</Label>
-                  <p className="text-base">{formatCurrency(taxSubmission.amount_cents / 100)}</p>
+                  <p className="text-base">{formatCurrency(taxSubmission.amount_cents)}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Total Amount</Label>
-                  <p className="text-base">{formatCurrency(taxSubmission.total_amount_due_cents / 100)}</p>
+                  <p className="text-base">{formatCurrency(taxSubmission.total_amount_due_cents)}</p>
                 </div>
               </div>
             </CardContent>

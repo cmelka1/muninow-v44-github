@@ -93,7 +93,7 @@ const PermitCertificate = () => {
               <p className="text-sm font-medium text-muted-foreground mb-1">CONSTRUCTION VALUE</p>
               <p className="text-xl font-semibold">
                 {permit.estimated_construction_value_cents 
-                  ? formatCurrency(permit.estimated_construction_value_cents / 100)
+                  ? formatCurrency(permit.estimated_construction_value_cents)
                   : 'Not specified'
                 }
               </p>

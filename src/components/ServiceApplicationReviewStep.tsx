@@ -103,7 +103,7 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
             <span className="font-medium">Amount:</span>
             {totalAmount ? (
               <Badge variant="secondary">
-                {formatCurrency(totalAmount / 100)}
+                {formatCurrency(totalAmount)}
               </Badge>
             ) : (
               <span className="text-muted-foreground">No fee</span>

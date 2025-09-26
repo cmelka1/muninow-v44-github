@@ -148,7 +148,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
             <div>
               <h3 className="font-semibold text-foreground">Payment Successful!</h3>
               <p className="text-sm text-muted-foreground">
-                Payment of {formatCurrency(totalWithFee / 100)} processed successfully.
+                Payment of {formatCurrency(totalWithFee)} processed successfully.
               </p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">{feeLabel}</span>
-            <span className="font-semibold">{formatCurrency(baseAmountCents / 100)}</span>
+            <span className="font-semibold">{formatCurrency(baseAmountCents)}</span>
           </div>
           <p className="text-xs text-muted-foreground">
             {completionText}
@@ -272,7 +272,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
               Processing Payment...
             </>
           ) : (
-            `Pay ${formatCurrency(totalWithFee / 100)}`
+            `Pay ${formatCurrency(totalWithFee)}`
           )}
         </Button>
 

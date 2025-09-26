@@ -87,7 +87,7 @@ const PaymentSuccessContent: React.FC<PaymentSuccessContentProps> = ({
           <div className="border-t pt-3 space-y-2">
             <div className="flex justify-between">
               <span className="text-sm">Amount</span>
-              <span className="text-sm">{formatCurrency(baseAmount / 100)}</span>
+              <span className="text-sm">{formatCurrency(baseAmount)}</span>
             </div>
             
             <div className="flex justify-between">
@@ -97,7 +97,7 @@ const PaymentSuccessContent: React.FC<PaymentSuccessContentProps> = ({
             
             <div className="flex justify-between font-semibold border-t pt-2">
               <span>Total Paid</span>
-              <span className="text-green-600">{formatCurrency(totalWithFee / 100)}</span>
+              <span className="text-green-600">{formatCurrency(totalWithFee)}</span>
             </div>
           </div>
         </CardContent>

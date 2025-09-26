@@ -632,7 +632,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             <div className="flex items-center gap-2">
               {totalAmount > 0 && (
                 <Badge variant="secondary" className="text-sm px-3 py-1">
-                  {formatCurrency(totalAmount / 100)}
+                  {formatCurrency(totalAmount)}
                 </Badge>
               )}
             </div>
@@ -937,7 +937,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-medium">Service Fee</h3>
                     <Badge variant="outline" className="text-sm px-2 py-1">
-                      {formData.amount_cents ? formatCurrency(formData.amount_cents / 100) : 'Not set'}
+                      {formData.amount_cents ? formatCurrency(formData.amount_cents) : 'Not set'}
                     </Badge>
                   </div>
                   <div className="space-y-2">

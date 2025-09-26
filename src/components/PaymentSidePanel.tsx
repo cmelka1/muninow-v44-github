@@ -229,7 +229,7 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
                   disabled={!selectedPaymentMethod || isProcessingPayment || !isPaymentAvailable}
                   onClick={handleSidePanelPayment}
                 >
-                  {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee / 100)}`}
+                  {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee)}`}
                 </Button>
                 
                 <Button 

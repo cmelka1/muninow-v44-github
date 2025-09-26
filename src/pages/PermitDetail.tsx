@@ -260,7 +260,7 @@ const PermitDetail = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Construction Value</Label>
-                  <p className="text-base">{formatCurrency(permit.estimated_construction_value_cents / 100)}</p>
+                  <p className="text-base">{formatCurrency(permit.estimated_construction_value_cents)}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
