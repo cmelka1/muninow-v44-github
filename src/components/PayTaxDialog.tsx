@@ -307,6 +307,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     }
     
     if (!payerName.trim()) e.payerName = 'Full name is required';
+    if (!payerCompanyName.trim()) e.payerCompanyName = 'Company name is required';
     if (!payerEmail.trim()) e.payerEmail = 'Email is required';
     if (!payerPhone.trim()) e.payerPhone = 'Phone is required';
     if (!payerAddress) e.payerAddress = 'Address is required';
@@ -722,20 +723,25 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           )}
                           </div>
                           
-                          <div>
-                            <Label htmlFor="payer-company" className="text-sm font-medium text-foreground">
-                              Company
-                            </Label>
-                            <Input
-                              id="payer-company"
-                              placeholder="Enter company name"
-                              value={payerCompanyName}
-                              onChange={(e) => {
-                                setPayerCompanyName(e.target.value);
-                              }}
-                              className="mt-1"
-                            />
-                          </div>
+                           <div>
+                             <Label htmlFor="payer-company" className="text-sm font-medium text-foreground">
+                               Company *
+                             </Label>
+                             <Input
+                               id="payer-company"
+                               placeholder="Enter company name"
+                               value={payerCompanyName}
+                               onChange={(e) => {
+                                 setPayerCompanyName(e.target.value);
+                                 if (e.target.value) clearFieldError('payerCompanyName');
+                               }}
+                               className={`mt-1 ${errors.payerCompanyName ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                               data-error={!!errors.payerCompanyName}
+                             />
+                             {errors.payerCompanyName && (
+                               <p className="text-sm text-destructive mt-1">{errors.payerCompanyName}</p>
+                             )}
+                           </div>
                           
                           <div>
                             <Label htmlFor="payer-ein" className="text-sm font-medium text-foreground">
