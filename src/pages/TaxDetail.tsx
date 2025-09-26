@@ -21,7 +21,7 @@ import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatTaxType } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
 import { TaxSubmissionCommunication } from '@/components/TaxSubmissionCommunication';
@@ -57,15 +57,6 @@ const TaxDetail = () => {
     loadDocuments();
   }, [submission?.id]);
 
-  const formatTaxType = (taxType: string | undefined) => {
-    if (!taxType) return 'Unknown';
-    const typeMap: Record<string, string> = {
-      'food_beverage': 'Food & Beverage',
-      'hotel_motel': 'Hotel & Motel',
-      'amusement': 'Amusement'
-    };
-    return typeMap[taxType] || taxType;
-  };
 
   const formatPeriod = (startDate: string | undefined, endDate: string | undefined) => {
     if (!startDate || !endDate) return 'Unknown Period';
@@ -167,7 +158,7 @@ const TaxDetail = () => {
             <div>
               <h1 className="text-3xl font-bold">Tax Submission Details</h1>
               <p className="text-muted-foreground">
-                {formatTaxType(submission.tax_type)} - {formatPeriod(submission.tax_period_start, submission.tax_period_end)} {submission.tax_year}
+                {formatTaxType(submission.tax_type)} - {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
               </p>
             </div>
           </div>
