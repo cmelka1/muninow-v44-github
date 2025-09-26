@@ -3540,6 +3540,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_submission_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          reviewer_id: string
+          submission_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          reviewer_id: string
+          submission_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          reviewer_id?: string
+          submission_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tax_submission_documents: {
         Row: {
           content_type: string

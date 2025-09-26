@@ -1,118 +1,45 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, DollarSign, User, Calendar, FileText, CreditCard, Building, Plus, Loader2, Download } from 'lucide-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/AppSidebar';
-import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
-import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { 
+  ArrowLeft, 
+  Calendar, 
+  User, 
+  CreditCard, 
+  FileText, 
+  DollarSign,
+  Download,
+  Clock
+} from 'lucide-react';
+import { format } from 'date-fns';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
-import { formatCurrency, formatDate } from '@/lib/formatters';
-import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { formatCurrency } from '@/lib/formatters';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
+import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
+import { TaxSubmissionCommunication } from '@/components/TaxSubmissionCommunication';
+import { supabase } from '@/integrations/supabase/client';
 
 const TaxDetail = () => {
   const { taxId } = useParams<{ taxId: string }>();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
-  const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
-  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const { profile } = useAuth();
   
-  const isMunicipalUser = profile?.account_type === 'municipaladmin';
-  
-  const { data: taxSubmission, isLoading, error, refetch: refetchTax } = useTaxSubmissionDetail(taxId!);
-  const { getDocuments, getDocumentUrl } = useTaxSubmissionDocuments();
+  const { data: submission, isLoading, error } = useTaxSubmissionDetail(taxId || null);
+  const { getDocuments } = useTaxSubmissionDocuments();
   
   // For now, we'll use empty array for documents until we have proper query for confirmed documents
   const documents: any[] = [];
   const documentsLoading = false;
-  const refetchDocuments = () => {};
 
-  // Payment callback functions
-  const handlePaymentSuccess = () => {
-    toast({
-      title: "Payment Successful",
-      description: "Your tax payment has been processed successfully.",
-    });
-    refetchTax();
-  };
-
-  const handlePaymentError = (error: any) => {
-    console.error('Payment error:', error);
-    toast({
-      variant: "destructive",
-      title: "Payment Failed",
-      description: "Your payment could not be processed. Please try again.",
-    });
-  };
-
-  const handleAddPaymentMethod = () => {
-    setIsAddPaymentDialogOpen(true);
-  };
-
-  const handleDocumentDownload = async (document: any) => {
-    setDownloadingDocument(document.id);
-    try {
-      console.log('Attempting to download document:', document.storage_path);
-      
-      const { data, error } = await supabase.storage
-        .from('tax-documents')
-        .download(document.storage_path);
-      
-      if (error) {
-        console.error('Error downloading document:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to download document. Please try again or contact support.",
-        });
-        return;
-      }
-      
-      if (data) {
-        const url = URL.createObjectURL(data);
-        const a = globalThis.document.createElement('a');
-        a.href = url;
-        a.download = document.file_name;
-        globalThis.document.body.appendChild(a);
-        a.click();
-        globalThis.document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        toast({
-          title: "Download started",
-          description: `${document.file_name} is being downloaded.`,
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No data received for download.",
-        });
-      }
-    } catch (error) {
-      console.error('Error downloading document:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to download document. Please try again later.",
-      });
-    } finally {
-      setDownloadingDocument(null);
-    }
-  };
-
-  const formatTaxType = (taxType: string) => {
+  const formatTaxType = (taxType: string | undefined) => {
+    if (!taxType) return 'Unknown';
     const typeMap: Record<string, string> = {
       'food_beverage': 'Food & Beverage',
       'hotel_motel': 'Hotel & Motel',
@@ -121,85 +48,89 @@ const TaxDetail = () => {
     return typeMap[taxType] || taxType;
   };
 
-  const formatPeriod = (startDate: string, endDate: string) => {
+  const formatPeriod = (startDate: string | undefined, endDate: string | undefined) => {
+    if (!startDate || !endDate) return 'Unknown Period';
     const start = new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const end = new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     return `${start} - ${end}`;
   };
 
+  const getStatusVariant = (status: string | undefined) => {
+    switch (status) {
+      case 'paid':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const handleDocumentDownload = async (storagePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('tax-documents')
+        .download(storagePath);
+      
+      if (error) throw error;
+      
+      if (data) {
+        const url = URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading document:', error);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100">
-        {isMunicipalUser ? (
-          <MunicipalLayout>
-            <div className="p-6">
-              <div className="animate-pulse space-y-6">
-                <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 space-y-6">
-                    <div className="h-48 bg-gray-200 rounded"></div>
-                    <div className="h-48 bg-gray-200 rounded"></div>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="h-32 bg-gray-200 rounded"></div>
-                    <div className="h-48 bg-gray-200 rounded"></div>
-                  </div>
-                </div>
-              </div>
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-48 w-full" />
             </div>
-          </MunicipalLayout>
-        ) : (
-          <div className="p-6">
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="h-48 bg-gray-200 rounded"></div>
-                  <div className="h-48 bg-gray-200 rounded"></div>
-                </div>
-                <div className="space-y-6">
-                  <div className="h-32 bg-gray-200 rounded"></div>
-                  <div className="h-48 bg-gray-200 rounded"></div>
-                </div>
-              </div>
+            <div className="space-y-6">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-48 w-full" />
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   }
 
-  if (error || !taxSubmission) {
+  if (error || !submission) {
     return (
-      <div className="min-h-screen bg-gray-100">
-        {isMunicipalUser ? (
-          <MunicipalLayout>
-            <div className="p-6">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-destructive">Error loading tax submission details. Please try again.</p>
-                </CardContent>
-              </Card>
-            </div>
-          </MunicipalLayout>
-        ) : (
-          <div className="p-6">
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-destructive">Error loading tax submission details. Please try again.</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+      <div className="container mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-destructive">Error loading tax submission details. Please try again.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
+
+  const isMunicipalUser = profile?.account_type === 'municipal';
 
   const PageContent = () => (
-    <div className="p-6">
+    <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="sm"
@@ -207,323 +138,274 @@ const TaxDetail = () => {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            Back to Taxes
           </Button>
-        </div>
-        
-        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Tax Submission</h1>
-            <p className="text-gray-600">{formatTaxType(taxSubmission.tax_type)} - {formatPeriod(taxSubmission.tax_period_start, taxSubmission.tax_period_end)}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge 
-              variant="outline" 
-              className={
-                taxSubmission.payment_status === 'paid' 
-                  ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
-                  : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
-              }
-            >
-              {taxSubmission.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
-            </Badge>
+            <h1 className="text-3xl font-bold">Tax Submission Details</h1>
+            <p className="text-muted-foreground">
+              {formatTaxType(submission.tax_type)} - {formatPeriod(submission.tax_period_start, submission.tax_period_end)} {submission.tax_year}
+            </p>
           </div>
         </div>
+        <Badge variant={getStatusVariant(submission.payment_status)}>
+          {submission.payment_status?.toUpperCase()}
+        </Badge>
       </div>
 
-      {/* Two Column Layout */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Content */}
+        {/* Left Column - Tax Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Tax Overview */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Tax Overview
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                <CardTitle>Tax Overview</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Tax Type</Label>
-                  <p className="text-base">{formatTaxType(taxSubmission.tax_type)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Tax Type</p>
+                  <p className="font-semibold">{formatTaxType(submission.tax_type)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Tax Period</Label>
-                  <p className="text-base">{formatPeriod(taxSubmission.tax_period_start, taxSubmission.tax_period_end)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Tax Period</p>
+                  <p className="font-semibold">
+                    {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Tax Year</Label>
-                  <p className="text-base">{taxSubmission.tax_year}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Tax Year</p>
+                  <p className="font-semibold">{submission.tax_year}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Submitted</Label>
-                  <p className="text-base">{formatDate(taxSubmission.submission_date)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Base Amount</Label>
-                  <p className="text-base">{formatCurrency(taxSubmission.amount_cents)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Total Amount</Label>
-                  <p className="text-base">{formatCurrency(taxSubmission.total_amount_due_cents)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <Badge variant={getStatusVariant(submission.payment_status)}>
+                    {submission.payment_status?.toUpperCase()}
+                  </Badge>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Payer Information */}
+          {/* Taxpayer Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Payer Information
-              </CardTitle>
+                <CardTitle>Taxpayer Information</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Name</Label>
-                  <p className="text-base">{taxSubmission.first_name} {taxSubmission.last_name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                  <p className="text-base">{taxSubmission.email}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
-                  <p className="text-base">{taxSubmission.payer_phone || 'N/A'}</p>
-                </div>
-                {taxSubmission.payer_business_name && (
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Business Name</Label>
-                    <p className="text-base">{taxSubmission.payer_business_name}</p>
-                  </div>
-                )}
-                {taxSubmission.payer_ein && (
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">EIN</Label>
-                    <p className="text-base">{taxSubmission.payer_ein}</p>
-                  </div>
-                )}
-              </div>
-              {(taxSubmission.payer_street_address || taxSubmission.payer_city) && (
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Address</Label>
-                  <p className="text-base">
-                    {taxSubmission.payer_street_address}
-                    {taxSubmission.payer_city && (
-                      <>
-                        <br />{taxSubmission.payer_city}, {taxSubmission.payer_state} {taxSubmission.payer_zip_code}
-                      </>
-                    )}
+                  <p className="text-sm font-medium text-muted-foreground">Name</p>
+                  <p className="font-semibold">
+                    {submission.first_name} {submission.last_name}
                   </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p className="font-semibold">{submission.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                  <p className="font-semibold">{submission.payer_phone || 'Not provided'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">EIN</p>
+                  <p className="font-semibold">{submission.payer_ein || 'Not provided'}</p>
+                </div>
+              </div>
+              
+              {submission.payer_business_name && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Business Name</p>
+                  <p className="font-semibold">{submission.payer_business_name}</p>
+                </div>
+              )}
+              
+              {submission.payer_street_address && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Address</p>
+                  <div className="space-y-1">
+                    <p className="font-semibold">{submission.payer_street_address}</p>
+                    <p className="font-semibold">
+                      {submission.payer_city}, {submission.payer_state} {submission.payer_zip_code}
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Calculation Details */}
-          {taxSubmission.calculation_notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Calculation Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SafeHtmlRenderer content={taxSubmission.calculation_notes} className="mt-1" fallback="No calculation details provided" />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Documents Section */}
+          {/* Tax Calculation Details */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Documents ({documents?.length || 0})
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAddDocumentOpen(true)}
-                  className="flex items-center gap-2"
-                  disabled
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Document
-                </Button>
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                <CardTitle>Tax Calculation Details</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Tax Amount</span>
+                  <span className="font-semibold">{formatCurrency(submission.amount_cents || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
+                  <span className="font-semibold">{formatCurrency(submission.service_fee_cents || 0)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total Amount</span>
+                  <span>{formatCurrency(submission.total_amount_due_cents || 0)}</span>
+                </div>
+              </div>
+              
+              {submission.calculation_notes && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Calculation Notes</p>
+                  <div className="text-sm bg-muted p-3 rounded-md">
+                    <SafeHtmlRenderer content={submission.calculation_notes} />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Supporting Documents */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                <CardTitle>Supporting Documents</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               {documentsLoading ? (
                 <div className="space-y-2">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
                 </div>
-              ) : documents && documents.length > 0 ? (
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3 flex-1">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium truncate">{doc.file_name}</span>
-                          </div>
-                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                            <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
-                            <span>Uploaded: {formatDate(doc.uploaded_at)}</span>
-                          </div>
-                          {doc.description && (
-                            <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
-                          )}
+              ) : documents?.length === 0 ? (
+                <p className="text-muted-foreground">No documents uploaded</p>
+              ) : (
+                <div className="space-y-2">
+                  {documents?.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        <div>
+                          <p className="font-medium text-sm">{doc.file_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.document_type} • {(doc.file_size / 1024 / 1024).toFixed(2)} MB
+                          </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDocumentDownload(doc)}
-                          disabled={downloadingDocument === doc.id}
-                        >
-                          {downloadingDocument === doc.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Download className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDocumentDownload(doc.storage_path, doc.file_name)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p className="text-sm">No documents uploaded yet</p>
-                  <p className="text-xs mt-1">Documents will appear here once uploaded</p>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Communication */}
+          <TaxSubmissionCommunication submissionId={submission.id} />
         </div>
 
-        {/* Right Column - Sidebar */}
+        {/* Right Column - Payment Information & Timeline */}
         <div className="space-y-6">
-          {/* Payment Management */}
+          {/* Payment Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment Management
-              </CardTitle>
+                <CardTitle>Payment Information</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
-                  <Badge 
-                    variant="outline" 
-                    className={
-                      taxSubmission.payment_status === 'paid' 
-                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
-                        : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
-                    }
-                  >
-                    {taxSubmission.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
-                  </Badge>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Status</span>
+                  <Badge variant="default">Paid</Badge>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Amount Paid</span>
+                  <span className="font-semibold">{formatCurrency(submission.total_amount_due_cents || 0)}</span>
+                </div>
+                {submission.payment_processed_at && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Paid On</span>
+                    <span className="font-semibold">
+                      {format(new Date(submission.payment_processed_at), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                )}
               </div>
-              
-              {taxSubmission.submission_status === 'submitted' && taxSubmission.payment_status !== 'paid' ? (
-                <InlinePaymentFlow
-                  entityType="tax_submission"
-                  entityId={taxSubmission.id}
-                  entityName={`${formatTaxType(taxSubmission.tax_type)} Tax - ${formatPeriod(taxSubmission.tax_period_start, taxSubmission.tax_period_end)}`}
-                  customerId={taxSubmission.customer_id}
-                  merchantId={taxSubmission.merchant_id}
-                  baseAmountCents={taxSubmission.amount_cents || 0}
-                  initialExpanded={true}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onPaymentError={handlePaymentError}
-                  onAddPaymentMethod={handleAddPaymentMethod}
-                />
-              ) : taxSubmission.payment_status === 'paid' ? (
-                <div className="pt-2 space-y-2">
-                  <Button className="w-full" disabled variant="outline">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Payment Complete
-                  </Button>
-                  
-                  <p className="text-xs text-green-600 mt-2">
-                    Your tax payment has been paid
-                  </p>
-                </div>
-              ) : (
-                <div className="pt-2">
-                  <Button className="w-full" disabled variant="outline">
-                    Payment Unavailable
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Payment processing will be available once your tax submission is submitted
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
           {/* Timeline */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Calendar className="h-4 w-4" />
-                Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between items-center py-1">
-                <span className="text-sm font-medium">Submitted</span>
-                <span className="text-xs text-muted-foreground">{formatDate(taxSubmission.submission_date)}</span>
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                <CardTitle>Timeline</CardTitle>
               </div>
-              {taxSubmission.payment_status === 'paid' && (
-                <div className="flex justify-between items-center py-1 text-green-700">
-                  <span className="text-sm font-medium">Payment Complete</span>
-                  <span className="text-xs">Paid</span>
-                </div>
-              )}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {submission.submission_date && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2" />
+                    <div>
+                      <p className="font-medium text-sm">Tax Submission Created</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(submission.submission_date), 'MMM d, yyyy h:mm a')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {submission.payment_processed_at && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2" />
+                    <div>
+                      <p className="font-medium text-sm">Payment Processed</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(submission.payment_processed_at), 'MMM d, yyyy h:mm a')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* Document upload dialog would go here when implemented */}
     </div>
   );
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {isMunicipalUser ? (
-        <MunicipalLayout>
-          <PageContent />
-        </MunicipalLayout>
-      ) : (
+  if (isMunicipalUser) {
+    return (
+      <MunicipalLayout>
         <PageContent />
-      )}
+      </MunicipalLayout>
+    );
+  }
 
-      {/* Add Payment Method Dialog */}
-      <AddPaymentMethodDialog
-        open={isAddPaymentDialogOpen}
-        onOpenChange={setIsAddPaymentDialogOpen}
-        onSuccess={() => {
-          setIsAddPaymentDialogOpen(false);
-        }}
-      />
-    </div>
-  );
+  return <PageContent />;
 };
 
 export default TaxDetail;
