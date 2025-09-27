@@ -332,7 +332,7 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           error: updateData.failure_message,
-          payment_history_id: paymentHistory.id
+        payment_transaction_id: paymentHistory.id
         }),
         { 
           status: 400,
@@ -344,7 +344,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        payment_history_id: paymentHistory.id,
+        payment_transaction_id: paymentHistory.id,
         transfer_id: finixData.id,
         transfer_state: finixData.state,
         amount_cents: totalAmountToCharge,

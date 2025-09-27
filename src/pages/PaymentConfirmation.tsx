@@ -11,11 +11,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { RefundDialog } from '@/components/RefundDialog';
 
-interface PaymentHistoryDetails {
+interface PaymentTransactionDetails {
   id: string;
-  bill_id: string;
+  bill_id?: string;
   finix_transfer_id: string;
-  amount_cents: number;
+  base_amount_cents: number;
   service_fee_cents: number;
   total_amount_cents: number;
   payment_type: string;
@@ -26,7 +26,7 @@ interface PaymentHistoryDetails {
   card_brand?: string;
   card_last_four?: string;
   bank_last_four?: string;
-  master_bills: {
+  master_bills?: {
     merchant_name: string;
     external_bill_number: string;
     category: string;
@@ -35,11 +35,11 @@ interface PaymentHistoryDetails {
 }
 
 const PaymentConfirmation = () => {
-  const { paymentHistoryId } = useParams<{ paymentHistoryId: string }>();
+  const { paymentTransactionId } = useParams<{ paymentTransactionId: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { hasRole, isLoading: rolesLoading } = useUserRole();
-  const [paymentDetails, setPaymentDetails] = useState<PaymentHistoryDetails | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentTransactionDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
@@ -47,7 +47,7 @@ const PaymentConfirmation = () => {
 
   useEffect(() => {
     const fetchPaymentDetails = async () => {
-      if (!paymentHistoryId) {
+      if (!paymentTransactionId) {
         setError('Payment ID not found');
         setIsLoading(false);
         return;
@@ -55,17 +55,9 @@ const PaymentConfirmation = () => {
 
       try {
         const { data, error } = await supabase
-          .from('payment_history')
-          .select(`
-            *,
-            master_bills!inner(
-              merchant_name,
-              external_bill_number,
-              category,
-              due_date
-            )
-          `)
-          .eq('id', paymentHistoryId)
+          .from('payment_transactions')
+          .select('*')
+          .eq('id', paymentTransactionId)
           .single();
 
         if (error) {
@@ -74,14 +66,34 @@ const PaymentConfirmation = () => {
           return;
         }
 
-        setPaymentDetails(data);
+        let enrichedData: PaymentTransactionDetails = { ...data } as PaymentTransactionDetails;
+
+        // Fetch master_bills data if bill_id exists
+        if (data.bill_id) {
+          const { data: billData, error: billError } = await supabase
+            .from('master_bills')
+            .select(`
+              merchant_name,
+              external_bill_number,
+              category,
+              due_date
+            `)
+            .eq('bill_id', data.bill_id)
+            .single();
+
+          if (!billError && billData) {
+            enrichedData.master_bills = billData;
+          }
+        }
+
+        setPaymentDetails(enrichedData);
 
         // Check for existing refunds if user is municipal
         if (profile?.account_type === 'municipal') {
           const { data: refundData } = await supabase
             .from('refunds')
             .select('id')
-            .eq('payment_history_id', paymentHistoryId)
+            .eq('payment_transaction_id', paymentTransactionId)
             .limit(1);
           
           setHasExistingRefund(refundData && refundData.length > 0);
@@ -95,7 +107,7 @@ const PaymentConfirmation = () => {
     };
 
     fetchPaymentDetails();
-  }, [paymentHistoryId, profile]);
+  }, [paymentTransactionId, profile]);
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -113,6 +125,8 @@ const PaymentConfirmation = () => {
   };
 
   const getPaymentMethodDisplay = () => {
+    if (!paymentDetails) return 'Unknown';
+    
     // For card payments
     if (paymentDetails.card_brand && paymentDetails.card_last_four) {
       const brandName = paymentDetails.card_brand.charAt(0).toUpperCase() + paymentDetails.card_brand.slice(1).toLowerCase();
@@ -160,10 +174,10 @@ const PaymentConfirmation = () => {
           <div class="section">
             <h2>Payment Details</h2>
             <div class="grid">
-              <div><div class="label">Bill From</div><div class="value">${paymentDetails.master_bills.merchant_name}</div></div>
-              <div><div class="label">Bill Number</div><div class="value">${paymentDetails.master_bills.external_bill_number}</div></div>
-              <div><div class="label">Category</div><div class="value">${paymentDetails.master_bills.category || 'N/A'}</div></div>
-              <div><div class="label">Due Date</div><div class="value">${formatDate(paymentDetails.master_bills.due_date)}</div></div>
+              <div><div class="label">Bill From</div><div class="value">${paymentDetails.master_bills?.merchant_name || 'N/A'}</div></div>
+              <div><div class="label">Bill Number</div><div class="value">${paymentDetails.master_bills?.external_bill_number || 'N/A'}</div></div>
+              <div><div class="label">Category</div><div class="value">${paymentDetails.master_bills?.category || 'N/A'}</div></div>
+              <div><div class="label">Due Date</div><div class="value">${paymentDetails.master_bills?.due_date ? formatDate(paymentDetails.master_bills.due_date) : 'N/A'}</div></div>
               <div><div class="label">Payment Method</div><div class="value">${getPaymentMethodDisplay()}</div></div>
               <div><div class="label">Transaction ID</div><div class="value" style="font-family: monospace; font-size: 11px;">${paymentDetails.finix_transfer_id}</div></div>
             </div>
@@ -174,7 +188,7 @@ const PaymentConfirmation = () => {
             <div style="margin-bottom: 10px;">
               <div style="display: flex; justify-content: space-between; padding: 8px 0;">
                 <span>Bill Amount</span>
-                <span>${formatCurrency(paymentDetails.amount_cents)}</span>
+                <span>${formatCurrency(paymentDetails.base_amount_cents)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; padding: 8px 0;">
                 <span>Service Fee</span>
@@ -344,19 +358,19 @@ const PaymentConfirmation = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Bill From</label>
-                <p className="text-base">{paymentDetails.master_bills.merchant_name}</p>
+                <p className="text-base">{paymentDetails.master_bills?.merchant_name || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Bill Number</label>
-                <p className="text-base">{paymentDetails.master_bills.external_bill_number}</p>
+                <p className="text-base">{paymentDetails.master_bills?.external_bill_number || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Category</label>
-                <p className="text-base">{paymentDetails.master_bills.category || 'N/A'}</p>
+                <p className="text-base">{paymentDetails.master_bills?.category || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Due Date</label>
-                <p className="text-base">{formatDate(paymentDetails.master_bills.due_date)}</p>
+                <p className="text-base">{paymentDetails.master_bills?.due_date ? formatDate(paymentDetails.master_bills.due_date) : 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Payment Method</label>
@@ -385,7 +399,7 @@ const PaymentConfirmation = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2">
                 <span className="text-base">Bill Amount</span>
-                <span className="text-base">{formatCurrency(paymentDetails.amount_cents)}</span>
+                <span className="text-base">{formatCurrency(paymentDetails.base_amount_cents)}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-base">Service Fee</span>

@@ -27,12 +27,12 @@ interface RefundDialogProps {
   onOpenChange: (open: boolean) => void;
   paymentDetails: {
     id: string;
-    bill_id: string;
-    amount_cents: number;
+    bill_id?: string;
+    base_amount_cents?: number;
     total_amount_cents: number;
     finix_transfer_id: string;
     user_id: string;
-    master_bills: {
+    master_bills?: {
       external_bill_number: string;
     };
   };
@@ -86,7 +86,7 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
 
       const { data, error } = await supabase.functions.invoke('process-finix-refund', {
         body: {
-          payment_history_id: paymentDetails.id,
+          payment_transaction_id: paymentDetails.id,
           reason: finalReason,
           refund_amount_cents: paymentDetails.total_amount_cents
         }
@@ -118,19 +118,19 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
       if (status === 'unpaid') {
         toast({
           title: "Refund Submitted Successfully",
-          description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been submitted and is being processed. You will be notified when the refund is completed.`,
+          description: `Refund request for ${paymentDetails.master_bills?.external_bill_number || 'transaction'} has been submitted and is being processed. You will be notified when the refund is completed.`,
           variant: "default"
         });
       } else if (status === 'succeeded') {
         toast({
           title: "Refund Completed",
-          description: `Refund for ${paymentDetails.master_bills.external_bill_number} has been successfully processed.`,
+          description: `Refund for ${paymentDetails.master_bills?.external_bill_number || 'transaction'} has been successfully processed.`,
           variant: "default"
         });
       } else {
         toast({
           title: "Refund Initiated",
-          description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been processed: ${parsedData.message}`,
+          description: `Refund request for ${paymentDetails.master_bills?.external_bill_number || 'transaction'} has been processed: ${parsedData.message}`,
           variant: "default"
         });
       }
@@ -168,7 +168,7 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
             Process Refund
           </DialogTitle>
           <DialogDescription>
-            Create a refund request for bill {paymentDetails.master_bills.external_bill_number}
+            Create a refund request for bill {paymentDetails.master_bills?.external_bill_number || 'N/A'}
           </DialogDescription>
         </DialogHeader>
         

@@ -176,7 +176,7 @@ const App = () => (
                     <BillOverview />
                   </SimpleProtectedRoute>
                 } />
-                <Route path="/payment-confirmation/:paymentHistoryId" element={
+                <Route path="/payment-confirmation/:paymentTransactionId" element={
                   <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <PaymentConfirmation />
                   </SimpleProtectedRoute>
