@@ -210,6 +210,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       setFinixFormReady(false);
     }
 
+    // Declare variables at useEffect scope so cleanup can access them
+    let form: any = null;
+    let observer: MutationObserver | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+
     try {
       console.log(`🔧 Initializing Finix ${paymentType} form...`);
       setInitializationError(null);
@@ -333,21 +338,21 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       });
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount - reference local variables, not state
     return () => {
-      if (finixForm) {
-        try {
-          console.log('🧹 Cleanup: destroying form and observers');
-          if (finixForm.observer) {
-            finixForm.observer.disconnect();
-          }
-          if (finixForm.fallbackTimer) {
-            clearTimeout(finixForm.fallbackTimer);
-          }
-          finixForm.form.destroy();
-        } catch (e) {
-          console.log('Error destroying form on cleanup:', e);
+      try {
+        console.log('🧹 Cleanup: destroying form and observers');
+        if (observer) {
+          observer.disconnect();
         }
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+        }
+        if (form && typeof form.destroy === 'function') {
+          form.destroy();
+        }
+      } catch (e) {
+        console.log('Error destroying form on cleanup:', e);
       }
     };
   }, [finixConfig, finixLibraryLoaded, paymentType, open]);
