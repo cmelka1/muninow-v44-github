@@ -23,8 +23,8 @@ serve(async (req) => {
     });
 
     // Validate required fields
-    if (!finixToken || !finixToken.startsWith('TK_')) {
-      throw new Error('Valid Finix token is required (must start with TK_)');
+    if (!finixToken || !finixToken.startsWith('TK')) {
+      throw new Error('Valid Finix token is required (must start with TK)');
     }
 
     // Get Finix credentials
