@@ -75,6 +75,8 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
   const [finixConfig, setFinixConfig] = useState<{ applicationId: string; environment: 'sandbox' | 'live' } | null>(null);
   const [finixForm, setFinixForm] = useState<any>(null);
   const [finixFormReady, setFinixFormReady] = useState(false);
+  const [finixLibraryLoaded, setFinixLibraryLoaded] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -90,6 +92,57 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
   });
 
   const useProfileAddress = form.watch('useProfileAddress');
+
+  // Wait for Finix library to load with retry mechanism
+  useEffect(() => {
+    if (!open) return;
+
+    let retryCount = 0;
+    const maxRetries = 20;
+    const retryInterval = 500;
+
+    const checkFinixLibrary = () => {
+      if (typeof window !== 'undefined' && window.Finix) {
+        console.log('✅ Finix library loaded successfully');
+        setFinixLibraryLoaded(true);
+        setInitializationError(null);
+        return true;
+      }
+      return false;
+    };
+
+    // Check immediately
+    if (checkFinixLibrary()) {
+      return;
+    }
+
+    // Retry with polling
+    const intervalId = setInterval(() => {
+      retryCount++;
+      console.log(`Checking for Finix library... (attempt ${retryCount}/${maxRetries})`);
+      
+      if (checkFinixLibrary()) {
+        clearInterval(intervalId);
+      } else if (retryCount >= maxRetries) {
+        clearInterval(intervalId);
+        const errorMsg = 'Finix payment library failed to load. Please refresh the page and try again.';
+        console.error('❌', errorMsg);
+        setInitializationError(errorMsg);
+        toast({
+          title: "Library Loading Error",
+          description: errorMsg,
+          variant: "destructive",
+          action: (
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+              Refresh
+            </Button>
+          ),
+        });
+      }
+    }, retryInterval);
+
+    return () => clearInterval(intervalId);
+  }, [open, toast]);
 
   // Fetch Finix configuration
   useEffect(() => {
@@ -107,33 +160,44 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
           throw new Error(data.error || 'Failed to get Finix configuration');
         }
 
-        console.log('Finix configuration loaded:', data.applicationId);
+        console.log('✅ Finix configuration loaded:', data.applicationId);
         setFinixConfig({
           applicationId: data.applicationId,
           environment: data.environment,
         });
       } catch (error) {
-        console.error('Error loading Finix config:', error);
+        console.error('❌ Error loading Finix config:', error);
+        const errorMsg = "Failed to load payment form configuration. Please try again.";
+        setInitializationError(errorMsg);
         toast({
           title: "Configuration Error",
-          description: "Failed to load payment form configuration. Please try again.",
+          description: errorMsg,
           variant: "destructive",
         });
       }
     };
 
-    if (open) {
+    if (open && finixLibraryLoaded) {
       fetchFinixConfig();
     }
-  }, [open, toast]);
+  }, [open, finixLibraryLoaded, toast]);
 
   // Initialize Finix form when config is loaded and payment type changes
   useEffect(() => {
-    if (!finixConfig || !window.Finix || !open) return;
+    if (!finixConfig || !finixLibraryLoaded || !window.Finix || !open) {
+      console.log('⏳ Waiting for prerequisites:', {
+        finixConfig: !!finixConfig,
+        finixLibraryLoaded,
+        windowFinix: !!window.Finix,
+        open
+      });
+      return;
+    }
 
     // Clean up existing form
     if (finixForm) {
       try {
+        console.log('🧹 Cleaning up previous form');
         finixForm.destroy();
       } catch (e) {
         console.log('Error destroying previous form:', e);
@@ -143,7 +207,8 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     }
 
     try {
-      console.log('Initializing Finix form:', paymentType);
+      console.log(`🔧 Initializing Finix ${paymentType} form...`);
+      setInitializationError(null);
       
       // Create appropriate form type
       const form = paymentType === 'card'
@@ -155,6 +220,8 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
             applicationId: finixConfig.applicationId,
             environment: finixConfig.environment,
           });
+
+      console.log('✅ Finix form instance created');
 
       // Define styles
       const formStyles = {
@@ -180,22 +247,18 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         },
       };
 
-      // Render form in container
-      const containerId = `finix-${paymentType}-form-container`;
-      form.render(containerId, formStyles);
-
-      // Set up event listeners
+      // Set up event listeners before rendering
       form.on('ready', () => {
-        console.log('Finix form ready');
+        console.log('✅ Finix form ready event fired');
         setFinixFormReady(true);
       });
 
       form.on('change', (data: any) => {
-        console.log('Finix form changed:', data);
+        console.log('📝 Finix form changed:', data);
       });
 
       form.on('error', (error: any) => {
-        console.error('Finix form error:', error);
+        console.error('❌ Finix form error:', error);
         toast({
           title: "Form Error",
           description: error.message || "An error occurred with the payment form",
@@ -203,12 +266,39 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         });
       });
 
+      // Render form in container with a small delay to ensure DOM is ready
+      const containerId = `finix-${paymentType}-form-container`;
+      console.log(`🎨 Rendering form in container: ${containerId}`);
+      
+      setTimeout(() => {
+        try {
+          const container = document.getElementById(containerId);
+          if (!container) {
+            throw new Error(`Container element #${containerId} not found in DOM`);
+          }
+          console.log('✅ Container found, rendering form...');
+          form.render(containerId, formStyles);
+          console.log('✅ Form render called successfully');
+        } catch (renderError) {
+          console.error('❌ Error rendering form:', renderError);
+          const errorMsg = renderError instanceof Error ? renderError.message : 'Failed to render payment form';
+          setInitializationError(errorMsg);
+          toast({
+            title: "Form Rendering Error",
+            description: errorMsg,
+            variant: "destructive",
+          });
+        }
+      }, 100); // 100ms delay to ensure DOM is ready
+
       setFinixForm(form);
     } catch (error) {
-      console.error('Error initializing Finix form:', error);
+      console.error('❌ Error initializing Finix form:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to initialize payment form';
+      setInitializationError(errorMsg);
       toast({
         title: "Form Initialization Error",
-        description: "Failed to initialize payment form. Please refresh and try again.",
+        description: `${errorMsg}. Please refresh and try again.`,
         variant: "destructive",
       });
     }
@@ -217,13 +307,14 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     return () => {
       if (finixForm) {
         try {
+          console.log('🧹 Cleanup: destroying form');
           finixForm.destroy();
         } catch (e) {
           console.log('Error destroying form on cleanup:', e);
         }
       }
     };
-  }, [finixConfig, paymentType, open]);
+  }, [finixConfig, finixLibraryLoaded, paymentType, open]);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -522,9 +613,38 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                   id={`finix-${paymentType}-form-container`}
                   className="min-h-[120px] p-4 border rounded-lg bg-background"
                 >
-                  {!finixFormReady && (
+                  {initializationError ? (
+                    <div className="flex flex-col items-center justify-center h-[120px] space-y-2">
+                      <div className="text-sm text-destructive text-center">{initializationError}</div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => window.location.reload()}
+                      >
+                        Refresh Page
+                      </Button>
+                    </div>
+                  ) : !finixLibraryLoaded ? (
                     <div className="flex items-center justify-center h-[120px]">
-                      <div className="text-sm text-muted-foreground">Loading secure form...</div>
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                        <div className="text-sm text-muted-foreground">Loading payment library...</div>
+                      </div>
+                    </div>
+                  ) : !finixConfig ? (
+                    <div className="flex items-center justify-center h-[120px]">
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                        <div className="text-sm text-muted-foreground">Loading configuration...</div>
+                      </div>
+                    </div>
+                  ) : !finixFormReady && (
+                    <div className="flex items-center justify-center h-[120px]">
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                        <div className="text-sm text-muted-foreground">Initializing secure form...</div>
+                      </div>
                     </div>
                   )}
                 </div>
