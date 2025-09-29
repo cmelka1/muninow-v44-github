@@ -151,7 +151,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          payment_history_id: existingPayment.id,
+          payment_transaction_id: existingPayment.id,
           message: "Payment already processed",
           transfer_state: existingPayment.transfer_state
         }),
