@@ -8,8 +8,8 @@ declare global {
         merchantId: string,
         callback?: (sessionKey: string) => void
       ) => FinixAuth;
-      CardTokenForm: (config: FinixFormConfig) => FinixTokenForm;
-      BankTokenForm: (config: FinixFormConfig) => FinixTokenForm;
+      CardTokenForm: () => FinixTokenForm;
+      BankTokenForm: () => FinixTokenForm;
     };
   }
 }
@@ -23,8 +23,14 @@ interface FinixFormConfig {
   environment: 'sandbox' | 'live';
 }
 
+interface FinixRenderConfig {
+  applicationId: string;
+  environment: 'sandbox' | 'live';
+  styles?: FinixFormStyles;
+}
+
 interface FinixTokenForm {
-  render(containerId: string, styles?: FinixFormStyles): void;
+  render(containerId: string, config: FinixRenderConfig): void;
   submit(): Promise<FinixTokenResponse>;
   on(event: 'ready' | 'change' | 'error', callback: (data?: any) => void): void;
   clear(): void;

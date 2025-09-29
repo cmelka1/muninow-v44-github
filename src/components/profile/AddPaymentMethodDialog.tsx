@@ -212,14 +212,8 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       
       // Create appropriate form type
       const form = paymentType === 'card'
-        ? window.Finix.CardTokenForm({
-            applicationId: finixConfig.applicationId,
-            environment: finixConfig.environment,
-          })
-        : window.Finix.BankTokenForm({
-            applicationId: finixConfig.applicationId,
-            environment: finixConfig.environment,
-          });
+        ? window.Finix.CardTokenForm()
+        : window.Finix.BankTokenForm();
 
       console.log('✅ Finix form instance created');
 
@@ -277,7 +271,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
             throw new Error(`Container element #${containerId} not found in DOM`);
           }
           console.log('✅ Container found, rendering form...');
-          form.render(containerId, formStyles);
+          form.render(containerId, {
+            applicationId: finixConfig.applicationId,
+            environment: finixConfig.environment,
+            styles: formStyles
+          });
           console.log('✅ Form render called successfully');
         } catch (renderError) {
           console.error('❌ Error rendering form:', renderError);
