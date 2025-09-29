@@ -41,7 +41,6 @@ const cardMetadataSchema = z.object({
 const bankMetadataSchema = z.object({
   paymentType: z.literal('bank'),
   accountNickname: z.string().optional(),
-  accountType: z.enum(['personal_checking', 'personal_savings', 'business_checking', 'business_savings']),
   useProfileAddress: z.boolean(),
   streetAddress: z.string().min(1, 'Street address is required'),
   city: z.string().min(1, 'City is required'),
@@ -468,7 +467,6 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
             body: {
               finixToken: token,
               nickname: data.accountNickname,
-              accountType: data.accountType,
               addressOverride,
             }
           });
@@ -630,45 +628,19 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                   )}
                 />
               ) : (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="accountNickname"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Nickname <span className="text-muted-foreground">(Optional)</span></FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., Primary Checking" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="accountType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select account type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="personal_checking">Personal Checking</SelectItem>
-                            <SelectItem value="personal_savings">Personal Savings</SelectItem>
-                            <SelectItem value="business_checking">Business Checking</SelectItem>
-                            <SelectItem value="business_savings">Business Savings</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="accountNickname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Nickname <span className="text-muted-foreground">(Optional)</span></FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g., Primary Checking" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
 
               {/* Finix Tokenized Form Container */}

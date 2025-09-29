@@ -14,22 +14,17 @@ serve(async (req) => {
 
   try {
     // Get request body
-    const { finixToken, nickname, addressOverride, accountType } = await req.json();
+    const { finixToken, nickname, addressOverride } = await req.json();
 
     console.log('Creating bank account from Finix token:', {
       hasToken: !!finixToken,
       hasNickname: !!nickname,
       hasAddressOverride: !!addressOverride,
-      accountType,
     });
 
     // Validate required fields
     if (!finixToken || !finixToken.startsWith('TK')) {
       throw new Error('Valid Finix token is required (must start with TK)');
-    }
-
-    if (!accountType) {
-      throw new Error('Account type is required');
     }
 
     // Get Finix credentials
@@ -123,9 +118,9 @@ serve(async (req) => {
     const paymentInstrument = await finixResponse.json();
     console.log('Bank account created:', paymentInstrument.id);
 
-    // Extract bank details
+    // Extract bank details from Finix response
     const bankLastFour = paymentInstrument.last_four || '0000';
-    const bankAccountType = accountType;
+    const bankAccountType = paymentInstrument.account_type || 'CHECKING';
 
     // Generate display name
     const displayName = nickname || `Bank Account •••• ${bankLastFour}`;
