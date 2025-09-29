@@ -8,6 +8,8 @@ const corsHeaders = {
 
 const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
+const MAX_VERIFICATION_ATTEMPTS = 5;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -72,10 +74,72 @@ serve(async (req) => {
 
     if (!verificationRecord) {
       console.log('No valid verification code found for:', user_identifier);
+      
+      // Check if there's a record with too many attempts
+      const { data: attemptRecord } = await supabase
+        .from('verification_codes')
+        .select('attempt_count')
+        .eq('user_identifier', user_identifier)
+        .eq('status', 'pending')
+        .gte('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (attemptRecord && attemptRecord.attempt_count >= MAX_VERIFICATION_ATTEMPTS) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Too many failed attempts. Please request a new verification code.' 
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Increment attempt count for the most recent pending code
+      const { data: currentRecord } = await supabase
+        .from('verification_codes')
+        .select('attempt_count')
+        .eq('user_identifier', user_identifier)
+        .eq('status', 'pending')
+        .gte('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (currentRecord) {
+        await supabase
+          .from('verification_codes')
+          .update({ 
+            attempt_count: (currentRecord.attempt_count || 0) + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_identifier', user_identifier)
+          .eq('status', 'pending')
+          .gte('expires_at', new Date().toISOString());
+      }
+
       return new Response(
         JSON.stringify({ 
           success: false, 
           error: 'Invalid or expired verification code' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Check if max attempts reached
+    if (verificationRecord.attempt_count >= MAX_VERIFICATION_ATTEMPTS) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Maximum verification attempts exceeded. Please request a new code.' 
         }),
         { 
           status: 400, 

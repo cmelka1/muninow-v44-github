@@ -72,6 +72,9 @@ verify_jwt = false
 [functions.verify-code]
 verify_jwt = false
 
+[functions.cleanup-expired-verification-codes]
+verify_jwt = false
+
 [functions.update-merchant-fee-profile]
 verify_jwt = false
 

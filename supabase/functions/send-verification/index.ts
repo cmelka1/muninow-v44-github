@@ -8,22 +8,30 @@ const corsHeaders = {
 
 const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
-// Helper function to determine if a string is a phone number
-function isPhoneNumber(identifier: string): boolean {
-  // Remove all non-digit characters and check if it's a valid phone format
-  const digitsOnly = identifier.replace(/\D/g, '');
-  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
-}
+// Rate limiting map: key = user_identifier, value = { count, resetTime }
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_MAX_ATTEMPTS = 3;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
-// Helper function to format phone number to E.164 format
-function formatPhoneNumber(phone: string): string {
-  const digitsOnly = phone.replace(/\D/g, '');
-  // Assume US numbers if 10 digits, add country code
-  if (digitsOnly.length === 10) {
-    return '+1' + digitsOnly;
+function checkRateLimit(identifier: string): { allowed: boolean; resetIn?: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    // Reset or create new record
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
   }
-  // Add + if not present
-  return digitsOnly.startsWith('1') ? '+' + digitsOnly : '+1' + digitsOnly;
+  
+  if (record.count >= RATE_LIMIT_MAX_ATTEMPTS) {
+    const resetIn = Math.ceil((record.resetTime - now) / 1000 / 60); // minutes
+    return { allowed: false, resetIn };
+  }
+  
+  // Increment count
+  record.count++;
+  rateLimitMap.set(identifier, record);
+  return { allowed: true };
 }
 
 serve(async (req) => {
@@ -32,43 +40,30 @@ serve(async (req) => {
   }
 
   try {
-    const requestBody = await req.json();
-    console.log('Request body:', requestBody);
+    const body = await req.json();
+    console.log('Request body:', JSON.stringify(body, null, 2));
 
-    // Handle both old format {phone, email, type} and new MFA format {identifier, type, action}
-    let phone = null;
-    let email = null;
-    let type = null;
+    // Support both new and old request formats
+    let user_identifier: string | undefined;
+    let type: string;
+    let action: string | undefined;
 
-    if (requestBody.identifier) {
-      // New MFA format
-      const { identifier, type: requestType, action } = requestBody;
+    // New format
+    const { identifier, type: requestType, action: requestAction } = body;
+    
+    // Old format
+    const { phone, email, verification_type } = body;
+
+    // Determine user_identifier and type
+    if (identifier) {
+      user_identifier = identifier;
       
-      if (!identifier) {
+      // Validate and map request type
+      if (!requestType || !['sms', 'email'].includes(requestType)) {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Identifier is required' 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-
-      // Determine if identifier is phone or email
-      if (isPhoneNumber(identifier)) {
-        phone = formatPhoneNumber(identifier);
-        console.log('Detected phone number:', phone);
-      } else if (identifier.includes('@')) {
-        email = identifier.toLowerCase().trim();
-        console.log('Detected email:', email);
-      } else {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Invalid identifier format' 
+            error: 'Invalid type. Must be "sms" or "email"' 
           }),
           { 
             status: 400, 
@@ -78,26 +73,39 @@ serve(async (req) => {
       }
 
       // Map request type to verification type (must be 'sms' or 'email' per DB constraint)
-      if (requestType === 'sms' && phone) {
+      type = requestType;
+      action = requestAction;
+    } else {
+      // Old format - determine identifier and type
+      if (phone) {
+        user_identifier = phone;
         type = 'sms';
-      } else if (requestType === 'email' && email) {
+      } else if (email) {
+        user_identifier = email;
         type = 'email';
       } else {
-        // For backward compatibility, determine type based on what we have
-        type = phone ? 'sms' : 'email';
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Either phone or email is required' 
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
       }
-    } else {
-      // Old format
-      phone = requestBody.phone;
-      email = requestBody.email;
-      type = requestBody.type;
+      
+      action = body.action;
     }
 
-    if (!phone && !email) {
+    console.log('Detected identifier:', user_identifier, 'type:', type);
+
+    if (!user_identifier) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Either phone or email is required' 
+          error: 'User identifier is required' 
         }),
         { 
           status: 400, 
@@ -106,70 +114,74 @@ serve(async (req) => {
       );
     }
 
-    if (!type || !['signup', 'login', 'password_reset', 'mfa'].includes(type)) {
+    // Check rate limiting
+    const rateLimit = checkRateLimit(user_identifier);
+    if (!rateLimit.allowed) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Invalid verification type. Must be one of: signup, login, password_reset, mfa' 
+          error: `Too many verification attempts. Please try again in ${rateLimit.resetIn} minutes.` 
         }),
         { 
-          status: 400, 
+          status: 429, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
 
-    // Generate 6-digit code
+    // Generate a random 6-digit verification code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
+    
     // Hash the code for secure storage
     const encoder = new TextEncoder();
     const data = encoder.encode(code);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const codeHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    // Determine user_identifier from phone or email
-    const userIdentifier = phone || email;
-
-    // Store verification code with new schema
-    const { error: insertError } = await supabase
+    
+    // Store the verification code
+    const { error: dbError } = await supabase
       .from('verification_codes')
       .insert({
-        user_identifier: userIdentifier,
+        user_identifier,
         code_hash: codeHash,
         verification_type: type,
-        expires_at: expiresAt.toISOString(),
-        status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
+        status: 'pending'
       });
 
-    if (insertError) {
-      console.error("Error storing verification code:", insertError);
-      const errorMessage = insertError instanceof Error ? insertError.message : 'Database error';
+    if (dbError) {
+      console.error("Error storing verification code:", dbError);
       return new Response(
-        JSON.stringify({ success: false, error: errorMessage }),
+        JSON.stringify({ success: false, error: 'Failed to create verification code' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Send verification based on method
-    let sendingResult: { success: boolean; message: string; error: string | null } = { success: false, message: '', error: null };
     
-    if (phone) {
-      sendingResult = await sendSMSVerification(phone, code, type);
-    } else if (email) {
-      sendingResult = await sendEmailVerification(email, code, type);
+    let sendingResult: { success: boolean; message?: string; error?: string };
+    
+    if (type === 'sms') {
+      sendingResult = await sendSMSVerification(user_identifier, code, type);
+    } else if (type === 'email') {
+      sendingResult = await sendEmailVerification(user_identifier, code, type);
+    } else {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid verification type. Must be "sms" or "email"' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     return new Response(
       JSON.stringify({ 
         success: sendingResult.success,
         message: sendingResult.message,
-        error: sendingResult.error,
-        code: code // For testing only - remove in production
+        error: sendingResult.error
       }),
       { 
         status: sendingResult.success ? 200 : 500,
@@ -193,94 +205,141 @@ serve(async (req) => {
   }
 });
 
-// SMS sending function using Twilio
-async function sendSMSVerification(phone: string, code: string, type: string) {
-  try {
-    const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER') || '+18333691461';
+// Helper functions
+function isPhoneNumber(identifier: string): boolean {
+  return /^\+?1?\d{10}$/.test(identifier.replace(/[\s()-]/g, ''));
+}
 
-    if (!twilioAccountSid || !twilioAuthToken) {
-      console.error('Twilio credentials not configured');
+function formatPhoneNumber(phone: string): string {
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 10) {
+    return `+1${cleaned}`;
+  }
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    return `+${cleaned}`;
+  }
+  return phone;
+}
+
+async function sendSMSVerification(phone: string, code: string, type: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const twilioPhone = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+    if (!accountSid || !authToken || !twilioPhone) {
+      console.error("Missing Twilio credentials");
       return {
         success: false,
-        message: 'SMS service not configured',
-        error: 'Twilio credentials missing'
+        error: "SMS service not configured"
       };
     }
 
-    // Format verification message based on type
-    let message = '';
-    switch (type) {
-      case 'mfa':
-        message = `Your MuniNow verification code is: ${code}. This code expires in 15 minutes.`;
-        break;
-      case 'signup':
-        message = `Welcome to MuniNow! Your verification code is: ${code}. This code expires in 15 minutes.`;
-        break;
-      case 'login':
-        message = `Your MuniNow login verification code is: ${code}. This code expires in 15 minutes.`;
-        break;
-      case 'password_reset':
-        message = `Your MuniNow password reset code is: ${code}. This code expires in 15 minutes.`;
-        break;
-      default:
-        message = `Your MuniNow verification code is: ${code}. This code expires in 15 minutes.`;
-    }
+    const formattedPhone = formatPhoneNumber(phone);
+    console.log(`Sending SMS to: ${formattedPhone}`);
 
-    console.log(`Sending SMS to ${phone} with message: ${message}`);
+    const messageBody = `Your MFA verification code is: ${code}. This code expires in 10 minutes. Do not share this code with anyone.`;
 
-    const twilioResponse = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
+          "Authorization": `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-          From: twilioPhoneNumber,
-          To: phone,
-          Body: message,
+          To: formattedPhone,
+          From: twilioPhone,
+          Body: messageBody,
         }),
       }
     );
 
-    if (twilioResponse.ok) {
-      const result = await twilioResponse.json();
-      console.log('SMS sent successfully:', result.sid);
-      return {
-        success: true,
-        message: 'Verification code sent via SMS',
-        error: null
-      };
-    } else {
-      const errorText = await twilioResponse.text();
-      console.error('Twilio SMS error:', errorText);
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Twilio error:", errorData);
       return {
         success: false,
-        message: 'Failed to send SMS',
-        error: `Twilio error: ${errorText}`
+        error: "Failed to send SMS"
       };
     }
+
+    console.log("SMS sent successfully");
+    return {
+      success: true,
+      message: "Verification code sent via SMS"
+    };
+
   } catch (error) {
-    console.error('SMS sending error:', error);
+    console.error("SMS error:", error);
     return {
       success: false,
-      message: 'SMS sending failed',
-      error: error instanceof Error ? error.message : 'Unknown SMS error'
+      error: error instanceof Error ? error.message : "Failed to send SMS"
     };
   }
 }
 
-// Email sending function (disabled for now due to Resend package issues)
-async function sendEmailVerification(email: string, code: string, type: string) {
-  console.log(`Email verification requested for ${email} with code ${code} (type: ${type})`);
-  console.log('Email sending is currently disabled due to Resend package issues');
-  
-  return {
-    success: false,
-    message: 'Email verification is temporarily disabled',
-    error: 'Email sending functionality is temporarily disabled due to package issues'
-  };
+async function sendEmailVerification(email: string, code: string, type: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    
+    if (!resendApiKey) {
+      console.error("Missing Resend API key");
+      return {
+        success: false,
+        error: "Email service not configured"
+      };
+    }
+
+    console.log(`Sending verification email to: ${email}`);
+
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "MuniNow <onboarding@resend.dev>",
+        to: [email],
+        subject: "Your MFA Verification Code",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Verification Code</h2>
+            <p>Your MFA verification code is:</p>
+            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
+              ${code}
+            </div>
+            <p style="color: #666;">This code will expire in 10 minutes.</p>
+            <p style="color: #999; font-size: 12px; margin-top: 30px;">
+              If you didn't request this code, please ignore this email. Do not share this code with anyone.
+            </p>
+          </div>
+        `,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Resend error:", errorData);
+      return {
+        success: false,
+        error: "Failed to send email"
+      };
+    }
+
+    console.log("Email sent successfully");
+    return {
+      success: true,
+      message: "Verification code sent via email"
+    };
+
+  } catch (error) {
+    console.error("Email error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email"
+    };
+  }
 }

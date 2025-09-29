@@ -145,7 +145,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
         body: {
           user_identifier: normalizedIdentifier,
           code: verificationCode,
-          verification_type: 'mfa'
+          verification_type: verificationMethod // 'sms' or 'email'
         }
       });
 
