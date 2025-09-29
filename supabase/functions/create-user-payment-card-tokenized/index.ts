@@ -135,7 +135,7 @@ serve(async (req) => {
 
     const isDefault = count === 0;
 
-    // Store in user_payment_instruments
+    // Store in user_payment_instruments with optimized data
     const { data: savedInstrument, error: saveError } = await supabase
       .from('user_payment_instruments')
       .insert({
@@ -155,7 +155,14 @@ serve(async (req) => {
         billing_city: addressOverride?.city || paymentInstrument.address?.city,
         billing_region: addressOverride?.state || paymentInstrument.address?.region,
         billing_postal_code: addressOverride?.zipCode || paymentInstrument.address?.postal_code,
-        raw_finix_response: paymentInstrument,
+        // Store only essential Finix data instead of full response
+        raw_finix_response: {
+          id: paymentInstrument.id,
+          fingerprint: paymentInstrument.fingerprint,
+          created_at: paymentInstrument.created_at,
+          updated_at: paymentInstrument.updated_at,
+          links: paymentInstrument._links?.self?.href
+        },
         created_via: 'tokenized_form',
       })
       .select()
