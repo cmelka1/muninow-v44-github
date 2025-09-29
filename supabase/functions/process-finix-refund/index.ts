@@ -6,7 +6,7 @@ const corsHeaders = {
 }
 
 interface RefundRequest {
-  payment_history_id: string;
+  payment_transaction_id: string;
   reason: string;
   refund_amount_cents?: number;
 }
@@ -35,11 +35,11 @@ Deno.serve(async (req) => {
     );
 
     // Parse request body
-    const { payment_history_id, reason, refund_amount_cents }: RefundRequest = await req.json();
+    const { payment_transaction_id, reason, refund_amount_cents }: RefundRequest = await req.json();
 
-    if (!payment_history_id || !reason) {
+    if (!payment_transaction_id || !reason) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing payment_history_id or reason' }),
+        JSON.stringify({ success: false, error: 'Missing payment_transaction_id or reason' }),
         { status: 400, headers: corsHeaders }
       );
     }
@@ -56,22 +56,21 @@ Deno.serve(async (req) => {
     }
 
     // Fetch payment transaction record
-    const { data: paymentHistory, error: paymentError } = await supabase
+    const { data: paymentTransaction, error: paymentError } = await supabase
       .from('payment_transactions')
       .select('*')
-      .eq('id', payment_history_id)
+      .eq('id', payment_transaction_id)
       .single();
 
-    if (paymentError || !paymentHistory) {
-      console.error('Payment history fetch error:', paymentError);
+    if (paymentError || !paymentTransaction) {
+      console.error('Payment transaction fetch error:', paymentError);
       return new Response(
         JSON.stringify({ success: false, error: 'Payment not found' }),
         { status: 404, headers: corsHeaders }
       );
     }
 
-
-    if (!paymentHistory.finix_transfer_id) {
+    if (!paymentTransaction.finix_transfer_id) {
       return new Response(
         JSON.stringify({ success: false, error: 'Payment not eligible for refund (no Finix transfer ID)' }),
         { status: 400, headers: corsHeaders }
@@ -93,7 +92,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify payment belongs to same customer
-    if (profile.customer_id !== paymentHistory.customer_id) {
+    if (profile.customer_id !== paymentTransaction.customer_id) {
       return new Response(
         JSON.stringify({ success: false, error: 'Payment not accessible by your organization' }),
         { status: 403, headers: corsHeaders }
@@ -104,7 +103,7 @@ Deno.serve(async (req) => {
     const { data: existingRefund } = await supabase
       .from('refunds')
       .select('id')
-      .eq('payment_transaction_id', payment_history_id)
+      .eq('payment_transaction_id', payment_transaction_id)
       .single();
 
     if (existingRefund) {
@@ -115,7 +114,7 @@ Deno.serve(async (req) => {
     }
 
     // Determine refund amount
-    const refundAmount = refund_amount_cents || paymentHistory.total_amount_cents;
+    const refundAmount = refund_amount_cents || paymentTransaction.total_amount_cents;
 
     // Call Finix API for refund
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
@@ -136,7 +135,7 @@ Deno.serve(async (req) => {
     const finixCredentials = btoa(`${finixApplicationId}:${finixApiSecret}`);
 
     const finixResponse = await fetch(
-      `${finixApiUrl}/transfers/${paymentHistory.finix_transfer_id}/reversals`,
+      `${finixApiUrl}/transfers/${paymentTransaction.finix_transfer_id}/reversals`,
       {
         method: 'POST',
         headers: {
@@ -147,7 +146,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           refund_amount: refundAmount,
           tags: {
-            payment_history_id: payment_history_id,
+            payment_transaction_id: payment_transaction_id,
             municipal_user_id: user.id,
             reason: reason
           }
@@ -184,38 +183,38 @@ Deno.serve(async (req) => {
     const { data: refundRecord, error: refundError } = await supabase
       .from('refunds')
       .insert({
-        bill_id: paymentHistory.bill_id,
-        user_id: paymentHistory.user_id,
-        customer_id: paymentHistory.customer_id,
+        bill_id: paymentTransaction.bill_id,
+        user_id: paymentTransaction.user_id,
+        customer_id: paymentTransaction.customer_id,
         municipal_user_id: user.id,
-        payment_transaction_id: payment_history_id,
-        finix_transfer_id: paymentHistory.finix_transfer_id,
+        payment_transaction_id: payment_transaction_id,
+        finix_transfer_id: paymentTransaction.finix_transfer_id,
         finix_reversal_id: finixData.id,
         reason: reason,
         refund_amount_cents: refundAmount,
-        original_amount_cents: paymentHistory.amount_cents,
+        original_amount_cents: paymentTransaction.amount_cents,
         refund_status: refundStatus,
         
         // Payment method details
-        card_brand: paymentHistory.card_brand,
-        card_last_four: paymentHistory.card_last_four,
-        bank_last_four: paymentHistory.bank_last_four,
-        payment_type: paymentHistory.payment_type,
+        card_brand: paymentTransaction.card_brand,
+        card_last_four: paymentTransaction.card_last_four,
+        bank_last_four: paymentTransaction.bank_last_four,
+        payment_type: paymentTransaction.payment_type,
         
         // Merchant and bill information
-        merchant_name: paymentHistory.merchant_name,
-        category: paymentHistory.category,
-        subcategory: paymentHistory.subcategory,
-        external_account_number: paymentHistory.external_account_number,
-        external_bill_number: paymentHistory.external_bill_number,
+        merchant_name: paymentTransaction.merchant_name,
+        category: paymentTransaction.category,
+        subcategory: paymentTransaction.subcategory,
+        external_account_number: paymentTransaction.external_account_number,
+        external_bill_number: paymentTransaction.external_bill_number,
         
         // Original bill dates
-        original_issue_date: paymentHistory.issue_date,
-        original_due_date: paymentHistory.due_date,
+        original_issue_date: paymentTransaction.issue_date,
+        original_due_date: paymentTransaction.due_date,
         
         // Finix integration
-        finix_merchant_id: paymentHistory.finix_merchant_id,
-        finix_payment_instrument_id: paymentHistory.finix_payment_instrument_id,
+        finix_merchant_id: paymentTransaction.finix_merchant_id,
+        finix_payment_instrument_id: paymentTransaction.finix_payment_instrument_id,
         finix_raw_response: finixData,
         
         // Processing timestamps
