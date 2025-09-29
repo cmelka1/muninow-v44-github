@@ -8,8 +8,8 @@ declare global {
         merchantId: string,
         callback?: (sessionKey: string) => void
       ) => FinixAuth;
-      CardTokenForm: (containerId: string, config: FinixRenderConfig) => FinixTokenForm;
-      BankTokenForm: (containerId: string, config: FinixRenderConfig) => FinixTokenForm;
+      CardTokenForm: (containerId: string, config?: FinixFormConfig) => FinixTokenForm;
+      BankTokenForm: (containerId: string, config?: FinixFormConfig) => FinixTokenForm;
     };
   }
 }
@@ -19,19 +19,22 @@ interface FinixAuth {
 }
 
 interface FinixFormConfig {
-  applicationId: string;
-  environment: 'sandbox' | 'live';
-}
-
-interface FinixRenderConfig {
-  applicationId: string;
-  environment: 'sandbox' | 'live';
   styles?: FinixFormStyles;
+  showAddress?: boolean;
+  showLabels?: boolean;
+  labels?: Record<string, string>;
+  showPlaceholders?: boolean;
+  placeholders?: Record<string, string>;
+  hideFields?: string[];
+  requiredFields?: string[];
+  hideErrorMessages?: boolean;
+  errorMessages?: Record<string, string>;
+  defaultValues?: Record<string, string>;
+  fonts?: Array<{ family: string; src: string }>;
 }
 
 interface FinixTokenForm {
-  render?(containerId: string, config: FinixRenderConfig): void;
-  submit(): Promise<FinixTokenResponse>;
+  submit(environment: 'sandbox' | 'live', applicationId: string, callback: (err: any, res: any) => void): void;
   on(event: 'ready' | 'change' | 'error', callback: (data?: any) => void): void;
   clear(): void;
   destroy(): void;

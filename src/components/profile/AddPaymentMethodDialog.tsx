@@ -234,18 +234,14 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         },
       };
       
-      const containerId = paymentType === 'card' ? 'finix-card-form' : 'finix-bank-form';
+      const containerId = `finix-${paymentType}-form-container`;
       
-      // Create appropriate form type with elementId and config
+      // Create appropriate form type with only styles config
       const form = paymentType === 'card'
         ? window.Finix.CardTokenForm(containerId, {
-            applicationId: finixConfig.applicationId,
-            environment: finixConfig.environment,
             styles: formStyles
           })
         : window.Finix.BankTokenForm(containerId, {
-            applicationId: finixConfig.applicationId,
-            environment: finixConfig.environment,
             styles: formStyles
           });
 
@@ -372,65 +368,93 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     try {
       console.log('Submitting Finix form...');
       
-      // Submit Finix form to get token
-      const tokenResponse = await finixForm.submit();
-      console.log('Finix token received:', tokenResponse.token);
+      // Submit Finix form to get token (callback-based per Finix docs)
+      finixForm.submit(finixConfig.environment, finixConfig.applicationId, async (err: any, res: any) => {
+        if (err) {
+          console.error('Finix submission error:', err);
+          toast({
+            title: "Payment Form Error",
+            description: err.message || "Failed to process payment information",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
 
-      // Prepare address override if not using profile address
-      const addressOverride = !data.useProfileAddress ? {
-        streetAddress: data.streetAddress,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-        country: data.country,
-      } : undefined;
+        const tokenData = res.data || {};
+        const token = tokenData.id;
+        console.log('Finix token received:', token);
 
-      // Call appropriate tokenized edge function
-      let response;
-      if (data.paymentType === 'card') {
-        response = await supabase.functions.invoke('create-user-payment-card-tokenized', {
-          body: {
-            finixToken: tokenResponse.token,
-            nickname: data.cardNickname,
-            addressOverride,
-          }
+        // Prepare address override if not using profile address
+        const addressOverride = !data.useProfileAddress ? {
+          streetAddress: data.streetAddress,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          country: data.country,
+        } : undefined;
+
+        // Call appropriate tokenized edge function
+        let response;
+        if (data.paymentType === 'card') {
+          response = await supabase.functions.invoke('create-user-payment-card-tokenized', {
+            body: {
+              finixToken: token,
+              nickname: data.cardNickname,
+              addressOverride,
+            }
+          });
+        } else {
+          response = await supabase.functions.invoke('create-user-bank-account-tokenized', {
+            body: {
+              finixToken: token,
+              nickname: data.accountNickname,
+              accountType: data.accountType,
+              addressOverride,
+            }
+          });
+        }
+
+        // Check for errors
+        if (response.error) {
+          console.error('Supabase invocation error:', response.error);
+          toast({
+            title: "Error",
+            description: `Network error: ${response.error.message}`,
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (!response.data || response.data.success === false) {
+          const errorMessage = response.data?.error || 'Unknown error occurred';
+          console.error('Edge function error:', errorMessage);
+          toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        console.log('Payment method created successfully:', response.data);
+        
+        toast({
+          title: "Success",
+          description: `${data.paymentType === 'card' ? 'Payment card' : 'Bank account'} added successfully.`,
         });
-      } else {
-        response = await supabase.functions.invoke('create-user-bank-account-tokenized', {
-          body: {
-            finixToken: tokenResponse.token,
-            nickname: data.accountNickname,
-            accountType: data.accountType,
-            addressOverride,
-          }
-        });
-      }
-
-      // Check for errors
-      if (response.error) {
-        console.error('Supabase invocation error:', response.error);
-        throw new Error(`Network error: ${response.error.message}`);
-      }
-
-      if (!response.data || response.data.success === false) {
-        const errorMessage = response.data?.error || 'Unknown error occurred';
-        console.error('Edge function error:', errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      console.log('Payment method created successfully:', response.data);
-      
-      toast({
-        title: "Success",
-        description: `${data.paymentType === 'card' ? 'Payment card' : 'Bank account'} added successfully.`,
+        
+        const paymentMethodId = response.data?.paymentInstrument?.id;
+        await onSuccess(paymentMethodId);
+        onOpenChange(false);
+        setIsSubmitting(false);
       });
-      
-      const paymentMethodId = response.data?.paymentInstrument?.id;
-      await onSuccess(paymentMethodId);
-      onOpenChange(false);
       
     } catch (error) {
       console.error('Payment method submission error:', error);
+      setIsSubmitting(false);
       
       let errorMessage = "Failed to add payment method. Please try again.";
       if (error instanceof Error) {
@@ -442,8 +466,6 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         description: errorMessage,
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
