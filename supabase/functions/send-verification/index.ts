@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
-// import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,7 +7,6 @@ const corsHeaders = {
 };
 
 const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
-// const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 // Helper function to determine if a string is a phone number
 function isPhoneNumber(identifier: string): boolean {
@@ -124,16 +122,27 @@ serve(async (req) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    // Store verification code
+    // Hash the code for secure storage
+    const encoder = new TextEncoder();
+    const data = encoder.encode(code);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const codeHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Determine user_identifier from phone or email
+    const userIdentifier = phone || email;
+
+    // Store verification code with new schema
     const { error: insertError } = await supabase
       .from('verification_codes')
       .insert({
-        phone,
-        email,
-        code,
-        type,
+        user_identifier: userIdentifier,
+        code_hash: codeHash,
+        verification_type: type,
         expires_at: expiresAt.toISOString(),
-        status: 'pending'
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
 
     if (insertError) {
@@ -267,82 +276,6 @@ async function sendSMSVerification(phone: string, code: string, type: string) {
 async function sendEmailVerification(email: string, code: string, type: string) {
   console.log(`Email verification requested for ${email} with code ${code} (type: ${type})`);
   console.log('Email sending is currently disabled due to Resend package issues');
-  
-  // TODO: Re-enable when Resend package issues are resolved
-  /*
-  try {
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    if (!resendApiKey) {
-      throw new Error('Resend API key not configured');
-    }
-
-    let subject = '';
-    let htmlContent = '';
-    
-    switch (type) {
-      case 'mfa':
-        subject = 'MuniNow - Verification Code';
-        htmlContent = `
-          <h1>Verification Code</h1>
-          <p>Your MuniNow verification code is: <strong>${code}</strong></p>
-          <p>This code expires in 15 minutes.</p>
-        `;
-        break;
-      case 'signup':
-        subject = 'Welcome to MuniNow - Verify Your Account';
-        htmlContent = `
-          <h1>Welcome to MuniNow!</h1>
-          <p>Your verification code is: <strong>${code}</strong></p>
-          <p>This code expires in 15 minutes.</p>
-        `;
-        break;
-      case 'login':
-        subject = 'MuniNow - Login Verification';
-        htmlContent = `
-          <h1>Login Verification</h1>
-          <p>Your login verification code is: <strong>${code}</strong></p>
-          <p>This code expires in 15 minutes.</p>
-        `;
-        break;
-      case 'password_reset':
-        subject = 'MuniNow - Password Reset Code';
-        htmlContent = `
-          <h1>Password Reset</h1>
-          <p>Your password reset code is: <strong>${code}</strong></p>
-          <p>This code expires in 15 minutes.</p>
-        `;
-        break;
-      default:
-        subject = 'MuniNow - Verification Code';
-        htmlContent = `
-          <h1>Verification Code</h1>
-          <p>Your verification code is: <strong>${code}</strong></p>
-          <p>This code expires in 15 minutes.</p>
-        `;
-    }
-
-    const emailResponse = await resend.emails.send({
-      from: 'MuniNow <verification@muninow.com>',
-      to: [email],
-      subject: subject,
-      html: htmlContent,
-    });
-
-    console.log('Email sent successfully:', emailResponse);
-    return {
-      success: true,
-      message: 'Verification code sent via email',
-      error: null
-    };
-  } catch (error) {
-    console.error('Email sending error:', error);
-    return {
-      success: false,
-      message: 'Email sending failed',
-      error: error instanceof Error ? error.message : 'Unknown email error'
-    };
-  }
-  */
   
   return {
     success: false,

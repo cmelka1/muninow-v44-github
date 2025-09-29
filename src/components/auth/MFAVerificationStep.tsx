@@ -77,6 +77,8 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
         normalizedIdentifier = formatPhoneForStorage(phone);
       }
 
+      console.log('Sending verification code to:', normalizedIdentifier);
+
       const { data, error } = await supabase.functions.invoke('send-verification', {
         body: {
           identifier: normalizedIdentifier,
@@ -137,12 +139,13 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
         normalizedIdentifier = formatPhoneForStorage(phone);
       }
 
-      const { data, error } = await supabase.functions.invoke('send-verification', {
+      console.log('Verifying code for:', normalizedIdentifier);
+
+      const { data, error } = await supabase.functions.invoke('verify-code', {
         body: {
-          identifier: normalizedIdentifier,
-          type: verificationMethod,
-          action: 'verify',
-          code: verificationCode
+          user_identifier: normalizedIdentifier,
+          code: verificationCode,
+          verification_type: 'mfa'
         }
       });
 
