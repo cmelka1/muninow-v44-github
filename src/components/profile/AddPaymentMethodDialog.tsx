@@ -210,14 +210,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       console.log(`🔧 Initializing Finix ${paymentType} form...`);
       setInitializationError(null);
       
-      // Create appropriate form type
-      const form = paymentType === 'card'
-        ? window.Finix.CardTokenForm()
-        : window.Finix.BankTokenForm();
-
-      console.log('✅ Finix form instance created');
-
-      // Define styles
+      // Define styles first
       const formStyles = {
         base: {
           fontSize: '14px',
@@ -240,54 +233,49 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
           color: 'hsl(var(--destructive))',
         },
       };
-
-      // Set up event listeners before rendering
-      form.on('ready', () => {
-        console.log('✅ Finix form ready event fired');
-        setFinixFormReady(true);
-      });
-
-      form.on('change', (data: any) => {
-        console.log('📝 Finix form changed:', data);
-      });
-
-      form.on('error', (error: any) => {
-        console.error('❌ Finix form error:', error);
-        toast({
-          title: "Form Error",
-          description: error.message || "An error occurred with the payment form",
-          variant: "destructive",
-        });
-      });
-
-      // Render form in container with a small delay to ensure DOM is ready
-      const containerId = `finix-${paymentType}-form-container`;
-      console.log(`🎨 Rendering form in container: ${containerId}`);
       
-      setTimeout(() => {
-        try {
-          const container = document.getElementById(containerId);
-          if (!container) {
-            throw new Error(`Container element #${containerId} not found in DOM`);
-          }
-          console.log('✅ Container found, rendering form...');
-          form.render(containerId, {
+      const containerId = paymentType === 'card' ? 'finix-card-form' : 'finix-bank-form';
+      
+      // Create appropriate form type with elementId and config
+      const form = paymentType === 'card'
+        ? window.Finix.CardTokenForm(containerId, {
+            applicationId: finixConfig.applicationId,
+            environment: finixConfig.environment,
+            styles: formStyles
+          })
+        : window.Finix.BankTokenForm(containerId, {
             applicationId: finixConfig.applicationId,
             environment: finixConfig.environment,
             styles: formStyles
           });
-          console.log('✅ Form render called successfully');
-        } catch (renderError) {
-          console.error('❌ Error rendering form:', renderError);
-          const errorMsg = renderError instanceof Error ? renderError.message : 'Failed to render payment form';
-          setInitializationError(errorMsg);
+
+      console.log('✅ Finix form instance created');
+      
+      // Defensive check
+      if (!form) {
+        throw new Error('Failed to create Finix form instance');
+      }
+
+      // Set up event listeners
+      if (typeof form.on === 'function') {
+        form.on('ready', () => {
+          console.log('✅ Finix form ready event fired');
+          setFinixFormReady(true);
+        });
+
+        form.on('change', (data: any) => {
+          console.log('📝 Finix form changed:', data);
+        });
+
+        form.on('error', (error: any) => {
+          console.error('❌ Finix form error:', error);
           toast({
-            title: "Form Rendering Error",
-            description: errorMsg,
+            title: "Form Error",
+            description: error.message || "An error occurred with the payment form",
             variant: "destructive",
           });
-        }
-      }, 100); // 100ms delay to ensure DOM is ready
+        });
+      }
 
       setFinixForm(form);
     } catch (error) {
