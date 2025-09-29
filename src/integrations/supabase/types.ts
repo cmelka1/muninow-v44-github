@@ -4511,9 +4511,7 @@ export type Database = {
         Returns: boolean
       }
       rollback_service_application_payment: {
-        Args:
-          | { p_application_id: string; p_payment_history_id: string }
-          | { p_payment_transaction_id: string }
+        Args: { p_payment_transaction_id: string }
         Returns: boolean
       }
       set_default_user_payment_instrument: {
@@ -4551,18 +4549,11 @@ export type Database = {
         Returns: boolean
       }
       update_unified_payment_status: {
-        Args:
-          | {
-              p_finix_transfer_id: string
-              p_payment_history_id: string
-              p_payment_status: string
-              p_transfer_state: string
-            }
-          | {
-              p_finix_transfer_id: string
-              p_payment_transaction_id: string
-              p_transfer_state: string
-            }
+        Args: {
+          p_finix_transfer_id: string
+          p_payment_transaction_id: string
+          p_transfer_state: string
+        }
         Returns: boolean
       }
       validate_merchant_category_subcategory: {
