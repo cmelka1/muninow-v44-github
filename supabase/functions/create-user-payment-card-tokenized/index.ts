@@ -29,11 +29,10 @@ serve(async (req) => {
 
     // Get Finix credentials
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixUsername = Deno.env.get('FINIX_USERNAME');
-    const finixPassword = Deno.env.get('FINIX_PASSWORD');
+    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
-    if (!finixApplicationId || !finixUsername || !finixPassword) {
+    if (!finixApplicationId || !finixApiSecret) {
       console.error('Missing Finix credentials');
       throw new Error('Finix payment processing is not configured');
     }
@@ -103,7 +102,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/vnd.json+api',
-        'Authorization': 'Basic ' + btoa(`${finixUsername}:${finixPassword}`),
+        'Authorization': 'Basic ' + btoa(`${finixApplicationId}:${finixApiSecret}`),
         'Finix-Version': '2022-02-01',
       },
       body: JSON.stringify(paymentInstrumentData),
