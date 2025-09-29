@@ -73,7 +73,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
   const [paymentType, setPaymentType] = useState<'card' | 'bank'>('card');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [finixConfig, setFinixConfig] = useState<{ applicationId: string; environment: 'sandbox' | 'live' } | null>(null);
-  const [finixForm, setFinixForm] = useState<any>(null);
+  const [finixForm, setFinixForm] = useState<{
+    form: any;
+    observer: MutationObserver | null;
+    fallbackTimer: NodeJS.Timeout | null;
+  } | null>(null);
   const [finixFormReady, setFinixFormReady] = useState(false);
   const [finixLibraryLoaded, setFinixLibraryLoaded] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
@@ -198,7 +202,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     if (finixForm) {
       try {
         console.log('🧹 Cleaning up previous form');
-        finixForm.destroy();
+        finixForm.form.destroy();
       } catch (e) {
         console.log('Error destroying previous form:', e);
       }
@@ -273,7 +277,44 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         });
       }
 
-      setFinixForm(form);
+      // Fallback 1: Check for iframe elements (Finix injects iframes for secure fields)
+      const checkForFormElements = () => {
+        const container = document.getElementById(containerId);
+        if (container) {
+          const iframes = container.querySelectorAll('iframe');
+          if (iframes.length > 0) {
+            console.log('✅ Finix form iframes detected, marking as ready');
+            setFinixFormReady(true);
+            return true;
+          }
+        }
+        return false;
+      };
+
+      // Fallback 2: Set up a mutation observer to detect when Finix injects content
+      let observer: MutationObserver | null = null;
+      const container = document.getElementById(containerId);
+      if (container) {
+        observer = new MutationObserver(() => {
+          if (checkForFormElements() && observer) {
+            observer.disconnect();
+          }
+        });
+        
+        observer.observe(container, {
+          childList: true,
+          subtree: true
+        });
+      }
+
+      // Fallback 3: Timeout - if form hasn't reported ready after 3 seconds but has content, mark as ready
+      const fallbackTimer = setTimeout(() => {
+        if (checkForFormElements()) {
+          console.log('⚠️ Finix ready event did not fire, but form content detected - marking as ready via timeout');
+        }
+      }, 3000);
+
+      setFinixForm({ form, observer, fallbackTimer });
     } catch (error) {
       console.error('❌ Error initializing Finix form:', error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to initialize payment form';
@@ -289,8 +330,14 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     return () => {
       if (finixForm) {
         try {
-          console.log('🧹 Cleanup: destroying form');
-          finixForm.destroy();
+          console.log('🧹 Cleanup: destroying form and observers');
+          if (finixForm.observer) {
+            finixForm.observer.disconnect();
+          }
+          if (finixForm.fallbackTimer) {
+            clearTimeout(finixForm.fallbackTimer);
+          }
+          finixForm.form.destroy();
         } catch (e) {
           console.log('Error destroying form on cleanup:', e);
         }
@@ -369,7 +416,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       console.log('Submitting Finix form...');
       
       // Submit Finix form to get token (callback-based per Finix docs)
-      finixForm.submit(finixConfig.environment, finixConfig.applicationId, async (err: any, res: any) => {
+      finixForm.form.submit(finixConfig.environment, finixConfig.applicationId, async (err: any, res: any) => {
         if (err) {
           console.error('Finix submission error:', err);
           toast({
@@ -473,7 +520,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     form.reset();
     if (finixForm) {
       try {
-        finixForm.clear();
+        finixForm.form.clear();
       } catch (e) {
         console.log('Error clearing form:', e);
       }
