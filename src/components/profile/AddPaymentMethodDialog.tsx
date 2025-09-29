@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -12,14 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { mapAccountTypeForFinix } from '@/utils/accountTypeMapping';
 import { CreditCard, Building2, MapPin } from 'lucide-react';
 
 interface AddPaymentMethodDialogProps {
@@ -28,15 +26,10 @@ interface AddPaymentMethodDialogProps {
   onSuccess: (paymentMethodId?: string) => void;
 }
 
-// Form schemas
-const cardSchema = z.object({
+// Form schemas for metadata only (Finix handles sensitive data)
+const cardMetadataSchema = z.object({
   paymentType: z.literal('card'),
-  cardholderName: z.string().min(1, 'Cardholder name is required'),
   cardNickname: z.string().optional(),
-  cardNumber: z.string().min(13, 'Card number must be at least 13 digits').max(19, 'Card number must be at most 19 digits'),
-  expirationMonth: z.string().min(1, 'Expiration month is required'),
-  expirationYear: z.string().min(1, 'Expiration year is required'),
-  securityCode: z.string().min(3, 'Security code must be at least 3 digits').max(4, 'Security code must be at most 4 digits'),
   useProfileAddress: z.boolean(),
   streetAddress: z.string().min(1, 'Street address is required'),
   city: z.string().min(1, 'City is required'),
@@ -45,12 +38,9 @@ const cardSchema = z.object({
   country: z.string().default('USA'),
 });
 
-const bankSchema = z.object({
+const bankMetadataSchema = z.object({
   paymentType: z.literal('bank'),
-  accountHolderName: z.string().min(1, 'Account holder name is required'),
   accountNickname: z.string().optional(),
-  routingNumber: z.string().length(9, 'Routing number must be 9 digits'),
-  accountNumber: z.string().min(4, 'Account number is required'),
   accountType: z.enum(['personal_checking', 'personal_savings', 'business_checking', 'business_savings']),
   useProfileAddress: z.boolean(),
   streetAddress: z.string().min(1, 'Street address is required'),
@@ -60,7 +50,7 @@ const bankSchema = z.object({
   country: z.string().default('USA'),
 });
 
-const formSchema = z.discriminatedUnion('paymentType', [cardSchema, bankSchema]);
+const formSchema = z.discriminatedUnion('paymentType', [cardMetadataSchema, bankMetadataSchema]);
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -81,8 +71,10 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
   const { profile } = useAuth();
   const { toast } = useToast();
   const [paymentType, setPaymentType] = useState<'card' | 'bank'>('card');
-  const [finixIdentityId, setFinixIdentityId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [finixConfig, setFinixConfig] = useState<{ applicationId: string; environment: 'sandbox' | 'live' } | null>(null);
+  const [finixForm, setFinixForm] = useState<any>(null);
+  const [finixFormReady, setFinixFormReady] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -99,45 +91,145 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
   const useProfileAddress = form.watch('useProfileAddress');
 
-  // Load user's Finix identity ID
+  // Fetch Finix configuration
   useEffect(() => {
-    const loadFinixIdentity = async () => {
-      if (!profile?.id) return;
-
+    const fetchFinixConfig = async () => {
       try {
-        const mappedAccountType = mapAccountTypeForFinix(profile.account_type);
-        const { data, error } = await supabase
-          .from('finix_identities')
-          .select('finix_identity_id')
-          .eq('user_id', profile.id)
-          .eq('account_type', mappedAccountType)
-          .single();
+        console.log('Fetching Finix configuration...');
+        const { data, error } = await supabase.functions.invoke('get-finix-config');
 
         if (error) {
-          console.error('Error loading Finix identity:', error);
-          console.log('Mapped account type used for query:', mappedAccountType);
-          toast({
-            title: "Payment Setup Required",
-            description: "Please complete your payment profile setup to add payment methods. Contact support if this issue persists.",
-            variant: "destructive",
-          });
-          return;
+          console.error('Error fetching Finix config:', error);
+          throw error;
         }
 
-        setFinixIdentityId(data?.finix_identity_id || 'Not Available');
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to get Finix configuration');
+        }
+
+        console.log('Finix configuration loaded:', data.applicationId);
+        setFinixConfig({
+          applicationId: data.applicationId,
+          environment: data.environment,
+        });
       } catch (error) {
-        console.error('Error loading Finix identity:', error);
+        console.error('Error loading Finix config:', error);
+        toast({
+          title: "Configuration Error",
+          description: "Failed to load payment form configuration. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
-    if (open && profile) {
-      loadFinixIdentity();
+    if (open) {
+      fetchFinixConfig();
+    }
+  }, [open, toast]);
+
+  // Initialize Finix form when config is loaded and payment type changes
+  useEffect(() => {
+    if (!finixConfig || !window.Finix || !open) return;
+
+    // Clean up existing form
+    if (finixForm) {
+      try {
+        finixForm.destroy();
+      } catch (e) {
+        console.log('Error destroying previous form:', e);
+      }
+      setFinixForm(null);
+      setFinixFormReady(false);
+    }
+
+    try {
+      console.log('Initializing Finix form:', paymentType);
       
-      // Reset form with profile data when dialog opens
+      // Create appropriate form type
+      const form = paymentType === 'card'
+        ? window.Finix.CardTokenForm({
+            applicationId: finixConfig.applicationId,
+            environment: finixConfig.environment,
+          })
+        : window.Finix.BankTokenForm({
+            applicationId: finixConfig.applicationId,
+            environment: finixConfig.environment,
+          });
+
+      // Define styles
+      const formStyles = {
+        base: {
+          fontSize: '14px',
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+          color: 'hsl(var(--foreground))',
+          backgroundColor: 'hsl(var(--background))',
+          padding: '10px 12px',
+          borderRadius: '6px',
+          border: '1px solid hsl(var(--border))',
+          '::placeholder': {
+            color: 'hsl(var(--muted-foreground))',
+          },
+        },
+        focus: {
+          borderColor: 'hsl(var(--ring))',
+          outline: '2px solid hsl(var(--ring))',
+        },
+        error: {
+          borderColor: 'hsl(var(--destructive))',
+          color: 'hsl(var(--destructive))',
+        },
+      };
+
+      // Render form in container
+      const containerId = `finix-${paymentType}-form-container`;
+      form.render(containerId, formStyles);
+
+      // Set up event listeners
+      form.on('ready', () => {
+        console.log('Finix form ready');
+        setFinixFormReady(true);
+      });
+
+      form.on('change', (data: any) => {
+        console.log('Finix form changed:', data);
+      });
+
+      form.on('error', (error: any) => {
+        console.error('Finix form error:', error);
+        toast({
+          title: "Form Error",
+          description: error.message || "An error occurred with the payment form",
+          variant: "destructive",
+        });
+      });
+
+      setFinixForm(form);
+    } catch (error) {
+      console.error('Error initializing Finix form:', error);
+      toast({
+        title: "Form Initialization Error",
+        description: "Failed to initialize payment form. Please refresh and try again.",
+        variant: "destructive",
+      });
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (finixForm) {
+        try {
+          finixForm.destroy();
+        } catch (e) {
+          console.log('Error destroying form on cleanup:', e);
+        }
+      }
+    };
+  }, [finixConfig, paymentType, open]);
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open && profile) {
       form.reset({
         paymentType: paymentType,
-        cardholderName: `${profile.first_name} ${profile.last_name}`,
-        accountHolderName: `${profile.first_name} ${profile.last_name}`,
         useProfileAddress: true,
         country: 'USA',
         streetAddress: profile.street_address || '',
@@ -150,20 +242,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
   // Update form when payment type changes
   useEffect(() => {
-    if (profile) {
-      form.setValue('paymentType', paymentType);
-      if (paymentType === 'card') {
-        form.setValue('cardholderName', `${profile.first_name} ${profile.last_name}`);
-      } else {
-        form.setValue('accountHolderName', `${profile.first_name} ${profile.last_name}`);
-      }
-    }
-  }, [paymentType, profile, form]);
+    form.setValue('paymentType', paymentType);
+  }, [paymentType, form]);
 
   // Handle address selection from Google Places
   const handleAddressSelect = (addressComponents: any) => {
-    
-    // Distribute to proper form fields using setValue with conditional checks
     if (addressComponents.streetAddress) {
       form.setValue('streetAddress', addressComponents.streetAddress);
     }
@@ -177,7 +260,6 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       form.setValue('zipCode', addressComponents.zipCode);
     }
     
-    // Trigger validation for updated fields
     form.trigger(['streetAddress', 'city', 'state', 'zipCode']);
   };
 
@@ -186,13 +268,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     form.setValue('useProfileAddress', checked);
     
     if (checked && profile) {
-      // Populate with profile address
       form.setValue('streetAddress', profile.street_address || '');
       form.setValue('city', profile.city || '');
       form.setValue('state', profile.state || '');
       form.setValue('zipCode', profile.zip_code || '');
     } else {
-      // Clear address fields for manual entry
       form.setValue('streetAddress', '');
       form.setValue('city', '');
       form.setValue('state', '');
@@ -201,71 +281,74 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
   };
 
   const onSubmit = async (data: FormData) => {
+    if (!finixForm || !finixFormReady) {
+      toast({
+        title: "Form Not Ready",
+        description: "Please wait for the payment form to load.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      console.log('Submitting Finix form...');
       
+      // Submit Finix form to get token
+      const tokenResponse = await finixForm.submit();
+      console.log('Finix token received:', tokenResponse.token);
+
+      // Prepare address override if not using profile address
+      const addressOverride = !data.useProfileAddress ? {
+        streetAddress: data.streetAddress,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        country: data.country,
+      } : undefined;
+
+      // Call appropriate tokenized edge function
       let response;
       if (data.paymentType === 'card') {
-        response = await supabase.functions.invoke('create-user-payment-card', {
+        response = await supabase.functions.invoke('create-user-payment-card-tokenized', {
           body: {
-            cardholderName: data.cardholderName,
-            cardNickname: data.cardNickname,
-            cardNumber: data.cardNumber,
-            expirationMonth: data.expirationMonth,
-            expirationYear: data.expirationYear,
-            securityCode: data.securityCode,
-            streetAddress: data.streetAddress,
-            city: data.city,
-            state: data.state,
-            zipCode: data.zipCode,
-            country: data.country
+            finixToken: tokenResponse.token,
+            nickname: data.cardNickname,
+            addressOverride,
           }
         });
       } else {
-        response = await supabase.functions.invoke('create-user-bank-account', {
+        response = await supabase.functions.invoke('create-user-bank-account-tokenized', {
           body: {
-            accountHolderName: data.accountHolderName,
-            accountNickname: data.accountNickname,
-            routingNumber: data.routingNumber,
-            accountNumber: data.accountNumber,
+            finixToken: tokenResponse.token,
+            nickname: data.accountNickname,
             accountType: data.accountType,
-            streetAddress: data.streetAddress,
-            city: data.city,
-            state: data.state,
-            zipCode: data.zipCode,
-            country: data.country
+            addressOverride,
           }
         });
       }
 
-      
-
-      // Check for Supabase function invocation errors (network/auth errors)
+      // Check for errors
       if (response.error) {
         console.error('Supabase invocation error:', response.error);
         throw new Error(`Network error: ${response.error.message}`);
       }
 
-      // Check for edge function business logic errors
       if (!response.data || response.data.success === false) {
-        const errorMessage = response.data?.error || response.data?.details || 'Unknown error occurred';
-        console.error('Edge function business error:', errorMessage);
+        const errorMessage = response.data?.error || 'Unknown error occurred';
+        console.error('Edge function error:', errorMessage);
         throw new Error(errorMessage);
       }
 
       console.log('Payment method created successfully:', response.data);
       
-      // Success! Show toast and update UI
       toast({
         title: "Success",
         description: `${data.paymentType === 'card' ? 'Payment card' : 'Bank account'} added successfully.`,
       });
       
-      // Extract payment method ID from response
       const paymentMethodId = response.data?.paymentInstrument?.id;
-      
-      // Refresh payment methods list and close dialog
       await onSuccess(paymentMethodId);
       onOpenChange(false);
       
@@ -289,6 +372,13 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
   const handleClose = () => {
     form.reset();
+    if (finixForm) {
+      try {
+        finixForm.clear();
+      } catch (e) {
+        console.log('Error clearing form:', e);
+      }
+    }
     onOpenChange(false);
   };
 
@@ -315,12 +405,6 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">User Name</Label>
                   <div className="mt-1 text-lg font-medium">{profile.first_name} {profile.last_name}</div>
-                </div>
-                <div className="text-right">
-                  <Label className="text-xs font-medium text-muted-foreground">Finix Identity ID</Label>
-                  <div className="mt-1 text-xs font-mono text-muted-foreground">
-                    {finixIdentityId}
-                  </div>
                 </div>
               </div>
             </div>
@@ -356,149 +440,39 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
               </div>
             </div>
 
-            {/* Payment Method Fields */}
-            {paymentType === 'card' ? (
-              <div className="space-y-4">
-                <h3 className="font-medium flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Card Information
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="cardholderName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cardholder Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="cardNickname"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Card Nickname <span className="text-muted-foreground">(Optional)</span></FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., Personal Visa" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+            {/* Finix Tokenized Form */}
+            <div className="space-y-4">
+              <h3 className="font-medium flex items-center gap-2">
+                {paymentType === 'card' ? (
+                  <>
+                    <CreditCard className="h-4 w-4" />
+                    Card Information
+                  </>
+                ) : (
+                  <>
+                    <Building2 className="h-4 w-4" />
+                    Bank Account Information
+                  </>
+                )}
+              </h3>
 
+              {/* Nickname Field */}
+              {paymentType === 'card' ? (
                 <FormField
                   control={form.control}
-                  name="cardNumber"
+                  name="cardNickname"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Card Number</FormLabel>
+                      <FormLabel>Card Nickname <span className="text-muted-foreground">(Optional)</span></FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="1234 5678 9012 3456" />
+                        <Input {...field} placeholder="e.g., Personal Visa" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="expirationMonth"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Exp Month</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="MM" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Array.from({ length: 12 }, (_, i) => (
-                              <SelectItem key={i + 1} value={String(i + 1).padStart(2, '0')}>
-                                {String(i + 1).padStart(2, '0')}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="expirationYear"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Exp Year</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="YYYY" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Array.from({ length: 10 }, (_, i) => {
-                              const year = new Date().getFullYear() + i;
-                              return (
-                                <SelectItem key={year} value={String(year)}>
-                                  {year}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="securityCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CVV</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="123" maxLength={4} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h3 className="font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Bank Account Information
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="accountHolderName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Holder Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
+              ) : (
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="accountNickname"
@@ -512,63 +486,53 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="routingNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Routing Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="123456789" maxLength={9} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
                     control={form.control}
-                    name="accountNumber"
+                    name="accountType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Account Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Account number" />
-                        </FormControl>
+                        <FormLabel>Account Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select account type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="personal_checking">Personal Checking</SelectItem>
+                            <SelectItem value="personal_savings">Personal Savings</SelectItem>
+                            <SelectItem value="business_checking">Business Checking</SelectItem>
+                            <SelectItem value="business_savings">Business Savings</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+              )}
 
-                <FormField
-                  control={form.control}
-                  name="accountType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Account Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select account type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="personal_checking">Personal Checking</SelectItem>
-                          <SelectItem value="personal_savings">Personal Savings</SelectItem>
-                          <SelectItem value="business_checking">Business Checking</SelectItem>
-                          <SelectItem value="business_savings">Business Savings</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+              {/* Finix Tokenized Form Container */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  {paymentType === 'card' ? 'Card Details' : 'Account Details'}
+                </Label>
+                <div 
+                  id={`finix-${paymentType}-form-container`}
+                  className="min-h-[120px] p-4 border rounded-lg bg-background"
+                >
+                  {!finixFormReady && (
+                    <div className="flex items-center justify-center h-[120px]">
+                      <div className="text-sm text-muted-foreground">Loading secure form...</div>
+                    </div>
                   )}
-                />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  🔒 Your payment information is securely handled by Finix and never touches our servers.
+                </p>
               </div>
-            )}
+            </div>
 
             {/* Billing Address Section */}
             <div className="space-y-4">
@@ -605,13 +569,13 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                       <FormItem>
                         <FormLabel>Street Address</FormLabel>
                         <FormControl>
-                            <GooglePlacesAutocompleteV2
-                              onAddressSelect={handleAddressSelect}
-                              className="h-11"
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Enter your street address"
-                            />
+                          <GooglePlacesAutocompleteV2
+                            onAddressSelect={handleAddressSelect}
+                            className="h-11"
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Enter your street address"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -683,10 +647,10 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-3 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !finixFormReady}>
                 {isSubmitting ? 'Adding...' : 'Add Payment Method'}
               </Button>
             </div>
