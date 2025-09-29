@@ -77,13 +77,14 @@ serve(async (req) => {
         );
       }
 
-      // Map MFA type to verification type
+      // Map request type to verification type (must be 'sms' or 'email' per DB constraint)
       if (requestType === 'sms' && phone) {
-        type = 'mfa';
+        type = 'sms';
       } else if (requestType === 'email' && email) {
-        type = 'mfa';
+        type = 'email';
       } else {
-        type = action || 'mfa'; // Use action if available, default to mfa
+        // For backward compatibility, determine type based on what we have
+        type = phone ? 'sms' : 'email';
       }
     } else {
       // Old format
