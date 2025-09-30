@@ -520,10 +520,10 @@ Deno.serve(async (req) => {
             break;
 
           case 'service_application':
-            // Get current service application status
+            // Get current service application status and check if review is required
             const { data: serviceApp, error: serviceFetchError } = await supabase
               .from('municipal_service_applications')
-              .select('status')
+              .select('status, tile_id, municipal_service_tiles!inner(requires_review)')
               .eq('id', entity_id)
               .single();
             
@@ -540,11 +540,20 @@ Deno.serve(async (req) => {
               finix_transfer_id: finixData.id
             };
             
-            // Auto-issue if approved
-            if (serviceApp.status === 'approved') {
+            // Check if service requires review
+            const requiresReview = (serviceApp.municipal_service_tiles as any)?.requires_review;
+            
+            // Auto-issue logic based on review requirement
+            if (!requiresReview) {
+              // Non-reviewable services: auto-issue immediately after payment
               serviceUpdate.status = 'issued';
               serviceUpdate.issued_at = new Date().toISOString();
-              console.log('Auto-issuing service application after successful payment');
+              console.log('Auto-issuing non-reviewable service application after payment');
+            } else if (serviceApp.status === 'approved') {
+              // Reviewable services: only auto-issue if already approved
+              serviceUpdate.status = 'issued';
+              serviceUpdate.issued_at = new Date().toISOString();
+              console.log('Auto-issuing approved reviewable service application after payment');
             }
             
             const { error: serviceError } = await supabase
