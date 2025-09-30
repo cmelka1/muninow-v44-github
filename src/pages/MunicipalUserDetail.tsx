@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Mail, Phone, MapPin, User, AlertCircle } from 'lucide-react';
-import UserBillsTable from '@/components/UserBillsTable';
 import UserPaymentHistoryTable from '@/components/UserPaymentHistoryTable';
 import { formatAccountType, getAccountTypeBadgeVariant } from '@/lib/formatters';
 import { useMunicipalUserSummary } from '@/hooks/useMunicipalUserSummary';
@@ -168,18 +167,6 @@ const MunicipalUserDetail = () => {
                   <p className="text-base">{formatPhoneNumber(userInfo.phone)}</p>
                 </div>
               )}
-              {userSummary && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Unpaid Bills</label>
-                  <p className="text-base">{userSummary.unpaid_bill_count} bills</p>
-                </div>
-              )}
-              {userSummary && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Total Amount Due</label>
-                  <p className="text-base">{formatCurrency(userSummary.total_amount_due_cents)}</p>
-                </div>
-              )}
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Address</label>
                 <p className="text-base">{formatAddress(userInfo)}</p>
@@ -196,11 +183,6 @@ const MunicipalUserDetail = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* User Bills Section */}
-        <div>
-          <UserBillsTable userId={userId!} />
-        </div>
 
         {/* MuniNow Payment History Section */}
         <div>

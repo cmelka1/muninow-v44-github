@@ -68,24 +68,6 @@ const PaymentConfirmation = () => {
 
         let enrichedData: PaymentTransactionDetails = { ...data } as PaymentTransactionDetails;
 
-        // Fetch master_bills data if bill_id exists
-        if (data.bill_id) {
-          const { data: billData, error: billError } = await supabase
-            .from('master_bills')
-            .select(`
-              merchant_name,
-              external_bill_number,
-              category,
-              due_date
-            `)
-            .eq('bill_id', data.bill_id)
-            .single();
-
-          if (!billError && billData) {
-            enrichedData.master_bills = billData;
-          }
-        }
-
         setPaymentDetails(enrichedData);
 
         // Check for existing refunds if user is municipal

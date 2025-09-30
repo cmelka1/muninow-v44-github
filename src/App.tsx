@@ -29,7 +29,6 @@ import SuperAdminCustomers from "./pages/SuperAdminCustomers";
 import SuperAdminCustomerDetail from "./pages/SuperAdminCustomerDetail";
 import SuperAdminMerchantDetail from "./pages/SuperAdminMerchantDetail";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
-import BillOverview from "./pages/BillOverview";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
 import PaymentHistory from "./pages/PaymentHistory";
 import MunicipalSignup from "./pages/MunicipalSignup";
@@ -47,7 +46,6 @@ import MunicipalUserDetail from "./pages/MunicipalUserDetail";
 import MunicipalTaxes from "./pages/MunicipalTaxes";
 import MunicipalTaxDetail from "./pages/MunicipalTaxDetail";
 import MunicipalOtherServices from "./pages/MunicipalOtherServices";
-import MunicipalBillOverview from "./pages/MunicipalBillOverview";
 import Permits from "./pages/Permits";
 import BusinessLicenses from "./pages/BusinessLicenses";
 import { BusinessLicenseDetail } from "./pages/BusinessLicenseDetail";
@@ -169,11 +167,6 @@ const App = () => (
                         </main>
                       </div>
                     </SidebarProvider>
-                  </SimpleProtectedRoute>
-                } />
-                <Route path="/bill/:billId" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
-                    <BillOverview />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/payment-confirmation/:paymentTransactionId" element={
@@ -341,13 +334,6 @@ const App = () => (
               </MunicipalLayout>
             </SimpleProtectedRoute>
           } />
-                <Route path="/municipal/bill/:billId" element={
-                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
-                    <MunicipalLayout>
-                      <MunicipalBillOverview />
-                    </MunicipalLayout>
-                  </SimpleProtectedRoute>
-                } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </CookieConsentProvider>
