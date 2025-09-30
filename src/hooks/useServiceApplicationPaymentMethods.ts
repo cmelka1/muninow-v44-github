@@ -17,14 +17,16 @@ interface ServiceApplicationData {
   statement_descriptor?: string;
 }
 
-export const useServiceApplicationPaymentMethods = (applicationData: ServiceApplicationData | null) => {
+export const useServiceApplicationPaymentMethods = (
+  applicationData: ServiceApplicationData | null,
+  applicationId?: string
+) => {
   const { toast } = useToast();
-  const [applicationId, setApplicationId] = useState<string | null>(null);
 
-  // Setup unified payment flow with service application entity type
+  // Setup unified payment flow with provided application ID
   const unifiedPayment = useUnifiedPaymentFlow({
     entityType: 'service_application',
-    entityId: applicationId || undefined,
+    entityId: applicationId,
     customerId: applicationData?.customer_id || '',
     merchantId: applicationData?.merchant_id || '',
     baseAmountCents: applicationData?.base_amount_cents || 0,
@@ -68,13 +70,13 @@ export const useServiceApplicationPaymentMethods = (applicationData: ServiceAppl
 
   // Handle regular payment
   const handlePayment = async () => {
-    if (!applicationData) {
+    if (!applicationData || !applicationId) {
       toast({
         title: 'Error',
-        description: 'Application data is missing',
+        description: 'Application data and ID are required',
         variant: 'destructive',
       });
-      return { success: false, error: 'Application data is missing' };
+      return { success: false, error: 'Application data and ID are required' };
     }
 
     if (!selectedPaymentMethod) {
@@ -87,37 +89,8 @@ export const useServiceApplicationPaymentMethods = (applicationData: ServiceAppl
     }
 
     try {
-      console.log('📝 Creating service application with payment...');
-
-      // Create service application record first
-      const { data: createResponse, error: createError } = await supabase.functions.invoke(
-        'create-service-application-with-payment',
-        {
-          body: {
-            tile_id: applicationData.tile_id,
-            customer_id: applicationData.customer_id,
-            merchant_id: applicationData.merchant_id,
-            user_id: applicationData.user_id,
-            form_data: applicationData.form_data,
-            base_amount_cents: applicationData.base_amount_cents,
-            merchant_name: applicationData.merchant_name,
-            category: applicationData.category,
-            subcategory: applicationData.subcategory,
-            statement_descriptor: applicationData.statement_descriptor,
-          },
-        }
-      );
-
-      if (createError) throw createError;
-      if (!createResponse?.success) {
-        throw new Error(createResponse?.error || 'Failed to create service application');
-      }
-
-      const newApplicationId = createResponse.service_application_id;
-      console.log('✅ Service application created:', newApplicationId);
-      setApplicationId(newApplicationId);
-
-      // Now process payment through unified flow
+      console.log('💳 Processing payment for application:', applicationId);
+      // Process payment through unified flow - application already exists
       return await unifiedPayment.handlePayment();
     } catch (error: any) {
       console.error('❌ Service application payment error:', error);
@@ -132,47 +105,18 @@ export const useServiceApplicationPaymentMethods = (applicationData: ServiceAppl
 
   // Handle Google Pay
   const handleGooglePayment = async () => {
-    if (!applicationData) {
+    if (!applicationData || !applicationId) {
       toast({
         title: 'Error',
-        description: 'Application data is missing',
+        description: 'Application data and ID are required',
         variant: 'destructive',
       });
-      return { success: false, error: 'Application data is missing' };
+      return { success: false, error: 'Application data and ID are required' };
     }
 
     try {
-      console.log('📝 Creating service application for Google Pay...');
-
-      // Create service application record first
-      const { data: createResponse, error: createError } = await supabase.functions.invoke(
-        'create-service-application-with-payment',
-        {
-          body: {
-            tile_id: applicationData.tile_id,
-            customer_id: applicationData.customer_id,
-            merchant_id: applicationData.merchant_id,
-            user_id: applicationData.user_id,
-            form_data: applicationData.form_data,
-            base_amount_cents: applicationData.base_amount_cents,
-            merchant_name: applicationData.merchant_name,
-            category: applicationData.category,
-            subcategory: applicationData.subcategory,
-            statement_descriptor: applicationData.statement_descriptor,
-          },
-        }
-      );
-
-      if (createError) throw createError;
-      if (!createResponse?.success) {
-        throw new Error(createResponse?.error || 'Failed to create service application');
-      }
-
-      const newApplicationId = createResponse.service_application_id;
-      console.log('✅ Service application created for Google Pay:', newApplicationId);
-      setApplicationId(newApplicationId);
-
-      // Set payment method and process through unified flow
+      console.log('💳 Processing Google Pay for application:', applicationId);
+      // Set payment method and process through unified flow - application already exists
       setSelectedPaymentMethod('google-pay');
       return await unifiedPayment.handleGooglePayment();
     } catch (error: any) {
@@ -188,13 +132,13 @@ export const useServiceApplicationPaymentMethods = (applicationData: ServiceAppl
 
   // Handle Apple Pay
   const handleApplePayment = async () => {
-    if (!applicationData) {
+    if (!applicationData || !applicationId) {
       toast({
         title: 'Error',
-        description: 'Application data is missing',
+        description: 'Application data and ID are required',
         variant: 'destructive',
       });
-      return { success: false, error: 'Application data is missing' };
+      return { success: false, error: 'Application data and ID are required' };
     }
 
     // Check Apple Pay availability
@@ -208,37 +152,8 @@ export const useServiceApplicationPaymentMethods = (applicationData: ServiceAppl
     }
 
     try {
-      console.log('📝 Creating service application for Apple Pay...');
-
-      // Create service application record first
-      const { data: createResponse, error: createError } = await supabase.functions.invoke(
-        'create-service-application-with-payment',
-        {
-          body: {
-            tile_id: applicationData.tile_id,
-            customer_id: applicationData.customer_id,
-            merchant_id: applicationData.merchant_id,
-            user_id: applicationData.user_id,
-            form_data: applicationData.form_data,
-            base_amount_cents: applicationData.base_amount_cents,
-            merchant_name: applicationData.merchant_name,
-            category: applicationData.category,
-            subcategory: applicationData.subcategory,
-            statement_descriptor: applicationData.statement_descriptor,
-          },
-        }
-      );
-
-      if (createError) throw createError;
-      if (!createResponse?.success) {
-        throw new Error(createResponse?.error || 'Failed to create service application');
-      }
-
-      const newApplicationId = createResponse.service_application_id;
-      console.log('✅ Service application created for Apple Pay:', newApplicationId);
-      setApplicationId(newApplicationId);
-
-      // Set payment method and process through unified flow
+      console.log('💳 Processing Apple Pay for application:', applicationId);
+      // Set payment method and process through unified flow - application already exists
       setSelectedPaymentMethod('apple-pay');
       return await unifiedPayment.handleApplePayment();
     } catch (error: any) {
@@ -263,7 +178,6 @@ export const useServiceApplicationPaymentMethods = (applicationData: ServiceAppl
     topPaymentMethods,
     paymentMethodsLoading,
     googlePayMerchantId,
-    applicationId,
 
     // Actions
     handlePayment,

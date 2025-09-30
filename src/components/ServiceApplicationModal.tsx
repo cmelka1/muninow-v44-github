@@ -13,7 +13,7 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { KeyboardNavigationForm } from '@/components/ui/keyboard-navigation-form';
 import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
-import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
+import { useCreateServiceApplication, useUpdateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,6 +63,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   onClose,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [draftApplicationId, setDraftApplicationId] = useState<string | null>(null);
   const dialogContentRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [useAutoPopulate, setUseAutoPopulate] = useState(true);
@@ -79,6 +80,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const { profile } = useAuth();
   const navigate = useNavigate();
   const createApplication = useCreateServiceApplication();
+  const updateApplication = useUpdateServiceApplication();
   const {
     paymentInstruments,
     isLoading: paymentMethodsLoading,
@@ -100,7 +102,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   } : null;
 
   // Initialize payment methods hook for non-reviewed services
-  const servicePaymentMethods = useServiceApplicationPaymentMethods(applicationData);
+  const servicePaymentMethods = useServiceApplicationPaymentMethods(
+    applicationData,
+    draftApplicationId || undefined
+  );
 
   useEffect(() => {
     if (tile && isOpen) {
@@ -232,7 +237,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 1) {
       // Validate step 1 mandatory fields before proceeding
       const errors = validateStep1Fields();
@@ -246,6 +251,40 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         return;
       } else {
         setValidationErrors({});
+      }
+
+      // For non-reviewable services, create draft application after validation
+      if (!tile?.requires_review && !draftApplicationId) {
+        try {
+          const draftApplication = await createApplication.mutateAsync({
+            tile_id: tile.id,
+            user_id: profile?.id || '',
+            customer_id: tile.customer_id,
+            status: 'draft',
+            payment_status: 'unpaid',
+            amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
+            applicant_email: formData.email || undefined,
+            applicant_phone: formData.phone || formData.phone_number || undefined,
+            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
+            street_address: formData.address || formData.street_address || formData.street || undefined,
+            apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
+            city: formData.city || undefined,
+            state: formData.state || undefined,
+            zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+            service_specific_data: formData,
+          });
+          setDraftApplicationId(draftApplication.id);
+          console.log('✅ Draft application created:', draftApplication.id);
+        } catch (error) {
+          console.error('Error creating draft application:', error);
+          toast({
+            title: "Error",
+            description: "Failed to create application draft. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
     }
 
@@ -274,25 +313,48 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const applicationData = await createApplication.mutateAsync({
-        tile_id: tile.id,
-        user_id: profile?.id || '',
-        customer_id: tile.customer_id,
-        status: 'submitted',
-        amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
-        // Map form data to structured fields
-        applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
-        applicant_email: formData.email || undefined,
-        applicant_phone: formData.phone || formData.phone_number || undefined,
-        business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
-        street_address: formData.address || formData.street_address || formData.street || undefined,
-        apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
-        city: formData.city || undefined,
-        state: formData.state || undefined,
-        zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
-        additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
-        service_specific_data: formData,
-      });
+      let applicationData;
+      
+      // For non-reviewable services with existing draft, update it
+      if (!tile.requires_review && draftApplicationId) {
+        applicationData = await updateApplication.mutateAsync({
+          id: draftApplicationId,
+          status: 'submitted',
+          payment_status: 'unpaid',
+          applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
+          applicant_email: formData.email || undefined,
+          applicant_phone: formData.phone || formData.phone_number || undefined,
+          business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
+          street_address: formData.address || formData.street_address || formData.street || undefined,
+          apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
+          city: formData.city || undefined,
+          state: formData.state || undefined,
+          zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+          additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
+          service_specific_data: formData,
+        });
+      } else {
+        // For reviewable services, create new application
+        applicationData = await createApplication.mutateAsync({
+          tile_id: tile.id,
+          user_id: profile?.id || '',
+          customer_id: tile.customer_id,
+          status: 'submitted',
+          payment_status: tile.requires_review ? 'not_required' : 'unpaid',
+          amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+          applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
+          applicant_email: formData.email || undefined,
+          applicant_phone: formData.phone || formData.phone_number || undefined,
+          business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
+          street_address: formData.address || formData.street_address || formData.street || undefined,
+          apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
+          city: formData.city || undefined,
+          state: formData.state || undefined,
+          zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+          additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
+          service_specific_data: formData,
+        });
+      }
 
       // Link uploaded documents to the application
       if (uploadedDocuments.length > 0) {
@@ -962,7 +1024,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   <CardContent>
                     <InlinePaymentFlow
                       entityType="service_application"
-                      entityId={servicePaymentMethods.applicationId || ''}
+                      entityId={draftApplicationId || ''}
                       entityName={tile.title}
                       customerId={tile.customer_id}
                       merchantId={tile.merchant_id}
