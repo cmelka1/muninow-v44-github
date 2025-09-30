@@ -3959,10 +3959,6 @@ export type Database = {
         Args: { "": string }
         Returns: string[]
       }
-      smart_bill_matching: {
-        Args: { input_bill_id: string }
-        Returns: undefined
-      }
       update_municipal_business_license_type: {
         Args: {
           p_base_fee_cents?: number
