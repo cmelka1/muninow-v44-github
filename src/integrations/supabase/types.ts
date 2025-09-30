@@ -14,36 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      bill_matching_queue: {
-        Row: {
-          bill_id: string | null
-          created_at: string | null
-          id: string
-          processed: boolean | null
-          processed_at: string | null
-          trigger_type: string | null
-          user_id: string | null
-        }
-        Insert: {
-          bill_id?: string | null
-          created_at?: string | null
-          id?: string
-          processed?: boolean | null
-          processed_at?: string | null
-          trigger_type?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          bill_id?: string | null
-          created_at?: string | null
-          id?: string
-          processed?: boolean | null
-          processed_at?: string | null
-          trigger_type?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       bill_notifications: {
         Row: {
           bill_id: string
@@ -132,36 +102,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      bill_processing_failures: {
-        Row: {
-          bill_id: string | null
-          failed_at: string | null
-          failure_reason: string | null
-          id: string
-          manual_review_required: boolean | null
-          raw_bill_data: Json | null
-          retry_count: number | null
-        }
-        Insert: {
-          bill_id?: string | null
-          failed_at?: string | null
-          failure_reason?: string | null
-          id?: string
-          manual_review_required?: boolean | null
-          raw_bill_data?: Json | null
-          retry_count?: number | null
-        }
-        Update: {
-          bill_id?: string | null
-          failed_at?: string | null
-          failure_reason?: string | null
-          id?: string
-          manual_review_required?: boolean | null
-          raw_bill_data?: Json | null
-          retry_count?: number | null
-        }
-        Relationships: []
       }
       business_license_applications: {
         Row: {
@@ -2980,41 +2920,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "permit_review_requests_permit_id_fkey"
-            columns: ["permit_id"]
-            isOneToOne: false
-            referencedRelation: "permit_applications"
-            referencedColumns: ["permit_id"]
-          },
-        ]
-      }
-      permit_reviews: {
-        Row: {
-          created_at: string
-          id: string
-          notes: string | null
-          permit_id: string
-          review_action: string
-          reviewer_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          notes?: string | null
-          permit_id: string
-          review_action: string
-          reviewer_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          notes?: string | null
-          permit_id?: string
-          review_action?: string
-          reviewer_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "permit_reviews_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
             referencedRelation: "permit_applications"
