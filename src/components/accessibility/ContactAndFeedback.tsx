@@ -23,7 +23,7 @@ const ContactAndFeedback: React.FC = () => {
         <ul className="list-disc pl-5 space-y-1">
           <li><strong>General Feedback:</strong> We respond within 2 business days</li>
           <li><strong>Accessibility Barriers:</strong> Critical issues addressed within 1 business day</li>
-          <li><strong>Payment Issues:</strong> Accessibility problems with payments resolved immediately</li>
+          <li><strong>Service Issues:</strong> Accessibility problems with services resolved immediately</li>
           <li><strong>Technical Support:</strong> Accessibility-related technical support available during business hours</li>
         </ul>
         
@@ -32,7 +32,7 @@ const ContactAndFeedback: React.FC = () => {
           If you encounter accessibility barriers that prevent you from using our online services, we provide alternative methods:
         </p>
         <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Phone Assistance:</strong> Complete municipal bill payments over the phone</li>
+          <li><strong>Phone Assistance:</strong> Complete municipal services over the phone</li>
           <li><strong>In-Person Support:</strong> Municipal office assistance for online services</li>
           <li><strong>Alternative Formats:</strong> Documents and forms in accessible formats upon request</li>
           <li><strong>Assisted Navigation:</strong> Step-by-step assistance with online processes</li>

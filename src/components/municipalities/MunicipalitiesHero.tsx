@@ -16,10 +16,10 @@ const MunicipalitiesHero: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[250px] lg:min-h-[300px] px-12 lg:px-24">
           <div>
             <ResponsiveTypography variant="h1" className="mb-6">
-              Streamline Municipal Bill Collection
+              Streamline Municipal Services Management
             </ResponsiveTypography>
             <ResponsiveTypography variant="body" className="text-muted-foreground mb-8 text-xl">
-              Our comprehensive platform helps municipalities modernize payment processes, reduce administrative overhead, and improve resident and business satisfaction.
+              Our comprehensive platform helps municipalities modernize permits, licenses, taxes, and service applications, reduce administrative overhead, and improve resident and business satisfaction.
             </ResponsiveTypography>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/signup" aria-label="Schedule a demo with MuniNow">

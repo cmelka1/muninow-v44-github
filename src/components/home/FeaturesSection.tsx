@@ -19,10 +19,10 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile }) => {
               Powerful Features
             </Badge>
             <ResponsiveTypography variant="h2" className="mb-4">
-              Streamline Your Bill Pay Process
+              Streamline Your Municipal Services
             </ResponsiveTypography>
             <ResponsiveTypography variant="body" className="text-muted-foreground mb-6">
-              MuniNow offers comprehensive tools for both residents, businesses, and municipal administrators to simplify the entire bill payment ecosystem.
+              MuniNow offers comprehensive tools for residents, businesses, and municipal administrators to simplify permits, licenses, taxes, and service applications.
             </ResponsiveTypography>
             
             <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
@@ -60,10 +60,10 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile }) => {
                 </div>
                 <div>
                   <ResponsiveTypography variant="h5" className="mb-1">
-                    Payment History & Reminders
+                    Service Tracking & Reminders
                   </ResponsiveTypography>
                   <ResponsiveTypography variant="small" className="text-muted-foreground">
-                    Complete payment history records and automated reminders for upcoming bills.
+                    Complete transaction history and automated reminders for permits, licenses, and tax deadlines.
                   </ResponsiveTypography>
                 </div>
               </div>

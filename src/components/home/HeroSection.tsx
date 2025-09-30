@@ -18,11 +18,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
           <div>
             <header>
               <ResponsiveTypography variant="h1" className="mb-3">
-                <span className="gradient-text">Simplified Municipal Bill Pay</span> for Everyone
+                <span className="gradient-text">Simplified Municipal Services</span> for Everyone
               </ResponsiveTypography>
               <ResponsiveTypography variant="body" className="text-muted-foreground mb-4">
-                One platform for all your bills, designed for residents, businesses, and administrators. 
-                Pay securely, schedule automatically, and never miss a payment again.
+                One platform for all your municipal needs, designed for residents, businesses, and administrators. 
+                Manage permits, licenses, taxes, and services securely in one place.
               </ResponsiveTypography>
             </header>
             

@@ -8,8 +8,7 @@ import { Bell, Mail, Smartphone, FileText, DollarSign, Edit2, Save, X } from 'lu
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-// Feature flag to control paperless billing visibility
-const SHOW_PAPERLESS_BILLING = false;
+// Feature flag removed - paperless billing is part of legacy bill system
 
 interface NotificationPreferences {
   serviceUpdates: {
@@ -20,7 +19,6 @@ interface NotificationPreferences {
     email: boolean;
     sms: boolean;
   };
-  paperlessBilling: boolean;
 }
 
 // Simplified notification categories configuration
@@ -46,13 +44,11 @@ export const NotificationsTab = () => {
   // Initialize preferences state
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     serviceUpdates: { email: true, sms: false },
-    paymentConfirmations: { email: true, sms: false },
-    paperlessBilling: false
+    paymentConfirmations: { email: true, sms: false }
   });
   const [originalPreferences, setOriginalPreferences] = useState<NotificationPreferences>({
     serviceUpdates: { email: true, sms: false },
-    paymentConfirmations: { email: true, sms: false },
-    paperlessBilling: false
+    paymentConfirmations: { email: true, sms: false }
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
@@ -85,8 +81,7 @@ export const NotificationsTab = () => {
             paymentConfirmations: {
               email: data.email_payment_confirmations ?? true,
               sms: data.sms_payment_confirmations ?? false
-            },
-            paperlessBilling: (data as any).paperless_billing ?? false
+            }
           };
           
           setPreferences(fetchedPreferences);
@@ -113,12 +108,6 @@ export const NotificationsTab = () => {
     }));
   };
 
-  const handlePaperlessChange = (value: boolean) => {
-    setPreferences(prev => ({
-      ...prev,
-      paperlessBilling: value
-    }));
-  };
 
   const handleCancel = () => {
     setPreferences(originalPreferences);
@@ -145,7 +134,6 @@ export const NotificationsTab = () => {
           sms_service_updates: preferences.serviceUpdates.sms,
           email_payment_confirmations: preferences.paymentConfirmations.email,
           sms_payment_confirmations: preferences.paymentConfirmations.sms,
-          paperless_billing: preferences.paperlessBilling,
           updated_at: new Date().toISOString()
         });
 
@@ -266,46 +254,6 @@ export const NotificationsTab = () => {
         </CardContent>
       </Card>
 
-      {/* Paperless Billing Section - Currently hidden via feature flag */}
-      {SHOW_PAPERLESS_BILLING && user && (
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Billing Preferences
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
-              <div>
-                <h4 className="font-medium text-slate-800">Enable Paperless Billing</h4>
-                <p className="text-sm text-slate-600">
-                  Receive all bills and statements electronically instead of by mail
-                </p>
-              </div>
-              <Switch
-                checked={preferences.paperlessBilling}
-                onCheckedChange={handlePaperlessChange}
-                disabled={!isEditing}
-              />
-            </div>
-            
-            {preferences.paperlessBilling && (
-              <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <FileText className="h-5 w-5 text-green-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-green-900">Paperless Billing Enabled</h4>
-                    <p className="text-sm text-green-700 mt-1">
-                      You'll receive all bills and statements via email. Paper statements will no longer be mailed.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

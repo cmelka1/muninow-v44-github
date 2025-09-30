@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import GooglePayButton from './GooglePayButton';
 
 interface PaymentButtonsContainerProps {
-  bill: any;
   totalAmount: number;
   merchantId: string;
   isDisabled?: boolean;
@@ -11,7 +10,6 @@ interface PaymentButtonsContainerProps {
 }
 
 const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
-  bill,
   totalAmount,
   merchantId,
   isDisabled = false,

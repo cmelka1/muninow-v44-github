@@ -10,10 +10,10 @@ const CTASection: React.FC = () => {
       <ResponsiveContainer variant="section" maxWidth="4xl">
         <div className="text-center">
           <ResponsiveTypography variant="h2" className="mb-3 text-primary-foreground">
-            Ready to Simplify Your Municipal Bill Payments?
+            Ready to Simplify Your Municipal Services?
           </ResponsiveTypography>
           <ResponsiveTypography variant="body" className="opacity-90 mb-4 max-w-2xl mx-auto text-primary-foreground">
-            Join hundreds of municipalities and thousands of residents and businesses already using MuniNow for their bill pay needs.
+            Join hundreds of municipalities and thousands of residents and businesses already using MuniNow for their permits, licenses, taxes, and municipal services.
           </ResponsiveTypography>
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <Link to="/signup" aria-label="Sign up for free MuniNow account">
