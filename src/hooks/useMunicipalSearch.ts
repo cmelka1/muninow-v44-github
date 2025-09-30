@@ -51,11 +51,45 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
 
       const searchTerm = params?.searchTerm?.toLowerCase() || '';
 
-      // Build search conditions for profiles
+      // Step 1: Find all user_ids that have applications for this customer
+      const [permitsUsers, licensesUsers, taxesUsers, servicesUsers] = await Promise.all([
+        supabase
+          .from('permit_applications')
+          .select('user_id')
+          .eq('customer_id', profile.customer_id),
+        supabase
+          .from('business_license_applications')
+          .select('user_id')
+          .eq('customer_id', profile.customer_id),
+        supabase
+          .from('tax_submissions')
+          .select('user_id')
+          .eq('customer_id', profile.customer_id),
+        supabase
+          .from('municipal_service_applications')
+          .select('user_id')
+          .eq('customer_id', profile.customer_id)
+      ]);
+
+      // Collect all unique user IDs
+      const userIdsSet = new Set<string>();
+      
+      permitsUsers.data?.forEach(p => p.user_id && userIdsSet.add(p.user_id));
+      licensesUsers.data?.forEach(l => l.user_id && userIdsSet.add(l.user_id));
+      taxesUsers.data?.forEach(t => t.user_id && userIdsSet.add(t.user_id));
+      servicesUsers.data?.forEach(s => s.user_id && userIdsSet.add(s.user_id));
+
+      const allUserIds = Array.from(userIdsSet);
+
+      if (allUserIds.length === 0) {
+        return { data: [], count: 0 };
+      }
+
+      // Step 2: Search within these user profiles
       let profileQuery = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, business_legal_name, customer_id')
-        .eq('customer_id', profile.customer_id);
+        .in('id', allUserIds);
 
       // Apply search term across multiple fields
       if (searchTerm) {
