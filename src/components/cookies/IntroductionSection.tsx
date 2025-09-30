@@ -11,7 +11,7 @@ const IntroductionSection: React.FC = () => {
       </p>
       <p className="mb-4">
         MuniNow uses cookies to enhance your experience on our platform, improve our services, 
-        and provide secure payment processing for municipal bill payments.
+        and provide secure payment processing for municipal payments.
       </p>
       <p>
         This Cookies Policy explains what cookies we use, why we use them, and how you can 

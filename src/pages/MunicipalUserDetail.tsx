@@ -14,25 +14,9 @@ const MunicipalUserDetail = () => {
   
   const { data: userSummary, isLoading, error } = useMunicipalUserSummary(userId);
   
-  const profile = userSummary ? {
-    id: userSummary.user_id,
-    first_name: userSummary.first_name,
-    last_name: userSummary.last_name,
-    email: userSummary.email,
-    phone: userSummary.phone,
-    street_address: userSummary.street_address,
-    apt_number: userSummary.apt_number,
-    city: userSummary.city,
-    state: userSummary.state,
-    zip_code: userSummary.zip_code,
-    account_type: userSummary.account_type,
-    business_legal_name: userSummary.business_legal_name,
-    created_at: userSummary.created_at,
-    updated_at: userSummary.updated_at,
-  } : null;
-  
+  const profile = userSummary;
   const userInfo = profile;
-  const hasProfileAccess = !!userSummary?.has_bills;
+  const hasProfileAccess = !!userSummary;
 
   if (isLoading) {
     return (
@@ -62,7 +46,7 @@ const MunicipalUserDetail = () => {
           </div>
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-destructive">User not found or no bills exist for this municipality.</p>
+              <p className="text-destructive">User not found or access denied.</p>
             </CardContent>
           </Card>
         </div>
@@ -127,7 +111,7 @@ const MunicipalUserDetail = () => {
               {!hasProfileAccess && (
                 <Badge variant="secondary" className="ml-2">
                   <AlertCircle className="h-3 w-3 mr-1" />
-                  Bill Data Only
+                  Limited Access
                 </Badge>
               )}
             </CardTitle>
@@ -177,7 +161,7 @@ const MunicipalUserDetail = () => {
               <div className="mt-6 p-4 bg-muted/30 border border-muted rounded-md">
                 <p className="text-sm text-muted-foreground flex items-center">
                   <AlertCircle className="h-4 w-4 mr-2" />
-                  Showing limited information from bill data. Full profile access may be restricted.
+                  Showing limited information. Full profile access may be restricted.
                 </p>
               </div>
             )}

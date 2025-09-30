@@ -22,7 +22,7 @@ const featuresData: Feature[] = [
   {
     id: '3',
     title: 'Automated Reminders',
-    description: 'Customizable notification system to keep residents informed about upcoming bills and payments due.',
+    description: 'Customizable notification system to keep residents informed about upcoming payments due.',
     icon: 'clock',
     benefits: ['Email Notifications', 'SMS Alerts', 'Custom Schedules', 'Multilingual Support']
   },

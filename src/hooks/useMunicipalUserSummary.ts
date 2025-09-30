@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface MunicipalUserSummary {
-  user_id: string;
+  id: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -17,9 +17,6 @@ export interface MunicipalUserSummary {
   business_legal_name: string | null;
   created_at: string;
   updated_at: string;
-  unpaid_bill_count: number;
-  total_amount_due_cents: number;
-  has_bills: boolean;
 }
 
 export const useMunicipalUserSummary = (userId?: string) => {
@@ -30,7 +27,7 @@ export const useMunicipalUserSummary = (userId?: string) => {
     queryFn: async () => {
       if (!userId) return null;
 
-      const { data, error } = await supabase.rpc('get_user_bill_summary_for_municipal', {
+      const { data, error } = await supabase.rpc('get_user_profile_for_municipal', {
         p_user_id: userId
       });
 

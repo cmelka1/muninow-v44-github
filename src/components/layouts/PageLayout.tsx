@@ -29,7 +29,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   breadcrumbs
 }) => {
   const fullTitle = `${title} | MuniNow`;
-  const defaultDescription = "Simplify your municipal bill payments with MuniNow's secure, all-in-one platform. Pay water, electric, gas, and tax bills online with autopay options.";
+  const defaultDescription = "Simplify your municipal payments with MuniNow's secure, all-in-one platform. Pay for permits, licenses, taxes, and other services online with autopay options.";
   const metaDescription = description || defaultDescription;
 
   return (

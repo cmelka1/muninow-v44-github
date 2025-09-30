@@ -86,7 +86,7 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
   };
 
   const handleRowClick = (user: SearchResult) => {
-    // Navigate to user bills detail view
+    // Navigate to user detail view
     if (user.user_id) {
       navigate(`/municipal/search/user/${user.user_id}`);
     }

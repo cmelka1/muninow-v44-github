@@ -10,7 +10,7 @@ const PaymentAccessibility: React.FC = () => {
       <CardContent className="space-y-4">
         <p>
           Our payment system is designed with accessibility as a core requirement, ensuring all users can securely 
-          complete municipal bill payments regardless of their abilities or assistive technology needs.
+          complete municipal payments regardless of their abilities or assistive technology needs.
         </p>
         
         <h3 className="text-lg font-semibold">Accessible Payment Features</h3>

@@ -2601,7 +2601,6 @@ export type Database = {
           created_at: string
           customer_id: string
           external_account_number: string | null
-          external_bill_number: string | null
           finix_merchant_id: string | null
           finix_payment_instrument_id: string | null
           finix_raw_response: Json | null
@@ -2631,7 +2630,6 @@ export type Database = {
           created_at?: string
           customer_id: string
           external_account_number?: string | null
-          external_bill_number?: string | null
           finix_merchant_id?: string | null
           finix_payment_instrument_id?: string | null
           finix_raw_response?: Json | null
@@ -2661,7 +2659,6 @@ export type Database = {
           created_at?: string
           customer_id?: string
           external_account_number?: string | null
-          external_bill_number?: string | null
           finix_merchant_id?: string | null
           finix_payment_instrument_id?: string | null
           finix_raw_response?: Json | null
@@ -3017,7 +3014,6 @@ export type Database = {
           email_payment_confirmations: boolean | null
           email_service_updates: boolean | null
           id: string
-          paperless_billing: boolean | null
           sms_payment_confirmations: boolean | null
           sms_service_updates: boolean | null
           updated_at: string
@@ -3028,7 +3024,6 @@ export type Database = {
           email_payment_confirmations?: boolean | null
           email_service_updates?: boolean | null
           id?: string
-          paperless_billing?: boolean | null
           sms_payment_confirmations?: boolean | null
           sms_service_updates?: boolean | null
           updated_at?: string
@@ -3039,7 +3034,6 @@ export type Database = {
           email_payment_confirmations?: boolean | null
           email_service_updates?: boolean | null
           id?: string
-          paperless_billing?: boolean | null
           sms_payment_confirmations?: boolean | null
           sms_service_updates?: boolean | null
           updated_at?: string
@@ -3796,28 +3790,6 @@ export type Database = {
         Args: { _role_name: string }
         Returns: string
       }
-      get_user_bill_summary_for_municipal: {
-        Args: { p_user_id: string }
-        Returns: {
-          account_type: string
-          apt_number: string
-          business_legal_name: string
-          city: string
-          created_at: string
-          email: string
-          first_name: string
-          has_bills: boolean
-          last_name: string
-          phone: string
-          state: string
-          street_address: string
-          total_amount_due_cents: number
-          unpaid_bill_count: number
-          updated_at: string
-          user_id: string
-          zip_code: string
-        }[]
-      }
       get_user_payment_instruments_with_display_names: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -4032,14 +4004,6 @@ export type Database = {
         | "businessadmin"
         | "businessuser"
       assignment_status_enum: "assigned" | "unassigned" | "pending_review"
-      bill_status_enum:
-        | "paid"
-        | "unpaid"
-        | "overdue"
-        | "delinquent"
-        | "cancelled"
-        | "disputed"
-        | "refunded"
       business_license_status_enum:
         | "draft"
         | "submitted"
@@ -4243,15 +4207,6 @@ export const Constants = {
         "businessuser",
       ],
       assignment_status_enum: ["assigned", "unassigned", "pending_review"],
-      bill_status_enum: [
-        "paid",
-        "unpaid",
-        "overdue",
-        "delinquent",
-        "cancelled",
-        "disputed",
-        "refunded",
-      ],
       business_license_status_enum: [
         "draft",
         "submitted",
