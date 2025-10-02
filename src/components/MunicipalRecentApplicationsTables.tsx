@@ -64,9 +64,9 @@ export const MunicipalRecentApplicationsTables = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Payment Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment Status</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -80,11 +80,11 @@ export const MunicipalRecentApplicationsTables = () => {
                     <TableCell className="font-medium">{permit.applicant_full_name}</TableCell>
                     <TableCell>{permit.permit_type}</TableCell>
                     <TableCell>{permit.merchant_name || 'Building Permits'}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(permit.total_amount_cents)}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">{formatCurrency(permit.total_amount_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <PermitStatusBadge status={permit.application_status as any} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={permit.payment_status} />
                     </TableCell>
                   </TableRow>
@@ -111,9 +111,9 @@ export const MunicipalRecentApplicationsTables = () => {
                   <TableHead>Name/Company</TableHead>
                   <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Payment Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment Status</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -129,11 +129,11 @@ export const MunicipalRecentApplicationsTables = () => {
                     </TableCell>
                     <TableCell>{license.business_type}</TableCell>
                     <TableCell>{license.merchant_name || 'Business Licenses'}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(license.total_amount_cents)}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">{formatCurrency(license.total_amount_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <BusinessLicenseStatusBadge status={license.application_status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={license.payment_status} />
                     </TableCell>
                   </TableRow>
@@ -160,9 +160,9 @@ export const MunicipalRecentApplicationsTables = () => {
                   <TableHead>Name/Company</TableHead>
                   <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Payment Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment Status</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -178,11 +178,11 @@ export const MunicipalRecentApplicationsTables = () => {
                     </TableCell>
                     <TableCell>{tax.tax_type}</TableCell>
                     <TableCell>{tax.merchant_name || 'Business Taxes'}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(tax.total_amount_due_cents)}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">{formatCurrency(tax.total_amount_due_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <TaxSubmissionStatusBadge status={tax.submission_status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={tax.payment_status} />
                     </TableCell>
                   </TableRow>
@@ -209,9 +209,9 @@ export const MunicipalRecentApplicationsTables = () => {
                   <TableHead>Name/Company</TableHead>
                   <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Payment Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment Status</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -227,11 +227,11 @@ export const MunicipalRecentApplicationsTables = () => {
                     </TableCell>
                     <TableCell>{service.service_name || 'Service Application'}</TableCell>
                     <TableCell>{service.merchant_name || 'Other Services'}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(service.total_amount_cents)}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">{formatCurrency(service.total_amount_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <ServiceApplicationStatusBadge status={service.status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={service.payment_status} />
                     </TableCell>
                   </TableRow>
