@@ -9,7 +9,7 @@ export interface RecentPermit {
   applicant_full_name: string;
   permit_type: string;
   merchant_name: string | null;
-  total_amount_cents: number;
+  base_fee_cents: number;
   application_status: string;
   payment_status: string | null;
 }
@@ -23,7 +23,7 @@ export interface RecentBusinessLicense {
   owner_last_name: string;
   business_type: string;
   merchant_name: string | null;
-  total_amount_cents: number;
+  base_fee_cents: number;
   application_status: string;
   payment_status: string | null;
 }
@@ -37,7 +37,7 @@ export interface RecentTaxSubmission {
   user_id: string;
   tax_type: string;
   merchant_name: string | null;
-  total_amount_due_cents: number;
+  amount_cents: number;
   submission_status: string;
   payment_status: string | null;
 }
@@ -51,7 +51,7 @@ export interface RecentServiceApplication {
   user_id: string;
   service_name: string | null;
   merchant_name: string | null;
-  total_amount_cents: number;
+  amount_cents: number;
   status: string;
   payment_status: string | null;
 }
@@ -73,7 +73,7 @@ export const useMunicipalRecentApplications = () => {
           applicant_full_name,
           permit_type,
           merchant_name,
-          total_amount_cents,
+          payment_amount_cents,
           application_status,
           payment_status
         `)
@@ -90,7 +90,7 @@ export const useMunicipalRecentApplications = () => {
         applicant_full_name: item.applicant_full_name || '',
         permit_type: item.permit_type || '',
         merchant_name: item.merchant_name,
-        total_amount_cents: item.total_amount_cents || 0,
+        base_fee_cents: item.payment_amount_cents || 0,
         application_status: item.application_status || '',
         payment_status: item.payment_status
       })) as RecentPermit[];
@@ -114,7 +114,7 @@ export const useMunicipalRecentApplications = () => {
           owner_last_name,
           business_type,
           merchant_name,
-          total_amount_cents,
+          base_fee_cents,
           application_status,
           payment_status
         `)
@@ -145,7 +145,7 @@ export const useMunicipalRecentApplications = () => {
           user_id,
           tax_type,
           merchant_name,
-          total_amount_due_cents,
+          amount_cents,
           submission_status,
           payment_status
         `)
@@ -176,7 +176,7 @@ export const useMunicipalRecentApplications = () => {
           user_id,
           service_name,
           merchant_name,
-          total_amount_cents,
+          amount_cents,
           status,
           payment_status
         `)
