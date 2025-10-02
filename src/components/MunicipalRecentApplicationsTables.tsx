@@ -74,7 +74,7 @@ export const MunicipalRecentApplicationsTables = () => {
                     <TableRow 
                       key={permit.id}
                       className="h-12 cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/municipal/permits/${permit.id}`)}
+                      onClick={() => navigate(`/municipal/permit/${permit.id}`)}
                     >
                       <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(permit.submitted_at)}</span>
@@ -123,7 +123,7 @@ export const MunicipalRecentApplicationsTables = () => {
                     <TableRow 
                       key={license.id}
                       className="h-12 cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/municipal/business-licenses/${license.id}`)}
+                      onClick={() => navigate(`/municipal/business-license/${license.id}`)}
                     >
                       <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(license.submitted_at)}</span>
@@ -174,7 +174,7 @@ export const MunicipalRecentApplicationsTables = () => {
                     <TableRow 
                       key={tax.id}
                       className="h-12 cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/municipal/taxes/${tax.id}`)}
+                      onClick={() => navigate(`/municipal/tax/${tax.id}`)}
                     >
                       <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(tax.submission_date)}</span>
@@ -225,7 +225,7 @@ export const MunicipalRecentApplicationsTables = () => {
                     <TableRow 
                       key={service.id}
                       className="h-12 cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/municipal/other-services/${service.id}`)}
+                      onClick={() => navigate(`/municipal/service-application/${service.id}`)}
                     >
                       <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(service.created_at)}</span>
