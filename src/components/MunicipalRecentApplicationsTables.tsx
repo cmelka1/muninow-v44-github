@@ -61,7 +61,7 @@ export const MunicipalRecentApplicationsTables = () => {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead>Date Submitted</TableHead>
+                  <TableHead className="text-center">Date Submitted</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-center">Payment Amount</TableHead>
@@ -76,7 +76,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       className="h-12 cursor-pointer hover:bg-muted/50"
                       onClick={() => navigate(`/municipal/permits/${permit.id}`)}
                     >
-                      <TableCell className="py-2">
+                      <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(permit.submitted_at)}</span>
                       </TableCell>
                       <TableCell className="py-2 font-medium">{permit.applicant_full_name}</TableCell>
@@ -110,7 +110,7 @@ export const MunicipalRecentApplicationsTables = () => {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead>Date Submitted</TableHead>
+                  <TableHead className="text-center">Date Submitted</TableHead>
                     <TableHead>Name/Company</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-center">Payment Amount</TableHead>
@@ -125,7 +125,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       className="h-12 cursor-pointer hover:bg-muted/50"
                       onClick={() => navigate(`/municipal/business-licenses/${license.id}`)}
                     >
-                      <TableCell className="py-2">
+                      <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(license.submitted_at)}</span>
                       </TableCell>
                       <TableCell className="py-2 font-medium">
@@ -161,7 +161,7 @@ export const MunicipalRecentApplicationsTables = () => {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead>Date Submitted</TableHead>
+                  <TableHead className="text-center">Date Submitted</TableHead>
                     <TableHead>Name/Company</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-center">Payment Amount</TableHead>
@@ -176,7 +176,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       className="h-12 cursor-pointer hover:bg-muted/50"
                       onClick={() => navigate(`/municipal/taxes/${tax.id}`)}
                     >
-                      <TableCell className="py-2">
+                      <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(tax.submission_date)}</span>
                       </TableCell>
                       <TableCell className="py-2 font-medium">
@@ -212,7 +212,7 @@ export const MunicipalRecentApplicationsTables = () => {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead>Date Submitted</TableHead>
+                    <TableHead className="text-center">Date Submitted</TableHead>
                     <TableHead>Name/Company</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-center">Payment Amount</TableHead>
@@ -227,7 +227,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       className="h-12 cursor-pointer hover:bg-muted/50"
                       onClick={() => navigate(`/municipal/other-services/${service.id}`)}
                     >
-                      <TableCell className="py-2">
+                      <TableCell className="py-2 text-center">
                         <span className="text-sm text-muted-foreground">{formatDate(service.created_at)}</span>
                       </TableCell>
                       <TableCell className="py-2 font-medium">
