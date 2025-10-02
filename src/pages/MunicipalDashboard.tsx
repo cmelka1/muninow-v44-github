@@ -13,6 +13,7 @@ import { useMunicipalRevenue } from "@/hooks/useMunicipalRevenue";
 import { useMunicipalReviewQueue } from "@/hooks/useMunicipalReviewQueue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navigate } from "react-router-dom";
+import { MunicipalRecentApplicationsTables } from "@/components/MunicipalRecentApplicationsTables";
 
 const MunicipalDashboard = () => {
   const [showReportBuilder, setShowReportBuilder] = useState(false);
@@ -149,6 +150,9 @@ const MunicipalDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Applications Tables */}
+      <MunicipalRecentApplicationsTables />
     </div>
   );
 };
