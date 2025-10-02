@@ -62,7 +62,6 @@ export const MunicipalRecentApplicationsTables = () => {
                 <TableRow>
                   <TableHead>Date Submitted</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-center">Payment Amount</TableHead>
                   <TableHead className="text-center">Status</TableHead>
@@ -79,7 +78,6 @@ export const MunicipalRecentApplicationsTables = () => {
                     <TableCell>{formatDate(permit.submitted_at)}</TableCell>
                     <TableCell className="font-medium">{permit.applicant_full_name}</TableCell>
                     <TableCell>{permit.permit_type}</TableCell>
-                    <TableCell>{permit.merchant_name || 'Building Permits'}</TableCell>
                     <TableCell className="text-center">{formatCurrency(permit.total_amount_cents)}</TableCell>
                     <TableCell className="text-center">
                       <PermitStatusBadge status={permit.application_status as any} />
@@ -109,7 +107,6 @@ export const MunicipalRecentApplicationsTables = () => {
                 <TableRow>
                   <TableHead>Date Submitted</TableHead>
                   <TableHead>Name/Company</TableHead>
-                  <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-center">Payment Amount</TableHead>
                   <TableHead className="text-center">Status</TableHead>
@@ -128,7 +125,6 @@ export const MunicipalRecentApplicationsTables = () => {
                       {license.business_legal_name || `${license.owner_first_name} ${license.owner_last_name}`}
                     </TableCell>
                     <TableCell>{license.business_type}</TableCell>
-                    <TableCell>{license.merchant_name || 'Business Licenses'}</TableCell>
                     <TableCell className="text-center">{formatCurrency(license.total_amount_cents)}</TableCell>
                     <TableCell className="text-center">
                       <BusinessLicenseStatusBadge status={license.application_status} />
@@ -158,7 +154,6 @@ export const MunicipalRecentApplicationsTables = () => {
                 <TableRow>
                   <TableHead>Date Submitted</TableHead>
                   <TableHead>Name/Company</TableHead>
-                  <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-center">Payment Amount</TableHead>
                   <TableHead className="text-center">Status</TableHead>
@@ -177,7 +172,6 @@ export const MunicipalRecentApplicationsTables = () => {
                       {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}
                     </TableCell>
                     <TableCell>{tax.tax_type}</TableCell>
-                    <TableCell>{tax.merchant_name || 'Business Taxes'}</TableCell>
                     <TableCell className="text-center">{formatCurrency(tax.total_amount_due_cents)}</TableCell>
                     <TableCell className="text-center">
                       <TaxSubmissionStatusBadge status={tax.submission_status} />
@@ -207,7 +201,6 @@ export const MunicipalRecentApplicationsTables = () => {
                 <TableRow>
                   <TableHead>Date Submitted</TableHead>
                   <TableHead>Name/Company</TableHead>
-                  <TableHead>Service Type</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-center">Payment Amount</TableHead>
                   <TableHead className="text-center">Status</TableHead>
@@ -226,7 +219,6 @@ export const MunicipalRecentApplicationsTables = () => {
                       {service.business_legal_name || service.applicant_name || 'N/A'}
                     </TableCell>
                     <TableCell>{service.service_name || 'Service Application'}</TableCell>
-                    <TableCell>{service.merchant_name || 'Other Services'}</TableCell>
                     <TableCell className="text-center">{formatCurrency(service.total_amount_cents)}</TableCell>
                     <TableCell className="text-center">
                       <ServiceApplicationStatusBadge status={service.status} />
