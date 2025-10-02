@@ -174,13 +174,8 @@ const MunicipalDashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold">{processingTimes?.period.overall.toFixed(1) || 0} days</div>
-              {processingComparison && (
-                <Badge variant={processingComparison.color as any} className="text-xs">
-                  {processingComparison.trend} {processingComparison.label}
-                </Badge>
-              )}
+            <div className="text-2xl font-bold">
+              {processingTimes?.period.overall.toFixed(1) || 0} days
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {getPeriodLabel(selectedPeriod)}
