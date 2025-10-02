@@ -80,7 +80,7 @@ export const useMunicipalRecentApplications = () => {
         .eq('customer_id', profile.customer_id)
         .neq('application_status', 'draft')
         .order('submitted_at', { ascending: false, nullsFirst: false })
-        .limit(3);
+        .limit(5);
 
       if (error) throw error;
       return (data || []).map(item => ({
