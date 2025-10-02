@@ -18,7 +18,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
           <div>
             <header>
               <ResponsiveTypography variant="h1" className="mb-3">
-                <span className="gradient-text">Simplified Municipal Services</span> for Everyone
+                <span className="text-primary font-bold">Simplified Municipal Services for Everyone</span>
               </ResponsiveTypography>
               <ResponsiveTypography variant="body" className="text-muted-foreground mb-4">
                 One platform for all your municipal needs, designed for residents, businesses, and administrators. 
