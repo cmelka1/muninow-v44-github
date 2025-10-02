@@ -53,42 +53,46 @@ export const MunicipalRecentApplicationsTables = () => {
         <CardHeader>
           <CardTitle>Recent Building Permits</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {permits.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No recent building permits</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date Submitted</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-center">Payment Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Payment Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {permits.map((permit) => (
-                  <TableRow 
-                    key={permit.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/municipal/permits/${permit.id}`)}
-                  >
-                    <TableCell>{formatDate(permit.submitted_at)}</TableCell>
-                    <TableCell className="font-medium">{permit.applicant_full_name}</TableCell>
-                    <TableCell>{permit.permit_type}</TableCell>
-                    <TableCell className="text-center">{formatCurrency(permit.base_fee_cents)}</TableCell>
-                    <TableCell className="text-center">
-                      <PermitStatusBadge status={permit.application_status as any} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <PaymentStatusBadge status={permit.payment_status} />
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead>Date Submitted</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-center">Payment Amount</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-center">Payment Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {permits.map((permit) => (
+                    <TableRow 
+                      key={permit.id}
+                      className="h-12 cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/municipal/permits/${permit.id}`)}
+                    >
+                      <TableCell className="py-2">
+                        <span className="text-sm text-muted-foreground">{formatDate(permit.submitted_at)}</span>
+                      </TableCell>
+                      <TableCell className="py-2 font-medium">{permit.applicant_full_name}</TableCell>
+                      <TableCell className="py-2">{permit.permit_type}</TableCell>
+                      <TableCell className="py-2 text-center">{formatCurrency(permit.base_fee_cents)}</TableCell>
+                      <TableCell className="py-2 text-center">
+                        <PermitStatusBadge status={permit.application_status as any} />
+                      </TableCell>
+                      <TableCell className="py-2 text-center">
+                        <PaymentStatusBadge status={permit.payment_status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -98,44 +102,48 @@ export const MunicipalRecentApplicationsTables = () => {
         <CardHeader>
           <CardTitle>Recent Business Licenses</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {licenses.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No recent business licenses</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date Submitted</TableHead>
-                  <TableHead>Name/Company</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-center">Payment Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Payment Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {licenses.map((license) => (
-                  <TableRow 
-                    key={license.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/municipal/business-licenses/${license.id}`)}
-                  >
-                    <TableCell>{formatDate(license.submitted_at)}</TableCell>
-                    <TableCell className="font-medium">
-                      {license.business_legal_name || `${license.owner_first_name} ${license.owner_last_name}`}
-                    </TableCell>
-                    <TableCell>{license.business_type}</TableCell>
-                    <TableCell className="text-center">{formatCurrency(license.base_fee_cents)}</TableCell>
-                    <TableCell className="text-center">
-                      <BusinessLicenseStatusBadge status={license.application_status} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <PaymentStatusBadge status={license.payment_status} />
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead>Date Submitted</TableHead>
+                    <TableHead>Name/Company</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-center">Payment Amount</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-center">Payment Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {licenses.map((license) => (
+                    <TableRow 
+                      key={license.id}
+                      className="h-12 cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/municipal/business-licenses/${license.id}`)}
+                    >
+                      <TableCell className="py-2">
+                        <span className="text-sm text-muted-foreground">{formatDate(license.submitted_at)}</span>
+                      </TableCell>
+                      <TableCell className="py-2 font-medium">
+                        {license.business_legal_name || `${license.owner_first_name} ${license.owner_last_name}`}
+                      </TableCell>
+                      <TableCell className="py-2">{license.business_type}</TableCell>
+                      <TableCell className="py-2 text-center">{formatCurrency(license.base_fee_cents)}</TableCell>
+                      <TableCell className="py-2 text-center">
+                        <BusinessLicenseStatusBadge status={license.application_status} />
+                      </TableCell>
+                      <TableCell className="py-2 text-center">
+                        <PaymentStatusBadge status={license.payment_status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -145,44 +153,48 @@ export const MunicipalRecentApplicationsTables = () => {
         <CardHeader>
           <CardTitle>Recent Business Taxes</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {taxes.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No recent business taxes</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date Submitted</TableHead>
-                  <TableHead>Name/Company</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-center">Payment Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Payment Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {taxes.map((tax) => (
-                  <TableRow 
-                    key={tax.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/municipal/taxes/${tax.id}`)}
-                  >
-                    <TableCell>{formatDate(tax.submission_date)}</TableCell>
-                    <TableCell className="font-medium">
-                      {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}
-                    </TableCell>
-                    <TableCell>{tax.tax_type}</TableCell>
-                    <TableCell className="text-center">{formatCurrency(tax.amount_cents)}</TableCell>
-                    <TableCell className="text-center">
-                      <TaxSubmissionStatusBadge status={tax.submission_status} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <PaymentStatusBadge status={tax.payment_status} />
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead>Date Submitted</TableHead>
+                    <TableHead>Name/Company</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-center">Payment Amount</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-center">Payment Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {taxes.map((tax) => (
+                    <TableRow 
+                      key={tax.id}
+                      className="h-12 cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/municipal/taxes/${tax.id}`)}
+                    >
+                      <TableCell className="py-2">
+                        <span className="text-sm text-muted-foreground">{formatDate(tax.submission_date)}</span>
+                      </TableCell>
+                      <TableCell className="py-2 font-medium">
+                        {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}
+                      </TableCell>
+                      <TableCell className="py-2">{tax.tax_type}</TableCell>
+                      <TableCell className="py-2 text-center">{formatCurrency(tax.amount_cents)}</TableCell>
+                      <TableCell className="py-2 text-center">
+                        <TaxSubmissionStatusBadge status={tax.submission_status} />
+                      </TableCell>
+                      <TableCell className="py-2 text-center">
+                        <PaymentStatusBadge status={tax.payment_status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -192,44 +204,48 @@ export const MunicipalRecentApplicationsTables = () => {
         <CardHeader>
           <CardTitle>Recent Service Applications</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {services.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No recent service applications</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date Submitted</TableHead>
-                  <TableHead>Name/Company</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-center">Payment Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Payment Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {services.map((service) => (
-                  <TableRow 
-                    key={service.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/municipal/other-services/${service.id}`)}
-                  >
-                    <TableCell>{formatDate(service.submitted_at)}</TableCell>
-                    <TableCell className="font-medium">
-                      {service.business_legal_name || service.applicant_name || 'N/A'}
-                    </TableCell>
-                    <TableCell>{service.service_name || 'Service Application'}</TableCell>
-                    <TableCell className="text-center">{formatCurrency(service.amount_cents)}</TableCell>
-                    <TableCell className="text-center">
-                      <ServiceApplicationStatusBadge status={service.status} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <PaymentStatusBadge status={service.payment_status} />
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead>Date Submitted</TableHead>
+                    <TableHead>Name/Company</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-center">Payment Amount</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-center">Payment Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {services.map((service) => (
+                    <TableRow 
+                      key={service.id}
+                      className="h-12 cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/municipal/other-services/${service.id}`)}
+                    >
+                      <TableCell className="py-2">
+                        <span className="text-sm text-muted-foreground">{formatDate(service.submitted_at)}</span>
+                      </TableCell>
+                      <TableCell className="py-2 font-medium">
+                        {service.business_legal_name || service.applicant_name || 'N/A'}
+                      </TableCell>
+                      <TableCell className="py-2">{service.service_name || 'Service Application'}</TableCell>
+                      <TableCell className="py-2 text-center">{formatCurrency(service.amount_cents)}</TableCell>
+                      <TableCell className="py-2 text-center">
+                        <ServiceApplicationStatusBadge status={service.status} />
+                      </TableCell>
+                      <TableCell className="py-2 text-center">
+                        <PaymentStatusBadge status={service.payment_status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
