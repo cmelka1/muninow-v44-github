@@ -1,5 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
-import { classifyPaymentError, generateIdempotencyId } from '../shared/paymentUtils.ts';
+import { 
+  classifyPaymentError, 
+  generateIdempotencyId,
+  generateDeterministicUUID,
+  generateIdempotencyMetadata,
+  isValidUUID 
+} from '../shared/paymentUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,7 +27,9 @@ interface UnifiedPaymentRequest {
   first_name?: string;
   last_name?: string;
   user_email?: string;
-  idempotency_id?: string; // Optional client-provided idempotency ID
+  idempotency_id?: string; // Legacy - kept for backward compatibility
+  session_uuid?: string; // New: Payment session UUID from client
+  idempotency_metadata?: any; // New: Client-side metadata for tracking
 }
 
 interface UnifiedPaymentResponse {
@@ -156,7 +164,9 @@ Deno.serve(async (req) => {
       first_name,
       last_name,
       user_email,
-      idempotency_id: clientIdempotencyId
+      idempotency_id: clientIdempotencyId, // Legacy
+      session_uuid,
+      idempotency_metadata: clientMetadata
     } = body;
 
     // Validate required fields
@@ -243,16 +253,43 @@ Deno.serve(async (req) => {
       finixPaymentInstrumentId = paymentInstrument.finix_payment_instrument_id;
     }
 
-    // Use client-provided idempotency ID or generate one
+    // Generate deterministic UUID for idempotency
+    // This ensures same inputs = same UUID for proper deduplication
+    const idempotencyUuid = generateDeterministicUUID({
+      entityType: entity_type,
+      entityId: entity_id,
+      userId: user.id,
+      sessionId: session_uuid || 'no-session',
+      paymentInstrumentId: payment_instrument_id
+    });
+    
+    console.log('Generated idempotency UUID:', idempotencyUuid);
+    
+    // Generate comprehensive metadata for debugging
+    const metadata = generateIdempotencyMetadata({
+      sessionId: session_uuid,
+      entityType: entity_type,
+      entityId: entity_id,
+      userId: user.id,
+      paymentMethod: payment_type,
+      paymentInstrumentId: payment_instrument_id,
+      clientUserAgent: clientMetadata?.client_user_agent,
+      clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
+    });
+    
+    console.log('Idempotency metadata:', metadata);
+    
+    // Keep legacy idempotency_id for backward compatibility
     const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_payment', entity_id);
-    console.log('Using idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
+    console.log('Legacy idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
 
-    // Check for existing payment transaction with this idempotency ID
+    // Check for existing payment transaction with this UUID
+    console.log('Checking for duplicate payment with UUID:', idempotencyUuid);
     const { data: existingTransaction, error: existingError } = await supabase
       .from('payment_transactions')
       .select('id, payment_status, finix_transfer_id, service_fee_cents, total_amount_cents')
-      .eq('idempotency_id', idempotency_id)
-      .single();
+      .eq('idempotency_uuid', idempotencyUuid)
+      .maybeSingle();
 
     if (existingTransaction && !existingError) {
       console.log('Found existing transaction with idempotency ID:', existingTransaction);

@@ -171,19 +171,18 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       throw new Error('Please wait before attempting another payment');
     }
 
-    // Generate or reuse session ID for this payment session
-    const sessionId = paymentSessionId || generateIdempotencyId('payment_session');
+    // Generate or reuse session UUID for this payment session
+    const sessionId = paymentSessionId || crypto.randomUUID();
     if (!paymentSessionId) {
       setPaymentSessionId(sessionId);
+      console.log('🆕 Generated new payment session UUID:', sessionId);
+    } else {
+      console.log('♻️ Reusing existing payment session UUID:', sessionId);
     }
 
     console.log('🚀 Setting payment processing state');
     setIsProcessingPayment(true);
     setLastPaymentAttempt(now);
-
-    // Create stable idempotency ID based on session and entity
-    const clientIdempotencyId = `${sessionId}_${params.entityId}_${selectedPaymentMethod}`;
-    console.log('💎 Using client-provided idempotency ID:', clientIdempotencyId);
 
     // Create the payment promise and store it for single-flight protection
     const paymentPromise = (async () => {
@@ -205,6 +204,18 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           (paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'card' : 'ach') : 
           selectedPaymentMethod; // For google-pay/apple-pay
 
+      // Prepare metadata for backend tracking and debugging
+      const idempotencyMetadata = {
+        session_id: sessionId,
+        entity_type: params.entityType,
+        entity_id: params.entityId,
+        user_id: user.id,
+        payment_method: paymentType,
+        payment_instrument_id: paymentInstrument?.id || selectedPaymentMethod,
+        client_user_agent: navigator.userAgent,
+        client_timestamp: new Date().toISOString()
+      };
+
       const requestBody = {
         entity_type: params.entityType,
         entity_id: params.entityId,
@@ -222,7 +233,8 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         first_name: user.user_metadata?.first_name,
         last_name: user.user_metadata?.last_name,
         user_email: user.email,
-        idempotency_id: clientIdempotencyId // Client-provided idempotency ID
+        session_uuid: sessionId, // Send session UUID to backend
+        idempotency_metadata: idempotencyMetadata // Send metadata for backend tracking
       };
 
       console.log('📤 Sending payment request:', { 

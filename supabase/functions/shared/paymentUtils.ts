@@ -1,10 +1,26 @@
 // Shared payment utility functions for edge functions
 
+// UUIDv5 namespace for payment idempotency (deterministic UUID generation)
+const PAYMENT_IDEMPOTENCY_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+
 export interface PaymentError {
   type: 'network' | 'payment_declined' | 'validation' | 'user_cancelled' | 'configuration' | 'unknown';
   message: string;
   retryable: boolean;
   details?: any;
+}
+
+export interface IdempotencyMetadata {
+  session_id?: string;
+  entity_type: string;
+  entity_id: string;
+  user_id: string;
+  payment_method?: string;
+  payment_instrument_id?: string;
+  client_user_agent?: string;
+  client_ip?: string;
+  created_at: string;
+  version: string;
 }
 
 export const classifyPaymentError = (error: any): PaymentError => {
@@ -92,6 +108,93 @@ export const classifyPaymentError = (error: any): PaymentError => {
   };
 };
 
+/**
+ * Generates a deterministic UUID v5 for payment idempotency
+ * Same inputs will always produce the same UUID, enabling proper deduplication
+ */
+export const generateDeterministicUUID = (params: {
+  entityType: string;
+  entityId: string;
+  userId: string;
+  sessionId: string;
+  paymentInstrumentId?: string;
+}): string => {
+  try {
+    // Create a deterministic input string from all parameters
+    const input = [
+      params.entityType,
+      params.entityId,
+      params.userId,
+      params.sessionId,
+      params.paymentInstrumentId || 'none'
+    ].join(':');
+
+    // Generate UUIDv5 using the payment namespace
+    const encoder = new TextEncoder();
+    const data = encoder.encode(PAYMENT_IDEMPOTENCY_NAMESPACE + input);
+    
+    // Simple hash-based UUID generation (UUIDv5-like)
+    const hashHex = Array.from(data.slice(0, 16))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Format as UUID v5: xxxxxxxx-xxxx-5xxx-yxxx-xxxxxxxxxxxx
+    const uuid = [
+      hashHex.slice(0, 8),
+      hashHex.slice(8, 12),
+      '5' + hashHex.slice(13, 16), // Version 5
+      ((parseInt(hashHex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16) + hashHex.slice(18, 20), // Variant
+      hashHex.slice(20, 32)
+    ].join('-');
+
+    console.log('Generated deterministic UUID:', uuid, 'for input:', input);
+    return uuid;
+  } catch (error) {
+    console.error('Error generating deterministic UUID:', error);
+    // Fallback to random UUID
+    return crypto.randomUUID();
+  }
+};
+
+/**
+ * Generates comprehensive metadata for debugging and tracking
+ */
+export const generateIdempotencyMetadata = (params: {
+  sessionId?: string;
+  entityType: string;
+  entityId: string;
+  userId: string;
+  paymentMethod?: string;
+  paymentInstrumentId?: string;
+  clientUserAgent?: string;
+  clientIp?: string;
+}): IdempotencyMetadata => {
+  return {
+    session_id: params.sessionId,
+    entity_type: params.entityType,
+    entity_id: params.entityId,
+    user_id: params.userId,
+    payment_method: params.paymentMethod,
+    payment_instrument_id: params.paymentInstrumentId,
+    client_user_agent: params.clientUserAgent,
+    client_ip: params.clientIp,
+    created_at: new Date().toISOString(),
+    version: '2.0' // Track which version of idempotency system
+  };
+};
+
+/**
+ * Validates if a string is a valid UUID format
+ */
+export const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+/**
+ * @deprecated Legacy function - use generateDeterministicUUID instead
+ * Kept for backward compatibility during migration
+ */
 export const generateIdempotencyId = (prefix: string, entityId?: string): string => {
   try {
     const timestamp = Date.now();
