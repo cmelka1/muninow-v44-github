@@ -127,11 +127,41 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const [dragActive, setDragActive] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [merchantFinixId, setMerchantFinixId] = useState<string | null>(null);
   
   const dialogContentRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Finix Auth for fraud detection (use merchant_id from selected municipality)
-  const { finixSessionKey } = useFinixAuth(selectedMunicipality?.id);
+  // Fetch Finix merchant ID when municipality is selected
+  React.useEffect(() => {
+    const fetchMerchantFinixId = async () => {
+      if (!selectedMunicipality?.id) {
+        setMerchantFinixId(null);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('merchants')
+        .select('finix_merchant_id')
+        .eq('id', selectedMunicipality.id)
+        .single();
+        
+      if (data?.finix_merchant_id) {
+        console.log('📊 Permit - Fetched Finix Merchant ID:', {
+          merchant_id: selectedMunicipality.id,
+          finix_merchant_id: data.finix_merchant_id,
+          format: data.finix_merchant_id.startsWith('MU') ? 'Valid (MU prefix)' : 'Invalid format'
+        });
+        setMerchantFinixId(data.finix_merchant_id);
+      } else if (error) {
+        console.error('❌ Error fetching merchant Finix ID:', error);
+      }
+    };
+    
+    fetchMerchantFinixId();
+  }, [selectedMunicipality?.id]);
+
+  // Initialize Finix Auth for fraud detection with correct Finix merchant ID
+  const { finixSessionKey } = useFinixAuth(merchantFinixId);
   
   // Only load permit types after municipality is selected
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = useMunicipalPermitTypes(

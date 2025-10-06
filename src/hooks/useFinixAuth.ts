@@ -17,9 +17,25 @@ export const useFinixAuth = (merchantId: string | null | undefined) => {
       return;
     }
 
+    // Validate merchant ID format - must start with 'MU' prefix
+    if (!merchantId.startsWith('MU')) {
+      console.error('❌ Invalid Finix merchant ID format:', {
+        received: merchantId,
+        expected_format: 'MUxxxxxxxxxxxxxxxxxxxxx',
+        note: 'Merchant ID must start with "MU" prefix from Finix',
+        received_length: merchantId.length,
+        starts_with: merchantId.substring(0, 2)
+      });
+      setIsFinixReady(false);
+      return;
+    }
+
     // Check if Finix library is loaded
     if (typeof window.Finix === 'undefined') {
-      console.error('❌ Finix JavaScript library not loaded');
+      console.error('❌ Finix JavaScript library not loaded', {
+        windowFinix: typeof window.Finix,
+        hint: 'Check if Finix.js script tag is present in index.html'
+      });
       setIsFinixReady(false);
       return;
     }

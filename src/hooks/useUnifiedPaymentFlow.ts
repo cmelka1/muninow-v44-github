@@ -43,9 +43,35 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   const [lastPaymentAttempt, setLastPaymentAttempt] = useState<number | null>(null);
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
   const [ongoingPaymentPromise, setOngoingPaymentPromise] = useState<Promise<PaymentResponse> | null>(null);
+  const [finixMerchantId, setFinixMerchantId] = useState<string | null>(null);
 
-  // Initialize Finix Auth for fraud detection
-  const { finixSessionKey, isFinixReady } = useFinixAuth(params.merchantId);
+  // Fetch Finix merchant ID from internal merchant UUID
+  useEffect(() => {
+    const fetchFinixMerchantId = async () => {
+      if (!params.merchantId) return;
+      
+      const { data, error } = await supabase
+        .from('merchants')
+        .select('finix_merchant_id')
+        .eq('id', params.merchantId)
+        .single();
+        
+      if (data?.finix_merchant_id) {
+        console.log('✅ Fetched Finix merchant ID:', {
+          internal_merchant_id: params.merchantId,
+          finix_merchant_id: data.finix_merchant_id
+        });
+        setFinixMerchantId(data.finix_merchant_id);
+      } else if (error) {
+        console.error('❌ Error fetching Finix merchant ID:', error);
+      }
+    };
+    
+    fetchFinixMerchantId();
+  }, [params.merchantId]);
+
+  // Initialize Finix Auth for fraud detection with correct Finix merchant ID
+  const { finixSessionKey, isFinixReady } = useFinixAuth(finixMerchantId);
 
   // Load Google Pay merchant ID
   useEffect(() => {
