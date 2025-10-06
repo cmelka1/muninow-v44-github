@@ -469,14 +469,15 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         const token = tokenData.id;
         console.log('Finix token received:', token);
 
-        // Prepare address override if not using profile address
-        const addressOverride = !data.useProfileAddress ? {
+        // Always send address to backend for storage and Finix validation
+        // The useProfileAddress checkbox only populates the form fields
+        const addressOverride = {
           streetAddress: data.streetAddress,
           city: data.city,
           state: data.state,
           zipCode: data.zipCode,
-          country: data.country,
-        } : undefined;
+          country: data.country || 'USA',
+        };
 
         // Call appropriate tokenized edge function
         let response;
