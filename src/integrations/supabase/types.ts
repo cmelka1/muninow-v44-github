@@ -1884,6 +1884,7 @@ export type Database = {
           business_license_id: string | null
           card_brand: string | null
           card_last_four: string | null
+          category: string | null
           created_at: string
           customer_id: string
           failure_code: string | null
@@ -1897,6 +1898,7 @@ export type Database = {
           idempotency_metadata: Json | null
           idempotency_uuid: string | null
           merchant_id: string
+          merchant_name: string | null
           payment_instrument_id: string
           payment_status: string
           payment_type: string
@@ -1904,6 +1906,8 @@ export type Database = {
           raw_finix_response: Json | null
           service_application_id: string | null
           service_fee_cents: number
+          statement_descriptor: string | null
+          subcategory: string | null
           tax_submission_id: string | null
           total_amount_cents: number
           transfer_state: string
@@ -1916,6 +1920,7 @@ export type Database = {
           business_license_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null
+          category?: string | null
           created_at?: string
           customer_id: string
           failure_code?: string | null
@@ -1929,6 +1934,7 @@ export type Database = {
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           merchant_id: string
+          merchant_name?: string | null
           payment_instrument_id: string
           payment_status?: string
           payment_type: string
@@ -1936,6 +1942,8 @@ export type Database = {
           raw_finix_response?: Json | null
           service_application_id?: string | null
           service_fee_cents?: number
+          statement_descriptor?: string | null
+          subcategory?: string | null
           tax_submission_id?: string | null
           total_amount_cents: number
           transfer_state?: string
@@ -1948,6 +1956,7 @@ export type Database = {
           business_license_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null
+          category?: string | null
           created_at?: string
           customer_id?: string
           failure_code?: string | null
@@ -1961,6 +1970,7 @@ export type Database = {
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           merchant_id?: string
+          merchant_name?: string | null
           payment_instrument_id?: string
           payment_status?: string
           payment_type?: string
@@ -1968,6 +1978,8 @@ export type Database = {
           raw_finix_response?: Json | null
           service_application_id?: string | null
           service_fee_cents?: number
+          statement_descriptor?: string | null
+          subcategory?: string | null
           tax_submission_id?: string | null
           total_amount_cents?: number
           transfer_state?: string
