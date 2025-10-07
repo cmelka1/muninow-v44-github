@@ -105,7 +105,6 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
             total_amount_cents: transaction.total_amount_cents,
             payment_type: 'card', // Default assumption for reconciliation
             payment_status: 'completed',
-            payment_method_type: 'card',
             idempotency_id: idempotency_id,
             merchant_id: merchant_id,
             finix_merchant_id: merchant.finix_merchant_id,
