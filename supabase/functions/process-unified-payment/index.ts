@@ -67,7 +67,7 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
           .from('tax_submissions')
           .update({
             payment_status: 'paid',
-            submission_status: 'approved',
+            submission_status: 'issued',
             transfer_state: 'SUCCEEDED',
             payment_processed_at: new Date().toISOString(),
             finix_transfer_id: transaction.finix_transfer_id,
