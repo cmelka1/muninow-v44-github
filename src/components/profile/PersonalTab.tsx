@@ -49,7 +49,8 @@ const profileSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   zipCode: z.string().optional(),
-  businessName: z.string().optional()
+  businessName: z.string().optional(),
+  industry: z.string().optional()
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -88,7 +89,8 @@ export const PersonalTab = () => {
       city: profile?.city || '',
       state: profile?.state || '',
       zipCode: profile?.zip_code || '',
-      businessName: profile?.business_legal_name || ''
+      businessName: profile?.business_legal_name || '',
+      industry: profile?.industry || ''
     }
   });
 
@@ -106,7 +108,8 @@ export const PersonalTab = () => {
         city: profile.city || '',
         state: profile.state || '',
         zipCode: profile.zip_code || '',
-        businessName: profile.business_legal_name || ''
+        businessName: profile.business_legal_name || '',
+        industry: profile.industry || ''
       });
     }
   }, [profile, form]);
@@ -156,6 +159,7 @@ export const PersonalTab = () => {
           state: data.state,
           zip_code: data.zipCode,
           business_legal_name: data.businessName,
+          industry: data.industry || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -299,7 +303,7 @@ export const PersonalTab = () => {
                   Business Information
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
                   name="businessName"
@@ -308,6 +312,19 @@ export const PersonalTab = () => {
                       <FormLabel className="text-slate-700 font-medium">Business Legal Name</FormLabel>
                        <FormControl>
                          <Input {...field} disabled={!isEditing} />
+                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="industry"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-700 font-medium">Industry</FormLabel>
+                       <FormControl>
+                         <Input {...field} disabled={!isEditing} placeholder="e.g., Restaurant, Retail, Healthcare" />
                        </FormControl>
                       <FormMessage />
                     </FormItem>
