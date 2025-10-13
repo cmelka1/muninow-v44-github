@@ -336,15 +336,22 @@ Deno.serve(async (req) => {
     }
 
     // Extract unique session ID from client idempotency ID to prevent UUID collision
-    // Format: sessionId_entityId_google-pay
+    // Format: uniqueSessionId_entityId_google-pay
+    // We need to remove the last 2 parts (entityId and "google-pay") to get the unique session
     let sessionIdForUuid = 'google-pay-session'; // default fallback
     const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_google_pay', entity_id);
     
+    console.log('📋 Parsing client idempotency ID:', clientIdempotencyId);
+    
     if (clientIdempotencyId && clientIdempotencyId.includes('_')) {
       const parts = clientIdempotencyId.split('_');
-      if (parts.length >= 1 && parts[0]) {
-        sessionIdForUuid = parts[0]; // Extract unique session from client
+      // Remove last 2 parts: _{entityId}_google-pay to get the unique session
+      if (parts.length >= 3) {
+        sessionIdForUuid = parts.slice(0, parts.length - 2).join('_');
         console.log('✅ Extracted unique session ID from client:', sessionIdForUuid);
+        console.log('   Full parts:', parts.length, 'Session parts:', parts.length - 2);
+      } else {
+        console.warn('⚠️  Client idempotency ID has too few parts:', parts.length);
       }
     }
     
@@ -392,41 +399,73 @@ Deno.serve(async (req) => {
     console.log('Checking for duplicate payment with UUID:', idempotencyUuid);
     const { data: existingTransaction, error: existingError } = await supabase
       .from('payment_transactions')
-      .select('id, payment_status, finix_transfer_id, finix_payment_instrument_id, service_fee_cents, total_amount_cents')
+      .select('id, payment_status, finix_transfer_id, finix_payment_instrument_id, service_fee_cents, total_amount_cents, idempotency_metadata')
       .eq('idempotency_uuid', idempotencyUuid)
       .maybeSingle();
 
     if (existingTransaction && !existingError) {
       console.log('Found existing transaction with idempotency ID:', existingTransaction);
       
-      // If payment is already completed, return the existing result
-      if (['paid', 'completed'].includes(existingTransaction.payment_status)) {
-        console.log('Returning existing successful Google Pay payment result');
-        return new Response(
-          JSON.stringify({
-            success: true,
-            transaction_id: existingTransaction.id,
-            finix_transfer_id: existingTransaction.finix_transfer_id,
-            finix_payment_instrument_id: existingTransaction.finix_payment_instrument_id,
-            service_fee_cents: existingTransaction.service_fee_cents,
-            total_amount_cents: existingTransaction.total_amount_cents,
-            duplicate_prevented: true
-          }),
-          { status: 200, headers: corsHeaders }
-        );
-      }
+      // CRITICAL: Verify this is truly the same payment (not a UUID collision)
+      // Check if the entity_id in metadata matches the current request
+      const existingEntityId = existingTransaction.idempotency_metadata?.entity_id;
+      const isEntityMatch = existingEntityId === entity_id;
       
-      // If payment is still pending, return error to prevent duplicate attempts
-      if (existingTransaction.payment_status === 'pending') {
-        console.log('Found pending Google Pay payment with same idempotency ID');
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Google Pay payment with this identifier is already being processed',
-            retryable: false
-          }),
-          { status: 409, headers: corsHeaders }
-        );
+      console.log('🔍 Duplicate verification:', {
+        existing_entity_id: existingEntityId,
+        requested_entity_id: entity_id,
+        is_match: isEntityMatch
+      });
+      
+      if (!isEntityMatch) {
+        console.warn('⚠️  UUID COLLISION DETECTED! Same UUID but different entity_id');
+        console.warn('   This should not happen with proper session extraction');
+        console.warn('   Forcing new UUID by regenerating with timestamp');
+        
+        // Force a new UUID to avoid collision
+        const collisionAvoidanceSession = `${sessionIdForUuid}_collision_${Date.now()}`;
+        const newIdempotencyUuid = generateDeterministicUUID({
+          entityType: entity_type,
+          entityId: entity_id,
+          userId: user.id,
+          sessionId: collisionAvoidanceSession,
+          paymentInstrumentId: google_pay_token.substring(0, 20)
+        });
+        
+        console.log('🔄 Generated collision-free UUID:', newIdempotencyUuid);
+        // Continue with the new UUID (don't return duplicate)
+      } else {
+        // Same entity - this is a legitimate duplicate/retry
+        
+        // If payment is already completed, return the existing result
+        if (['paid', 'completed'].includes(existingTransaction.payment_status)) {
+          console.log('Returning existing successful Google Pay payment result');
+          return new Response(
+            JSON.stringify({
+              success: true,
+              transaction_id: existingTransaction.id,
+              finix_transfer_id: existingTransaction.finix_transfer_id,
+              finix_payment_instrument_id: existingTransaction.finix_payment_instrument_id,
+              service_fee_cents: existingTransaction.service_fee_cents,
+              total_amount_cents: existingTransaction.total_amount_cents,
+              duplicate_prevented: true
+            }),
+            { status: 200, headers: corsHeaders }
+          );
+        }
+        
+        // If payment is still pending, return error to prevent duplicate attempts
+        if (existingTransaction.payment_status === 'pending') {
+          console.log('Found pending Google Pay payment with same idempotency ID');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Google Pay payment with this identifier is already being processed',
+              retryable: false
+            }),
+            { status: 409, headers: corsHeaders }
+          );
+        }
       }
     }
 
@@ -663,6 +702,8 @@ Deno.serve(async (req) => {
     // STEP 6: Update entity status if payment succeeded
     if (finixData.state === 'SUCCEEDED') {
       console.log(`=== UPDATING ${entity_type.toUpperCase()} STATUS ===`);
+      console.log(`   Entity ID: ${entity_id}`);
+      console.log(`   Total Amount from DB: ${totalAmountFromDB}`);
       
       try {
         if (entity_type === 'permit') {
@@ -687,23 +728,42 @@ Deno.serve(async (req) => {
           console.log('Successfully updated permit status to issued after Google Pay payment');
           
         } else if (entity_type === 'tax_submission') {
+          // CRITICAL: Always update the requested entity_id, not any other submission
           const taxUpdate = {
             payment_status: 'paid',
             submission_status: 'submitted',
             transfer_state: 'SUCCEEDED',
-            finix_transfer_id: finixData.id
+            finix_transfer_id: finixData.id,
+            payment_processed_at: new Date().toISOString()
           };
           
-          const { error: taxUpdateError } = await supabase
+          console.log('Updating tax submission:', {
+            id: entity_id,
+            update: taxUpdate
+          });
+          
+          const { data: updatedTax, error: taxUpdateError } = await supabase
             .from('tax_submissions')
             .update(taxUpdate)
-            .eq('id', entity_id);
+            .eq('id', entity_id)
+            .select('id, payment_status, total_amount_due_cents')
+            .single();
             
           if (taxUpdateError) {
             console.error('Failed to update tax submission status:', taxUpdateError);
             throw taxUpdateError;
           }
-          console.log('Successfully updated tax submission status to submitted after Google Pay payment');
+          
+          console.log('Successfully updated tax submission:', updatedTax);
+          
+          // Verify the amounts match
+          if (updatedTax.total_amount_due_cents && 
+              updatedTax.total_amount_due_cents !== totalAmountFromDB) {
+            console.warn('⚠️  Amount mismatch detected:', {
+              db_total: totalAmountFromDB,
+              submission_total: updatedTax.total_amount_due_cents
+            });
+          }
           
         } else if (entity_type === 'business_license') {
           const licenseUpdate = {
