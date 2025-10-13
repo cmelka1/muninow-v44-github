@@ -363,7 +363,7 @@ Deno.serve(async (req) => {
 
     // Generate deterministic UUID for idempotency
     // This ensures same inputs = same UUID for proper deduplication
-    const idempotencyUuid = generateDeterministicUUID({
+    let idempotencyUuid = generateDeterministicUUID({
       entityType: entity_type,
       entityId: entity_id,
       userId: user.id,
@@ -380,17 +380,17 @@ Deno.serve(async (req) => {
     });
     console.log('Generated idempotency UUID:', idempotencyUuid);
     
-    // Generate comprehensive metadata for debugging
-    const metadata = generateIdempotencyMetadata({
-      sessionId: sessionIdForUuid,
-      entityType: entity_type,
-      entityId: entity_id,
-      userId: user.id,
-      paymentMethod: 'google-pay',
-      paymentInstrumentId: 'google-pay-token',
-      clientUserAgent: req.headers.get('user-agent') || 'unknown',
-      clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
-    });
+  // Generate comprehensive metadata for debugging
+  let metadata = generateIdempotencyMetadata({
+    sessionId: sessionIdForUuid,
+    entityType: entity_type,
+    entityId: entity_id,
+    userId: user.id,
+    paymentMethod: 'google-pay',
+    paymentInstrumentId: 'google-pay-token',
+    clientUserAgent: req.headers.get('user-agent') || 'unknown',
+    clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
+  });
     
     console.log('Idempotency metadata:', metadata);
     console.log('Legacy idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
@@ -433,7 +433,25 @@ Deno.serve(async (req) => {
         });
         
         console.log('🔄 Generated collision-free UUID:', newIdempotencyUuid);
-        // Continue with the new UUID (don't return duplicate)
+        
+        // ✅ CRITICAL FIX: Reassign to use the collision-free UUID
+        idempotencyUuid = newIdempotencyUuid;
+        console.log('✅ Now using collision-free UUID for this payment');
+        
+        // Regenerate metadata with collision-avoidance session
+        metadata = generateIdempotencyMetadata({
+          sessionId: collisionAvoidanceSession,
+          entityType: entity_type,
+          entityId: entity_id,
+          userId: user.id,
+          paymentMethod: 'google-pay',
+          paymentInstrumentId: 'google-pay-token',
+          clientUserAgent: req.headers.get('user-agent') || 'unknown',
+          clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
+        });
+        console.log('✅ Updated metadata for collision-avoidance:', metadata);
+        
+        // Continue processing with the new UUID (no existing transaction to check)
       } else {
         // Same entity - this is a legitimate duplicate/retry
         
