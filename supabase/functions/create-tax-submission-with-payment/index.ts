@@ -18,7 +18,6 @@ interface CreateTaxSubmissionRequest {
   calculation_notes?: string;
   total_amount_due_cents: number;
   service_fee_cents: number;
-  total_amount_cents: number;
   payer_first_name?: string;
   payer_last_name?: string;
   payer_email?: string;
@@ -82,7 +81,6 @@ serve(async (req) => {
         calculation_notes: requestBody.calculation_notes,
         total_amount_due_cents: requestBody.total_amount_due_cents,
         service_fee_cents: requestBody.service_fee_cents,
-        total_amount_cents: requestBody.total_amount_cents,
         submission_status: 'draft',
         payment_status: 'pending',
         transfer_state: 'PENDING',
