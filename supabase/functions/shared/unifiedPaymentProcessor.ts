@@ -594,15 +594,33 @@ async function autoIssueEntity(
     }
   }
 
-  // Auto-issue service applications when payment completes
+  // Auto-issue service applications based on requires_review flag
   if (entityType === 'service_application') {
     const { data: application } = await supabase
       .from('municipal_service_applications')
-      .select('status')
+      .select('status, tile_id, municipal_service_tiles(requires_review)')
       .eq('id', entityId)
       .single();
 
-    if (application && application.status === 'approved') {
+    if (!application) {
+      console.log('[autoIssueEntity] Service application not found');
+      return;
+    }
+
+    const requiresReview = application.municipal_service_tiles?.requires_review;
+    let shouldIssue = false;
+
+    if (requiresReview === false) {
+      // No review required: auto-issue from any status
+      shouldIssue = true;
+      console.log('[autoIssueEntity] Service application requires_review=false, auto-issuing from status:', application.status);
+    } else {
+      // Review required: only auto-issue if already approved
+      shouldIssue = application.status === 'approved';
+      console.log('[autoIssueEntity] Service application requires_review=true, status:', application.status, 'shouldIssue:', shouldIssue);
+    }
+
+    if (shouldIssue) {
       await supabase
         .from('municipal_service_applications')
         .update({ 
