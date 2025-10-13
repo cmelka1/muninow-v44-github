@@ -3946,6 +3946,10 @@ export type Database = {
         Args: { _entity_id?: string; _role: string; _user_id: string }
         Returns: boolean
       }
+      immutable_date: {
+        Args: { "": string }
+        Returns: string
+      }
       initialize_standard_business_license_types: {
         Args: { p_customer_id: string }
         Returns: boolean
