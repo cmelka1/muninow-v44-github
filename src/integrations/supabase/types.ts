@@ -78,6 +78,7 @@ export type Database = {
           payment_processed_at: string | null
           payment_status: string | null
           payment_type: string | null
+          raw_finix_response: Json | null
           resubmitted_at: string | null
           review_notes: string | null
           reviewer_comments: string | null
@@ -155,6 +156,7 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
+          raw_finix_response?: Json | null
           resubmitted_at?: string | null
           review_notes?: string | null
           reviewer_comments?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
+          raw_finix_response?: Json | null
           resubmitted_at?: string | null
           review_notes?: string | null
           reviewer_comments?: string | null
@@ -1459,6 +1462,7 @@ export type Database = {
           payment_processed_at: string | null
           payment_status: string | null
           payment_type: Database["public"]["Enums"]["payment_type_enum"] | null
+          raw_finix_response: Json | null
           resubmitted_at: string | null
           review_notes: string | null
           service_fee_cents: number | null
@@ -1523,6 +1527,7 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
+          raw_finix_response?: Json | null
           resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
@@ -1587,6 +1592,7 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
+          raw_finix_response?: Json | null
           resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
@@ -2043,6 +2049,7 @@ export type Database = {
           profile_id: string | null
           property_address: string
           property_pin: string | null
+          raw_finix_response: Json | null
           resubmitted_at: string | null
           review_completed_at: string | null
           review_notes: string | null
@@ -2116,6 +2123,7 @@ export type Database = {
           profile_id?: string | null
           property_address: string
           property_pin?: string | null
+          raw_finix_response?: Json | null
           resubmitted_at?: string | null
           review_completed_at?: string | null
           review_notes?: string | null
@@ -2189,6 +2197,7 @@ export type Database = {
           profile_id?: string | null
           property_address?: string
           property_pin?: string | null
+          raw_finix_response?: Json | null
           resubmitted_at?: string | null
           review_completed_at?: string | null
           review_notes?: string | null
