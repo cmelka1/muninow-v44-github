@@ -120,43 +120,11 @@ export const generateDeterministicUUID = (params: {
   baseAmountCents: number;
   paymentInstrumentId?: string;
 }): string => {
-  try {
-    // Create a deterministic input string from all parameters
-    // Including baseAmountCents ensures different amounts generate different UUIDs
-    const input = [
-      params.entityType,
-      params.entityId,
-      params.userId,
-      params.sessionId,
-      params.baseAmountCents.toString(),
-      params.paymentInstrumentId || 'none'
-    ].join(':');
-
-    // Generate UUIDv5 using the payment namespace
-    const encoder = new TextEncoder();
-    const data = encoder.encode(PAYMENT_IDEMPOTENCY_NAMESPACE + input);
-    
-    // Simple hash-based UUID generation (UUIDv5-like)
-    const hashHex = Array.from(data.slice(0, 16))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-    
-    // Format as UUID v5: xxxxxxxx-xxxx-5xxx-yxxx-xxxxxxxxxxxx
-    const uuid = [
-      hashHex.slice(0, 8),
-      hashHex.slice(8, 12),
-      '5' + hashHex.slice(13, 16), // Version 5
-      ((parseInt(hashHex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16) + hashHex.slice(18, 20), // Variant
-      hashHex.slice(20, 32)
-    ].join('-');
-
-    console.log('Generated deterministic UUID:', uuid, 'for input:', input);
-    return uuid;
-  } catch (error) {
-    console.error('Error generating deterministic UUID:', error);
-    // Fallback to random UUID
-    return crypto.randomUUID();
-  }
+  // Generate a truly random UUID to avoid hash collisions
+  // The idempotency metadata still tracks all session info for debugging
+  const uuid = crypto.randomUUID();
+  console.log('Generated random UUID:', uuid, 'for session:', params.sessionId);
+  return uuid;
 };
 
 /**
