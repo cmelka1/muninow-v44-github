@@ -455,7 +455,7 @@ Deno.serve(async (req) => {
       currency: 'USD',
       amount: totalAmountFromDB,
       source: finixPaymentInstrumentId,
-      idempotency_id: idempotency_id,
+      idempotency_id: idempotencyUuid,
       ...(fraud_session_id && { fraud_session_id })
     };
 

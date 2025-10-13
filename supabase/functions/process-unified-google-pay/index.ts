@@ -1,5 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
-import { classifyPaymentError, generateIdempotencyId } from '../shared/paymentUtils.ts';
+import { 
+  classifyPaymentError, 
+  generateIdempotencyId, 
+  generateDeterministicUUID,
+  generateIdempotencyMetadata 
+} from '../shared/paymentUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -330,16 +335,43 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use client-provided idempotency ID or generate one
+    // Generate deterministic UUID for idempotency
+    // This ensures same inputs = same UUID for proper deduplication
+    const idempotencyUuid = generateDeterministicUUID({
+      entityType: entity_type,
+      entityId: entity_id,
+      userId: user.id,
+      sessionId: 'google-pay-session',
+      paymentInstrumentId: google_pay_token.substring(0, 20) // Use token prefix for uniqueness
+    });
+    
+    console.log('Generated idempotency UUID:', idempotencyUuid);
+    
+    // Generate comprehensive metadata for debugging
+    const metadata = generateIdempotencyMetadata({
+      sessionId: 'google-pay-session',
+      entityType: entity_type,
+      entityId: entity_id,
+      userId: user.id,
+      paymentMethod: 'google-pay',
+      paymentInstrumentId: 'google-pay-token',
+      clientUserAgent: req.headers.get('user-agent') || 'unknown',
+      clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
+    });
+    
+    console.log('Idempotency metadata:', metadata);
+    
+    // Keep legacy idempotency_id for backward compatibility
     const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_google_pay', entity_id);
-    console.log('Using idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
+    console.log('Legacy idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
 
-    // Check for existing payment transaction with this idempotency ID
+    // Check for existing payment transaction with this UUID
+    console.log('Checking for duplicate payment with UUID:', idempotencyUuid);
     const { data: existingTransaction, error: existingError } = await supabase
       .from('payment_transactions')
       .select('id, payment_status, finix_transfer_id, finix_payment_instrument_id, service_fee_cents, total_amount_cents')
-      .eq('idempotency_id', idempotency_id)
-      .single();
+      .eq('idempotency_uuid', idempotencyUuid)
+      .maybeSingle();
 
     if (existingTransaction && !existingError) {
       console.log('Found existing transaction with idempotency ID:', existingTransaction);
@@ -391,6 +423,8 @@ Deno.serve(async (req) => {
         p_payment_type: 'google-pay',
         p_fraud_session_id: fraud_session_id || null,
         p_idempotency_id: idempotency_id,
+        p_idempotency_uuid: idempotencyUuid,
+        p_idempotency_metadata: metadata,
         p_is_card: true, // Google Pay is treated as card payment (uses card fee rates & no ACH fee limit)
         p_card_brand: null, // Will be updated after payment instrument creation
         p_card_last_four: null,
@@ -538,7 +572,7 @@ Deno.serve(async (req) => {
       currency: 'USD',
       amount: totalAmountFromDB,
       source: piData.id,
-      idempotency_id: idempotency_id
+      idempotency_id: idempotencyUuid
     };
 
     if (fraud_session_id) {
