@@ -51,7 +51,6 @@ export type Database = {
           form_responses: Json | null
           fraud_session_id: string | null
           id: string
-          idempotency_id: string | null
           idempotency_metadata: Json | null
           idempotency_uuid: string | null
           information_requested_at: string | null
@@ -129,7 +128,6 @@ export type Database = {
           form_responses?: Json | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_requested_at?: string | null
@@ -207,7 +205,6 @@ export type Database = {
           form_responses?: Json | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_requested_at?: string | null
@@ -1447,7 +1444,6 @@ export type Database = {
           fixed_fee: number | null
           fraud_session_id: string | null
           id: string
-          idempotency_id: string | null
           idempotency_metadata: Json | null
           idempotency_uuid: string | null
           information_request_reason: string | null
@@ -1512,7 +1508,6 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_request_reason?: string | null
@@ -1577,7 +1572,6 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_request_reason?: string | null
@@ -1900,7 +1894,6 @@ export type Database = {
           finix_transfer_id: string | null
           fraud_session_id: string | null
           id: string
-          idempotency_id: string | null
           idempotency_metadata: Json | null
           idempotency_uuid: string
           merchant_id: string
@@ -1936,7 +1929,6 @@ export type Database = {
           finix_transfer_id?: string | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid: string
           merchant_id: string
@@ -1972,7 +1964,6 @@ export type Database = {
           finix_transfer_id?: string | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string
           merchant_id?: string
@@ -2020,7 +2011,6 @@ export type Database = {
           finix_transfer_id: string | null
           fixed_fee: number | null
           fraud_session_id: string | null
-          idempotency_id: string | null
           idempotency_metadata: Json | null
           idempotency_uuid: string | null
           information_request_reason: string | null
@@ -2094,7 +2084,6 @@ export type Database = {
           finix_transfer_id?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_request_reason?: string | null
@@ -2168,7 +2157,6 @@ export type Database = {
           finix_transfer_id?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_request_reason?: string | null
@@ -2919,7 +2907,6 @@ export type Database = {
           fixed_fee: number | null
           fraud_session_id: string | null
           id: string
-          idempotency_id: string | null
           idempotency_metadata: Json | null
           idempotency_uuid: string | null
           last_name: string | null
@@ -2973,7 +2960,6 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           last_name?: string | null
@@ -3027,7 +3013,6 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string | null
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           last_name?: string | null
