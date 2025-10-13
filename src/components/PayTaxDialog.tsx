@@ -341,26 +341,31 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
       setIsSubmitting(true);
       
       try {
-        const { data, error } = await supabase.rpc('create_tax_submission_before_payment', {
-          p_user_id: profile?.id,
-          p_customer_id: selectedMunicipality?.customer_id,
-          p_merchant_id: selectedMunicipality?.id,
-          p_tax_type: taxType,
-          p_tax_period_start: getCurrentTaxPeriodStart(),
-          p_tax_period_end: getCurrentTaxPeriodEnd(),
-          p_tax_year: getCurrentTaxYear(),
-          p_amount_cents: getTaxAmountInCents(),
-          p_calculation_notes: calculationNotes,
-          p_first_name: payerName.split(' ')[0] || '',
-          p_last_name: payerName.split(' ').slice(1).join(' ') || '',
-          p_user_email: payerEmail,
-          p_payer_ein: payerEin,
-          p_payer_phone: payerPhone,
-          p_payer_street_address: payerAddress?.streetAddress,
-          p_payer_city: payerAddress?.city,
-          p_payer_state: payerAddress?.state,
-          p_payer_zip_code: payerAddress?.zipCode,
-          p_payer_business_name: payerCompanyName || null
+        const { data, error } = await supabase.functions.invoke('create-tax-submission-with-payment', {
+          body: {
+            user_id: profile?.id,
+            customer_id: selectedMunicipality?.customer_id,
+            merchant_id: selectedMunicipality?.id,
+            tax_type: taxType,
+            tax_period_start: getCurrentTaxPeriodStart(),
+            tax_period_end: getCurrentTaxPeriodEnd(),
+            tax_year: getCurrentTaxYear(),
+            base_amount_cents: getTaxAmountInCents(),
+            calculation_notes: calculationNotes,
+            total_amount_due_cents: getTaxAmountInCents(),
+            service_fee_cents: 0,
+            total_amount_cents: getTaxAmountInCents(),
+            payer_first_name: payerName.split(' ')[0] || '',
+            payer_last_name: payerName.split(' ').slice(1).join(' ') || '',
+            payer_email: payerEmail,
+            payer_ein: payerEin,
+            payer_phone: payerPhone,
+            payer_business_name: payerCompanyName || '',
+            payer_street_address: payerAddress?.streetAddress || '',
+            payer_city: payerAddress?.city || '',
+            payer_state: payerAddress?.state || '',
+            payer_zip_code: payerAddress?.zipCode || ''
+          }
         });
 
         if (error) {
