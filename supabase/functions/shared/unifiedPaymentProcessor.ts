@@ -447,6 +447,19 @@ async function updateTransactionStatus(
   return { success: !error };
 }
 
+// Helper: Map payment type to PostgreSQL ENUM
+function mapPaymentTypeToEnum(paymentType: string): string {
+  const enumMap: Record<string, string> = {
+    'card': 'PAYMENT_CARD',
+    'ach': 'BANK_ACCOUNT',
+    'google-pay': 'PAYMENT_CARD',
+    'apple-pay': 'PAYMENT_CARD',
+    'PAYMENT_CARD': 'PAYMENT_CARD',
+    'BANK_ACCOUNT': 'BANK_ACCOUNT'
+  };
+  return enumMap[paymentType] || 'PAYMENT_CARD';
+}
+
 // Helper: Update entity status
 async function updateEntityStatus(
   supabase: any,
@@ -518,9 +531,9 @@ async function updateEntityStatus(
       updateData.ach_fixed_fee = feeProfile.ach_fixed_fee;
     }
     
-    // Determine payment type based on payment instrument
+    // Determine payment type based on payment instrument and map to ENUM
     const isCard = finixPaymentInstrumentId.startsWith('PI');
-    updateData.payment_type = isCard ? 'card' : 'ach';
+    updateData.payment_type = mapPaymentTypeToEnum(isCard ? 'card' : 'ach');
   }
 
   const { error } = await supabase
