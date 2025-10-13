@@ -439,7 +439,16 @@ async function updateEntityStatus(
     'tax_submission': 'tax_submissions'
   };
 
+  const primaryKeyMap: Record<string, string> = {
+    'permit': 'permit_id',
+    'business_license': 'id',
+    'service_application': 'id',
+    'tax_submission': 'id'
+  };
+
   const tableName = tableMap[entityType];
+  const primaryKeyColumn = primaryKeyMap[entityType] || 'id';
+  
   if (!tableName) {
     return { success: false };
   }
@@ -465,7 +474,7 @@ async function updateEntityStatus(
   const { error } = await supabase
     .from(tableName)
     .update(updateData)
-    .eq('id', entityId);
+    .eq(primaryKeyColumn, entityId);
 
   if (error) {
     console.error('[updateEntityStatus] Error:', error);
@@ -486,14 +495,14 @@ async function autoIssueEntity(
     const { data: permit } = await supabase
       .from('permit_applications')
       .select('application_status')
-      .eq('id', entityId)
+      .eq('permit_id', entityId)
       .single();
 
     if (permit && permit.application_status === 'approved') {
       await supabase
         .from('permit_applications')
         .update({ application_status: 'issued' })
-        .eq('id', entityId);
+        .eq('permit_id', entityId);
       
       console.log('[autoIssueEntity] Permit auto-issued');
     }
