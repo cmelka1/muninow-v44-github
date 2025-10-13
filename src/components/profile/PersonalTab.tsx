@@ -295,7 +295,7 @@ export const PersonalTab = () => {
 
 
           {/* Business Information (if applicable) */}
-          {profile?.account_type === 'business' && (
+          {(profile?.account_type === 'businessadmin' || profile?.account_type === 'businessuser') && (
             <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-6">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
