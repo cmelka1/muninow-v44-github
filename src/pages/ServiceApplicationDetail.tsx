@@ -121,7 +121,7 @@ const ServiceApplicationDetail: React.FC = () => {
       const skipFields = ['name', 'full_name', 'first_name', 'last_name', 'email', 'phone', 'phone_number', 
                          'business_name', 'business_legal_name', 'company_name', 'address', 'street_address', 
                          'street', 'apt', 'apt_number', 'apartment', 'city', 'state', 'zip', 'zip_code', 
-                         'postal_code', 'additional_information', 'notes', 'comments', 'amount_cents'];
+                         'postal_code', 'additional_information', 'notes', 'comments', 'amount_cents', 'base_amount_cents'];
       if (skipFields.includes(key.toLowerCase()) || !value) return null;
       
       const field = formFields.find((f: any) => f.id === key);
@@ -432,7 +432,7 @@ const ServiceApplicationDetail: React.FC = () => {
                   entityId={application.id}
                   customerId={application.customer_id}
                   merchantId={application.merchant_id || ''}
-                  baseAmountCents={application.amount_cents || application.tile?.amount_cents || 0}
+                  baseAmountCents={application.base_amount_cents || application.tile?.amount_cents || 0}
                   entityName={application.tile?.title || 'Service Application'}
                   initialExpanded={true}
                   onPaymentSuccess={() => {

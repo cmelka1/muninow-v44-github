@@ -239,7 +239,7 @@ const MunicipalServiceApplicationDetail = () => {
       const skipFields = ['name', 'full_name', 'first_name', 'last_name', 'email', 'phone', 'phone_number', 
                          'business_name', 'business_legal_name', 'company_name', 'address', 'street_address', 
                          'street', 'apt', 'apt_number', 'apartment', 'city', 'state', 'zip', 'zip_code', 
-                         'postal_code', 'additional_information', 'notes', 'comments', 'amount_cents'];
+                         'postal_code', 'additional_information', 'notes', 'comments', 'amount_cents', 'base_amount_cents'];
       if (skipFields.includes(key.toLowerCase()) || !value) return null;
       
       const field = formFields.find((f: any) => f.id === key);
@@ -546,13 +546,13 @@ const MunicipalServiceApplicationDetail = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Service Amount</span>
                       <span className="text-sm font-medium">
-                        {formatCurrency((application.amount_cents || application.tile?.amount_cents || 0) / 100)}
+                        {formatCurrency((application.base_amount_cents || application.tile?.amount_cents || 0) / 100)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Service Fee</span>
                       <span className="text-sm font-medium">
-                        {formatCurrency(((application.total_amount_cents || 0) - (application.amount_cents || application.tile?.amount_cents || 0)) / 100)}
+                        {formatCurrency(((application.total_amount_cents || 0) - (application.base_amount_cents || application.tile?.amount_cents || 0)) / 100)}
                       </span>
                     </div>
                     <Separator />
@@ -565,11 +565,11 @@ const MunicipalServiceApplicationDetail = () => {
                   </div>
                 ) : (
                   // Simple display for unpaid applications
-                  (application.amount_cents || application.tile?.amount_cents) && (
+                  (application.base_amount_cents || application.tile?.amount_cents) && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-muted-foreground">Service Amount</span>
                       <span className="text-sm font-medium">
-                        {formatCurrency((application.amount_cents || application.tile?.amount_cents || 0) / 100)}
+                        {formatCurrency((application.base_amount_cents || application.tile?.amount_cents || 0) / 100)}
                       </span>
                     </div>
                   )

@@ -40,7 +40,7 @@ export interface ServiceApplication {
   issued_at?: string;
   
   // Payment Information
-  amount_cents?: number;
+  base_amount_cents?: number;
   service_fee_cents?: number;
   total_amount_cents?: number;
   payment_status?: string;

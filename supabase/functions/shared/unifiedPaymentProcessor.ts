@@ -501,6 +501,28 @@ async function updateEntityStatus(
     updateData.total_amount_cents = totalAmount;  // All other entities use this
   }
 
+  // Add merchant fee profile data for business licenses and service applications
+  if (entityType === 'business_license' || entityType === 'service_application') {
+    // Get fee profile data
+    const { data: feeProfile } = await supabase
+      .from('merchant_fee_profiles')
+      .select('id, basis_points, fixed_fee, ach_basis_points, ach_fixed_fee')
+      .eq('merchant_id', merchantData.merchantId)
+      .single();
+    
+    if (feeProfile) {
+      updateData.merchant_fee_profile_id = feeProfile.id;
+      updateData.basis_points = feeProfile.basis_points;
+      updateData.fixed_fee = feeProfile.fixed_fee;
+      updateData.ach_basis_points = feeProfile.ach_basis_points;
+      updateData.ach_fixed_fee = feeProfile.ach_fixed_fee;
+    }
+    
+    // Determine payment type based on payment instrument
+    const isCard = finixPaymentInstrumentId.startsWith('PI');
+    updateData.payment_type = isCard ? 'card' : 'ach';
+  }
+
   const { error } = await supabase
     .from(tableName)
     .update(updateData)
@@ -549,10 +571,34 @@ async function autoIssueEntity(
     if (license && license.application_status === 'approved') {
       await supabase
         .from('business_license_applications')
-        .update({ application_status: 'issued' })
+        .update({ 
+          application_status: 'issued',
+          issued_at: new Date().toISOString()
+        })
         .eq('id', entityId);
       
       console.log('[autoIssueEntity] License auto-issued');
+    }
+  }
+
+  // Auto-issue service applications when payment completes
+  if (entityType === 'service_application') {
+    const { data: application } = await supabase
+      .from('municipal_service_applications')
+      .select('status')
+      .eq('id', entityId)
+      .single();
+
+    if (application && application.status === 'approved') {
+      await supabase
+        .from('municipal_service_applications')
+        .update({ 
+          status: 'issued',
+          issued_at: new Date().toISOString()
+        })
+        .eq('id', entityId);
+      
+      console.log('[autoIssueEntity] Service application auto-issued');
     }
   }
 }
