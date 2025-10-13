@@ -537,7 +537,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         owner_city: city || '',
         owner_state: state || '',
         owner_zip_code: zipCode || '',
-        base_fee_cents: selectedLicenseType?.base_fee_cents || 0,
+        base_amount_cents: selectedLicenseType?.base_fee_cents || 0,
         total_fee_cents: selectedLicenseType?.base_fee_cents || 0,
         additional_info: { additionalDetails: businessInfo.additionalDetails },
         form_responses: {

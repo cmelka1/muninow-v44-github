@@ -204,7 +204,7 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {
                   </TableCell>
                   <TableCell className="hidden 2xl:table-cell py-2 text-center">
                     <span className="text-sm font-medium">
-                      {formatAmount(license.base_fee_cents / 100)}
+                      {formatAmount(license.base_amount_cents / 100)}
                     </span>
                   </TableCell>
                   <TableCell className="text-center py-2">

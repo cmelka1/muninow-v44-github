@@ -12,7 +12,7 @@ export interface BusinessLicense {
   owner_first_name: string;
   owner_last_name: string;
   application_status: string;
-  base_fee_cents: number;
+  base_amount_cents: number;
   total_fee_cents: number;
   submitted_at?: string;
   approved_at?: string;
@@ -76,19 +76,19 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
       if (filters.feeRange) {
         switch (filters.feeRange) {
           case '0-50':
-            query = query.lte('base_fee_cents', 5000);
+            query = query.lte('base_amount_cents', 5000);
             break;
           case '51-100':
-            query = query.gt('base_fee_cents', 5000).lte('base_fee_cents', 10000);
+            query = query.gt('base_amount_cents', 5000).lte('base_amount_cents', 10000);
             break;
           case '101-250':
-            query = query.gt('base_fee_cents', 10000).lte('base_fee_cents', 25000);
+            query = query.gt('base_amount_cents', 10000).lte('base_amount_cents', 25000);
             break;
           case '251-500':
-            query = query.gt('base_fee_cents', 25000).lte('base_fee_cents', 50000);
+            query = query.gt('base_amount_cents', 25000).lte('base_amount_cents', 50000);
             break;
           case '500+':
-            query = query.gt('base_fee_cents', 50000);
+            query = query.gt('base_amount_cents', 50000);
             break;
         }
       }
@@ -119,7 +119,7 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
         owner_first_name: license.owner_first_name,
         owner_last_name: license.owner_last_name,
         application_status: license.application_status,
-        base_fee_cents: license.base_amount_cents || 0,
+        base_amount_cents: license.base_amount_cents || 0,
         total_fee_cents: license.total_fee_cents || 0,
         submitted_at: license.submitted_at,
         approved_at: license.approved_at,

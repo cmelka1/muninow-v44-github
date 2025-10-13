@@ -28,7 +28,7 @@ export interface CreateBusinessLicenseApplicationData {
   owner_city: string;
   owner_state: string;
   owner_zip_code: string;
-  base_fee_cents?: number;
+  base_amount_cents?: number;
   total_fee_cents?: number;
   service_fee_cents?: number;
   total_amount_cents?: number;
