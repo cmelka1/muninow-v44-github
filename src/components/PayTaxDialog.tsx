@@ -336,69 +336,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 2 && !validateStep2()) return;
     
-    // Create tax submission when moving from step 2 to step 3
-    if (currentStep === 2 && currentStep + 1 === 3) {
-      setIsSubmitting(true);
-      
-      try {
-        const { data, error } = await supabase.functions.invoke('create-tax-submission-with-payment', {
-          body: {
-            user_id: profile?.id,
-            customer_id: selectedMunicipality?.customer_id,
-            merchant_id: selectedMunicipality?.id,
-            tax_type: taxType,
-            tax_period_start: getCurrentTaxPeriodStart(),
-            tax_period_end: getCurrentTaxPeriodEnd(),
-            tax_year: getCurrentTaxYear(),
-            base_amount_cents: getTaxAmountInCents(),
-            calculation_notes: calculationNotes,
-            total_amount_due_cents: getTaxAmountInCents(),
-            service_fee_cents: 0,
-            payer_first_name: payerName.split(' ')[0] || '',
-            payer_last_name: payerName.split(' ').slice(1).join(' ') || '',
-            payer_email: payerEmail,
-            payer_ein: payerEin,
-            payer_phone: payerPhone,
-            payer_business_name: payerCompanyName || '',
-            payer_street_address: payerAddress?.streetAddress || '',
-            payer_city: payerAddress?.city || '',
-            payer_state: payerAddress?.state || '',
-            payer_zip_code: payerAddress?.zipCode || ''
-          }
-        });
-
-        if (error) {
-          throw new Error(error.message || 'Failed to create tax submission');
-        }
-
-        const result = data as { success: boolean; tax_submission_id?: string; error?: string };
-
-        if (!result?.success) {
-          throw new Error(result?.error || 'Failed to create tax submission');
-        }
-
-        // Store the created tax submission ID
-        setCreatedTaxSubmissionId(result.tax_submission_id || '');
-        
-        toast({
-          title: "Tax submission created",
-          description: "Your tax submission has been prepared for payment.",
-        });
-        
-      } catch (error: any) {
-        console.error('Tax submission creation error:', error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to create tax submission. Please try again.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-    
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
@@ -441,14 +378,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setCalculationNotes('');
     setTotalAmountDue('');
     
-    // Reset created tax submission ID
-    setCreatedTaxSubmissionId(null);
-    
     setErrors({});
     setIsSubmitting(false);
   };
-
-  const [createdTaxSubmissionId, setCreatedTaxSubmissionId] = useState<string | null>(null);
 
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
@@ -1053,19 +985,18 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment Section */}
-                  {createdTaxSubmissionId && (
-                    <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          Complete Payment
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <InlinePaymentFlow
-                          entityType="tax_submission"
-                          entityId={createdTaxSubmissionId}
+                  {/* Payment Section - Note: Tax submission will be created during payment */}
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Complete Payment
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <InlinePaymentFlow
+                        entityType="tax_submission"
+                        entityId={null}
                           entityName={`${taxType} Tax Payment`}
                           customerId={selectedMunicipality?.customer_id || ''}
                           merchantId={selectedMunicipality?.id || ''}
@@ -1089,7 +1020,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         />
                       </CardContent>
                     </Card>
-                  )}
                 </div>
               )}
             </div>
