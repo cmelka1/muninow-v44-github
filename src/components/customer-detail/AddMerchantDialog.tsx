@@ -73,6 +73,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
     applicationId: string;
     environment: 'sandbox' | 'live';
   } | null>(null);
+  const [finixLibraryLoaded, setFinixLibraryLoaded] = useState(false);
 
   // Function to scroll dialog content to top
   const scrollToTop = () => {
@@ -80,6 +81,45 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
       dialogContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  // Detect when Finix library is loaded
+  useEffect(() => {
+    if (!open) return;
+    
+    const checkFinixLoaded = () => {
+      if (window.Finix && window.Finix.BankTokenForm) {
+        console.log('✅ Finix library detected and loaded');
+        setFinixLibraryLoaded(true);
+        return true;
+      }
+      return false;
+    };
+    
+    // Check immediately
+    if (checkFinixLoaded()) {
+      return;
+    }
+    
+    // If not loaded, poll every 100ms for up to 5 seconds
+    let attempts = 0;
+    const maxAttempts = 50;
+    const pollInterval = setInterval(() => {
+      attempts++;
+      if (checkFinixLoaded()) {
+        clearInterval(pollInterval);
+      } else if (attempts >= maxAttempts) {
+        console.error('❌ Finix library failed to load after 5 seconds');
+        clearInterval(pollInterval);
+        toast({
+          title: "Library Loading Error",
+          description: "Payment library failed to load. Please refresh the page.",
+          variant: "destructive",
+        });
+      }
+    }, 100);
+    
+    return () => clearInterval(pollInterval);
+  }, [open]);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -128,15 +168,30 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
     fetchFinixConfig();
   }, [open]);
 
+  // Initialize Finix BankTokenForm with comprehensive fallbacks
   useEffect(() => {
-    if (currentStep !== 2 || !finixConfig || !step1Data?.finix_identity_id) {
+    // Prerequisites check (matching working implementation)
+    if (!finixConfig || !finixLibraryLoaded || !window.Finix || !open) {
+      console.log('⏳ Waiting for prerequisites:', {
+        currentStep,
+        finixConfig: !!finixConfig,
+        finixLibraryLoaded,
+        windowFinix: !!window.Finix,
+        step1Data: !!step1Data,
+        open
+      });
       return;
     }
     
+    if (currentStep !== 2 || !step1Data?.finix_identity_id) {
+      return;
+    }
+    
+    // Clean up existing form
     if (finixBankForm) {
       try {
+        console.log('🧹 Cleaning up previous form');
         finixBankForm.destroy();
-        console.log('🧹 Previous Finix form destroyed');
       } catch (e) {
         console.log('⚠️ Error destroying previous form:', e);
       }
@@ -144,9 +199,15 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
       setIsFinixFormReady(false);
     }
     
+    // Declare variables at useEffect scope so cleanup can access them
+    let form: any = null;
+    let observer: MutationObserver | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    
     try {
       console.log('🔧 Initializing Finix BankTokenForm for merchant:', step1Data.merchant_id);
       
+      // Simplified styles (remove invalid 'success' property)
       const formStyles = {
         base: {
           fontSize: '14px',
@@ -163,18 +224,17 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
         focus: {
           borderColor: 'hsl(var(--ring))',
           outline: '2px solid hsl(var(--ring))',
-          outlineOffset: '2px',
         },
         error: {
           borderColor: 'hsl(var(--destructive))',
           color: 'hsl(var(--destructive))',
         },
-        success: {
-          borderColor: 'hsl(var(--success))',
-        },
       };
       
-      const bankForm = (window as any).Finix.BankTokenForm('merchant-bank-form-container', {
+      const containerId = 'merchant-bank-form-container';
+      
+      // Simplified configuration (remove invalid 'confirmAccountNumber' option)
+      const formConfig = {
         styles: formStyles,
         showLabels: true,
         showPlaceholders: true,
@@ -182,7 +242,6 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
         defaultValues: {
           account_holder_name: customer.legal_entity_name || '',
         },
-        confirmAccountNumber: true,
         placeholders: {
           account_holder_name: 'Enter account holder name',
           routing_number: '123456789',
@@ -193,46 +252,119 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
           account_holder_name: 'Account Holder Name',
           routing_number: 'Routing Number',
           account_number: 'Account Number',
-          account_number_confirmation: 'Confirm Account Number',
           account_type: 'Account Type',
         },
-      });
-      
-      bankForm.on('ready', () => {
-        console.log('✅ Finix BankTokenForm ready for merchant onboarding');
-        setIsFinixFormReady(true);
-      });
-      
-      bankForm.on('error', (error: any) => {
-        console.error('❌ Finix form error:', error);
-        toast({
-          title: "Form Error",
-          description: error.message || "Payment form error. Please check your input.",
-          variant: "destructive",
-        });
-      });
-      
-      setFinixBankForm(bankForm);
-      
-      return () => {
-        try {
-          if (bankForm && typeof bankForm.destroy === 'function') {
-            bankForm.destroy();
-            console.log('🧹 Finix form cleaned up');
-          }
-        } catch (e) {
-          console.log('⚠️ Error during cleanup:', e);
-        }
       };
+      
+      // Create BankTokenForm with proper type checking
+      form = window.Finix.BankTokenForm(containerId, formConfig);
+      
+      console.log('✅ Finix form instance created');
+      
+      // Defensive check
+      if (!form) {
+        throw new Error('Failed to create Finix form instance');
+      }
+      
+      // Set up event listeners
+      if (typeof form.on === 'function') {
+        form.on('ready', () => {
+          console.log('✅ Finix BankTokenForm ready event fired');
+          setIsFinixFormReady(true);
+        });
+        
+        form.on('change', (data: any) => {
+          console.log('📝 Finix form changed:', data);
+        });
+        
+        form.on('error', (error: any) => {
+          console.error('❌ Finix form error:', error);
+          toast({
+            title: "Form Error",
+            description: error.message || "Payment form error. Please check your input.",
+            variant: "destructive",
+          });
+        });
+      }
+      
+      // Fallback 1: Check for iframe elements (Finix injects iframes for secure fields)
+      const checkForFormElements = () => {
+        const container = document.getElementById(containerId);
+        if (container) {
+          const iframes = container.querySelectorAll('iframe');
+          if (iframes.length > 0) {
+            console.log('✅ Finix form iframes detected, marking as ready');
+            setIsFinixFormReady(true);
+            return true;
+          }
+        }
+        return false;
+      };
+      
+      // Fallback 2: Set up a mutation observer to detect when Finix injects content
+      const container = document.getElementById(containerId);
+      if (container) {
+        observer = new MutationObserver(() => {
+          if (checkForFormElements() && observer) {
+            observer.disconnect();
+          }
+        });
+        
+        observer.observe(container, {
+          childList: true,
+          subtree: true
+        });
+      }
+      
+      // Fallback 3: Timeout - if form hasn't reported ready after 3 seconds but has content, mark as ready
+      fallbackTimer = setTimeout(() => {
+        const container = document.getElementById(containerId);
+        if (container) {
+          const iframes = container.querySelectorAll('iframe');
+          if (iframes.length > 0) {
+            console.log('⚠️ Finix ready event did not fire, but form content detected - marking as ready via timeout');
+            setIsFinixFormReady(true);
+          }
+        }
+      }, 3000);
+      
+      setFinixBankForm(form);
+      
     } catch (error) {
       console.error('❌ Error initializing Finix form:', error);
+      console.error('Error details:', {
+        error: error instanceof Error ? error.message : error,
+        windowFinix: typeof window.Finix,
+        bankTokenForm: typeof window.Finix?.BankTokenForm,
+        containerId: 'merchant-bank-form-container',
+        finixConfig,
+        step1Data: step1Data?.merchant_id
+      });
       toast({
         title: "Form Initialization Error",
         description: "Failed to load secure payment form. Please refresh the page and try again.",
         variant: "destructive",
       });
     }
-  }, [currentStep, finixConfig, step1Data, customer]);
+    
+    // Cleanup on unmount - reference local variables, not state
+    return () => {
+      try {
+        console.log('🧹 Cleanup: destroying form and observers');
+        if (observer) {
+          observer.disconnect();
+        }
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+        }
+        if (form && typeof form.destroy === 'function') {
+          form.destroy();
+        }
+      } catch (e) {
+        console.log('⚠️ Error destroying form on cleanup:', e);
+      }
+    };
+  }, [currentStep, finixConfig, finixLibraryLoaded, step1Data, customer, open]);
 
   const handleStep1Submit = async (data: Step1Data) => {
     setIsLoading(true);
