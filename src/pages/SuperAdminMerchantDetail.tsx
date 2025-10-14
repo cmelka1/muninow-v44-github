@@ -45,10 +45,11 @@ const SuperAdminMerchantDetail = () => {
   const { customerId, merchantId } = useParams<{ customerId: string; merchantId: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { fetchMerchantById, isLoading: merchantLoading, error: merchantError } = useMerchants();
+  const { fetchMerchantById, deleteMerchant, isLoading: merchantLoading, error: merchantError } = useMerchants();
   const { fetchCustomerById, isLoading: customerLoading } = useCustomers();
   const [merchant, setMerchant] = useState<any>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const activeTab = searchParams.get('tab') || 'profile';
 
   useEffect(() => {
@@ -71,6 +72,17 @@ const SuperAdminMerchantDetail = () => {
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
+  };
+
+  const handleDelete = async (merchantId: string) => {
+    setIsDeleting(true);
+    const result = await deleteMerchant(merchantId);
+    setIsDeleting(false);
+    
+    if (result.success) {
+      // Navigate back to customer's merchant list
+      navigate(`/superadmin/customers/${customerId}`);
+    }
   };
 
   const isLoading = merchantLoading || customerLoading;
@@ -184,7 +196,11 @@ const SuperAdminMerchantDetail = () => {
 
           <div className="mt-6">
             <TabsContent value="profile" className="space-y-6">
-              <MerchantProfileTab merchant={merchant} />
+              <MerchantProfileTab 
+                merchant={merchant} 
+                onDelete={handleDelete}
+                isDeleting={isDeleting}
+              />
             </TabsContent>
 
             <TabsContent value="transactions" className="space-y-6">

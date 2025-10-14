@@ -216,6 +216,73 @@ export const useMerchants = () => {
     };
   };
 
+  const deleteMerchant = async (merchantId: string) => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Check for related records that would block deletion
+      const checks = await Promise.all([
+        supabase.from('payment_transactions').select('id', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+        supabase.from('permit_applications').select('id', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+        supabase.from('municipal_service_applications').select('id', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+        supabase.from('business_license_applications').select('id', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+        supabase.from('merchant_fee_profiles').select('id', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+        supabase.from('merchant_payout_profiles').select('id', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      ]);
+
+      const [transactions, permits, services, licenses, feeProfiles, payoutProfiles] = checks;
+
+      // Build error message for blocking records
+      const blockingRecords: string[] = [];
+      if (transactions.count && transactions.count > 0) blockingRecords.push(`${transactions.count} payment transactions`);
+      if (permits.count && permits.count > 0) blockingRecords.push(`${permits.count} permit applications`);
+      if (services.count && services.count > 0) blockingRecords.push(`${services.count} service applications`);
+      if (licenses.count && licenses.count > 0) blockingRecords.push(`${licenses.count} business license applications`);
+      if (feeProfiles.count && feeProfiles.count > 0) blockingRecords.push(`${feeProfiles.count} fee profiles`);
+      if (payoutProfiles.count && payoutProfiles.count > 0) blockingRecords.push(`${payoutProfiles.count} payout profiles`);
+
+      if (blockingRecords.length > 0) {
+        const errorMsg = `Cannot delete merchant: ${blockingRecords.join(', ')} exist`;
+        setError(errorMsg);
+        toast({
+          title: "Cannot Delete Merchant",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        return { success: false, error: errorMsg };
+      }
+
+      // Perform deletion
+      const { error: deleteError } = await supabase
+        .from('merchants')
+        .delete()
+        .eq('id', merchantId);
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: "Success",
+        description: "Merchant deleted successfully",
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      const errorMsg = err.message || 'Failed to delete merchant';
+      setError(errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMsg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     merchants,
     isLoading,
@@ -225,6 +292,7 @@ export const useMerchants = () => {
     fetchMerchantById,
     subscribeToMerchantChanges,
     fetchPayoutProfile,
-    updatePayoutProfile
+    updatePayoutProfile,
+    deleteMerchant
   };
 };
