@@ -11,12 +11,17 @@ serve(async (req) => {
   }
 
   try {
-    const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
+    const finixAppId = Deno.env.get('FINIX_USER_APPLICATION_ID');
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
     if (!finixAppId) {
-      console.error('❌ Missing FINIX_APPLICATION_ID');
-      throw new Error('Finix configuration not available');
+      console.error('❌ Missing FINIX_USER_APPLICATION_ID');
+      throw new Error('Finix user application ID not configured');
+    }
+
+    if (!finixAppId.startsWith('AP')) {
+      console.error('❌ Invalid FINIX_USER_APPLICATION_ID format. Expected AP... format, got:', finixAppId);
+      throw new Error('Invalid Finix user application ID format');
     }
 
     console.log('✅ Returning Finix config:', {
