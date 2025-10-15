@@ -439,7 +439,7 @@ const MunicipalPermitDetail = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Review Timeline
+                Timeline
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
