@@ -215,30 +215,13 @@ const MunicipalTaxDetail = () => {
                   <CardTitle>Tax Calculation Details</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Tax Amount</span>
-                    <span className="font-semibold">{formatCurrency(submission.base_amount_cents || 0)}</span>
+              <CardContent>
+                {submission.calculation_notes ? (
+                  <div className="text-sm bg-muted p-3 rounded-md">
+                    <SafeHtmlRenderer content={submission.calculation_notes} />
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
-                    <span className="font-semibold">{formatCurrency(submission.service_fee_cents || 0)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total Amount</span>
-                    <span>{formatCurrency(submission.total_amount_due_cents || 0)}</span>
-                  </div>
-                </div>
-                
-                {submission.calculation_notes && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Calculation Notes</p>
-                    <div className="text-sm bg-muted p-3 rounded-md">
-                      <SafeHtmlRenderer content={submission.calculation_notes} />
-                    </div>
-                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No calculation notes provided</p>
                 )}
               </CardContent>
             </Card>
