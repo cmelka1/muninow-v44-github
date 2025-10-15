@@ -20,6 +20,12 @@ export const TaxSubmissionStatusBadge = ({ status, className }: TaxSubmissionSta
           className: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
           label: 'Submitted'
         };
+      case 'issued':
+        return {
+          variant: 'default' as const,
+          className: 'bg-blue-600 text-white hover:bg-blue-600',
+          label: 'Issued'
+        };
       default:
         return {
           variant: 'outline' as const,
