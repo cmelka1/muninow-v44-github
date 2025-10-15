@@ -123,6 +123,10 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
   
+  // Tax submission tracking
+  const [taxSubmissionId, setTaxSubmissionId] = useState<string | null>(null);
+  const [isCreatingSubmission, setIsCreatingSubmission] = useState(false);
+  
   
   // Download instructions state
   const [isDownloadingInstructions, setIsDownloadingInstructions] = useState(false);
@@ -336,9 +340,103 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 2 && !validateStep2()) return;
     
+    // Create tax submission when moving from Step 2 to Step 3
+    if (currentStep === 2) {
+      const success = await createTaxSubmission();
+      if (!success) {
+        console.error('[PayTaxDialog] Failed to create tax submission, staying on step 2');
+        return; // Don't proceed if creation failed
+      }
+    }
+    
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
+    }
+  };
+
+  const createTaxSubmission = async (): Promise<boolean> => {
+    if (!profile?.id || !selectedMunicipality) {
+      toast({
+        title: "Error",
+        description: "Missing required information to create tax submission.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setIsCreatingSubmission(true);
+    
+    try {
+      console.log('[PayTaxDialog] Creating tax submission...');
+      
+      const { data: taxSubmission, error: taxError } = await supabase.functions.invoke(
+        'create-tax-submission-with-payment',
+        {
+          body: {
+            user_id: profile.id,
+            customer_id: selectedMunicipality.customer_id,
+            merchant_id: selectedMunicipality.id,
+            tax_type: taxType,
+            tax_period_start: getCurrentTaxPeriodStart(),
+            tax_period_end: getCurrentTaxPeriodEnd(),
+            tax_year: getCurrentTaxYear(),
+            base_amount_cents: getTaxAmountInCents(),
+            calculation_notes: calculationNotes,
+            payer_first_name: payerName.split(' ')[0] || '',
+            payer_last_name: payerName.split(' ').slice(1).join(' ') || '',
+            payer_email: payerEmail,
+            payer_ein: payerEin,
+            payer_phone: payerPhone,
+            payer_business_name: payerCompanyName,
+            payer_street_address: payerAddress?.streetAddress || '',
+            payer_city: payerAddress?.city || '',
+            payer_state: payerAddress?.state || '',
+            payer_zip_code: payerAddress?.zipCode || '',
+          },
+        }
+      );
+
+      if (taxError) {
+        console.error('[PayTaxDialog] Tax submission creation error:', taxError);
+        toast({
+          title: "Failed to Create Tax Submission",
+          description: taxError.message || "Unable to create tax submission record.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      if (!taxSubmission?.success || !taxSubmission?.tax_submission_id) {
+        console.error('[PayTaxDialog] Invalid response from create-tax-submission:', taxSubmission);
+        toast({
+          title: "Failed to Create Tax Submission",
+          description: "Invalid response from server.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      console.log('[PayTaxDialog] Tax submission created successfully:', taxSubmission.tax_submission_id);
+      setTaxSubmissionId(taxSubmission.tax_submission_id);
+      
+      toast({
+        title: "Tax Submission Created",
+        description: "Your tax submission has been created. Please proceed with payment.",
+      });
+      
+      return true;
+
+    } catch (error) {
+      console.error('[PayTaxDialog] Error creating tax submission:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while creating the tax submission.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsCreatingSubmission(false);
     }
   };
 
@@ -377,6 +475,10 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     // Reset simplified tax data
     setCalculationNotes('');
     setTotalAmountDue('');
+    
+    // Reset tax submission state
+    setTaxSubmissionId(null);
+    setIsCreatingSubmission(false);
     
     setErrors({});
     setIsSubmitting(false);
@@ -996,7 +1098,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     <CardContent>
                       <InlinePaymentFlow
                         entityType="tax_submission"
-                        entityId={null}
+                        entityId={taxSubmissionId}
                           entityName={`${taxType} Tax Payment`}
                           customerId={selectedMunicipality?.customer_id || ''}
                           merchantId={selectedMunicipality?.id || ''}
@@ -1044,10 +1146,22 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                 <Button 
                   onClick={handleNext} 
                   className="flex items-center space-x-2"
-                  disabled={currentStep === 2 && hasUploadingDocuments}
+                  disabled={
+                    (currentStep === 2 && hasUploadingDocuments) ||
+                    isCreatingSubmission
+                  }
                 >
-                  <span>Next</span>
-                  <ChevronRight className="w-4 h-4" />
+                  {isCreatingSubmission ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <span>Creating Submission...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>
