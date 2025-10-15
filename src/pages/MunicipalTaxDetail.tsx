@@ -320,6 +320,7 @@ const MunicipalTaxDetail = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
+                  {/* 1. Status */}
                   <div className="flex justify-between">
                     <span className="text-sm font-medium text-muted-foreground">Status</span>
                     <Badge 
@@ -333,10 +334,8 @@ const MunicipalTaxDetail = () => {
                       {submission.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
                     </Badge>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Amount Paid</span>
-                    <span className="font-semibold">{formatCurrency(submission.total_amount_due_cents || 0)}</span>
-                  </div>
+                  
+                  {/* 2. Paid On */}
                   {submission.payment_processed_at && (
                     <div className="flex justify-between">
                       <span className="text-sm font-medium text-muted-foreground">Paid On</span>
@@ -345,6 +344,24 @@ const MunicipalTaxDetail = () => {
                       </span>
                     </div>
                   )}
+                  
+                  {/* Separator before payment breakdown */}
+                  <Separator />
+                  
+                  {/* 3. Payment Details Breakdown */}
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Base Amount</span>
+                    <span className="font-semibold">{formatCurrency(submission.base_amount_cents || 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
+                    <span className="font-semibold">{formatCurrency(submission.service_fee_cents || 0)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total Paid</span>
+                    <span>{formatCurrency(submission.total_amount_due_cents || 0)}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
