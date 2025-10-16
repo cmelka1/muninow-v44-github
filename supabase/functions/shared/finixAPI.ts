@@ -113,7 +113,8 @@ export class FinixAPI {
         currency: params.currency,
         merchant: params.merchant,
         source: params.source,
-        tags: params.tags || {}
+        tags: params.tags || {},
+        idempotency_id: params.idempotency_id
       };
 
       if (params.fraud_session_id) {
