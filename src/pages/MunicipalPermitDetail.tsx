@@ -13,7 +13,8 @@ import {
   Download,
   CalendarIcon,
   Edit,
-  Calendar
+  Calendar,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -432,6 +433,67 @@ const MunicipalPermitDetail = () => {
                 <CalendarIcon className="h-4 w-4 mr-2" />
                 Schedule Inspection
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Payment Information */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                <CardTitle>Payment Information</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                {/* Status Badge */}
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Status</span>
+                  <Badge 
+                    variant={permit.payment_status === 'paid' ? 'default' : 'outline'}
+                    className={
+                      permit.payment_status === 'paid' 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                        : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                    }
+                  >
+                    {permit.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                  </Badge>
+                </div>
+                
+                {/* Paid On - Only show if paid */}
+                {permit.payment_processed_at && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Paid On</span>
+                    <span className="font-semibold">
+                      {format(new Date(permit.payment_processed_at), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                )}
+                
+                <Separator />
+                
+                {/* Base Amount - Always show */}
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Base Amount</span>
+                  <span className="font-semibold">{formatCurrency(permit.payment_amount_cents || 0)}</span>
+                </div>
+                
+                {/* Service Fee and Total - Only show for paid transactions */}
+                {permit.payment_status === 'paid' && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
+                      <span className="font-semibold">{formatCurrency(permit.service_fee_cents || 0)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total Paid</span>
+                      <span>{formatCurrency(permit.total_amount_cents || 0)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
 

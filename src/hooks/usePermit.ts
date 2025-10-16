@@ -17,6 +17,9 @@ export interface PermitDetail {
   total_amount_cents: number;
   payment_amount_cents: number;
   payment_status: string;
+  payment_processed_at: string | null;
+  base_amount_cents: number;
+  service_fee_cents: number;
   submitted_at: string | null;
   under_review_at: string | null;
   information_requested_at: string | null;
