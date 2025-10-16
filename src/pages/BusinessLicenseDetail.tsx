@@ -826,15 +826,20 @@ export const BusinessLicenseDetail = () => {
                     <span className="text-sm font-medium text-muted-foreground">Base Amount</span>
                     <span className="font-semibold">{formatCurrency(license.base_amount_cents || 0)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
-                    <span className="font-semibold">{formatCurrency(license.service_fee_cents || 0)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total Paid</span>
-                    <span>{formatCurrency(license.total_amount_cents || 0)}</span>
-                  </div>
+                  {/* Only show Service Fee and Total for paid transactions */}
+                  {license.payment_status === 'paid' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
+                        <span className="font-semibold">{formatCurrency(license.service_fee_cents || 0)}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between text-lg font-bold">
+                        <span>Total Paid</span>
+                        <span>{formatCurrency(license.total_amount_cents || 0)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
