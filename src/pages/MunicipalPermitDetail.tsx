@@ -14,7 +14,9 @@ import {
   CalendarIcon,
   Edit,
   Calendar,
-  CreditCard
+  CreditCard,
+  Plus,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +35,7 @@ import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
+import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 
 
 import { supabase } from '@/integrations/supabase/client';
@@ -48,13 +51,15 @@ const MunicipalPermitDetail = () => {
   
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+  const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   const { data: questions } = useMunicipalPermitQuestions(
     permit?.customer_id,
     permit?.merchant_id
   );
-  const { data: documents } = usePermitDocuments(permitId!);
+  const { data: documents, refetch: refetchDocuments } = usePermitDocuments(permitId!);
 
   const handleSaveNotes = async () => {
     if (!permitId || !reviewNotes.trim()) {
@@ -311,10 +316,21 @@ const MunicipalPermitDetail = () => {
           {/* Documents Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Documents ({documents?.length || 0})
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Documents ({documents?.length || 0})
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddDocumentOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Document
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {documents && documents.length > 0 ? (
@@ -341,6 +357,7 @@ const MunicipalPermitDetail = () => {
                           variant="ghost" 
                           size="sm"
                           onClick={async () => {
+                            setDownloadingDocument(doc.id);
                             try {
                               const { data, error } = await supabase.storage
                                 .from('permit-documents')
@@ -377,10 +394,17 @@ const MunicipalPermitDetail = () => {
                                 description: "Failed to download document",
                                 variant: "destructive"
                               });
+                            } finally {
+                              setDownloadingDocument(null);
                             }
                           }}
+                          disabled={downloadingDocument === doc.id}
                         >
-                          <Download className="h-4 w-4" />
+                          {downloadingDocument === doc.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -390,7 +414,7 @@ const MunicipalPermitDetail = () => {
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
                   <p className="text-sm">No documents uploaded yet</p>
-                  <p className="text-xs mt-1">Documents will appear here once uploaded by the applicant</p>
+                  <p className="text-xs mt-1">Documents will appear here once uploaded</p>
                 </div>
               )}
             </CardContent>
@@ -575,6 +599,23 @@ const MunicipalPermitDetail = () => {
         onStatusChanged={() => {
           // Refresh permit data
           window.location.reload();
+        }}
+      />
+
+      {/* Add Document Dialog */}
+      <AddPermitDocumentDialog
+        open={addDocumentOpen}
+        onOpenChange={setAddDocumentOpen}
+        permitId={permitId!}
+        customerId={permit.customer_id}
+        merchantId={permit.merchant_id}
+        merchantName={permit.merchant_name}
+        onSuccess={() => {
+          refetchDocuments();
+          toast({
+            title: "Document uploaded",
+            description: "Document has been successfully added to the permit"
+          });
         }}
       />
 
