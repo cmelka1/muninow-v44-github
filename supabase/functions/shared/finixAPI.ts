@@ -133,7 +133,7 @@ export class FinixAPI {
           'Authorization': 'Basic ' + btoa(`${this.config.username}:${this.config.password}`),
           'Content-Type': 'application/json',
           'Finix-Version': '2022-02-01',
-          'Idempotency-ID': params.idempotency_id
+          'idempotency_id': params.idempotency_id
         },
         body: JSON.stringify(body)
       });
