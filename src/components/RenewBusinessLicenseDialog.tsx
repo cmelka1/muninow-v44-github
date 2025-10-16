@@ -118,7 +118,7 @@ export const RenewBusinessLicenseDialog = ({
                       : 'text-yellow-700'
                 }`}>
                   {daysRemaining <= 0 
-                    ? 'Your license has expired. Renew immediately to continue operations legally.'
+                    ? 'Your license has expired. Please renew immediately'
                     : 'Renew now to avoid interruption in your business operations.'
                   }
                 </p>
