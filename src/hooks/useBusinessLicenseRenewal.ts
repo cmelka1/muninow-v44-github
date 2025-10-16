@@ -17,8 +17,8 @@ export const useBusinessLicenseRenewal = () => {
     },
     onSuccess: (newLicenseId) => {
       toast({
-        title: "Renewal Started",
-        description: "Your renewal application has been created. You'll be redirected to review it.",
+        title: "Renewal Approved",
+        description: "Your renewal has been approved. You can now proceed to payment.",
       });
       
       // Invalidate queries to refetch updated data

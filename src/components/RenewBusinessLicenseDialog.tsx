@@ -173,8 +173,8 @@ export const RenewBusinessLicenseDialog = ({
               <div className="flex-1">
                 <p className="font-medium text-blue-900 text-sm">Important Information</p>
                 <p className="text-sm text-blue-700 mt-1">
-                  The renewal will create a new application with your current business information. 
-                  You'll have the opportunity to review and update any details before submitting.
+                  The renewal will be automatically approved and ready for immediate payment. 
+                  All information from your current license will be copied to the renewal.
                 </p>
               </div>
             </div>
@@ -192,7 +192,7 @@ export const RenewBusinessLicenseDialog = ({
               className="text-sm leading-relaxed cursor-pointer"
             >
               I confirm that my business information is accurate and up to date. 
-              I understand that I will need to review and submit the renewal application.
+              I understand that the renewal will be automatically approved and ready for payment.
             </Label>
           </div>
         </div>
