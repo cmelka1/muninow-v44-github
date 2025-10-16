@@ -1014,6 +1014,20 @@ export const BusinessLicenseDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Renew Business License Dialog */}
+      <RenewBusinessLicenseDialog
+        open={showRenewDialog}
+        onOpenChange={setShowRenewDialog}
+        license={{
+          id: license.id,
+          license_number: license.license_number,
+          business_legal_name: license.business_legal_name,
+          business_type: license.business_type,
+          expires_at: license.expires_at,
+          base_amount_cents: license.base_amount_cents,
+        }}
+      />
     </div>
   );
 
