@@ -51,6 +51,11 @@ const BusinessLicenseCertificate = () => {
             <h1 className="text-4xl font-bold text-primary mb-2">
               BUSINESS LICENSE CERTIFICATE
             </h1>
+            {license.is_renewal && (
+              <div className="inline-block bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold mb-2">
+                RENEWAL {license.renewal_generation ? `#${license.renewal_generation}` : ''}
+              </div>
+            )}
             <div className="text-xl text-muted-foreground mb-4">
               {municipality?.legal_entity_name || 'Municipality'}
             </div>
@@ -61,7 +66,7 @@ const BusinessLicenseCertificate = () => {
           <div className="flex-1 flex flex-col justify-between space-y-4">
             {/* License Information Row */}
             <div className="bg-muted/10 p-6 rounded-lg">
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-4 gap-6">
                 <div className="text-center">
                   <span className="font-medium text-xl text-muted-foreground block mb-2">License Number:</span>
                   <div className="text-3xl font-bold text-primary">
@@ -75,9 +80,17 @@ const BusinessLicenseCertificate = () => {
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="font-medium text-xl text-muted-foreground block mb-2">Issue Date:</span>
+                  <span className="font-medium text-xl text-muted-foreground block mb-2">
+                    {license.is_renewal ? 'Renewed On:' : 'Issue Date:'}
+                  </span>
                   <div className="text-2xl font-semibold">
                     {license.issued_at ? format(new Date(license.issued_at), 'MMMM d, yyyy') : 'Pending'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <span className="font-medium text-xl text-muted-foreground block mb-2">Expires:</span>
+                  <div className="text-2xl font-semibold">
+                    {license.expires_at ? format(new Date(license.expires_at), 'MMMM d, yyyy') : 'N/A'}
                   </div>
                 </div>
               </div>
@@ -383,6 +396,11 @@ const BusinessLicenseCertificate = () => {
                   <h1 className="text-3xl font-bold text-primary mb-2">
                     BUSINESS LICENSE CERTIFICATE
                   </h1>
+                  {license.is_renewal && (
+                    <div className="inline-block bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold mb-2">
+                      RENEWAL {license.renewal_generation ? `#${license.renewal_generation}` : ''}
+                    </div>
+                  )}
                   <div className="text-lg text-muted-foreground">
                     {municipality?.legal_entity_name || 'Municipality'}
                   </div>
@@ -398,7 +416,7 @@ const BusinessLicenseCertificate = () => {
                         <Award className="h-5 w-5" />
                         License Details
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
                           <span className="font-medium text-muted-foreground">License Number:</span>
                           <div className="text-lg font-bold text-primary">
@@ -410,9 +428,17 @@ const BusinessLicenseCertificate = () => {
                           <div className="font-semibold">{license.business_type}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-muted-foreground">Issue Date:</span>
+                          <span className="font-medium text-muted-foreground">
+                            {license.is_renewal ? 'Renewed On:' : 'Issue Date:'}
+                          </span>
                           <div className="font-semibold">
                             {license.issued_at ? format(new Date(license.issued_at), 'MMMM d, yyyy') : 'N/A'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-muted-foreground">Expires:</span>
+                          <div className="font-semibold">
+                            {license.expires_at ? format(new Date(license.expires_at), 'MMMM d, yyyy') : 'N/A'}
                           </div>
                         </div>
                       </div>
