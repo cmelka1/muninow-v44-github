@@ -46,21 +46,21 @@ serve(async (req) => {
 
     let googlePayMerchantId = null;
 
-    // If merchant_id is provided, try to get the finix_merchant_id from database
+    // If merchant_id is provided, try to get the finix_identity_id from database
     if (merchantId) {
-      console.log('Looking up finix_merchant_id for merchant:', merchantId);
+      console.log('Looking up finix_identity_id for merchant:', merchantId);
       
       const { data: merchant, error: merchantError } = await supabase
         .from('merchants')
-        .select('finix_merchant_id')
+        .select('finix_identity_id')
         .eq('id', merchantId)
         .single();
 
-      if (!merchantError && merchant?.finix_merchant_id) {
-        googlePayMerchantId = merchant.finix_merchant_id;
-        console.log('Found finix_merchant_id from database:', googlePayMerchantId);
+      if (!merchantError && merchant?.finix_identity_id) {
+        googlePayMerchantId = merchant.finix_identity_id;
+        console.log('Found finix_identity_id from database:', googlePayMerchantId);
       } else {
-        console.log('Merchant not found or no finix_merchant_id, falling back to env variable');
+        console.log('Merchant not found or no finix_identity_id, falling back to env variable');
       }
     }
 
