@@ -43,6 +43,7 @@ export type Database = {
           denied_at: string | null
           doing_business_as: string | null
           expired_at: string | null
+          expires_at: string | null
           federal_ein: string | null
           finix_fee_profile_id: string | null
           finix_merchant_id: string | null
@@ -54,6 +55,7 @@ export type Database = {
           idempotency_metadata: Json | null
           idempotency_uuid: string | null
           information_requested_at: string | null
+          is_renewal: boolean | null
           issued_at: string | null
           license_number: string | null
           license_type_id: string | null
@@ -61,6 +63,7 @@ export type Database = {
           merchant_finix_identity_id: string | null
           merchant_id: string | null
           merchant_name: string | null
+          original_issue_date: string | null
           owner_apt_number: string | null
           owner_city: string
           owner_country: string | null
@@ -72,12 +75,17 @@ export type Database = {
           owner_street_address: string
           owner_title: string | null
           owner_zip_code: string
+          parent_license_id: string | null
           payment_instrument_id: string | null
           payment_method_type: string | null
           payment_processed_at: string | null
           payment_status: string | null
           payment_type: string | null
           raw_finix_response: Json | null
+          renewal_generation: number | null
+          renewal_notified_at: string | null
+          renewal_reminder_count: number | null
+          renewal_status: string | null
           resubmitted_at: string | null
           review_notes: string | null
           reviewer_comments: string | null
@@ -120,6 +128,7 @@ export type Database = {
           denied_at?: string | null
           doing_business_as?: string | null
           expired_at?: string | null
+          expires_at?: string | null
           federal_ein?: string | null
           finix_fee_profile_id?: string | null
           finix_merchant_id?: string | null
@@ -131,6 +140,7 @@ export type Database = {
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_requested_at?: string | null
+          is_renewal?: boolean | null
           issued_at?: string | null
           license_number?: string | null
           license_type_id?: string | null
@@ -138,6 +148,7 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          original_issue_date?: string | null
           owner_apt_number?: string | null
           owner_city: string
           owner_country?: string | null
@@ -149,12 +160,17 @@ export type Database = {
           owner_street_address: string
           owner_title?: string | null
           owner_zip_code: string
+          parent_license_id?: string | null
           payment_instrument_id?: string | null
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
           raw_finix_response?: Json | null
+          renewal_generation?: number | null
+          renewal_notified_at?: string | null
+          renewal_reminder_count?: number | null
+          renewal_status?: string | null
           resubmitted_at?: string | null
           review_notes?: string | null
           reviewer_comments?: string | null
@@ -197,6 +213,7 @@ export type Database = {
           denied_at?: string | null
           doing_business_as?: string | null
           expired_at?: string | null
+          expires_at?: string | null
           federal_ein?: string | null
           finix_fee_profile_id?: string | null
           finix_merchant_id?: string | null
@@ -208,6 +225,7 @@ export type Database = {
           idempotency_metadata?: Json | null
           idempotency_uuid?: string | null
           information_requested_at?: string | null
+          is_renewal?: boolean | null
           issued_at?: string | null
           license_number?: string | null
           license_type_id?: string | null
@@ -215,6 +233,7 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          original_issue_date?: string | null
           owner_apt_number?: string | null
           owner_city?: string
           owner_country?: string | null
@@ -226,12 +245,17 @@ export type Database = {
           owner_street_address?: string
           owner_title?: string | null
           owner_zip_code?: string
+          parent_license_id?: string | null
           payment_instrument_id?: string | null
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string | null
           raw_finix_response?: Json | null
+          renewal_generation?: number | null
+          renewal_notified_at?: string | null
+          renewal_reminder_count?: number | null
+          renewal_status?: string | null
           resubmitted_at?: string | null
           review_notes?: string | null
           reviewer_comments?: string | null
@@ -252,6 +276,13 @@ export type Database = {
             columns: ["license_type_id"]
             isOneToOne: false
             referencedRelation: "municipal_business_license_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_license_applications_parent_license_id_fkey"
+            columns: ["parent_license_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_applications"
             referencedColumns: ["id"]
           },
         ]
@@ -385,6 +416,51 @@ export type Database = {
           year_code?: string
         }
         Relationships: []
+      }
+      business_license_renewal_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          original_license_id: string
+          renewal_generation: number
+          renewed_at: string | null
+          renewed_by: string
+          renewed_license_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          original_license_id: string
+          renewal_generation: number
+          renewed_at?: string | null
+          renewed_by: string
+          renewed_license_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          original_license_id?: string
+          renewal_generation?: number
+          renewed_at?: string | null
+          renewed_by?: string
+          renewed_license_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_license_renewal_history_original_license_id_fkey"
+            columns: ["original_license_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_license_renewal_history_renewed_license_id_fkey"
+            columns: ["renewed_license_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_license_types: {
         Row: {
