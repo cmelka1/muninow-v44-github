@@ -50,7 +50,7 @@ export const RenewServiceApplicationDialog = ({
     try {
       const newApplicationId = await renewApplication(application.id);
       onOpenChange(false);
-      navigate(`/service-applications/${newApplicationId}`);
+      navigate(`/service-application/${newApplicationId}`);
     } catch (error) {
       // Error is handled in the hook
     }
