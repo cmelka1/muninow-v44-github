@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
+import { ServiceApplicationRenewalStatusBadge } from '@/components/ServiceApplicationRenewalStatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceApplicationDocumentDialog';
 import { ServiceApplicationCommunication } from '@/components/ServiceApplicationCommunication';
@@ -270,6 +271,23 @@ const ServiceApplicationDetail: React.FC = () => {
                   <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
                   <p className="text-base">{formatDate(application.updated_at)}</p>
                 </div>
+                {application.expires_at && application.status === 'issued' && application.tile?.is_renewable && (
+                  <>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Expiration Date</Label>
+                      <p className="text-base">{formatDate(application.expires_at)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Renewal Status</Label>
+                      <div className="mt-1">
+                        <ServiceApplicationRenewalStatusBadge 
+                          renewalStatus={application.renewal_status || 'active'} 
+                          expiresAt={application.expires_at}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

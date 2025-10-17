@@ -54,6 +54,9 @@ export interface RecentServiceApplication {
   base_amount_cents: number;
   status: string;
   payment_status: string | null;
+  expires_at: string | null;
+  renewal_status: string | null;
+  is_renewable: boolean | null;
 }
 
 export const useMunicipalRecentApplications = () => {
@@ -178,7 +181,11 @@ export const useMunicipalRecentApplications = () => {
           merchant_name,
           base_amount_cents,
           status,
-          payment_status
+          payment_status,
+          expires_at,
+          renewal_status,
+          tile_id,
+          municipal_service_tiles!inner(is_renewable)
         `)
         .eq('customer_id', profile.customer_id)
         .neq('status', 'draft')
@@ -186,7 +193,10 @@ export const useMunicipalRecentApplications = () => {
         .limit(5);
 
       if (error) throw error;
-      return (data || []) as RecentServiceApplication[];
+      return (data || []).map(item => ({
+        ...item,
+        is_renewable: (item as any).municipal_service_tiles?.is_renewable || false
+      })) as RecentServiceApplication[];
     },
     enabled: !!profile?.customer_id && !!profile?.account_type?.startsWith('municipal')
   });

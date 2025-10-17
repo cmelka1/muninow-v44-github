@@ -9,6 +9,7 @@ import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBadge';
 import { TaxSubmissionStatusBadge } from '@/components/TaxSubmissionStatusBadge';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
+import { ServiceApplicationRenewalStatusBadge } from '@/components/ServiceApplicationRenewalStatusBadge';
 import { Badge } from '@/components/ui/badge';
 
 const PaymentStatusBadge = ({ status }: { status: string | null }) => {
@@ -210,16 +211,17 @@ export const MunicipalRecentApplicationsTables = () => {
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-muted/50">
-                  <TableRow>
-                    <TableHead className="text-center">Date Submitted</TableHead>
-                    <TableHead>Name/Company</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-center">Payment Amount</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-center">Payment Status</TableHead>
-                  </TableRow>
-                </TableHeader>
+                 <TableHeader className="bg-muted/50">
+                   <TableRow>
+                     <TableHead className="text-center">Date Submitted</TableHead>
+                     <TableHead>Name/Company</TableHead>
+                     <TableHead>Category</TableHead>
+                     <TableHead className="text-center">Payment Amount</TableHead>
+                     <TableHead className="text-center">Status</TableHead>
+                     <TableHead className="text-center">Payment Status</TableHead>
+                     <TableHead className="text-center">Expiration</TableHead>
+                   </TableRow>
+                 </TableHeader>
                 <TableBody>
                   {services.map((service) => (
                     <TableRow 
@@ -238,10 +240,20 @@ export const MunicipalRecentApplicationsTables = () => {
                       <TableCell className="py-2 text-center">
                         <ServiceApplicationStatusBadge status={service.status} />
                       </TableCell>
-                      <TableCell className="py-2 text-center">
-                        <PaymentStatusBadge status={service.payment_status} />
-                      </TableCell>
-                    </TableRow>
+                       <TableCell className="py-2 text-center">
+                         <PaymentStatusBadge status={service.payment_status} />
+                       </TableCell>
+                       <TableCell className="py-2 text-center">
+                         {service.expires_at && service.status === 'issued' && service.is_renewable ? (
+                           <ServiceApplicationRenewalStatusBadge 
+                             renewalStatus={service.renewal_status || 'active'} 
+                             expiresAt={service.expires_at}
+                           />
+                         ) : (
+                           <span className="text-sm text-muted-foreground">N/A</span>
+                         )}
+                       </TableCell>
+                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
