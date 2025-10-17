@@ -22,6 +22,7 @@ import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceAppl
 import { ServiceApplicationCommunication } from '@/components/ServiceApplicationCommunication';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { RenewServiceApplicationDialog } from '@/components/RenewServiceApplicationDialog';
+import { format } from 'date-fns';
 
 const ServiceApplicationDetail: React.FC = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -41,6 +42,23 @@ const ServiceApplicationDetail: React.FC = () => {
 
   const handleAddPaymentMethodSuccess = () => {
     setIsAddPaymentDialogOpen(false);
+  };
+
+  // Helper function to check if within renewal window
+  const isWithinRenewalWindow = (expiresAt: string, reminderDays: number = 30): boolean => {
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+    const diffTime = expiration.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= reminderDays;
+  };
+
+  // Helper function to get renewal available date
+  const getRenewalAvailableDate = (expiresAt: string, reminderDays: number = 30): Date => {
+    const expiration = new Date(expiresAt);
+    const renewalDate = new Date(expiration);
+    renewalDate.setDate(renewalDate.getDate() - reminderDays);
+    return renewalDate;
   };
 
   // Set documents from query
@@ -213,10 +231,14 @@ const ServiceApplicationDetail: React.FC = () => {
             <p className="text-muted-foreground">Application #{application.application_number || application.id}</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Renewal Button - Only show for issued, renewable services with expiration dates */}
+            {/* Renewal Button - Show when within renewal window */}
             {application.status === 'issued' && 
              application.expires_at && 
-             application.tile?.is_renewable && (
+             application.tile?.is_renewable && 
+             isWithinRenewalWindow(
+               application.expires_at, 
+               application.tile?.renewal_reminder_days || 30
+             ) && (
               <Button
                 onClick={() => setIsRenewalDialogOpen(true)}
                 variant="default"
@@ -226,6 +248,30 @@ const ServiceApplicationDetail: React.FC = () => {
                 Renew Application
               </Button>
             )}
+
+            {/* Show disabled button with tooltip when NOT in renewal window */}
+            {application.status === 'issued' && 
+             application.expires_at && 
+             application.tile?.is_renewable && 
+             !isWithinRenewalWindow(
+               application.expires_at, 
+               application.tile?.renewal_reminder_days || 30
+             ) && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" disabled className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4" />
+                      Renew Application
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Renewal available starting {format(getRenewalAvailableDate(application.expires_at, application.tile?.renewal_reminder_days || 30), 'MMMM d, yyyy')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             <ServiceApplicationStatusBadge status={application.status} />
           </div>
         </div>
@@ -633,6 +679,7 @@ const ServiceApplicationDetail: React.FC = () => {
           business_legal_name: application.business_legal_name,
           expires_at: application.expires_at,
           base_amount_cents: application.base_amount_cents || 0,
+          renewal_reminder_days: application.tile?.renewal_reminder_days,
         }}
       />
     </div>

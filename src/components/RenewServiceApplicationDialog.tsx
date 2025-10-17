@@ -26,6 +26,7 @@ interface RenewServiceApplicationDialogProps {
     business_legal_name?: string;
     expires_at?: string;
     base_amount_cents: number;
+    renewal_reminder_days?: number;
   };
 }
 
@@ -65,6 +66,10 @@ export const RenewServiceApplicationDialog = ({
   };
 
   const daysRemaining = getDaysUntilExpiration();
+  const renewalReminderDays = application.renewal_reminder_days || 30;
+
+  // Check if user is outside renewal window (shouldn't happen if frontend hides button correctly)
+  const isOutsideRenewalWindow = daysRemaining !== null && daysRemaining > renewalReminderDays;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,6 +85,20 @@ export const RenewServiceApplicationDialog = ({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Outside Renewal Window Warning */}
+          {isOutsideRenewalWindow && application.expires_at && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-gray-50 border border-gray-200">
+              <AlertCircle className="h-5 w-5 mt-0.5 text-gray-600" />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Renewal Not Yet Available</p>
+                <p className="text-sm text-gray-700 mt-1">
+                  You can renew this application starting {renewalReminderDays} days before expiration 
+                  (on {format(new Date(new Date(application.expires_at).getTime() - renewalReminderDays * 24 * 60 * 60 * 1000), 'MMMM d, yyyy')}).
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Urgency Warning */}
           {daysRemaining !== null && daysRemaining <= 30 && (
             <div className={`flex items-start gap-3 p-4 rounded-lg ${
@@ -212,7 +231,7 @@ export const RenewServiceApplicationDialog = ({
           </Button>
           <Button
             onClick={handleConfirmRenewal}
-            disabled={!confirmed || isRenewing}
+            disabled={!confirmed || isRenewing || isOutsideRenewalWindow}
           >
             {isRenewing ? (
               <>
