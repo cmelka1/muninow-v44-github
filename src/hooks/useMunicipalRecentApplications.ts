@@ -186,7 +186,7 @@ export const useMunicipalRecentApplications = () => {
           expires_at,
           renewal_status,
           tile_id,
-          municipal_service_tiles!inner(is_renewable, name)
+          municipal_service_tiles!inner(is_renewable, title)
         `)
         .eq('customer_id', profile.customer_id)
         .neq('status', 'draft')
@@ -197,7 +197,7 @@ export const useMunicipalRecentApplications = () => {
       return (data || []).map(item => ({
         ...item,
         is_renewable: (item as any).municipal_service_tiles?.is_renewable || false,
-        tile_name: (item as any).municipal_service_tiles?.name || ''
+        tile_name: (item as any).municipal_service_tiles?.title || ''
       })) as RecentServiceApplication[];
     },
     enabled: !!profile?.customer_id && !!profile?.account_type?.startsWith('municipal')
