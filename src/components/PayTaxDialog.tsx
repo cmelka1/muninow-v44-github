@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 // Removed calendar and popover imports - using text inputs for dates
 
-import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
+import { TaxMunicipalityAutocomplete } from '@/components/ui/tax-municipality-autocomplete';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -606,7 +606,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <Label>Municipality</Label>
-                        <BuildingPermitsMunicipalityAutocomplete
+                        <TaxMunicipalityAutocomplete
                           onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
                           placeholder="Search your municipality"
                         />
