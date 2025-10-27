@@ -3677,12 +3677,9 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: boolean
       }
-      check_email_duplicate: {
-        Args: { email_input: string }
-        Returns: boolean
-      }
+      check_email_duplicate: { Args: { email_input: string }; Returns: boolean }
       check_expiring_licenses: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           days_until_expiration: number
           expires_at: string
@@ -3697,14 +3694,8 @@ export type Database = {
         Args: { p_hours_threshold?: number }
         Returns: number
       }
-      cleanup_expired_verification_codes: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_staged_tax_documents: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_verification_codes: { Args: never; Returns: undefined }
+      cleanup_old_staged_tax_documents: { Args: never; Returns: undefined }
       cleanup_staged_tax_documents: {
         Args: { p_staging_id: string }
         Returns: undefined
@@ -3721,9 +3712,9 @@ export type Database = {
         Args: { p_original_license_id: string }
         Returns: string
       }
-      create_municipal_business_license_type: {
-        Args:
-          | {
+      create_municipal_business_license_type:
+        | {
+            Args: {
               p_base_fee_cents: number
               p_business_license_type_id: string
               p_customer_id: string
@@ -3733,7 +3724,10 @@ export type Database = {
               p_merchant_name: string
               p_municipal_label: string
             }
-          | {
+            Returns: string
+          }
+        | {
+            Args: {
               p_base_fee_cents: number
               p_business_license_type_id?: string
               p_customer_id: string
@@ -3743,8 +3737,8 @@ export type Database = {
               p_merchant_name?: string
               p_municipal_label: string
             }
-        Returns: string
-      }
+            Returns: string
+          }
       create_municipal_team_invitation: {
         Args: {
           p_customer_id: string
@@ -3897,14 +3891,8 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: string
       }
-      generate_permit_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_service_application_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_permit_number: { Args: never; Returns: string }
+      generate_service_application_number: { Args: never; Returns: string }
       get_available_vehicles: {
         Args: { user_id: string }
         Returns: {
@@ -3920,11 +3908,14 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
           year: string
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "vehicles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_role: { Args: never; Returns: string }
       get_merchant_fee_profile: {
         Args: { p_merchant_id: string }
         Returns: {
@@ -4006,12 +3997,9 @@ export type Database = {
         }
         Returns: string
       }
-      get_role_id_by_name: {
-        Args: { _role_name: string }
-        Returns: string
-      }
+      get_role_id_by_name: { Args: { _role_name: string }; Returns: string }
       get_user_payment_instruments_with_display_names: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           bank_account_type: string
           bank_last_four: string
@@ -4062,26 +4050,6 @@ export type Database = {
           role: string
         }[]
       }
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
       has_business_access_to_customer: {
         Args: { customer_uuid: string; user_uuid: string }
         Returns: boolean
@@ -4090,12 +4058,12 @@ export type Database = {
         Args: { customer_uuid: string; user_uuid: string }
         Returns: boolean
       }
-      has_permission: {
-        Args:
-          | { _entity_id?: string; _permission: string; _user_id: string }
-          | { permission_name: string }
-        Returns: boolean
-      }
+      has_permission:
+        | { Args: { permission_name: string }; Returns: boolean }
+        | {
+            Args: { _entity_id?: string; _permission: string; _user_id: string }
+            Returns: boolean
+          }
       has_resident_access_to_customer: {
         Args: { customer_uuid: string; user_uuid: string }
         Returns: boolean
@@ -4104,42 +4072,20 @@ export type Database = {
         Args: { _entity_id?: string; _role: string; _user_id: string }
         Returns: boolean
       }
-      immutable_date: {
-        Args: { "": string }
-        Returns: string
-      }
       initialize_standard_business_license_types: {
         Args: { p_customer_id: string }
         Returns: boolean
       }
-      is_business_admin: {
-        Args: { business_id: string }
-        Returns: boolean
-      }
-      is_business_user: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
-      is_current_user_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_business_admin: { Args: { business_id: string }; Returns: boolean }
+      is_business_user: { Args: { user_uuid?: string }; Returns: boolean }
+      is_current_user_super_admin: { Args: never; Returns: boolean }
       is_in_same_organization: {
         Args: { user_a: string; user_b: string }
         Returns: boolean
       }
-      is_municipal_admin: {
-        Args: { municipal_id?: string }
-        Returns: boolean
-      }
-      is_municipal_user: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
-      is_resident_user: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
+      is_municipal_admin: { Args: { municipal_id?: string }; Returns: boolean }
+      is_municipal_user: { Args: { user_uuid?: string }; Returns: boolean }
+      is_resident_user: { Args: { user_uuid?: string }; Returns: boolean }
       log_address2_event: {
         Args: {
           p_component_type?: string
@@ -4171,18 +4117,8 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       update_municipal_business_license_type: {
         Args: {
           p_base_fee_cents?: number

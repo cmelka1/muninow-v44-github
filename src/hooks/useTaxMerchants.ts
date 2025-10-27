@@ -31,7 +31,7 @@ export const useTaxMerchants = (searchTerm: string) => {
           .from('merchants')
           .select('id, merchant_name, business_name, customer_city, customer_state, customer_id, finix_merchant_id')
           .eq('subcategory', 'Tax')
-          .ilike('merchant_name', `%${searchTerm}%`)
+          .or(`merchant_name.ilike.%${searchTerm}%,business_name.ilike.%${searchTerm}%`)
           .limit(10);
 
         if (supabaseError) {
