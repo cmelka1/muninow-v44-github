@@ -3712,33 +3712,19 @@ export type Database = {
         Args: { p_original_license_id: string }
         Returns: string
       }
-      create_municipal_business_license_type:
-        | {
-            Args: {
-              p_base_fee_cents: number
-              p_business_license_type_id: string
-              p_customer_id: string
-              p_display_order?: number
-              p_is_custom?: boolean
-              p_merchant_id: string
-              p_merchant_name: string
-              p_municipal_label: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_base_fee_cents: number
-              p_business_license_type_id?: string
-              p_customer_id: string
-              p_display_order?: number
-              p_is_custom?: boolean
-              p_merchant_id?: string
-              p_merchant_name?: string
-              p_municipal_label: string
-            }
-            Returns: string
-          }
+      create_municipal_business_license_type: {
+        Args: {
+          p_base_fee_cents: number
+          p_business_license_type_id?: string
+          p_customer_id: string
+          p_display_order?: number
+          p_is_custom?: boolean
+          p_merchant_id?: string
+          p_merchant_name?: string
+          p_municipal_label: string
+        }
+        Returns: string
+      }
       create_municipal_team_invitation: {
         Args: {
           p_customer_id: string
