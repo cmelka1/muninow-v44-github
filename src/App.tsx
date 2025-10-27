@@ -68,12 +68,12 @@ const App = () => (
   <HelmetProvider>
     <TooltipProvider>
       <AuthProvider>
-          <BrowserRouter>
-            <ScrollToTop />
-            <CookieConsentProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
+        <BrowserRouter>
+          <ScrollToTop />
+          <CookieConsentProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
