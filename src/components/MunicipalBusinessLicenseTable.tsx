@@ -99,14 +99,30 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
 
   if (!data || data.licenses.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Business Licenses ({data?.totalCount || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No business licenses found.</p>
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Business Licenses ({data?.totalCount || 0})</CardTitle>
+              <Button 
+                onClick={() => setShowNewLicenseDialog(true)}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New License</span>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">No business licenses found.</p>
+          </CardContent>
+        </Card>
+
+        <NewBusinessLicenseDialog
+          open={showNewLicenseDialog}
+          onOpenChange={setShowNewLicenseDialog}
+        />
+      </>
     );
   }
 
