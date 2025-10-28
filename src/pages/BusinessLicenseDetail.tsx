@@ -701,9 +701,6 @@ export const BusinessLicenseDetail = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium truncate">{doc.file_name}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {doc.document_type}
-                            </Badge>
                           </div>
                           <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                             <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
