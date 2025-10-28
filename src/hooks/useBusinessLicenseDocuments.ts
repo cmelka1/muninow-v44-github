@@ -88,23 +88,29 @@ export const useBusinessLicenseDocuments = () => {
     },
   });
 
-  const getDocumentUrl = async (storagePath: string) => {
-    const { data } = await supabase.storage
+  const downloadDocument = async (storagePath: string, fileName: string) => {
+    const { data, error } = await supabase.storage
       .from('business-license-documents')
-      .createSignedUrl(storagePath, 3600);
-
-    if (data?.signedUrl) {
-      const supabaseUrl = 'https://qcuiuubbaozcmejzvxje.supabase.co';
-      return `${supabaseUrl}${data.signedUrl}`;
-    }
+      .download(storagePath);
     
-    return undefined;
+    if (error) throw error;
+    
+    if (data) {
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   return {
     uploadDocument,
     deleteDocument,
-    getDocumentUrl,
+    downloadDocument,
     uploadProgress,
     setUploadProgress,
   };

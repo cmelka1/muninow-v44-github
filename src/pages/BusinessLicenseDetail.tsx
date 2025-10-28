@@ -22,7 +22,6 @@ import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommun
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
 import { RenewBusinessLicenseDialog } from '@/components/RenewBusinessLicenseDialog';
-
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,7 +50,7 @@ export const BusinessLicenseDetail = () => {
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
-  const { getDocumentUrl } = useBusinessLicenseDocuments();
+  const { downloadDocument } = useBusinessLicenseDocuments();
   const { updateLicenseStatus, isUpdating, getValidStatusTransitions } = useBusinessLicenseWorkflow();
   const { customer: municipality, isLoading: municipalityLoading } = useCustomerById(license?.customer_id);
 
@@ -78,21 +77,18 @@ export const BusinessLicenseDetail = () => {
   const handleDocumentDownload = async (docItem: any) => {
     setDownloadingDocument(docItem.id);
     try {
-      const url = await getDocumentUrl(docItem.storage_path);
-      if (url) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = docItem.file_name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      await downloadDocument(docItem.storage_path, docItem.file_name);
+      
+      toast({
+        title: "Download started",
+        description: `${docItem.file_name} is being downloaded.`,
+      });
     } catch (error) {
       console.error('Error downloading document:', error);
       toast({
+        variant: "destructive",
         title: "Error",
-        description: "Failed to download document",
-        variant: "destructive"
+        description: "Failed to download document. Please try again.",
       });
     } finally {
       setDownloadingDocument(null);
