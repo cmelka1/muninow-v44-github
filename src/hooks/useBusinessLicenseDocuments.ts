@@ -93,7 +93,12 @@ export const useBusinessLicenseDocuments = () => {
       .from('business-license-documents')
       .createSignedUrl(storagePath, 3600);
 
-    return data?.signedUrl;
+    if (data?.signedUrl) {
+      const supabaseUrl = 'https://qcuiuubbaozcmejzvxje.supabase.co';
+      return `${supabaseUrl}${data.signedUrl}`;
+    }
+    
+    return undefined;
   };
 
   return {
