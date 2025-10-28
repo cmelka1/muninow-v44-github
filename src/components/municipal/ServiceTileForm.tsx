@@ -88,6 +88,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [renewalFrequency, setRenewalFrequency] = useState<'annual' | 'quarterly'>(tile?.renewal_frequency || 'annual');
   const [renewalReminderDays, setRenewalReminderDays] = useState(tile?.renewal_reminder_days || 30);
   const [autoRenewEnabled, setAutoRenewEnabled] = useState(tile?.auto_renew_enabled || false);
+  const [requiresPayment, setRequiresPayment] = useState(tile?.requires_payment !== false); // Default true
 
   // Fetch merchants for this municipality on mount
   useEffect(() => {
@@ -180,13 +181,14 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
     const serviceData = {
       title: title.trim(),
       description: description.trim() || undefined,
-      amount_cents: amountCents,
+      amount_cents: requiresPayment ? amountCents : 0, // Force 0 if no payment
       requires_review: requiresReview,
+      requires_payment: requiresPayment,
       is_active: isActive,
       auto_populate_user_info: false,
-      allow_user_defined_amount: allowUserDefinedAmount,
-      merchant_id: selectedMerchantId || undefined,
-      finix_merchant_id: selectedMerchant?.finix_merchant_id || undefined,
+      allow_user_defined_amount: requiresPayment && allowUserDefinedAmount, // Only if payment required
+      merchant_id: requiresPayment ? (selectedMerchantId || undefined) : undefined, // Only if payment required
+      finix_merchant_id: requiresPayment ? (selectedMerchant?.finix_merchant_id || undefined) : undefined, // Only if payment required
       // merchant_fee_profile_id will be set via merchant relationship
       pdf_form_url: finalPdfUrl,
       form_fields: STANDARD_FORM_FIELDS,
@@ -254,85 +256,120 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
             />
           </div>
           
-          <div>
-            <Label htmlFor="amount">Service Fee (USD) *</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={amountDollars}
-                onChange={(e) => setAmountDollars(e.target.value)}
-                placeholder="0.00"
-                className="pl-10 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                required
-                disabled={allowUserDefinedAmount}
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="allow-user-defined-amount">Allow User-Defined Amount</Label>
-              <p className="text-sm text-muted-foreground">
-                Let users enter their own service fee amount (useful for variable fees like vehicle registration)
+          {/* Only show amount input if payment is required */}
+          {requiresPayment && (
+            <>
+              <div>
+                <Label htmlFor="amount">Service Fee (USD) *</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={amountDollars}
+                    onChange={(e) => setAmountDollars(e.target.value)}
+                    placeholder="0.00"
+                    className="pl-10 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    required
+                    disabled={allowUserDefinedAmount}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="allow-user-defined-amount">Allow User-Defined Amount</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Let users enter their own service fee amount (useful for variable fees like vehicle registration)
+                  </p>
+                </div>
+                <Switch
+                  id="allow-user-defined-amount"
+                  checked={allowUserDefinedAmount}
+                  onCheckedChange={(checked) => {
+                    setAllowUserDefinedAmount(checked);
+                    if (checked) {
+                      setAmountDollars('0');
+                    }
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Show "Free Service" badge when payment not required */}
+          {!requiresPayment && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-4">
+              <p className="text-sm text-green-800">
+                <strong>Free Service:</strong> This service does not require any payment. Users can submit applications without providing payment information.
               </p>
             </div>
-            <Switch
-              id="allow-user-defined-amount"
-              checked={allowUserDefinedAmount}
-              onCheckedChange={(checked) => {
-                setAllowUserDefinedAmount(checked);
-                if (checked) {
-                  setAmountDollars('0');
-                }
-              }}
-            />
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Payment Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Payment Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="merchant">Payment Merchant</Label>
-            <Select value={selectedMerchantId} onValueChange={setSelectedMerchantId} disabled={isLoading}>
-              <SelectTrigger>
-                <SelectValue placeholder={isLoading ? "Loading merchants..." : "Select a merchant for payment processing"} />
-              </SelectTrigger>
-              <SelectContent>
-                {merchants?.map((merchant) => (
-                  <SelectItem key={merchant.id} value={merchant.id}>
-                    {merchant.merchant_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {isLoading ? (
-              <p className="text-sm text-muted-foreground mt-1">
-                Loading available merchants...
+      {/* Payment Configuration - Only show if payment is required */}
+      {requiresPayment && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Payment Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="merchant">Payment Merchant</Label>
+              <Select value={selectedMerchantId} onValueChange={setSelectedMerchantId} disabled={isLoading}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoading ? "Loading merchants..." : "Select a merchant for payment processing"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {merchants?.map((merchant) => (
+                    <SelectItem key={merchant.id} value={merchant.id}>
+                      {merchant.merchant_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Loading available merchants...
+                </p>
+              ) : !merchants?.length ? (
+                <p className="text-sm text-muted-foreground mt-1">
+                  No merchants available for this municipality
+                </p>
+              ) : !selectedMerchantId ? (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Select a merchant to enable online payments for this service
+                </p>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show informational message when payment not required */}
+      {!requiresPayment && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Payment Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <p className="text-sm text-blue-800">
+                <strong>No payment required:</strong> This service will be submitted for review only, without any payment processing. No merchant configuration is needed.
               </p>
-            ) : !merchants?.length ? (
-              <p className="text-sm text-muted-foreground mt-1">
-                No merchants available for this municipality
-              </p>
-            ) : !selectedMerchantId ? (
-              <p className="text-sm text-muted-foreground mt-1">
-                Select a merchant to enable online payments for this service
-              </p>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
 
       {/* Settings */}
@@ -341,6 +378,20 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
           <CardTitle>Service Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="requires-payment">Requires Payment</Label>
+              <p className="text-sm text-muted-foreground">
+                This service requires payment processing
+              </p>
+            </div>
+            <Switch
+              id="requires-payment"
+              checked={requiresPayment}
+              onCheckedChange={setRequiresPayment}
+            />
+          </div>
+
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="requires-review">Requires Manual Review</Label>

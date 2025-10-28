@@ -10,6 +10,7 @@ export interface MunicipalServiceTile {
   pdf_form_url?: string;
   amount_cents: number;
   requires_review: boolean;
+  requires_payment: boolean;
   merchant_id?: string;
   finix_merchant_id?: string;
   merchant_fee_profile_id?: string;

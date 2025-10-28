@@ -1745,6 +1745,7 @@ export type Database = {
           pdf_form_url: string | null
           renewal_frequency: string | null
           renewal_reminder_days: number | null
+          requires_payment: boolean
           requires_review: boolean
           title: string
           updated_at: string
@@ -1768,6 +1769,7 @@ export type Database = {
           pdf_form_url?: string | null
           renewal_frequency?: string | null
           renewal_reminder_days?: number | null
+          requires_payment?: boolean
           requires_review?: boolean
           title: string
           updated_at?: string
@@ -1791,6 +1793,7 @@ export type Database = {
           pdf_form_url?: string | null
           renewal_frequency?: string | null
           renewal_reminder_days?: number | null
+          requires_payment?: boolean
           requires_review?: boolean
           title?: string
           updated_at?: string
