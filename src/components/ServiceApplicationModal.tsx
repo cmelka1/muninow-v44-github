@@ -229,43 +229,25 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       zipCode: string;
     }
   ) => {
-    // Update the main address field
+    // Create full address string (matching Permits and Business Licenses behavior)
+    const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
+    
+    // Update the address field with the full address
     setFormData(prev => ({
       ...prev,
-      [fieldId]: addressComponents.streetAddress
+      [fieldId]: fullAddress
     }));
 
-    // Auto-populate related address fields if they exist
-    const fields = tile?.form_fields || [];
-    const updates: Record<string, string> = {};
-
-    fields.forEach(field => {
-      const fieldId = field.id.toLowerCase();
-      
-      if (fieldId.includes('city')) {
-        updates[field.id] = addressComponents.city;
-      } else if (fieldId.includes('state')) {
-        updates[field.id] = addressComponents.state;
-      } else if (fieldId.includes('zip') || fieldId.includes('postal')) {
-        updates[field.id] = addressComponents.zipCode;
-      }
-    });
-
-    if (Object.keys(updates).length > 0) {
-      setFormData(prev => ({ ...prev, ...updates }));
-    }
-
-    // Clear validation errors for all updated fields
+    // Clear validation error for this field
     setValidationErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors[fieldId];
-      Object.keys(updates).forEach(key => delete newErrors[key]);
       return newErrors;
     });
 
     toast({
       title: "Address Selected",
-      description: "Address fields have been automatically populated",
+      description: "Address has been populated",
     });
   };
 
