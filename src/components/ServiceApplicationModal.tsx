@@ -244,11 +244,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       delete newErrors[fieldId];
       return newErrors;
     });
-
-    toast({
-      title: "Address Selected",
-      description: "Address has been populated",
-    });
   };
 
   const validateStep1Fields = () => {
