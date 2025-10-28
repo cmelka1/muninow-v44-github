@@ -38,7 +38,11 @@ export const useMunicipalUserSummary = (userId?: string) => {
 
       return data && data.length > 0 ? data[0] as MunicipalUserSummary : null;
     },
-    enabled: !!(userId && profile?.account_type === 'municipal'),
+    enabled: !!(
+      userId && 
+      profile?.customer_id &&
+      ['municipal', 'municipaladmin', 'municipaluser'].includes(profile?.account_type || '')
+    ),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
