@@ -106,6 +106,10 @@ export const useUserPaymentHistory = (params: UseUserPaymentHistoryParams) => {
 
       return { data: enrichedData, count: count || 0 };
     },
-    enabled: !!(userId && profile?.customer_id && profile?.account_type === 'municipal'),
+    enabled: !!(
+      userId && 
+      profile?.customer_id && 
+      ['municipal', 'municipaladmin', 'municipaluser'].includes(profile?.account_type || '')
+    ),
   });
 };
