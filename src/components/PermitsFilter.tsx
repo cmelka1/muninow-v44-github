@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface PermitFilters {
   permitType?: string;
@@ -18,14 +21,43 @@ interface PermitsFilterProps {
 }
 
 const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange }) => {
-  const permitTypeOptions = [
-    { value: 'Building', label: 'Building' },
-    { value: 'Electrical', label: 'Electrical' },
-    { value: 'Plumbing', label: 'Plumbing' },
-    { value: 'HVAC', label: 'HVAC' },
-    { value: 'Zoning', label: 'Zoning' },
-    { value: 'Business', label: 'Business License' },
-  ];
+  const { profile } = useAuth();
+
+  // Dynamic permit type options based on user's actual permit applications
+  const { data: permitTypeOptions = [], isLoading: isLoadingPermitTypes } = useQuery({
+    queryKey: ['user-permit-types', profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return [];
+      
+      console.log('[PermitsFilter] Fetching permit types for user:', profile.id);
+      
+      const { data, error } = await supabase
+        .from('permit_applications')
+        .select('permit_type')
+        .eq('user_id', profile.id);
+        
+      if (error) {
+        console.error('[PermitsFilter] Error fetching permit types:', error);
+        return [];
+      }
+      
+      // Get unique permit types, filter out empty/null values
+      const uniqueTypes = [...new Set(
+        data
+          .map(p => p.permit_type)
+          .filter(type => type && type.trim() !== '')
+      )];
+      
+      console.log('[PermitsFilter] Found unique permit types:', uniqueTypes);
+      
+      // Map to select options format and sort alphabetically
+      return uniqueTypes
+        .map(type => ({ value: type, label: type }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    },
+    enabled: !!profile?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   const statusOptions = [
     { value: 'draft', label: 'Draft' },
@@ -135,17 +167,27 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
           {/* Permit Type - Hidden on mobile (Priority 2) */}
           <div className="hidden sm:block space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Permit Type</label>
-            <Select value={filters.permitType || 'all'} onValueChange={(value) => updateFilter('permitType', value)}>
+            <Select 
+              value={filters.permitType || 'all'} 
+              onValueChange={(value) => updateFilter('permitType', value)}
+              disabled={isLoadingPermitTypes}
+            >
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={isLoadingPermitTypes ? "Loading types..." : "Type"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                {permitTypeOptions.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
+                {isLoadingPermitTypes ? (
+                  <SelectItem value="loading" disabled>Loading...</SelectItem>
+                ) : permitTypeOptions.length === 0 ? (
+                  <SelectItem value="none" disabled>No permit types found</SelectItem>
+                ) : (
+                  permitTypeOptions.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

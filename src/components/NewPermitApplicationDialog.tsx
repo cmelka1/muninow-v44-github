@@ -424,6 +424,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           customer_id: selectedMunicipality!.customer_id,
           merchant_id: selectedMunicipality!.id,
           permit_type: selectedPermitType!.municipal_label,
+          municipal_permit_type_id: selectedPermitType!.id,
           property_address: propertyInfo.address,
           property_pin: propertyInfo.pinNumber || null,
           estimated_construction_value_cents: propertyInfo.estimatedValue * 100,

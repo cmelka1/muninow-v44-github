@@ -102,10 +102,25 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
     if (selectedPermitType && standardPermitTypes) {
       const standard = standardPermitTypes.find(pt => pt.id === selectedPermitType);
       if (standard) {
-        form.setValue('municipal_label', standard.name);
+        // Only auto-fill municipal_label if it's currently empty or unchanged from a previous selection
+        const currentLabel = form.getValues('municipal_label');
+        const isLabelEmpty = !currentLabel || currentLabel.trim() === '';
+        
+        // Auto-fill empty label
+        if (isLabelEmpty) {
+          form.setValue('municipal_label', standard.name);
+        }
+        
+        // Always update fees and processing info from standard type
+        // (municipalities typically want these but can override after)
         form.setValue('base_fee_cents', standard.base_fee_cents / 100);
         form.setValue('processing_days', standard.processing_days);
         form.setValue('requires_inspection', standard.requires_inspection);
+        
+        // Auto-fill description if empty
+        if (standard.description && !form.getValues('description')) {
+          form.setValue('description', standard.description);
+        }
       }
     }
   }, [selectedPermitType, standardPermitTypes, form]);
@@ -287,11 +302,28 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
                       />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
+              </FormItem>
+            )}
+          />
 
-              <FormField
+          {!isCustom && selectedPermitType && (
+            <div className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
+              <p className="text-muted-foreground">
+                <span className="font-medium">Standard label:</span>{" "}
+                {standardPermitTypes?.find(pt => pt.id === selectedPermitType)?.name}
+              </p>
+              {form.watch('municipal_label') !== standardPermitTypes?.find(pt => pt.id === selectedPermitType)?.name && (
+                <p className="mt-1 flex items-center gap-1 text-amber-600">
+                  <span className="font-semibold">⚠ Customized</span>
+                  <span className="text-xs">
+                    - This label differs from the standard
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+
+          <FormField
                 control={form.control}
                 name="processing_days"
                 render={({ field }) => (

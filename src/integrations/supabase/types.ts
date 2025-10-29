@@ -2138,6 +2138,7 @@ export type Database = {
           merchant_finix_identity_id: string | null
           merchant_id: string | null
           merchant_name: string | null
+          municipal_permit_type_id: string | null
           municipal_questions_responses: Json | null
           municipal_review_status: string | null
           owner_address: string | null
@@ -2211,6 +2212,7 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          municipal_permit_type_id?: string | null
           municipal_questions_responses?: Json | null
           municipal_review_status?: string | null
           owner_address?: string | null
@@ -2284,6 +2286,7 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          municipal_permit_type_id?: string | null
           municipal_questions_responses?: Json | null
           municipal_review_status?: string | null
           owner_address?: string | null
@@ -2324,6 +2327,13 @@ export type Database = {
           withdrawn_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "permit_applications_municipal_permit_type_id_fkey"
+            columns: ["municipal_permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "municipal_permit_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "permit_applications_permit_merchant_id_fkey"
             columns: ["permit_merchant_id"]
