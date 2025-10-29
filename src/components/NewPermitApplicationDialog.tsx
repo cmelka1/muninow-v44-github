@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
-import { useMunicipalPermitTypes, MunicipalPermitType } from '@/hooks/useMunicipalPermitTypes';
+import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { formatCurrency } from '@/lib/formatters';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
@@ -40,7 +40,7 @@ interface SelectedMunicipality {
 
 interface SelectedPermitType {
   id: string;
-  municipal_label: string;
+  name: string;
   description: string | null;
   base_fee_cents: number;
   processing_days: number;
@@ -164,7 +164,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const { finixSessionKey } = useFinixAuth(merchantFinixId);
   
   // Only load permit types after municipality is selected
-  const { data: permitTypes, isLoading: isLoadingPermitTypes } = useMunicipalPermitTypes(
+  const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes(
     selectedMunicipality?.customer_id
   );
   
@@ -423,8 +423,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           user_id: profile.id,
           customer_id: selectedMunicipality!.customer_id,
           merchant_id: selectedMunicipality!.id,
-          permit_type: selectedPermitType!.municipal_label,
-          municipal_permit_type_id: selectedPermitType!.id,
+          permit_type_id: selectedPermitType!.id,
           property_address: propertyInfo.address,
           property_pin: propertyInfo.pinNumber || null,
           estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
@@ -526,7 +525,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     if (permitType) {
       setSelectedPermitType({
         id: permitType.id,
-        municipal_label: permitType.municipal_label,
+        name: permitType.name,
         description: permitType.description,
         base_fee_cents: permitType.base_fee_cents,
         processing_days: permitType.processing_days,
@@ -946,7 +945,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       <SelectContent>
                         {filteredPermitTypes?.map((permitType) => (
                           <SelectItem key={permitType.id} value={permitType.id}>
-                            {permitType.municipal_label}
+                            {permitType.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1501,7 +1500,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Permit Type</Label>
-                    <p className="text-sm font-medium">{selectedPermitType?.municipal_label || 'Not selected'}</p>
+                    <p className="text-sm font-medium">{selectedPermitType?.name || 'Not selected'}</p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Property Address</Label>

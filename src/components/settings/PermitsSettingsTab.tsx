@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Edit2, Save, X, Plus } from 'lucide-react';
-import { usePermitTypesWithCustomizations, useUpsertMunicipalPermitType, useCreateMunicipalPermitType, useMunicipalPermitTypes } from '@/hooks/useMunicipalPermitTypes';
+import { usePermitTypes, useCreatePermitType, useUpdatePermitType } from '@/hooks/usePermitTypes';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
 import { PermitQuestionsCard } from './PermitQuestionsCard';
@@ -138,30 +138,14 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
 };
 
 export const PermitsSettingsTab = () => {
-  const { data: standardPermitTypes, isLoading: isLoadingStandard } = usePermitTypesWithCustomizations();
-  const { data: customPermitTypes, isLoading: isLoadingCustom } = useMunicipalPermitTypes();
-  const upsertMutation = useUpsertMunicipalPermitType();
-  const createMutation = useCreateMunicipalPermitType();
+  const { profile } = useAuth();
+  const { data: permitTypes, isLoading } = usePermitTypes(profile?.customer_id);
+  const updateMutation = useUpdatePermitType();
+  const createMutation = useCreatePermitType();
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [changes, setChanges] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
-
-  const isLoading = isLoadingStandard || isLoadingCustom;
-
-  // Combine standard and custom permit types
-  const allPermitTypes = [
-    ...(standardPermitTypes || []),
-    ...(customPermitTypes?.filter(ct => ct.is_custom) || []).map(ct => ({
-      permit_type_id: ct.id,
-      permit_type_name: ct.municipal_label,
-      standard_fee_cents: ct.base_fee_cents,
-      standard_processing_days: ct.processing_days,
-      standard_requires_inspection: ct.requires_inspection,
-      is_customized: false,
-      is_custom: true,
-    }))
-  ];
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -174,7 +158,7 @@ export const PermitsSettingsTab = () => {
     let processedValue = value;
     
     // Convert fee values to cents for consistent storage
-    if (field === 'fee_cents') {
+    if (field === 'base_fee_cents') {
       processedValue = Math.round(value * 100);
     }
     
@@ -184,18 +168,12 @@ export const PermitsSettingsTab = () => {
     }));
   };
 
-  const getFieldValue = (permit: any, field: string, defaultValue: any) => {
-    const changeKey = `${permit.permit_type_id}::${field}`;
+  const getFieldValue = (permit: any, field: string) => {
+    const changeKey = `${permit.id}::${field}`;
     if (changes[changeKey] !== undefined) {
       return changes[changeKey];
     }
-    
-    if (permit.is_custom) {
-      return defaultValue;
-    }
-    
-    const customValue = permit[`custom_${field}`];
-    return customValue !== undefined && customValue !== null ? customValue : defaultValue;
+    return permit[field];
   };
 
   const handleSave = async () => {
@@ -204,24 +182,14 @@ export const PermitsSettingsTab = () => {
       const updates = Object.entries(changes).reduce((acc, [key, value]) => {
         const [permitTypeId, field] = key.split('::');
         if (!acc[permitTypeId]) acc[permitTypeId] = {};
-        
-        switch (field) {
-          case 'fee_cents':
-            acc[permitTypeId].base_fee_cents = value; // Already in cents from handleFieldChange
-            break;
-          case 'requires_inspection':
-            acc[permitTypeId].requires_inspection = value;
-            break;
-        }
+        acc[permitTypeId][field] = value;
         return acc;
       }, {} as Record<string, any>);
 
-      // Save all updates - use upsert for both standard and custom permit types
-      // The upsert mutation handles the logic of whether to create or update
       await Promise.all(
         Object.entries(updates).map(([permitTypeId, updateData]) =>
-          upsertMutation.mutateAsync({
-            permitTypeId,
+          updateMutation.mutateAsync({
+            id: permitTypeId,
             updates: updateData,
           })
         )
@@ -246,17 +214,16 @@ export const PermitsSettingsTab = () => {
   const handleAddCustomType = async (permitType: { name: string; fee_cents: number; requires_inspection: boolean }) => {
     try {
       await createMutation.mutateAsync({
-        municipal_label: permitType.name,
+        name: permitType.name,
         base_fee_cents: permitType.fee_cents,
-        processing_days: 30, // Default processing days since column is hidden
+        processing_days: 30,
         requires_inspection: permitType.requires_inspection,
-        is_custom: true,
       });
       
-      toast.success('Custom permit type added successfully');
+      toast.success('Permit type added successfully');
     } catch (error) {
-      toast.error('Failed to add custom permit type');
-      console.error('Error adding custom permit type:', error);
+      toast.error('Failed to add permit type');
+      console.error('Error adding permit type:', error);
     }
   };
 
@@ -309,7 +276,7 @@ export const PermitsSettingsTab = () => {
             <div className="flex items-center justify-center py-8">
               <div className="text-muted-foreground">Loading permit types...</div>
             </div>
-          ) : !allPermitTypes?.length ? (
+          ) : !permitTypes?.length ? (
             <div className="text-center py-8">
               <div className="text-muted-foreground">
                 No permit types available.
@@ -326,46 +293,34 @@ export const PermitsSettingsTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {allPermitTypes.map((permit) => {
-                    const isCustomized = permit.is_customized;
-                    const isCustom = permit.is_custom;
-                    
-                    return (
-                      <TableRow key={permit.permit_type_id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center space-x-2">
-                            <span>{permit.permit_type_name}</span>
-                            {isCustom && (
-                              <Badge variant="default" className="text-xs">
-                                Custom
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        
-                        <TableCell className="text-center">
-                          <EditableField
-                            value={getFieldValue(permit, 'fee_cents', permit.standard_fee_cents) / 100}
-                            onChange={(value) => handleFieldChange(permit.permit_type_id, 'fee_cents', value)}
-                            type="number"
-                            prefix="$"
-                            placeholder={formatCurrency(permit.standard_fee_cents)}
-                            isEditMode={isEditMode}
-                            className="text-right"
-                          />
-                        </TableCell>
-                        
-                        <TableCell className="text-center">
-                          <EditableField
-                            value={getFieldValue(permit, 'requires_inspection', permit.standard_requires_inspection)}
-                            onChange={(value) => handleFieldChange(permit.permit_type_id, 'requires_inspection', value)}
-                            type="boolean"
-                            isEditMode={isEditMode}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {permitTypes.map((permit) => (
+                    <TableRow key={permit.id}>
+                      <TableCell className="font-medium">
+                        <span>{permit.name}</span>
+                      </TableCell>
+                      
+                      <TableCell className="text-center">
+                        <EditableField
+                          value={getFieldValue(permit, 'base_fee_cents') / 100}
+                          onChange={(value) => handleFieldChange(permit.id, 'base_fee_cents', value)}
+                          type="number"
+                          prefix="$"
+                          placeholder={formatCurrency(permit.base_fee_cents)}
+                          isEditMode={isEditMode}
+                          className="text-right"
+                        />
+                      </TableCell>
+                      
+                      <TableCell className="text-center">
+                        <EditableField
+                          value={getFieldValue(permit, 'requires_inspection')}
+                          onChange={(value) => handleFieldChange(permit.id, 'requires_inspection', value)}
+                          type="boolean"
+                          isEditMode={isEditMode}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
                   
                   {isEditMode && (
                     <NewPermitTypeRow

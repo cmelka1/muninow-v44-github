@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface PermitDetail {
   permit_id: string;
   permit_number: string;
-  permit_type: string;
+  permit_type_id: string;
+  permit_type_name: string | null;
   application_status: string;
   applicant_full_name: string;
   applicant_email: string;
@@ -41,8 +42,6 @@ export interface PermitDetail {
   finix_merchant_id: string | null;
   customer_id: string;
   user_id: string;
-  municipal_permit_type_id: string | null;
-  municipal_label: string | null;
 }
 
 export const usePermit = (permitId: string) => {
@@ -57,7 +56,7 @@ export const usePermit = (permitId: string) => {
         .from('permit_applications')
         .select(`
           *,
-          municipal_permit_types(municipal_label)
+          permit_types_v2(name)
         `)
         .eq('permit_id', permitId)
         .single();
@@ -70,7 +69,7 @@ export const usePermit = (permitId: string) => {
       // Transform to flatten the join
       const transformedPermit = {
         ...permitData,
-        municipal_label: (permitData.municipal_permit_types as any)?.municipal_label || null
+        permit_type_name: (permitData.permit_types_v2 as any)?.name || null
       };
       
       return transformedPermit as PermitDetail;

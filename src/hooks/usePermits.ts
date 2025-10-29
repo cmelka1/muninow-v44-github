@@ -6,7 +6,8 @@ import type { PermitStatus } from './usePermitWorkflow';
 export interface Permit {
   permit_id: string;
   permit_number: string;
-  permit_type: string;
+  permit_type_id: string;
+  permit_type_name: string | null;
   application_status: string;
   applicant_full_name: string;
   property_address: string;
@@ -17,8 +18,6 @@ export interface Permit {
   customer_id: string;
   merchant_name: string | null;
   user_id: string;
-  municipal_permit_type_id: string | null;
-  municipal_label: string | null;
 }
 
 interface UsePermitsParams {
@@ -52,7 +51,7 @@ export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermits
         .select(`
           permit_id,
           permit_number,
-          permit_type,
+          permit_type_id,
           application_status,
           applicant_full_name,
           property_address,
@@ -63,8 +62,7 @@ export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermits
           customer_id,
           merchant_name,
           user_id,
-          municipal_permit_type_id,
-          municipal_permit_types(municipal_label)
+          permit_types_v2(name)
         `, { count: 'exact' });
 
       // Only show permits for this specific user
@@ -72,7 +70,7 @@ export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermits
 
       // Apply filters
       if (filters.permitType) {
-        query = query.eq('permit_type', filters.permitType);
+        query = query.eq('permit_type_id', filters.permitType);
       }
 
       if (filters.status) {
@@ -137,10 +135,10 @@ export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermits
         throw error;
       }
 
-      // Transform data to flatten municipal_permit_types join
+      // Transform data to flatten permit_types_v2 join
       const transformedData = data?.map((permit: any) => ({
         ...permit,
-        municipal_label: permit.municipal_permit_types?.municipal_label || null
+        permit_type_name: permit.permit_types_v2?.name || null
       }));
 
       return {

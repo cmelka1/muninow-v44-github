@@ -4,7 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
-import { usePermitTypesWithCustomizations } from '@/hooks/useMunicipalPermitTypes';
+import { usePermitTypes } from '@/hooks/usePermitTypes';
+import { useAuth } from '@/contexts/SimpleAuthContext';
 
 export interface PermitFilters {
   permitType?: string;
@@ -20,34 +21,18 @@ interface PermitsFilterProps {
 }
 
 const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange }) => {
-  // Use the same hook as Municipal Settings for consistency
-  const { data: permitTypesWithCustomizations, isLoading: isLoadingPermitTypes } = usePermitTypesWithCustomizations();
+  const { profile } = useAuth();
+  const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes(profile?.customer_id);
 
   // Transform to dropdown options
   const permitTypeOptions = React.useMemo(() => {
-    if (!permitTypesWithCustomizations) return [];
+    if (!permitTypes) return [];
     
-    return permitTypesWithCustomizations
-      .filter(pt => pt.is_active !== false) // Only show active types
-      .map(pt => {
-        // Use municipal label if customized, otherwise standard name
-        const displayLabel = pt.municipal_label || pt.permit_type_name;
-        
-        // Value for filtering: municipal label if present (matches what's stored in permit_applications)
-        // Otherwise standard name
-        const filterValue = pt.municipal_label || pt.permit_type_name;
-        
-        return {
-          value: filterValue,
-          label: displayLabel,
-          standardName: pt.permit_type_name,
-          municipalLabel: pt.municipal_label,
-          isCustom: pt.is_custom || false,
-          municipalPermitTypeId: pt.municipal_permit_type_id
-        };
-      })
-      .sort((a, b) => a.label.localeCompare(b.label)); // Alphabetical sort
-  }, [permitTypesWithCustomizations]);
+    return permitTypes.map(pt => ({
+      value: pt.name,
+      label: pt.name,
+    }));
+  }, [permitTypes]);
 
   const statusOptions = [
     { value: 'draft', label: 'Draft' },
@@ -174,19 +159,7 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
                 ) : (
                   permitTypeOptions.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
-                      <div className="flex flex-col items-start">
-                        <div className="flex items-center gap-2">
-                          <span>{type.label}</span>
-                          {type.isCustom && (
-                            <Badge variant="outline" className="text-xs">Custom</Badge>
-                          )}
-                        </div>
-                        {type.municipalLabel && type.municipalLabel !== type.standardName && (
-                          <span className="text-xs text-muted-foreground">
-                            Standard: {type.standardName}
-                          </span>
-                        )}
-                      </div>
+                      {type.label}
                     </SelectItem>
                   ))
                 )}

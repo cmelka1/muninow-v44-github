@@ -2138,7 +2138,6 @@ export type Database = {
           merchant_finix_identity_id: string | null
           merchant_id: string | null
           merchant_name: string | null
-          municipal_permit_type_id: string | null
           municipal_questions_responses: Json | null
           municipal_review_status: string | null
           owner_address: string | null
@@ -2154,7 +2153,7 @@ export type Database = {
           permit_id: string
           permit_merchant_id: string | null
           permit_number: string | null
-          permit_type: string
+          permit_type_id: string
           profile_id: string | null
           property_address: string
           property_pin: string | null
@@ -2212,7 +2211,6 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
-          municipal_permit_type_id?: string | null
           municipal_questions_responses?: Json | null
           municipal_review_status?: string | null
           owner_address?: string | null
@@ -2228,7 +2226,7 @@ export type Database = {
           permit_id?: string
           permit_merchant_id?: string | null
           permit_number?: string | null
-          permit_type: string
+          permit_type_id: string
           profile_id?: string | null
           property_address: string
           property_pin?: string | null
@@ -2286,7 +2284,6 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
-          municipal_permit_type_id?: string | null
           municipal_questions_responses?: Json | null
           municipal_review_status?: string | null
           owner_address?: string | null
@@ -2302,7 +2299,7 @@ export type Database = {
           permit_id?: string
           permit_merchant_id?: string | null
           permit_number?: string | null
-          permit_type?: string
+          permit_type_id?: string
           profile_id?: string | null
           property_address?: string
           property_pin?: string | null
@@ -2328,10 +2325,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "permit_applications_municipal_permit_type_id_fkey"
-            columns: ["municipal_permit_type_id"]
+            foreignKeyName: "fk_permit_applications_permit_type"
+            columns: ["permit_type_id"]
             isOneToOne: false
-            referencedRelation: "municipal_permit_types"
+            referencedRelation: "permit_types_v2"
             referencedColumns: ["id"]
           },
           {
