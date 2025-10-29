@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useMunicipalBusinessLicenseTypes } from '@/hooks/useMunicipalBusinessLicenseTypes';
+import { useBusinessLicenseTypes } from '@/hooks/useBusinessLicenseTypes';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface BusinessLicenseFilters {
@@ -26,13 +26,13 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
   onFiltersChange
 }) => {
   const { profile } = useAuth();
-  const { data: licenseTypes, isLoading: licenseTypesLoading } = useMunicipalBusinessLicenseTypes(
+  const { data: licenseTypes, isLoading: licenseTypesLoading } = useBusinessLicenseTypes(
     profile?.customer_id
   );
 
   const licenseTypeOptions = licenseTypes?.map(type => ({
     value: type.id,
-    label: type.municipal_label
+    label: type.name
   })) || [];
 
   const statusOptions = [

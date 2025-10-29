@@ -58,7 +58,7 @@ export type Database = {
           is_renewal: boolean | null
           issued_at: string | null
           license_number: string | null
-          license_type_id: string | null
+          license_type_id: string
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
           merchant_id: string | null
@@ -143,7 +143,7 @@ export type Database = {
           is_renewal?: boolean | null
           issued_at?: string | null
           license_number?: string | null
-          license_type_id?: string | null
+          license_type_id: string
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -228,7 +228,7 @@ export type Database = {
           is_renewal?: boolean | null
           issued_at?: string | null
           license_number?: string | null
-          license_type_id?: string | null
+          license_type_id?: string
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -272,17 +272,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "business_license_applications_license_type_id_fkey"
-            columns: ["license_type_id"]
-            isOneToOne: false
-            referencedRelation: "municipal_business_license_types"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "business_license_applications_parent_license_id_fkey"
             columns: ["parent_license_id"]
             isOneToOne: false
             referencedRelation: "business_license_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_business_license_applications_license_type"
+            columns: ["license_type_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_types_v2"
             referencedColumns: ["id"]
           },
         ]
@@ -462,7 +462,7 @@ export type Database = {
           },
         ]
       }
-      business_license_types: {
+      business_license_types_deprecated: {
         Row: {
           base_fee_cents: number
           created_at: string
@@ -500,6 +500,69 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      business_license_types_v2: {
+        Row: {
+          base_fee_cents: number
+          created_at: string
+          customer_id: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_custom: boolean
+          merchant_id: string | null
+          merchant_name: string | null
+          name: string
+          processing_days: number
+          updated_at: string
+        }
+        Insert: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          name: string
+          processing_days?: number
+          updated_at?: string
+        }
+        Update: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          name?: string
+          processing_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_license_types_v2_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "business_license_types_v2_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -1224,7 +1287,7 @@ export type Database = {
           },
         ]
       }
-      municipal_business_license_types: {
+      municipal_business_license_types_deprecated: {
         Row: {
           base_fee_cents: number
           business_license_type_id: string | null
@@ -3785,19 +3848,6 @@ export type Database = {
         Args: { p_original_license_id: string }
         Returns: string
       }
-      create_municipal_business_license_type: {
-        Args: {
-          p_base_fee_cents: number
-          p_business_license_type_id?: string
-          p_customer_id: string
-          p_display_order?: number
-          p_is_custom?: boolean
-          p_merchant_id?: string
-          p_merchant_name?: string
-          p_municipal_label: string
-        }
-        Returns: string
-      }
       create_municipal_team_invitation: {
         Args: {
           p_customer_id: string
@@ -3984,23 +4034,6 @@ export type Database = {
           fixed_fee: number
         }[]
       }
-      get_municipal_business_license_types: {
-        Args: { p_customer_id: string }
-        Returns: {
-          base_fee_cents: number
-          business_license_type_id: string
-          created_at: string
-          customer_id: string
-          display_order: number
-          id: string
-          is_active: boolean
-          is_custom: boolean
-          merchant_id: string
-          merchant_name: string
-          municipal_label: string
-          updated_at: string
-        }[]
-      }
       get_municipal_questions: {
         Args: { p_customer_id: string; p_merchant_id?: string }
         Returns: {
@@ -4178,16 +4211,6 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
-      update_municipal_business_license_type: {
-        Args: {
-          p_base_fee_cents?: number
-          p_display_order?: number
-          p_id: string
-          p_is_active?: boolean
-          p_municipal_label?: string
-        }
-        Returns: boolean
-      }
       update_municipal_team_member_role: {
         Args: { p_customer_id: string; p_member_id: string; p_new_role: string }
         Returns: boolean

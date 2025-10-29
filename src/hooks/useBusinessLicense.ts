@@ -106,15 +106,15 @@ export const useBusinessLicense = (licenseId: string) => {
       let license_type = null;
       if (data.license_type_id) {
         const { data: typeData } = await supabase
-          .from('municipal_business_license_types')
-          .select('municipal_label, base_fee_cents, is_active, merchant_name')
+          .from('business_license_types_v2')
+          .select('name, description, base_fee_cents, processing_days, is_active, merchant_name')
           .eq('id', data.license_type_id)
           .single();
         license_type = typeData ? {
-          name: typeData.municipal_label,
-          description: `Municipal license type - Fee: $${(typeData.base_fee_cents / 100).toFixed(2)}`,
-          processing_days: 7, // Default processing days for municipal licenses
-          requires_inspection: false // Default value
+          name: typeData.name,
+          description: typeData.description || `Business license type - Fee: $${(typeData.base_fee_cents / 100).toFixed(2)}`,
+          processing_days: typeData.processing_days,
+          requires_inspection: false // Business licenses don't require inspection
         } : null;
       }
 

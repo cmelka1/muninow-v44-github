@@ -19,13 +19,12 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useBusinessLicensesMerchant } from '@/hooks/useBusinessLicensesMerchant';
 import { 
-  useMunicipalBusinessLicenseTypes, 
-  useCreateMunicipalBusinessLicenseType, 
-  useUpdateMunicipalBusinessLicenseType, 
-  useDeleteMunicipalBusinessLicenseType,
-  useInitializeMunicipalBusinessLicenseTypes,
-  type MunicipalBusinessLicenseType
-} from '@/hooks/useMunicipalBusinessLicenseTypes';
+  useBusinessLicenseTypes, 
+  useCreateBusinessLicenseType, 
+  useUpdateBusinessLicenseType, 
+  useDeleteBusinessLicenseType,
+  type BusinessLicenseType
+} from '@/hooks/useBusinessLicenseTypes';
 import { formatCurrency } from '@/lib/formatters';
 import { toast } from 'sonner';
 
@@ -133,28 +132,15 @@ const NewBusinessLicenseTypeRow: React.FC<NewBusinessLicenseTypeRowProps> = ({ o
 export const BusinessLicensesSettingsTab = () => {
   const { profile } = useAuth();
   const { data: businessLicensesMerchant } = useBusinessLicensesMerchant(profile?.customer_id);
-  const { data: municipalTypes = [], isLoading } = useMunicipalBusinessLicenseTypes(profile?.customer_id);
+  const { data: municipalTypes = [], isLoading } = useBusinessLicenseTypes(profile?.customer_id);
   
-  const createMutation = useCreateMunicipalBusinessLicenseType();
-  const updateMutation = useUpdateMunicipalBusinessLicenseType();
-  const deleteMutation = useDeleteMunicipalBusinessLicenseType();
-  const initializeMutation = useInitializeMunicipalBusinessLicenseTypes();
+  const createMutation = useCreateBusinessLicenseType();
+  const updateMutation = useUpdateBusinessLicenseType();
+  const deleteMutation = useDeleteBusinessLicenseType();
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [changes, setChanges] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
-
-  // Initialize standard types if none exist and prevent infinite retries
-  useEffect(() => {
-    if (profile?.customer_id && 
-        municipalTypes.length === 0 && 
-        !isLoading && 
-        businessLicensesMerchant && 
-        !initializeMutation.isPending &&
-        !initializeMutation.isError) {
-      initializeMutation.mutate(profile.customer_id);
-    }
-  }, [profile?.customer_id, municipalTypes.length, isLoading, businessLicensesMerchant, initializeMutation.isPending, initializeMutation.isError]);
 
   const formatCurrencyValue = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -170,7 +156,7 @@ export const BusinessLicensesSettingsTab = () => {
     }));
   };
 
-  const getFieldValue = (licenseType: MunicipalBusinessLicenseType, field: string, defaultValue: any) => {
+  const getFieldValue = (licenseType: BusinessLicenseType, field: string, defaultValue: any) => {
     const changeKey = `${licenseType.id}::${field}`;
     if (changes[changeKey] !== undefined) {
       return changes[changeKey];
@@ -190,8 +176,8 @@ export const BusinessLicensesSettingsTab = () => {
         if (!acc[licenseTypeId]) acc[licenseTypeId] = {};
         
         switch (field) {
-          case 'municipal_label':
-            acc[licenseTypeId].municipal_label = value;
+          case 'name':
+            acc[licenseTypeId].name = value;
             break;
           case 'fee_cents':
             acc[licenseTypeId].base_fee_cents = Math.round(value * 100);
@@ -205,7 +191,7 @@ export const BusinessLicensesSettingsTab = () => {
         Object.entries(updates).map(([licenseTypeId, updateData]) =>
           updateMutation.mutateAsync({
             id: licenseTypeId,
-            data: updateData,
+            updates: updateData,
           })
         )
       );
@@ -234,7 +220,7 @@ export const BusinessLicensesSettingsTab = () => {
         customer_id: profile.customer_id,
         merchant_id: businessLicensesMerchant.id,
         merchant_name: businessLicensesMerchant.merchant_name,
-        municipal_label: licenseType.name,
+        name: licenseType.name,
         base_fee_cents: licenseType.fee_cents,
         is_custom: true,
         display_order: municipalTypes.length,
@@ -312,26 +298,10 @@ export const BusinessLicensesSettingsTab = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading || initializeMutation.isPending ? (
+          {isLoading ? (
             <p className="text-muted-foreground text-center py-8">
-              {initializeMutation.isPending 
-                ? 'Initializing standard business license types...' 
-                : 'Loading business license types...'
-              }
+              Loading business license types...
             </p>
-          ) : initializeMutation.isError ? (
-            <div className="text-center py-8">
-              <p className="text-destructive mb-4">
-                Failed to initialize business license types.
-              </p>
-              <Button 
-                onClick={() => initializeMutation.mutate(profile?.customer_id!)} 
-                variant="outline"
-                disabled={!profile?.customer_id}
-              >
-                Retry Initialization
-              </Button>
-            </div>
           ) : municipalTypes.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
               No business license types configured yet.
@@ -352,10 +322,10 @@ export const BusinessLicensesSettingsTab = () => {
                       <TableCell className="font-medium">
                         <div className="flex items-center space-x-2">
                           <EditableField
-                            value={getFieldValue(type, 'municipal_label', type.municipal_label)}
-                            onChange={(value) => handleFieldChange(type.id, 'municipal_label', value)}
+                            value={getFieldValue(type, 'name', type.name)}
+                            onChange={(value) => handleFieldChange(type.id, 'name', value)}
                             type="text"
-                            placeholder={type.municipal_label}
+                            placeholder={type.name}
                             isEditMode={isEditMode}
                           />
                           {type.is_custom && (
@@ -394,7 +364,7 @@ export const BusinessLicensesSettingsTab = () => {
                                 <AlertDialogTitle>Delete Custom License Type</AlertDialogTitle>
                                 <AlertDialogDescription className="space-y-3">
                                   <p>
-                                    Are you sure you want to delete <strong>{type.municipal_label}</strong>?
+                                    Are you sure you want to delete <strong>{type.name}</strong>?
                                   </p>
                                   <p className="text-destructive text-sm">
                                     This action cannot be undone. Applications using this license type may be affected.
@@ -404,7 +374,7 @@ export const BusinessLicensesSettingsTab = () => {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDelete(type.id, type.municipal_label)}
+                                  onClick={() => handleDelete(type.id, type.name)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   Delete

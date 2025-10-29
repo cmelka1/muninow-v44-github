@@ -18,7 +18,7 @@ import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { normalizeEINInput, formatEINForStorage, formatEINForDisplay } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useMunicipalBusinessLicenseTypes } from '@/hooks/useMunicipalBusinessLicenseTypes';
+import { useBusinessLicenseTypes } from '@/hooks/useBusinessLicenseTypes';
 import { useBusinessLicenseApplication } from '@/hooks/useBusinessLicenseApplication';
 import { useBusinessLicenseDocuments } from '@/hooks/useBusinessLicenseDocuments';
 import { useFinixAuth } from '@/hooks/useFinixAuth';
@@ -98,7 +98,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
   const { profile } = useAuth();
 
   // Hooks for data operations
-  const { data: licenseTypes = [] } = useMunicipalBusinessLicenseTypes(
+  const { data: licenseTypes = [] } = useBusinessLicenseTypes(
     selectedMunicipality?.customer_id 
   );
   const { createApplication, submitApplication } = useBusinessLicenseApplication();
@@ -396,7 +396,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
   const formatBusinessType = (businessTypeId: string) => {
     const selectedType = licenseTypes.find(type => type.id === businessTypeId);
-    return selectedType ? selectedType.municipal_label : 'Unknown Type';
+    return selectedType ? selectedType.name : 'Unknown Type';
   };
 
   const handleBusinessAddressSelect = (addressComponents: any) => {
@@ -520,7 +520,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         merchant_id: merchantData.id,
         license_type_id: selectedBusinessType,
         business_legal_name: businessInfo.businessLegalName,
-        business_type: selectedLicenseType?.municipal_label || '',
+        business_type: selectedLicenseType?.name || '',
         business_description: businessInfo.businessDescription,
         federal_ein: formatEINForStorage(businessInfo.businessEIN),
         business_street_address: streetAddress || businessInfo.businessAddress,
@@ -659,7 +659,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                       <SelectContent>
                          {licenseTypes.map((type) => (
                             <SelectItem key={type.id} value={type.id}>
-                              {type.municipal_label}
+                              {type.name}
                             </SelectItem>
                          ))}
                       </SelectContent>
