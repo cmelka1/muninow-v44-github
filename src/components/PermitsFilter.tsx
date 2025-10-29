@@ -2,10 +2,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermitTypesWithCustomizations } from '@/hooks/useMunicipalPermitTypes';
 
 export interface PermitFilters {
   permitType?: string;
@@ -21,57 +20,34 @@ interface PermitsFilterProps {
 }
 
 const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange }) => {
-  const { profile } = useAuth();
+  // Use the same hook as Municipal Settings for consistency
+  const { data: permitTypesWithCustomizations, isLoading: isLoadingPermitTypes } = usePermitTypesWithCustomizations();
 
-  // Dynamic permit type options from municipality's available permit types
-  const { data: permitTypeOptions = [], isLoading: isLoadingPermitTypes } = useQuery({
-    queryKey: ['municipality-permit-types', profile?.customer_id],
-    queryFn: async () => {
-      // Use customer_id from profile context (already loaded)
-      if (!profile?.customer_id) {
-        console.log('[PermitsFilter] No customer_id in profile, cannot fetch permit types');
-        return [];
-      }
-      
-      console.log('[PermitsFilter] Fetching permit types for customer_id:', profile.customer_id);
-      
-      // Single query - no round trip to permit_applications
-      const { data, error } = await supabase
-        .from('municipal_permit_types')
-        .select(`
-          id,
-          municipal_label,
-          permit_type_id,
-          display_order,
-          permit_types(name)
-        `)
-        .eq('customer_id', profile.customer_id)
-        .eq('is_active', true)
-        .order('display_order', { ascending: true })
-        .order('municipal_label', { ascending: true });
+  // Transform to dropdown options
+  const permitTypeOptions = React.useMemo(() => {
+    if (!permitTypesWithCustomizations) return [];
+    
+    return permitTypesWithCustomizations
+      .filter(pt => pt.is_active !== false) // Only show active types
+      .map(pt => {
+        // Use municipal label if customized, otherwise standard name
+        const displayLabel = pt.municipal_label || pt.permit_type_name;
         
-      if (error) {
-        console.error('[PermitsFilter] Error fetching municipal permit types:', error);
-        return [];
-      }
-      
-      // Transform to match expected format
-      const permitTypes = data.map(item => {
-        const standardName = (item.permit_types as any)?.name || item.municipal_label;
+        // Value for filtering: municipal label if present (matches what's stored in permit_applications)
+        // Otherwise standard name
+        const filterValue = pt.municipal_label || pt.permit_type_name;
+        
         return {
-          value: standardName,
-          label: item.municipal_label,
-          municipalLabel: item.municipal_label,
-          municipalPermitTypeId: item.id
+          value: filterValue,
+          label: displayLabel,
+          standardName: pt.permit_type_name,
+          municipalLabel: pt.municipal_label,
+          isCustom: pt.is_custom || false,
+          municipalPermitTypeId: pt.municipal_permit_type_id
         };
-      });
-      
-      console.log('[PermitsFilter] Found municipal permit types:', permitTypes);
-      return permitTypes;
-    },
-    enabled: !!profile?.customer_id,
-    staleTime: 5 * 60 * 1000,
-  });
+      })
+      .sort((a, b) => a.label.localeCompare(b.label)); // Alphabetical sort
+  }, [permitTypesWithCustomizations]);
 
   const statusOptions = [
     { value: 'draft', label: 'Draft' },
@@ -199,10 +175,15 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
                   permitTypeOptions.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       <div className="flex flex-col items-start">
-                        <span>{type.label}</span>
-                        {type.municipalLabel && type.municipalLabel !== type.value && (
+                        <div className="flex items-center gap-2">
+                          <span>{type.label}</span>
+                          {type.isCustom && (
+                            <Badge variant="outline" className="text-xs">Custom</Badge>
+                          )}
+                        </div>
+                        {type.municipalLabel && type.municipalLabel !== type.standardName && (
                           <span className="text-xs text-muted-foreground">
-                            Standard: {type.value}
+                            Standard: {type.standardName}
                           </span>
                         )}
                       </div>
