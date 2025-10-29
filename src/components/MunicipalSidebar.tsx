@@ -160,9 +160,6 @@ export function MunicipalSidebar() {
                 <span className="text-sm font-medium text-foreground truncate">
                   {customer.legal_entity_name}
                 </span>
-                <span className="text-xs text-muted-foreground truncate">
-                  {customer.business_city}, {customer.business_state}
-                </span>
               </div>
             </div>
           )}
