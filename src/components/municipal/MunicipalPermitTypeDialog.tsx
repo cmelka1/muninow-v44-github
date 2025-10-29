@@ -31,31 +31,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Plus } from 'lucide-react';
-import { usePermitTypes } from '@/hooks/usePermitTypes';
+import { usePermitTypes, useCreatePermitType, useUpdatePermitType, type PermitType } from '@/hooks/usePermitTypes';
 import { useMerchants } from '@/hooks/useMerchants';
-import { useCreateMunicipalPermitType, useUpdateMunicipalPermitType, type MunicipalPermitType } from '@/hooks/useMunicipalPermitTypes';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
-  permit_type_id: z.string().optional(),
-  merchant_id: z.string().optional(),
-  municipal_label: z.string()
-    .min(1, 'Municipal label is required')
+  name: z.string()
+    .min(1, 'Permit type name is required')
     .refine(val => val.trim() !== '', {
-      message: 'Municipal label cannot be empty or whitespace only'
+      message: 'Name cannot be empty or whitespace only'
     }),
+  merchant_id: z.string().optional(),
   base_fee_cents: z.number().min(0, 'Fee must be positive'),
   processing_days: z.number().min(1, 'Processing days must be at least 1'),
   requires_inspection: z.boolean(),
-  is_custom: z.boolean(),
   description: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 interface MunicipalPermitTypeDialogProps {
-  permitType?: MunicipalPermitType;
+  permitType?: PermitType;
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -69,11 +66,11 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { profile } = useAuth();
-  const { data: standardPermitTypes } = usePermitTypes();
+  const { data: permitTypes } = usePermitTypes(profile?.customer_id);
   const { merchants, fetchMerchantsByCustomer } = useMerchants();
   
-  const createMutation = useCreateMunicipalPermitType();
-  const updateMutation = useUpdateMunicipalPermitType();
+  const createMutation = useCreatePermitType();
+  const updateMutation = useUpdatePermitType();
 
   React.useEffect(() => {
     if (profile?.customer_id) {
@@ -84,46 +81,14 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      permit_type_id: permitType?.permit_type_id || '',
+      name: permitType?.name || '',
       merchant_id: permitType?.merchant_id || '',
-      municipal_label: permitType?.municipal_label || '',
       base_fee_cents: permitType?.base_fee_cents ? permitType.base_fee_cents / 100 : 0,
       processing_days: permitType?.processing_days || 30,
       requires_inspection: permitType?.requires_inspection || false,
-      is_custom: permitType?.is_custom || false,
       description: permitType?.description || '',
     },
   });
-
-  const selectedPermitType = form.watch('permit_type_id');
-  const isCustom = form.watch('is_custom');
-
-  React.useEffect(() => {
-    if (selectedPermitType && standardPermitTypes) {
-      const standard = standardPermitTypes.find(pt => pt.id === selectedPermitType);
-      if (standard) {
-        // Only auto-fill municipal_label if it's currently empty or unchanged from a previous selection
-        const currentLabel = form.getValues('municipal_label');
-        const isLabelEmpty = !currentLabel || currentLabel.trim() === '';
-        
-        // Auto-fill empty label
-        if (isLabelEmpty) {
-          form.setValue('municipal_label', standard.name);
-        }
-        
-        // Always update fees and processing info from standard type
-        // (municipalities typically want these but can override after)
-        form.setValue('base_fee_cents', standard.base_fee_cents / 100);
-        form.setValue('processing_days', standard.processing_days);
-        form.setValue('requires_inspection', standard.requires_inspection);
-        
-        // Auto-fill description if empty
-        if (standard.description && !form.getValues('description')) {
-          form.setValue('description', standard.description);
-        }
-      }
-    }
-  }, [selectedPermitType, standardPermitTypes, form]);
 
   const handleDialogOpenChange = (newOpen: boolean) => {
     if (onOpenChange) {
@@ -139,15 +104,14 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
   const onSubmit = async (data: FormData) => {
     try {
       const payload = {
-        permit_type_id: data.permit_type_id,
-        merchant_id: data.merchant_id,
-        municipal_label: data.municipal_label,
+        name: data.name.trim(),
+        merchant_id: data.merchant_id || null,
         base_fee_cents: Math.round(data.base_fee_cents * 100),
         processing_days: data.processing_days,
         requires_inspection: data.requires_inspection,
-        is_custom: data.is_custom,
-        description: data.description,
+        description: data.description || null,
         merchant_name: merchants.find(m => m.id === data.merchant_id)?.merchant_name || null,
+        customer_id: profile?.customer_id,
       };
 
       if (permitType) {
@@ -194,58 +158,27 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="is_custom"
+              name="name"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Custom Permit Type</FormLabel>
-                    <FormDescription>
-                      Create a completely custom permit type instead of customizing a standard one
-                    </FormDescription>
-                  </div>
+                <FormItem>
+                  <FormLabel>Permit Type Name</FormLabel>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Input {...field} placeholder="e.g., Residential Building Permit" />
                   </FormControl>
+                  <FormDescription>
+                    The name residents will see when applying for this permit
+                  </FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />
-
-            {!isCustom && (
-              <FormField
-                control={form.control}
-                name="permit_type_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Standard Permit Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a standard permit type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {standardPermitTypes?.map((type) => (
-                          <SelectItem key={type.id} value={type.id}>
-                            {type.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Choose a standard permit type to customize for your municipality
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <FormField
               control={form.control}
               name="merchant_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Merchant</FormLabel>
+                  <FormLabel>Payment Merchant (Optional)</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -262,23 +195,6 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
                   </Select>
                   <FormDescription>
                     Choose which merchant account will process payments for this permit type
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="municipal_label"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Municipal Label</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g., Building Permit - Residential" />
-                  </FormControl>
-                  <FormDescription>
-                    The name residents will see when applying for this permit
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -302,28 +218,11 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
                       />
                     </FormControl>
                     <FormMessage />
-              </FormItem>
-            )}
-          />
+                  </FormItem>
+                )}
+              />
 
-          {!isCustom && selectedPermitType && (
-            <div className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
-              <p className="text-muted-foreground">
-                <span className="font-medium">Standard label:</span>{" "}
-                {standardPermitTypes?.find(pt => pt.id === selectedPermitType)?.name}
-              </p>
-              {form.watch('municipal_label') !== standardPermitTypes?.find(pt => pt.id === selectedPermitType)?.name && (
-                <p className="mt-1 flex items-center gap-1 text-amber-600">
-                  <span className="font-semibold">⚠ Customized</span>
-                  <span className="text-xs">
-                    - This label differs from the standard
-                  </span>
-                </p>
-              )}
-            </div>
-          )}
-
-          <FormField
+              <FormField
                 control={form.control}
                 name="processing_days"
                 render={({ field }) => (
