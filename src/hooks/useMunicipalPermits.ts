@@ -154,10 +154,10 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
         throw error;
       }
 
-      // Transform data to flatten municipal_permit_types join
+      // Transform data to flatten permit_types_v2 join
       const transformedData = data?.map((permit: any) => ({
         ...permit,
-        municipal_label: permit.municipal_permit_types?.municipal_label || null
+        permit_type_name: permit.permit_types_v2?.name || null
       }));
 
       const result = {
