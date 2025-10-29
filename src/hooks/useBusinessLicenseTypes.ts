@@ -12,7 +12,6 @@ export interface BusinessLicenseType {
   processing_days: number;
   merchant_id: string | null;
   merchant_name: string | null;
-  is_custom: boolean;
   display_order: number;
   is_active: boolean;
   created_at: string;
@@ -75,7 +74,6 @@ export const useCreateBusinessLicenseType = () => {
           processing_days: licenseType.processing_days || 7,
           merchant_id: licenseType.merchant_id,
           merchant_name: licenseType.merchant_name,
-          is_custom: licenseType.is_custom ?? true,
           display_order: licenseType.display_order || 0,
         })
         .select()

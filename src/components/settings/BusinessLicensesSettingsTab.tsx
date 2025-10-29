@@ -94,17 +94,12 @@ const NewBusinessLicenseTypeRow: React.FC<NewBusinessLicenseTypeRowProps> = ({ o
   return (
     <TableRow className="bg-muted/10">
       <TableCell>
-        <div className="flex items-center space-x-2">
-          <Input
-            placeholder="Enter license type name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full"
-          />
-          <Badge variant="outline" className="text-xs shrink-0">
-            Custom
-          </Badge>
-        </div>
+        <Input
+          placeholder="Enter license type name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full"
+        />
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-2">
@@ -222,7 +217,6 @@ export const BusinessLicensesSettingsTab = () => {
         merchant_name: businessLicensesMerchant.merchant_name,
         name: licenseType.name,
         base_fee_cents: licenseType.fee_cents,
-        is_custom: true,
         display_order: municipalTypes.length,
       });
       
@@ -320,20 +314,13 @@ export const BusinessLicensesSettingsTab = () => {
                   {municipalTypes.map((type) => (
                     <TableRow key={type.id}>
                       <TableCell className="font-medium">
-                        <div className="flex items-center space-x-2">
-                          <EditableField
-                            value={getFieldValue(type, 'name', type.name)}
-                            onChange={(value) => handleFieldChange(type.id, 'name', value)}
-                            type="text"
-                            placeholder={type.name}
-                            isEditMode={isEditMode}
-                          />
-                          {type.is_custom && (
-                            <Badge variant="default" className="text-xs">
-                              Custom
-                            </Badge>
-                          )}
-                        </div>
+                        <EditableField
+                          value={getFieldValue(type, 'name', type.name)}
+                          onChange={(value) => handleFieldChange(type.id, 'name', value)}
+                          type="text"
+                          placeholder={type.name}
+                          isEditMode={isEditMode}
+                        />
                       </TableCell>
                       <TableCell>
                         <EditableField
@@ -347,7 +334,7 @@ export const BusinessLicensesSettingsTab = () => {
                         />
                       </TableCell>
                       <TableCell className="text-right">
-                        {type.is_custom && !isEditMode && (
+                        {!isEditMode && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button

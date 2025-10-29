@@ -441,7 +441,6 @@ export type Database = {
           display_order: number
           id: string
           is_active: boolean
-          is_custom: boolean
           merchant_id: string | null
           merchant_name: string | null
           name: string
@@ -456,7 +455,6 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
-          is_custom?: boolean
           merchant_id?: string | null
           merchant_name?: string | null
           name: string
@@ -471,7 +469,6 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
-          is_custom?: boolean
           merchant_id?: string | null
           merchant_name?: string | null
           name?: string

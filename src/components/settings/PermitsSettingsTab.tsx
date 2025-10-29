@@ -96,17 +96,12 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
   return (
     <TableRow className="bg-muted/10">
       <TableCell>
-        <div className="flex items-center space-x-2">
-          <Input
-            placeholder="Enter permit type name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full"
-          />
-          <Badge variant="outline" className="text-xs shrink-0">
-            Custom
-          </Badge>
-        </div>
+        <Input
+          placeholder="Enter permit type name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full"
+        />
       </TableCell>
       <TableCell className="text-center">
         <Input
