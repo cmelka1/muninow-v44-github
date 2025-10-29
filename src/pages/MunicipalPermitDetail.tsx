@@ -36,7 +36,6 @@ import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog'
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
-import { PermitTypeBadge } from '@/components/PermitTypeBadge';
 
 
 import { supabase } from '@/integrations/supabase/client';

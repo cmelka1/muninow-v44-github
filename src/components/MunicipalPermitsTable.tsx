@@ -19,7 +19,6 @@ import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDia
 import { useMunicipalPermits } from '@/hooks/useMunicipalPermits';
 import { useQueryPerformance } from '@/hooks/useQueryPerformance';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
-import { PermitTypeBadge } from '@/components/PermitTypeBadge';
 
 interface MunicipalPermitsTableProps {
   filters?: PermitFilters;

@@ -1377,7 +1377,7 @@ export type Database = {
           },
         ]
       }
-      municipal_permit_types: {
+      municipal_permit_types_deprecated: {
         Row: {
           base_fee_cents: number
           created_at: string
@@ -1448,7 +1448,7 @@ export type Database = {
             foreignKeyName: "municipal_permit_types_permit_type_id_fkey"
             columns: ["permit_type_id"]
             isOneToOne: false
-            referencedRelation: "permit_types"
+            referencedRelation: "permit_types_deprecated"
             referencedColumns: ["id"]
           },
         ]
@@ -2643,7 +2643,7 @@ export type Database = {
           },
         ]
       }
-      permit_types: {
+      permit_types_deprecated: {
         Row: {
           base_fee_cents: number
           created_at: string

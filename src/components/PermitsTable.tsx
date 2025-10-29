@@ -19,7 +19,6 @@ import { PermitFilters } from './PermitsFilter';
 import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDialog';
 import { usePermits } from '@/hooks/usePermits';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
-import { PermitTypeBadge } from '@/components/PermitTypeBadge';
 
 interface PermitsTableProps {
   filters?: PermitFilters;
