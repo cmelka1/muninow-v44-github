@@ -2682,6 +2682,69 @@ export type Database = {
         }
         Relationships: []
       }
+      permit_types_v2: {
+        Row: {
+          base_fee_cents: number
+          created_at: string
+          customer_id: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          merchant_id: string | null
+          merchant_name: string | null
+          name: string
+          processing_days: number
+          requires_inspection: boolean
+          updated_at: string
+        }
+        Insert: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          name: string
+          processing_days?: number
+          requires_inspection?: boolean
+          updated_at?: string
+        }
+        Update: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          name?: string
+          processing_days?: number
+          requires_inspection?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permit_types_v2_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "permit_types_v2_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: string
