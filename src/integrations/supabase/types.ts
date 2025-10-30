@@ -3767,6 +3767,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      generate_business_license_number: {
+        Args: { p_customer_id: string }
+        Returns: string
+      }
       generate_permit_number: { Args: never; Returns: string }
       generate_service_application_number: { Args: never; Returns: string }
       get_available_vehicles: {
