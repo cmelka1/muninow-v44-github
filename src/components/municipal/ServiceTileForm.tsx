@@ -256,6 +256,20 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
             />
           </div>
           
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="requires-payment">Requires Payment</Label>
+              <p className="text-sm text-muted-foreground">
+                This service requires payment processing
+              </p>
+            </div>
+            <Switch
+              id="requires-payment"
+              checked={requiresPayment}
+              onCheckedChange={setRequiresPayment}
+            />
+          </div>
+          
           {/* Only show amount input if payment is required */}
           {requiresPayment && (
             <>
@@ -378,20 +392,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
           <CardTitle>Service Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="requires-payment">Requires Payment</Label>
-              <p className="text-sm text-muted-foreground">
-                This service requires payment processing
-              </p>
-            </div>
-            <Switch
-              id="requires-payment"
-              checked={requiresPayment}
-              onCheckedChange={setRequiresPayment}
-            />
-          </div>
-
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="requires-review">Requires Manual Review</Label>
