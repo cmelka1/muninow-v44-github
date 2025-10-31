@@ -64,8 +64,8 @@ export const BusinessLicenseDetail = () => {
   
   const canRenew = !isMunicipalUser && isOwner && 
     license?.application_status === 'issued' && 
-    license?.renewal_status && 
-    ['expiring_soon', 'requires_renewal', 'expired'].includes(license.renewal_status);
+    license?.renewal_status !== undefined &&
+    ['expiring_soon', 'expired'].includes(license.renewal_status);
 
   const handleBack = () => {
     if (isMunicipalUser) {
