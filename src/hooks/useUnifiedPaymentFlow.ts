@@ -569,7 +569,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       // Enhanced success detection with multiple fallbacks for Google Pay
       const isSuccess = parsedData?.success === true || 
                        (parsedData?.finix_transfer_id && !parsedData?.error) ||
-                       (parsedData?.status === 'completed' || parsedData?.payment_status === 'paid') ||
+                       (parsedData?.status === 'paid' || parsedData?.payment_status === 'paid') ||
                        (parsedData?.transaction_id && !parsedData?.error);
 
       console.log('🔍 Google Pay success detection:', {
@@ -577,7 +577,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         'has_finix_transfer_id': !!parsedData?.finix_transfer_id,
         'has_transaction_id': !!parsedData?.transaction_id,
         'no_error': !parsedData?.error,
-        'status_completed': parsedData?.status === 'completed',
+        'status_paid': parsedData?.status === 'paid',
         'payment_status_paid': parsedData?.payment_status === 'paid',
         'final_isSuccess': isSuccess
       });
@@ -588,7 +588,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           success: true,
           transaction_id: parsedData.finix_transfer_id,
           payment_id: parsedData.transaction_id,
-          status: 'completed'
+          status: 'paid'
         };
         
         toast({
