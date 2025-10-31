@@ -119,6 +119,15 @@ export const BusinessLicenseDetail = () => {
   };
 
   const handleInitiateRenewal = async () => {
+    if (!canRenew) {
+      toast({
+        title: 'Renewal not available',
+        description: 'You can only renew within 30 days of expiration or after it expires.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const newLicenseId = await renewLicense(license.id);
       navigate(`/municipal/business-license/${newLicenseId}`);
@@ -472,7 +481,7 @@ export const BusinessLicenseDetail = () => {
               />
             )}
             {isMunicipalUser && license.application_status === 'issued' && 
-             license.renewal_status && ['active', 'expiring_soon'].includes(license.renewal_status) && (
+             license.renewal_status && ['expiring_soon', 'expired'].includes(license.renewal_status) && (
               <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 flex items-center gap-1">
                 <CheckCircle className="h-3 w-3" />
                 Eligible for Renewal
@@ -609,7 +618,7 @@ export const BusinessLicenseDetail = () => {
                     </div>
                     
                     {/* Renewal Eligibility Indicator - Only show for business owners */}
-                    {!isMunicipalUser && ['active', 'expiring_soon'].includes(license.renewal_status || '') && (
+                    {canRenew && (
                       <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
                         <div className="flex items-center gap-2 text-sm text-blue-800">
                           <CheckCircle className="h-4 w-4" />
@@ -619,7 +628,7 @@ export const BusinessLicenseDetail = () => {
                           size="sm"
                           variant="default"
                           className="bg-blue-600 hover:bg-blue-700"
-                          onClick={handleInitiateRenewal}
+                          onClick={() => setShowRenewDialog(true)}
                           disabled={isRenewing}
                         >
                           <RefreshCw className="h-4 w-4 mr-2" />
