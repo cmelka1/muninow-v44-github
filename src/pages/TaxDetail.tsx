@@ -365,13 +365,13 @@ const TaxDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {submission.submission_date && (
+                  {submission.submitted_at && (
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-primary rounded-full mt-2" />
                       <div>
                         <p className="font-medium text-sm">Tax Submission Created</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(submission.submission_date), 'MMM d, yyyy h:mm a')}
+                          {format(new Date(submission.submitted_at), 'MMM d, yyyy h:mm a')}
                         </p>
                       </div>
                     </div>

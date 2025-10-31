@@ -140,7 +140,7 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     onClick={() => handleRowClick(submission.id)}
                   >
                     <TableCell className="font-medium">
-                      {formatDateLocal(submission.submission_date)}
+                      {formatDateLocal(submission.submitted_at)}
                     </TableCell>
                     <TableCell>
                       {submission.payer_business_name || `${submission.first_name} ${submission.last_name}`}

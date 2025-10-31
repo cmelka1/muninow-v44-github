@@ -364,11 +364,11 @@ const MunicipalTaxDetail = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2">
-                  {submission.submission_date && (
+                  {submission.submitted_at && (
                     <div className="flex justify-between text-sm">
                       <span>Created</span>
                       <span className="text-gray-600">
-                        {format(new Date(submission.submission_date), 'MMM d, yyyy h:mm a')}
+                        {format(new Date(submission.submitted_at), 'MMM d, yyyy h:mm a')}
                       </span>
                     </div>
                   )}

@@ -76,7 +76,7 @@ export const useMunicipalTaxSubmissions = (params?: UseMunicipalTaxSubmissionsPa
       }
 
       const { data, error, count } = await query
-        .order('submission_date', { ascending: false })
+        .order('submitted_at', { ascending: false })
         .range(from, to);
 
       if (error) {
