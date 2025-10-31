@@ -510,22 +510,6 @@ export const BusinessLicenseDetail = () => {
                 {isGeneratingPDF ? 'Generating...' : 'Download License'}
               </Button>
             )}
-            {canRenew && (
-              <Button
-                size="sm"
-                onClick={() => setShowRenewDialog(true)}
-                className={`flex items-center gap-2 ${
-                  license.renewal_status === 'expired' 
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : license.renewal_status === 'requires_renewal'
-                      ? 'bg-orange-600 hover:bg-orange-700'
-                      : 'bg-yellow-600 hover:bg-yellow-700'
-                }`}
-              >
-                <RefreshCw className="h-4 w-4" />
-                Renew License
-              </Button>
-            )}
             {canWithdraw && (
               <Button
                 variant="outline"
