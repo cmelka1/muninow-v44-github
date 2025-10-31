@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTaxSubmissionComments, useCreateTaxSubmissionComment } from '@/hooks/useTaxSubmissionComments';
@@ -91,25 +92,30 @@ export const TaxSubmissionCommunication: React.FC<TaxSubmissionCommunicationProp
             {visibleComments.length === 0 ? (
               <p className="text-muted-foreground text-sm">No comments yet. Start a conversation with the municipality.</p>
             ) : (
-              visibleComments.map((comment) => (
-                <div key={comment.id} className="border-l-2 border-muted pl-4 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">
-                      {comment.reviewer.first_name} {comment.reviewer.last_name}
-                    </span>
-                    <Badge 
-                      variant={['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'secondary' : 'outline'} 
-                      className={`text-xs ${['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
-                    >
-                      {['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'Municipal Staff' : 'Applicant'}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
-                    </span>
+              visibleComments.map((comment, index) => (
+                <div key={comment.id}>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">
+                        {comment.reviewer.first_name} {comment.reviewer.last_name}
+                      </span>
+                      <Badge 
+                        variant={['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'secondary' : 'outline'} 
+                        className={`text-xs ${['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                      >
+                        {['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'Municipal Staff' : 'Applicant'}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                      {comment.comment_text}
+                    </p>
                   </div>
-                  <p className="text-sm text-foreground whitespace-pre-wrap">
-                    {comment.comment_text}
-                  </p>
+                  {index < visibleComments.length - 1 && (
+                    <Separator className="my-4" />
+                  )}
                 </div>
               ))
             )}
