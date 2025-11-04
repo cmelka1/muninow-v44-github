@@ -778,10 +778,15 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       // Handle payment authorization
       session.onpaymentauthorized = async (event: any) => {
         try {
-          console.log('🍎 Processing Apple Pay payment...');
+          console.log('🍎 Payment authorized, capturing token...');
           
           const applePayToken = event.payment.token;
           const billingContact = event.payment.billingContact;
+          
+          // CRITICAL: Complete payment immediately per Apple requirements (must be within 30 seconds)
+          session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+          console.log('✅ Apple Pay session completed');
+          clearTimeout(timeoutId);
           
           // Build billing address
           const billingAddress = billingContact ? {
@@ -792,6 +797,9 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             administrative_area: billingContact.administrativeArea || ''
           } : undefined;
 
+          // Process payment in background
+          console.log('🍎 Processing payment in background...');
+          
           const { data, error } = await supabase.functions.invoke('process-unified-apple-pay', {
             body: {
               entity_type: params.entityType,
@@ -810,10 +818,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           });
 
           if (data?.success && data?.finix_transfer_id) {
-            console.log('✅ Apple Pay payment successful:', data.finix_transfer_id);
-            
-            session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
-            clearTimeout(timeoutId);
+            console.log('✅ Apple Pay payment processed successfully:', data.finix_transfer_id);
             
             toast({
               title: "Payment Successful",
@@ -835,9 +840,6 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             
           } else {
             console.error('❌ Apple Pay payment failed:', data?.error || error);
-            
-            session.completePayment(window.ApplePaySession.STATUS_FAILURE);
-            clearTimeout(timeoutId);
             
             const errorMessage = data?.error || error?.message || 'Apple Pay payment failed';
             
@@ -866,8 +868,6 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           
         } catch (err) {
           console.error('❌ Apple Pay processing error:', err);
-          session.completePayment(window.ApplePaySession.STATUS_FAILURE);
-          clearTimeout(timeoutId);
           
           const errorMessage = err instanceof Error ? err.message : 'Unknown error';
           

@@ -33,18 +33,3 @@ export interface ApplePayButtonProps {
   totalAmount: number;
   isDisabled?: boolean;
 }
-
-declare global {
-  interface Window {
-    ApplePaySession?: {
-      canMakePayments(): boolean;
-      new(version: number, paymentRequest: any): any;
-      STATUS_SUCCESS: number;
-      STATUS_FAILURE: number;
-      STATUS_INVALID_BILLING_ADDRESS: number;
-      STATUS_INVALID_SHIPPING_ADDRESS: number;
-      STATUS_INVALID_SHIPPING_CONTACT: number;
-      STATUS_INVALID_PAYMENT_METHOD: number;
-    };
-  }
-}
