@@ -90,11 +90,11 @@ Deno.serve(async (req) => {
     // Fetch merchant Finix identity
     const { data: merchantData, error: merchantError } = await supabase
       .from('merchants')
-      .select('finix_merchant_identity_id')
+      .select('finix_merchant_id, finix_identity_id')
       .eq('id', merchant_id)
       .single();
 
-    if (merchantError || !merchantData?.finix_merchant_identity_id) {
+    if (merchantError || !merchantData?.finix_identity_id) {
       console.error('[process-unified-apple-pay] Merchant not found:', merchantError);
       return new Response(
         JSON.stringify({ 
@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const finixMerchantIdentity = merchantData.finix_merchant_identity_id;
+    const finixMerchantIdentity = merchantData.finix_identity_id;
     const finixUserIdentity = profileData.finix_identity_id;
 
     console.log('[process-unified-apple-pay] Finix identities:', {

@@ -663,33 +663,45 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       };
     }
 
-    try {
-      setIsProcessingPayment(true);
+    return new Promise<PaymentResponse>((resolve, reject) => {
+      try {
+        setIsProcessingPayment(true);
 
-      // Calculate total in dollars
-      const totalAmount = serviceFee?.totalAmountToCharge || params.baseAmountCents;
-      const totalPriceDollars = (totalAmount / 100).toFixed(2);
+        // Calculate total in dollars
+        const totalAmount = serviceFee?.totalAmountToCharge || params.baseAmountCents;
+        const totalPriceDollars = (totalAmount / 100).toFixed(2);
 
-      console.log('🍎 Creating Apple Pay payment request:', {
-        total: totalPriceDollars,
-        merchantId: params.merchantId
-      });
+        console.log('🍎 Creating Apple Pay payment request:', {
+          total: totalPriceDollars,
+          merchantId: params.merchantId
+        });
 
-      // Create Apple Pay payment request
-      const paymentRequest = {
-        countryCode: "US",
-        currencyCode: "USD",
-        merchantCapabilities: ["supports3DS"],
-        supportedNetworks: ["visa", "masterCard", "amex", "discover"],
-        total: {
-          label: "Muni Now Payment",
-          amount: totalPriceDollars
-        },
-        requiredBillingContactFields: ["postalAddress"]
-      };
+        // Create Apple Pay payment request
+        const paymentRequest = {
+          countryCode: "US",
+          currencyCode: "USD",
+          merchantCapabilities: ["supports3DS"],
+          supportedNetworks: ["visa", "masterCard", "amex", "discover"],
+          total: {
+            label: "Muni Now Payment",
+            amount: totalPriceDollars
+          },
+          requiredBillingContactFields: ["postalAddress"]
+        };
 
-      // Initialize Apple Pay session
-      const session = new window.ApplePaySession(6, paymentRequest);
+        // Initialize Apple Pay session
+        const session = new window.ApplePaySession(6, paymentRequest);
+
+        // Add session timeout handler (5 minutes)
+        const timeoutId = setTimeout(() => {
+          console.error('❌ Apple Pay session timeout');
+          session.abort();
+          setIsProcessingPayment(false);
+          resolve({
+            success: false,
+            error: 'Payment session timed out'
+          });
+        }, 300000);
 
       // Handle merchant validation
       session.onvalidatemerchant = async (event: any) => {
@@ -708,10 +720,16 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           if (error || !data?.session_details) {
             console.error('❌ Merchant validation failed:', error);
             session.abort();
+            setIsProcessingPayment(false);
+            clearTimeout(timeoutId);
             toast({
               title: "Validation Failed",
               description: "Unable to validate Apple Pay merchant session",
               variant: "destructive",
+            });
+            resolve({
+              success: false,
+              error: 'Merchant validation failed'
             });
             return;
           }
@@ -723,10 +741,16 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         } catch (err) {
           console.error('❌ Merchant validation error:', err);
           session.abort();
+          setIsProcessingPayment(false);
+          clearTimeout(timeoutId);
           toast({
             title: "Validation Error",
             description: err instanceof Error ? err.message : "Failed to validate merchant",
             variant: "destructive",
+          });
+          resolve({
+            success: false,
+            error: err instanceof Error ? err.message : 'Validation error'
           });
         }
       };
@@ -769,6 +793,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             console.log('✅ Apple Pay payment successful:', data.finix_transfer_id);
             
             session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+            clearTimeout(timeoutId);
             
             toast({
               title: "Payment Successful",
@@ -781,17 +806,18 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
             setIsProcessingPayment(false);
             
-            return {
+            resolve({
               success: true,
               transaction_id: data.finix_transfer_id,
               payment_id: data.transaction_id,
               status: 'paid'
-            };
+            });
             
           } else {
             console.error('❌ Apple Pay payment failed:', data?.error || error);
             
             session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+            clearTimeout(timeoutId);
             
             const errorMessage = data?.error || error?.message || 'Apple Pay payment failed';
             
@@ -812,15 +838,16 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
             setIsProcessingPayment(false);
             
-            return {
+            resolve({
               success: false,
               error: errorMessage
-            };
+            });
           }
           
         } catch (err) {
           console.error('❌ Apple Pay processing error:', err);
           session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+          clearTimeout(timeoutId);
           
           const errorMessage = err instanceof Error ? err.message : 'Unknown error';
           
@@ -832,10 +859,10 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
           setIsProcessingPayment(false);
           
-          return {
+          resolve({
             success: false,
             error: errorMessage
-          };
+          });
         }
       };
 
@@ -843,22 +870,18 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       session.oncancel = (event: any) => {
         console.log('🍎 Apple Pay session cancelled by user');
         setIsProcessingPayment(false);
-        // No toast - user intentionally cancelled
+        clearTimeout(timeoutId);
+        resolve({
+          success: false,
+          error: 'User cancelled payment'
+        });
       };
 
       // Begin the session
       session.begin();
       
-      // Return a pending response - actual result comes from onpaymentauthorized
-      return {
-        success: false,
-        error: 'Payment in progress'
-      };
-
     } catch (error) {
-      console.error('❌ Failed to begin Apple Pay session:', error);
       setIsProcessingPayment(false);
-      
       const errorMessage = error instanceof Error ? error.message : 'Failed to start Apple Pay session';
       
       toast({
@@ -867,11 +890,9 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         variant: "destructive",
       });
       
-      return {
-        success: false,
-        error: errorMessage
-      };
+      reject(error);
     }
+  });
   };
 
   return {
