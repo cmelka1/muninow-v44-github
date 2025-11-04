@@ -634,11 +634,244 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   };
 
   const handleApplePayment = async (): Promise<PaymentResponse> => {
-    if (isProcessingPayment) {
-      throw new Error('Payment already in progress');
+    console.log('🍎 Apple Pay payment initiated');
+
+    // Check if Apple Pay is available
+    if (!window.ApplePaySession || !window.ApplePaySession.canMakePayments()) {
+      const errorMsg = 'Apple Pay is only available in Safari on Apple devices';
+      toast({
+        title: "Apple Pay Not Available",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      return {
+        success: false,
+        error: errorMsg
+      };
     }
-    setSelectedPaymentMethod('apple-pay');
-    return handlePayment();
+
+    if (!params) {
+      const errorMsg = 'Payment parameters not configured';
+      toast({
+        title: "Configuration Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      return {
+        success: false,
+        error: errorMsg
+      };
+    }
+
+    try {
+      setIsProcessingPayment(true);
+
+      // Calculate total in dollars
+      const totalAmount = serviceFee?.totalAmountToCharge || params.baseAmountCents;
+      const totalPriceDollars = (totalAmount / 100).toFixed(2);
+
+      console.log('🍎 Creating Apple Pay payment request:', {
+        total: totalPriceDollars,
+        merchantId: params.merchantId
+      });
+
+      // Create Apple Pay payment request
+      const paymentRequest = {
+        countryCode: "US",
+        currencyCode: "USD",
+        merchantCapabilities: ["supports3DS"],
+        supportedNetworks: ["visa", "masterCard", "amex", "discover"],
+        total: {
+          label: "Muni Now Payment",
+          amount: totalPriceDollars
+        },
+        requiredBillingContactFields: ["postalAddress"]
+      };
+
+      // Initialize Apple Pay session
+      const session = new window.ApplePaySession(6, paymentRequest);
+
+      // Handle merchant validation
+      session.onvalidatemerchant = async (event: any) => {
+        try {
+          console.log('🍎 Validating Apple Pay merchant session...');
+          
+          const { data, error } = await supabase.functions.invoke('create-apple-pay-session', {
+            body: {
+              validation_url: event.validationURL,
+              merchant_id: params.merchantId,
+              domain_name: window.location.hostname,
+              display_name: "Muni Now"
+            }
+          });
+
+          if (error || !data?.session_details) {
+            console.error('❌ Merchant validation failed:', error);
+            session.abort();
+            toast({
+              title: "Validation Failed",
+              description: "Unable to validate Apple Pay merchant session",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const merchantSession = JSON.parse(data.session_details);
+          session.completeMerchantValidation(merchantSession);
+          console.log('✅ Merchant validation successful');
+          
+        } catch (err) {
+          console.error('❌ Merchant validation error:', err);
+          session.abort();
+          toast({
+            title: "Validation Error",
+            description: err instanceof Error ? err.message : "Failed to validate merchant",
+            variant: "destructive",
+          });
+        }
+      };
+
+      // Handle payment authorization
+      session.onpaymentauthorized = async (event: any) => {
+        try {
+          console.log('🍎 Processing Apple Pay payment...');
+          
+          const applePayToken = event.payment.token;
+          const billingContact = event.payment.billingContact;
+          
+          // Build billing address
+          const billingAddress = billingContact ? {
+            name: `${billingContact.givenName || ''} ${billingContact.familyName || ''}`.trim(),
+            postal_code: billingContact.postalCode || '',
+            country_code: billingContact.countryCode || 'US',
+            locality: billingContact.locality || '',
+            administrative_area: billingContact.administrativeArea || ''
+          } : undefined;
+
+          const { data, error } = await supabase.functions.invoke('process-unified-apple-pay', {
+            body: {
+              entity_type: params.entityType,
+              entity_id: params.entityId,
+              customer_id: params.customerId,
+              merchant_id: params.merchantId,
+              base_amount_cents: params.baseAmountCents,
+              apple_pay_token: {
+                token: applePayToken,
+                billingContact: billingContact
+              },
+              billing_address: billingAddress,
+              fraud_session_id: finixSessionKey,
+              session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId)
+            }
+          });
+
+          if (data?.success && data?.finix_transfer_id) {
+            console.log('✅ Apple Pay payment successful:', data.finix_transfer_id);
+            
+            session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+            
+            toast({
+              title: "Payment Successful",
+              description: "Your Apple Pay payment has been processed successfully.",
+            });
+            
+            if (params.onSuccess) {
+              await params.onSuccess(data.finix_transfer_id);
+            }
+
+            setIsProcessingPayment(false);
+            
+            return {
+              success: true,
+              transaction_id: data.finix_transfer_id,
+              payment_id: data.transaction_id,
+              status: 'paid'
+            };
+            
+          } else {
+            console.error('❌ Apple Pay payment failed:', data?.error || error);
+            
+            session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+            
+            const errorMessage = data?.error || error?.message || 'Apple Pay payment failed';
+            
+            toast({
+              title: "Payment Failed",
+              description: errorMessage,
+              variant: "destructive",
+            });
+            
+            if (params.onError) {
+              const paymentError: PaymentError = {
+                type: 'payment_declined',
+                message: errorMessage,
+                retryable: true
+              };
+              params.onError(paymentError);
+            }
+
+            setIsProcessingPayment(false);
+            
+            return {
+              success: false,
+              error: errorMessage
+            };
+          }
+          
+        } catch (err) {
+          console.error('❌ Apple Pay processing error:', err);
+          session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+          
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          
+          toast({
+            title: "Payment Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+
+          setIsProcessingPayment(false);
+          
+          return {
+            success: false,
+            error: errorMessage
+          };
+        }
+      };
+
+      // Handle session cancellation
+      session.oncancel = (event: any) => {
+        console.log('🍎 Apple Pay session cancelled by user');
+        setIsProcessingPayment(false);
+        // No toast - user intentionally cancelled
+      };
+
+      // Begin the session
+      session.begin();
+      
+      // Return a pending response - actual result comes from onpaymentauthorized
+      return {
+        success: false,
+        error: 'Payment in progress'
+      };
+
+    } catch (error) {
+      console.error('❌ Failed to begin Apple Pay session:', error);
+      setIsProcessingPayment(false);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start Apple Pay session';
+      
+      toast({
+        title: "Apple Pay Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
   };
 
   return {
