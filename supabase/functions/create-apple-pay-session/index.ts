@@ -16,18 +16,22 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get user from auth token
+    // Get user from auth token (optional for guest checkout)
     const authHeader = req.headers.get('authorization')?.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
-    
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
+    let userId: string | undefined;
 
-    console.log('[create-apple-pay-session] Authenticated user:', user.id);
+    if (authHeader) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
+      
+      if (userError || !user) {
+        console.warn('[create-apple-pay-session] Invalid auth token, proceeding as guest');
+      } else {
+        userId = user.id;
+        console.log('[create-apple-pay-session] Authenticated user:', userId);
+      }
+    } else {
+      console.log('[create-apple-pay-session] Guest checkout - no auth token');
+    }
 
     // Parse request body
     const body = await req.json();

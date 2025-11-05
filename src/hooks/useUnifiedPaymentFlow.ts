@@ -739,6 +739,13 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         };
 
         // Initialize Apple Pay session
+        console.log('🍎 Creating Apple Pay session with:', {
+          version: 6,
+          countryCode: paymentRequest.countryCode,
+          total: paymentRequest.total,
+          merchantCapabilities: paymentRequest.merchantCapabilities,
+          supportedNetworks: paymentRequest.supportedNetworks
+        });
         const session = new window.ApplePaySession(6, paymentRequest);
 
         // Add session timeout handler (5 minutes)
@@ -769,7 +776,13 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
           if (error || !data?.session_details) {
             const errorDetails = error?.message || data?.error || JSON.stringify(data?.details) || "Unknown error";
-            console.error('❌ Merchant validation failed:', { error, data, errorDetails });
+            console.error('❌ Merchant validation failed:', { 
+              error, 
+              data,
+              errorDetails,
+              domainUsed: domainName,
+              validationUrl: event.validationURL
+            });
             
             // Check if it's a domain registration error
             const isDomainError = errorDetails.toLowerCase().includes('domain') && 
@@ -792,7 +805,22 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             return;
           }
 
-          const merchantSession = JSON.parse(data.session_details);
+          // Handle both string and object responses
+          const merchantSession = typeof data.session_details === 'string' 
+            ? JSON.parse(data.session_details)
+            : data.session_details;
+
+          console.log('🍎 Merchant session received:', {
+            hasEpochTimestamp: !!merchantSession.epochTimestamp,
+            hasSignature: !!merchantSession.signature,
+            hasMerchantSessionIdentifier: !!merchantSession.merchantSessionIdentifier,
+            domain: merchantSession.domainName
+          });
+
+          if (!merchantSession.signature || !merchantSession.merchantSessionIdentifier) {
+            throw new Error('Invalid merchant session received from server');
+          }
+
           session.completeMerchantValidation(merchantSession);
           console.log('✅ Merchant validation successful');
           
