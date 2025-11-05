@@ -902,36 +902,44 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           data = invokeResult.data;
           error = invokeResult.error;
           
-          // Handle 401 by refreshing token and retrying once
+          // Handle 401 by refreshing token and retrying once (ONLY for authenticated users)
           if (error && (error.message?.includes('401') || error.message?.includes('Unauthorized'))) {
-            console.warn('⚠️ 401 error on process-unified-apple-pay, refreshing token and retrying...');
-            
-            const { data: refreshData } = await supabase.auth.refreshSession();
-            const newToken = refreshData.session?.access_token;
-            
-            if (newToken) {
-              console.info('🔄 Retrying process-unified-apple-pay with refreshed token');
-              const retryResult = await supabase.functions.invoke('process-unified-apple-pay', {
-                body: {
-                  entity_type: params.entityType,
-                  entity_id: params.entityId,
-                  customer_id: params.customerId,
-                  merchant_id: params.merchantId,
-                  base_amount_cents: params.baseAmountCents,
-                  apple_pay_token: {
-                    token: applePayToken,
-                    billingContact: billingContact
+            // Only retry with token refresh for authenticated users
+            // Guests shouldn't hit 401 since backend doesn't require auth
+            if (authToken) {
+              console.warn('⚠️ 401 error on process-unified-apple-pay, refreshing token and retrying...');
+              
+              const { data: refreshData } = await supabase.auth.refreshSession();
+              const newToken = refreshData.session?.access_token;
+              
+              if (newToken) {
+                console.info('🔄 Retrying process-unified-apple-pay with refreshed token');
+                const retryResult = await supabase.functions.invoke('process-unified-apple-pay', {
+                  body: {
+                    entity_type: params.entityType,
+                    entity_id: params.entityId,
+                    customer_id: params.customerId,
+                    merchant_id: params.merchantId,
+                    base_amount_cents: params.baseAmountCents,
+                    apple_pay_token: {
+                      token: applePayToken,
+                      billingContact: billingContact
+                    },
+                    billing_address: billingAddress,
+                    fraud_session_id: finixSessionKey,
+                    session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId),
+                    guest_email: billingContact?.emailAddress
                   },
-                  billing_address: billingAddress,
-                  fraud_session_id: finixSessionKey,
-                  session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId)
-                },
-                headers: {
-                  Authorization: `Bearer ${newToken}`
-                }
-              });
-              data = retryResult.data;
-              error = retryResult.error;
+                  headers: {
+                    Authorization: `Bearer ${newToken}`
+                  }
+                });
+                data = retryResult.data;
+                error = retryResult.error;
+              }
+            } else {
+              // Guest users shouldn't hit 401 errors, but log if they do
+              console.error('❌ Guest user received 401 error - this should not happen');
             }
           }
           
