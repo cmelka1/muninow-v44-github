@@ -114,7 +114,7 @@ export function NotificationDropdown() {
             No notifications yet
           </div>
         ) : (
-          <ScrollArea className="max-h-80">
+          <ScrollArea className="h-80">
             {recentNotifications.map((notification) => {
               const serviceContext = getServiceContext(notification);
               
