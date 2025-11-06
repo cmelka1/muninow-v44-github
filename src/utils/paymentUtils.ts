@@ -123,11 +123,21 @@ export const initializeApplePaySession = async (
   onValidateMerchant: (event: any) => Promise<any>,
   onPaymentAuthorized: (event: any) => Promise<any>
 ): Promise<any> => {
+  console.log('🍎 [paymentUtils] ========================================');
+  console.log('🍎 [paymentUtils] Initializing Apple Pay Session');
+  console.log('🍎 [paymentUtils] ========================================');
+  console.log('🍎 [paymentUtils] Merchant ID:', merchantId);
+  console.log('🍎 [paymentUtils] Merchant Name:', merchantName);
+  console.log('🍎 [paymentUtils] Total Amount:', totalAmount, 'cents');
+  console.log('🍎 [paymentUtils] Display Amount:', `$${(totalAmount / 100).toFixed(2)}`);
+  
   if (!window.ApplePaySession) {
+    console.error('🍎 [paymentUtils] ❌ ApplePaySession not available');
     throw new Error('Apple Pay is not available on this device');
   }
 
   if (!window.ApplePaySession.canMakePayments()) {
+    console.error('🍎 [paymentUtils] ❌ Device cannot make payments');
     throw new Error('Apple Pay is not available on this device');
   }
 
@@ -143,14 +153,71 @@ export const initializeApplePaySession = async (
     }
   };
 
+  console.log('🍎 [paymentUtils] Payment Request:', JSON.stringify(paymentRequest, null, 2));
+  console.log('🍎 [paymentUtils] Creating ApplePaySession (version 3)...');
+
   const session = new window.ApplePaySession(3, paymentRequest);
 
-  session.onvalidatemerchant = onValidateMerchant;
-  session.onpaymentauthorized = onPaymentAuthorized;
-  
-  session.oncancel = () => {
-    console.log('Apple Pay session was cancelled by user');
+  // Wrap the merchant validation handler
+  const wrappedValidateMerchant = async (event: any) => {
+    console.log('🍎 [paymentUtils] ========================================');
+    console.log('🍎 [paymentUtils] onvalidatemerchant EVENT');
+    console.log('🍎 [paymentUtils] ========================================');
+    console.log('🍎 [paymentUtils] Validation URL:', event.validationURL);
+    console.log('🍎 [paymentUtils] Calling validation handler...');
+    
+    try {
+      const validationStart = Date.now();
+      const result = await onValidateMerchant(event);
+      const validationDuration = Date.now() - validationStart;
+      
+      console.log('🍎 [paymentUtils] ✅ Merchant validation completed');
+      console.log('🍎 [paymentUtils] Duration:', `${validationDuration}ms`);
+      console.log('🍎 [paymentUtils] Result:', result ? 'Session details received' : 'No result');
+      
+      return result;
+    } catch (error) {
+      console.error('🍎 [paymentUtils] ❌ Merchant validation error:', error);
+      throw error;
+    }
   };
 
+  // Wrap the payment authorization handler
+  const wrappedPaymentAuthorized = async (event: any) => {
+    console.log('🍎 [paymentUtils] ========================================');
+    console.log('🍎 [paymentUtils] onpaymentauthorized EVENT');
+    console.log('🍎 [paymentUtils] ========================================');
+    console.log('🍎 [paymentUtils] Payment token received');
+    console.log('🍎 [paymentUtils] Token length:', JSON.stringify(event.payment.token).length);
+    console.log('🍎 [paymentUtils] Billing contact:', event.payment.billingContact ? 'Present' : 'Missing');
+    console.log('🍎 [paymentUtils] Calling payment handler...');
+    
+    try {
+      const paymentStart = Date.now();
+      const result = await onPaymentAuthorized(event);
+      const paymentDuration = Date.now() - paymentStart;
+      
+      console.log('🍎 [paymentUtils] ✅ Payment authorization completed');
+      console.log('🍎 [paymentUtils] Duration:', `${paymentDuration}ms`);
+      console.log('🍎 [paymentUtils] Result status:', result?.status || 'Unknown');
+      
+      return result;
+    } catch (error) {
+      console.error('🍎 [paymentUtils] ❌ Payment authorization error:', error);
+      throw error;
+    }
+  };
+
+  session.onvalidatemerchant = wrappedValidateMerchant;
+  session.onpaymentauthorized = wrappedPaymentAuthorized;
+  
+  session.oncancel = (event: any) => {
+    console.log('🍎 [paymentUtils] ⚠️ ========================================');
+    console.log('🍎 [paymentUtils] ⚠️ SESSION CANCELLED BY USER');
+    console.log('🍎 [paymentUtils] ⚠️ ========================================');
+    console.log('🍎 [paymentUtils] Event:', event);
+  };
+
+  console.log('🍎 [paymentUtils] ✅ Apple Pay session initialized');
   return session;
 };

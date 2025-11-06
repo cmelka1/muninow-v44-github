@@ -35,24 +35,40 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   const btnRef = useRef<HTMLElement | null>(null);
 
   const safeHandleClick = useCallback(async () => {
+    console.log('🍎 [ApplePayButton] ========================================');
+    console.log('🍎 [ApplePayButton] Button clicked');
+    console.log('🍎 [ApplePayButton] ========================================');
+    console.log('🍎 [ApplePayButton] Merchant ID:', merchantId);
+    console.log('🍎 [ApplePayButton] Amount:', totalAmount);
+    console.log('🍎 [ApplePayButton] Is Disabled:', isDisabled);
+    console.log('🍎 [ApplePayButton] Is Processing:', isProcessing);
+    
     if (isDisabled) {
-      console.log('🍎 Apple Pay button is disabled. merchantId:', merchantId, 'isProcessing:', isProcessing);
+      console.log('🍎 [ApplePayButton] ⚠️ Button is disabled - ignoring click');
       return;
     }
     if (isProcessing) {
-      console.log('🍎 Apple Pay payment already processing');
+      console.log('🍎 [ApplePayButton] ⚠️ Payment already processing - ignoring click');
       return;
     }
     try {
       setIsProcessing(true);
-      console.log('🍎 Apple Pay button clicked');
+      console.log('🍎 [ApplePayButton] ▶️ Starting payment flow...');
+      const paymentStart = Date.now();
+      
       await onPayment();
+      
+      const paymentDuration = Date.now() - paymentStart;
+      console.log('🍎 [ApplePayButton] ✅ Payment completed');
+      console.log('🍎 [ApplePayButton] Duration:', `${paymentDuration}ms`);
     } catch (error) {
-      console.error('🍎 Apple Pay error:', error);
+      console.error('🍎 [ApplePayButton] ❌ Payment error:', error);
+      console.error('🍎 [ApplePayButton] Error details:', JSON.stringify(error, null, 2));
     } finally {
       setIsProcessing(false);
+      console.log('🍎 [ApplePayButton] Payment flow ended');
     }
-  }, [isDisabled, isProcessing, merchantId, onPayment]);
+  }, [isDisabled, isProcessing, merchantId, totalAmount, onPayment]);
 
   useEffect(() => {
     const el = btnRef.current;
@@ -74,9 +90,14 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   useEffect(() => {
     // Check if Apple Pay is available
     const checkAvailability = async () => {
+      console.log('🍎 [ApplePayButton] Starting availability check...');
+      console.log('🍎 [ApplePayButton] Merchant ID:', merchantId);
+      console.log('🍎 [ApplePayButton] Total Amount:', totalAmount);
+      
       setIsLoading(true);
       
       if (typeof window === 'undefined') {
+        console.log('🍎 [ApplePayButton] ❌ Window is undefined (SSR)');
         setIsLoading(false);
         setIsAvailable(false);
         onAvailabilityChange?.(false);
@@ -85,30 +106,43 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
 
       // Check if ApplePaySession exists and browser supports it
       if (!window.ApplePaySession) {
-        console.log('🍎 Apple Pay not supported - ApplePaySession not available');
+        console.log('🍎 [ApplePayButton] ❌ ApplePaySession not available');
+        console.log('🍎 [ApplePayButton] User Agent:', navigator.userAgent);
+        console.log('🍎 [ApplePayButton] Platform:', navigator.platform);
         setIsLoading(false);
         setIsAvailable(false);
         onAvailabilityChange?.(false);
         return;
       }
+
+      console.log('🍎 [ApplePayButton] ✅ ApplePaySession exists');
+      const supportsV3 = (window.ApplePaySession as any).supportsVersion ? (window.ApplePaySession as any).supportsVersion(3) : true;
+      console.log('🍎 [ApplePayButton] ApplePaySession version:', supportsV3 ? '3+' : 'Unknown');
 
       // Check if the device can make Apple Pay payments
-      if (!window.ApplePaySession.canMakePayments()) {
-        console.log('🍎 Apple Pay not available - Device cannot make payments');
+      const canMakePayments = window.ApplePaySession.canMakePayments();
+      console.log('🍎 [ApplePayButton] canMakePayments:', canMakePayments);
+      
+      if (!canMakePayments) {
+        console.log('🍎 [ApplePayButton] ❌ Device cannot make payments');
+        console.log('🍎 [ApplePayButton] This usually means:');
+        console.log('🍎 [ApplePayButton]   - No Apple Pay cards configured');
+        console.log('🍎 [ApplePayButton]   - Device doesn\'t support Apple Pay');
+        console.log('🍎 [ApplePayButton]   - Not on Safari/iOS');
         setIsLoading(false);
         setIsAvailable(false);
         onAvailabilityChange?.(false);
         return;
       }
 
-      console.log('🍎 Apple Pay is available');
+      console.log('🍎 [ApplePayButton] ✅ Apple Pay is available and ready');
       setIsLoading(false);
       setIsAvailable(true);
       onAvailabilityChange?.(true);
     };
 
     checkAvailability();
-  }, [onAvailabilityChange]);
+  }, [onAvailabilityChange, merchantId, totalAmount]);
 
   // Show loading state while checking availability
   if (isLoading) {

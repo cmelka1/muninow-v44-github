@@ -683,11 +683,17 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   };
 
   const handleApplePayment = async (): Promise<PaymentResponse> => {
-    console.log('🍎 Apple Pay payment initiated');
+    console.log('🍎 [useUnifiedPaymentFlow] ========================================');
+    console.log('🍎 [useUnifiedPaymentFlow] APPLE PAY PAYMENT INITIATED');
+    console.log('🍎 [useUnifiedPaymentFlow] ========================================');
+    console.log('🍎 [useUnifiedPaymentFlow] Timestamp:', new Date().toISOString());
 
     // Check if Apple Pay is available
     if (!window.ApplePaySession || !window.ApplePaySession.canMakePayments()) {
       const errorMsg = 'Apple Pay is only available in Safari on Apple devices';
+      console.error('🍎 [useUnifiedPaymentFlow] ❌ Apple Pay not available');
+      console.error('🍎 [useUnifiedPaymentFlow] Has ApplePaySession:', !!window.ApplePaySession);
+      console.error('🍎 [useUnifiedPaymentFlow] Can make payments:', window.ApplePaySession?.canMakePayments?.());
       toast({
         title: "Apple Pay Not Available",
         description: errorMsg,
@@ -701,6 +707,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
     if (!params) {
       const errorMsg = 'Payment parameters not configured';
+      console.error('🍎 [useUnifiedPaymentFlow] ❌ Missing payment parameters');
       toast({
         title: "Configuration Error",
         description: errorMsg,
@@ -712,6 +719,15 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       };
     }
 
+    console.log('🍎 [useUnifiedPaymentFlow] Payment Parameters:', {
+      entityType: params.entityType,
+      entityId: params.entityId,
+      customerId: params.customerId,
+      merchantId: params.merchantId,
+      baseAmountCents: params.baseAmountCents,
+      totalAmount: serviceFee?.totalAmountToCharge || params.baseAmountCents
+    });
+
     return new Promise<PaymentResponse>((resolve, reject) => {
       try {
         setIsProcessingPayment(true);
@@ -720,8 +736,9 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         const totalAmount = serviceFee?.totalAmountToCharge || params.baseAmountCents;
         const totalPriceDollars = (totalAmount / 100).toFixed(2);
 
-        console.log('🍎 Creating Apple Pay payment request:', {
-          total: totalPriceDollars,
+        console.log('🍎 [useUnifiedPaymentFlow] Creating payment request:', {
+          totalCents: totalAmount,
+          totalDollars: totalPriceDollars,
           merchantId: params.merchantId
         });
 
@@ -739,18 +756,13 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         };
 
         // Initialize Apple Pay session
-        console.log('🍎 Creating Apple Pay session with:', {
-          version: 6,
-          countryCode: paymentRequest.countryCode,
-          total: paymentRequest.total,
-          merchantCapabilities: paymentRequest.merchantCapabilities,
-          supportedNetworks: paymentRequest.supportedNetworks
-        });
+        console.log('🍎 [useUnifiedPaymentFlow] Creating Apple Pay session (version 6)');
+        console.log('🍎 [useUnifiedPaymentFlow] Payment request:', JSON.stringify(paymentRequest, null, 2));
         const session = new window.ApplePaySession(6, paymentRequest);
 
         // Add session timeout handler (5 minutes)
         const timeoutId = setTimeout(() => {
-          console.error('❌ Apple Pay session timeout');
+          console.error('🍎 [useUnifiedPaymentFlow] ❌ Session timeout (5 minutes)');
           session.abort();
           setIsProcessingPayment(false);
           resolve({
@@ -761,10 +773,20 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
       // Handle merchant validation
       session.onvalidatemerchant = async (event: any) => {
+        console.log('🍎 [useUnifiedPaymentFlow] ========================================');
+        console.log('🍎 [useUnifiedPaymentFlow] onvalidatemerchant EVENT');
+        console.log('🍎 [useUnifiedPaymentFlow] ========================================');
+        const validationStartTime = Date.now();
+        
         try {
           const domainName = import.meta.env.VITE_APPLE_PAY_DOMAIN || window.location.hostname;
-          console.log('🍎 Validating Apple Pay merchant session...', { domain: domainName });
+          console.log('🍎 [useUnifiedPaymentFlow] Validation details:');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Validation URL:', event.validationURL);
+          console.log('🍎 [useUnifiedPaymentFlow]   - Domain:', domainName);
+          console.log('🍎 [useUnifiedPaymentFlow]   - Merchant ID:', params.merchantId);
+          console.log('🍎 [useUnifiedPaymentFlow]   - Display Name: Muni Now');
           
+          console.log('🍎 [useUnifiedPaymentFlow] Calling create-apple-pay-session edge function...');
           const { data, error } = await supabase.functions.invoke('create-apple-pay-session', {
             body: {
               validation_url: event.validationURL,
@@ -773,20 +795,27 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
               display_name: "Muni Now"
             }
           });
+          
+          const validationDuration = Date.now() - validationStartTime;
+          console.log('🍎 [useUnifiedPaymentFlow] Edge function response received (Duration:', `${validationDuration}ms)`);
 
           if (error || !data?.session_details) {
             const errorDetails = error?.message || data?.error || JSON.stringify(data?.details) || "Unknown error";
-            console.error('❌ Merchant validation failed:', { 
-              error, 
-              data,
-              errorDetails,
-              domainUsed: domainName,
-              validationUrl: event.validationURL
-            });
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ MERCHANT VALIDATION FAILED');
+            console.error('🍎 [useUnifiedPaymentFlow] Error object:', error);
+            console.error('🍎 [useUnifiedPaymentFlow] Data:', data);
+            console.error('🍎 [useUnifiedPaymentFlow] Error details:', errorDetails);
+            console.error('🍎 [useUnifiedPaymentFlow] Domain used:', domainName);
+            console.error('🍎 [useUnifiedPaymentFlow] Validation URL:', event.validationURL);
             
             // Check if it's a domain registration error
             const isDomainError = errorDetails.toLowerCase().includes('domain') && 
                                  errorDetails.toLowerCase().includes('not registered');
+            
+            if (isDomainError) {
+              console.error('🍎 [useUnifiedPaymentFlow] 🚨 DOMAIN NOT REGISTERED ERROR');
+              console.error('🍎 [useUnifiedPaymentFlow] The domain is not registered with Finix for Apple Pay');
+            }
             
             session.abort();
             setIsProcessingPayment(false);
@@ -810,22 +839,23 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             ? JSON.parse(data.session_details)
             : data.session_details;
 
-          console.log('🍎 Merchant session received:', {
-            hasEpochTimestamp: !!merchantSession.epochTimestamp,
-            hasSignature: !!merchantSession.signature,
-            hasMerchantSessionIdentifier: !!merchantSession.merchantSessionIdentifier,
-            domain: merchantSession.domainName
-          });
+          console.log('🍎 [useUnifiedPaymentFlow] ✅ Merchant session received:');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Has epochTimestamp:', !!merchantSession.epochTimestamp);
+          console.log('🍎 [useUnifiedPaymentFlow]   - Has signature:', !!merchantSession.signature);
+          console.log('🍎 [useUnifiedPaymentFlow]   - Has merchantSessionIdentifier:', !!merchantSession.merchantSessionIdentifier);
+          console.log('🍎 [useUnifiedPaymentFlow]   - Domain:', merchantSession.domainName);
 
           if (!merchantSession.signature || !merchantSession.merchantSessionIdentifier) {
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ Invalid merchant session structure');
             throw new Error('Invalid merchant session received from server');
           }
 
+          console.log('🍎 [useUnifiedPaymentFlow] Completing merchant validation...');
           session.completeMerchantValidation(merchantSession);
-          console.log('✅ Merchant validation successful');
+          console.log('🍎 [useUnifiedPaymentFlow] ✅ Merchant validation completed successfully');
           
         } catch (err) {
-          console.error('❌ Merchant validation error:', err);
+          console.error('🍎 [useUnifiedPaymentFlow] ❌ Exception during merchant validation:', err);
           session.abort();
           setIsProcessingPayment(false);
           clearTimeout(timeoutId);
@@ -843,15 +873,32 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
       // Handle payment authorization
       session.onpaymentauthorized = async (event: any) => {
+        console.log('🍎 [useUnifiedPaymentFlow] ========================================');
+        console.log('🍎 [useUnifiedPaymentFlow] onpaymentauthorized EVENT');
+        console.log('🍎 [useUnifiedPaymentFlow] ========================================');
+        const paymentStartTime = Date.now();
+        
         try {
-          console.log('🍎 Payment authorized, capturing token...');
+          console.log('🍎 [useUnifiedPaymentFlow] Payment authorized - extracting token...');
           
           const applePayToken = event.payment.token;
           const billingContact = event.payment.billingContact;
           
+          console.log('🍎 [useUnifiedPaymentFlow] Token details:');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Token size:', JSON.stringify(applePayToken).length, 'bytes');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Has payment data:', !!applePayToken?.paymentData);
+          console.log('🍎 [useUnifiedPaymentFlow]   - Payment method:', applePayToken?.paymentMethod?.displayName || 'Unknown');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Network:', applePayToken?.paymentMethod?.network || 'Unknown');
+          console.log('🍎 [useUnifiedPaymentFlow] Billing contact:');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Name:', billingContact ? `${billingContact.givenName} ${billingContact.familyName}` : 'Not provided');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Email:', billingContact?.emailAddress || 'Not provided');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Postal Code:', billingContact?.postalCode || 'Not provided');
+          console.log('🍎 [useUnifiedPaymentFlow]   - Country:', billingContact?.countryCode || 'Not provided');
+          
           // CRITICAL: Complete payment immediately per Apple requirements (must be within 30 seconds)
+          console.log('🍎 [useUnifiedPaymentFlow] Completing Apple Pay session with STATUS_SUCCESS...');
           session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
-          console.log('✅ Apple Pay session completed');
+          console.log('🍎 [useUnifiedPaymentFlow] ✅ Apple Pay session completed');
           clearTimeout(timeoutId);
           
           // Build billing address
@@ -862,42 +909,59 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             locality: billingContact.locality || '',
             administrative_area: billingContact.administrativeArea || ''
           } : undefined;
+          
+          console.log('🍎 [useUnifiedPaymentFlow] Formatted billing address:', billingAddress || 'None');
 
           // Process payment in background
-          console.log('🍎 Processing payment in background...');
+          console.log('🍎 [useUnifiedPaymentFlow] Processing payment through edge function...');
           
           // Get authentication token
           const { data: sessionData } = await supabase.auth.getSession();
           const authToken = sessionData.session?.access_token;
 
           if (!authToken) {
-            console.log('⚠️ No auth token - proceeding as GUEST for Apple Pay checkout');
-            console.log('📧 Guest email from Apple Pay:', billingContact?.emailAddress || 'not provided');
+            console.log('🍎 [useUnifiedPaymentFlow] ⚠️ GUEST CHECKOUT MODE');
+            console.log('🍎 [useUnifiedPaymentFlow] Guest email:', billingContact?.emailAddress || 'not provided');
           } else {
-            console.info('🔐 Authenticated user - using existing account');
+            console.info('🍎 [useUnifiedPaymentFlow] 🔐 AUTHENTICATED USER');
+            console.info('🍎 [useUnifiedPaymentFlow] Using existing account');
           }
           
+          const edgeFunctionPayload = {
+            entity_type: params.entityType,
+            entity_id: params.entityId,
+            customer_id: params.customerId,
+            merchant_id: params.merchantId,
+            base_amount_cents: params.baseAmountCents,
+            apple_pay_token: {
+              token: applePayToken,
+              billingContact: billingContact
+            },
+            billing_address: billingAddress,
+            fraud_session_id: finixSessionKey,
+            session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId),
+            guest_email: billingContact?.emailAddress
+          };
+          
+          console.log('🍎 [useUnifiedPaymentFlow] Edge function payload:', {
+            ...edgeFunctionPayload,
+            apple_pay_token: '***REDACTED***',
+            fraud_session_id: finixSessionKey ? '***SET***' : undefined
+          });
+          
+          console.log('🍎 [useUnifiedPaymentFlow] Calling process-unified-apple-pay...');
+          const edgeFunctionStartTime = Date.now();
           let data, error;
           const invokeResult = await supabase.functions.invoke('process-unified-apple-pay', {
-            body: {
-              entity_type: params.entityType,
-              entity_id: params.entityId,
-              customer_id: params.customerId,
-              merchant_id: params.merchantId,
-              base_amount_cents: params.baseAmountCents,
-              apple_pay_token: {
-                token: applePayToken,
-                billingContact: billingContact
-              },
-              billing_address: billingAddress,
-              fraud_session_id: finixSessionKey,
-              session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId),
-              guest_email: billingContact?.emailAddress
-            },
+            body: edgeFunctionPayload,
             headers: authToken ? {
               Authorization: `Bearer ${authToken}`
             } : {}
           });
+          const edgeFunctionDuration = Date.now() - edgeFunctionStartTime;
+          
+          console.log('🍎 [useUnifiedPaymentFlow] Edge function response received');
+          console.log('🍎 [useUnifiedPaymentFlow] Duration:', `${edgeFunctionDuration}ms`);
           
           data = invokeResult.data;
           error = invokeResult.error;
@@ -943,10 +1007,22 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             }
           }
           
-          console.info('✅ process-unified-apple-pay response:', { success: !!data?.success, hasError: !!error });
+          console.log('🍎 [useUnifiedPaymentFlow] Response analysis:', {
+            hasData: !!data,
+            hasError: !!error,
+            success: data?.success,
+            hasTransferId: !!data?.finix_transfer_id,
+            hasTransactionId: !!data?.transaction_id
+          });
 
           if (data?.success && data?.finix_transfer_id) {
-            console.log('✅ Apple Pay payment processed successfully:', data.finix_transfer_id);
+            const totalPaymentDuration = Date.now() - paymentStartTime;
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ ========================================');
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ PAYMENT SUCCESSFUL');
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ ========================================');
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ Finix Transfer ID:', data.finix_transfer_id);
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ Transaction ID:', data.transaction_id);
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ Total Duration:', `${totalPaymentDuration}ms`);
             
             toast({
               title: "Payment Successful",
@@ -954,6 +1030,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             });
             
             if (params.onSuccess) {
+              console.log('🍎 [useUnifiedPaymentFlow] Calling onSuccess callback...');
               await params.onSuccess(data.finix_transfer_id);
             }
 
@@ -967,7 +1044,14 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             });
             
           } else {
-            console.error('❌ Apple Pay payment failed:', data?.error || error);
+            const totalPaymentDuration = Date.now() - paymentStartTime;
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ ========================================');
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ PAYMENT FAILED');
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ ========================================');
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ Data error:', data?.error);
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ Request error:', error);
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ Full data:', JSON.stringify(data, null, 2));
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ Total Duration:', `${totalPaymentDuration}ms`);
             
             const errorMessage = data?.error || error?.message || 'Apple Pay payment failed';
             
@@ -995,7 +1079,11 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           }
           
         } catch (err) {
-          console.error('❌ Apple Pay processing error:', err);
+          console.error('🍎 [useUnifiedPaymentFlow] ❌ ========================================');
+          console.error('🍎 [useUnifiedPaymentFlow] ❌ EXCEPTION IN PAYMENT PROCESSING');
+          console.error('🍎 [useUnifiedPaymentFlow] ❌ ========================================');
+          console.error('🍎 [useUnifiedPaymentFlow] ❌ Error Type:', err?.constructor?.name);
+          console.error('🍎 [useUnifiedPaymentFlow] ❌ Error:', err);
           
           const errorMessage = err instanceof Error ? err.message : 'Unknown error';
           
