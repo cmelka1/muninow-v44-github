@@ -405,21 +405,26 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           },
         });
 
+        // Check for Postgres errors first
         if (rpcError) {
-          if (rpcError.message?.includes('conflict')) {
-            toast({
-              title: 'Time Slot Unavailable',
-              description: 'This time slot was just booked by someone else. Please select a different time.',
-              variant: 'destructive',
-            });
-            setCurrentStep(2); // Go back to booking step
-            setIsSubmitting(false);
-            return;
-          }
           throw rpcError;
         }
 
-        applicationData = { id: (rpcData as { application_id: string }).application_id };
+        // Check for application-level conflicts in the response
+        const response = rpcData as { success: boolean; error?: string; message?: string; application_id?: string };
+        
+        if (!response.success) {
+          toast({
+            title: 'Time Slot Unavailable',
+            description: response.message || 'This time slot was just booked by someone else. Please select a different time.',
+            variant: 'destructive',
+          });
+          setCurrentStep(2); // Go back to booking step
+          setIsSubmitting(false);
+          return;
+        }
+
+        applicationData = { id: response.application_id! };
       }
       // For non-reviewable services with existing draft, update it
       else if (!tile.requires_review && draftApplicationId) {
