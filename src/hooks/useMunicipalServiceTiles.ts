@@ -2,6 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+export interface TimeSlotConfig {
+  slot_duration_minutes?: number;
+  available_days?: string[]; // ['Monday', 'Tuesday', etc.]
+  start_time?: string; // '09:00'
+  end_time?: string; // '17:00'
+  max_advance_days?: number;
+  blackout_dates?: string[]; // ['2024-12-25', '2024-01-01']
+  timezone?: string; // 'America/New_York'
+}
+
 export interface MunicipalServiceTile {
   id: string;
   customer_id: string;
@@ -29,6 +39,9 @@ export interface MunicipalServiceTile {
   renewal_frequency?: 'annual' | 'quarterly';
   renewal_reminder_days: number;
   auto_renew_enabled: boolean;
+  has_time_slots?: boolean;
+  booking_mode?: 'time_period' | 'start_time';
+  time_slot_config?: TimeSlotConfig;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -50,7 +63,11 @@ export const useMunicipalServiceTiles = (customerId?: string) => {
       const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as MunicipalServiceTile[];
+      return (data || []).map(tile => ({
+        ...tile,
+        form_fields: Array.isArray(tile.form_fields) ? tile.form_fields : [],
+        time_slot_config: tile.time_slot_config || {}
+      })) as unknown as MunicipalServiceTile[];
     },
     enabled: !!customerId,
   });
@@ -63,7 +80,7 @@ export const useCreateServiceTile = () => {
     mutationFn: async (tile: Omit<MunicipalServiceTile, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('municipal_service_tiles')
-        .insert(tile)
+        .insert(tile as any)
         .select()
         .single();
       
@@ -94,7 +111,7 @@ export const useUpdateServiceTile = () => {
     mutationFn: async ({ id, ...updates }: Partial<MunicipalServiceTile> & { id: string }) => {
       const { data, error } = await supabase
         .from('municipal_service_tiles')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();

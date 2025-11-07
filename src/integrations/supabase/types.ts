@@ -1375,7 +1375,14 @@ export type Database = {
           assigned_reviewer_id: string | null
           base_amount_cents: number | null
           basis_points: number | null
+          booking_date: string | null
+          booking_end_time: string | null
+          booking_start_time: string | null
+          booking_timezone: string | null
           business_legal_name: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           city: string | null
           country: string | null
           created_at: string | null
@@ -1447,7 +1454,14 @@ export type Database = {
           assigned_reviewer_id?: string | null
           base_amount_cents?: number | null
           basis_points?: number | null
+          booking_date?: string | null
+          booking_end_time?: string | null
+          booking_start_time?: string | null
+          booking_timezone?: string | null
           business_legal_name?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -1519,7 +1533,14 @@ export type Database = {
           assigned_reviewer_id?: string | null
           base_amount_cents?: number | null
           basis_points?: number | null
+          booking_date?: string | null
+          booking_end_time?: string | null
+          booking_start_time?: string | null
+          booking_timezone?: string | null
           business_legal_name?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -1601,12 +1622,14 @@ export type Database = {
           amount_cents: number
           auto_populate_user_info: boolean
           auto_renew_enabled: boolean | null
+          booking_mode: string | null
           created_at: string
           created_by: string
           customer_id: string
           description: string | null
           finix_merchant_id: string | null
           form_fields: Json | null
+          has_time_slots: boolean | null
           id: string
           is_active: boolean
           is_renewable: boolean | null
@@ -1617,6 +1640,7 @@ export type Database = {
           renewal_reminder_days: number | null
           requires_payment: boolean
           requires_review: boolean
+          time_slot_config: Json | null
           title: string
           updated_at: string
         }
@@ -1625,12 +1649,14 @@ export type Database = {
           amount_cents?: number
           auto_populate_user_info?: boolean
           auto_renew_enabled?: boolean | null
+          booking_mode?: string | null
           created_at?: string
           created_by: string
           customer_id: string
           description?: string | null
           finix_merchant_id?: string | null
           form_fields?: Json | null
+          has_time_slots?: boolean | null
           id?: string
           is_active?: boolean
           is_renewable?: boolean | null
@@ -1641,6 +1667,7 @@ export type Database = {
           renewal_reminder_days?: number | null
           requires_payment?: boolean
           requires_review?: boolean
+          time_slot_config?: Json | null
           title: string
           updated_at?: string
         }
@@ -1649,12 +1676,14 @@ export type Database = {
           amount_cents?: number
           auto_populate_user_info?: boolean
           auto_renew_enabled?: boolean | null
+          booking_mode?: string | null
           created_at?: string
           created_by?: string
           customer_id?: string
           description?: string | null
           finix_merchant_id?: string | null
           form_fields?: Json | null
+          has_time_slots?: boolean | null
           id?: string
           is_active?: boolean
           is_renewable?: boolean | null
@@ -1665,6 +1694,7 @@ export type Database = {
           renewal_reminder_days?: number | null
           requires_payment?: boolean
           requires_review?: boolean
+          time_slot_config?: Json | null
           title?: string
           updated_at?: string
         }
@@ -3616,6 +3646,20 @@ export type Database = {
       }
       confirm_staged_tax_documents_for_transaction: {
         Args: { p_transaction_id: string }
+        Returns: Json
+      }
+      create_booking_with_conflict_check: {
+        Args: {
+          p_amount_cents: number
+          p_booking_date: string
+          p_booking_end_time: string
+          p_booking_start_time: string
+          p_booking_timezone: string
+          p_customer_id: string
+          p_form_data: Json
+          p_tile_id: string
+          p_user_id: string
+        }
         Returns: Json
       }
       create_license_renewal: {

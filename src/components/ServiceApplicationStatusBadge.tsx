@@ -78,6 +78,18 @@ const ServiceApplicationStatusBadge: React.FC<ServiceApplicationStatusBadgeProps
           className: 'bg-blue-600 text-white hover:bg-blue-600',
           label: 'Issued'
         };
+      case 'reserved':
+        return {
+          variant: 'default' as const,
+          className: 'bg-emerald-600 text-white hover:bg-emerald-600',
+          label: 'Reserved'
+        };
+      case 'cancelled':
+        return {
+          variant: 'secondary' as const,
+          className: 'bg-gray-400 text-white hover:bg-gray-400',
+          label: 'Cancelled'
+        };
       default:
         return {
           variant: 'outline' as const,

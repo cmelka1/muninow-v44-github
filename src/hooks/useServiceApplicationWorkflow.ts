@@ -13,7 +13,9 @@ export type ServiceApplicationStatus =
   | 'rejected'
   | 'withdrawn' 
   | 'expired'
-  | 'issued';
+  | 'issued'
+  | 'reserved'
+  | 'cancelled';
 
 export const getStatusDisplayName = (status: ServiceApplicationStatus): string => {
   const statusMap: Record<ServiceApplicationStatus, string> = {
@@ -27,7 +29,9 @@ export const getStatusDisplayName = (status: ServiceApplicationStatus): string =
     rejected: 'Rejected',
     withdrawn: 'Withdrawn',
     expired: 'Expired',
-    issued: 'Issued'
+    issued: 'Issued',
+    reserved: 'Reserved',
+    cancelled: 'Cancelled'
   };
   return statusMap[status] || status;
 };
@@ -44,26 +48,30 @@ export const getStatusDescription = (status: ServiceApplicationStatus): string =
     rejected: 'Application was reviewed but did not meet requirements. Explanation provided',
     withdrawn: 'Applicant has voluntarily withdrawn the application',
     expired: 'Application has been inactive past the allowable time window',
-    issued: 'Service has been issued and is active'
+    issued: 'Service has been issued and is active',
+    reserved: 'Time slot has been reserved and confirmed with payment',
+    cancelled: 'Reservation has been cancelled by municipal staff or applicant'
   };
   return descriptions[status] || '';
 };
 
-export const getValidStatusTransitions = (currentStatus: ServiceApplicationStatus): ServiceApplicationStatus[] => {
-  const transitions: Record<ServiceApplicationStatus, ServiceApplicationStatus[]> = {
+export const getValidStatusTransitions = (currentStatus: ServiceApplicationStatus, hasTimeSlots?: boolean): ServiceApplicationStatus[] => {
+  const baseTransitions: Record<ServiceApplicationStatus, ServiceApplicationStatus[]> = {
     draft: ['submitted'],
     submitted: ['under_review', 'approved', 'rejected', 'withdrawn'],
     under_review: ['information_requested', 'approved', 'rejected'],
     information_requested: ['resubmitted', 'withdrawn', 'expired'],
     resubmitted: ['under_review'],
-    approved: ['issued'],
+    approved: hasTimeSlots ? ['reserved', 'cancelled'] : ['issued'],
     denied: [],
     rejected: [],
     withdrawn: [],
     expired: [],
-    issued: []
+    issued: [],
+    reserved: ['cancelled'],
+    cancelled: []
   };
-  return transitions[currentStatus] || [];
+  return baseTransitions[currentStatus] || [];
 };
 
 export const useServiceApplicationWorkflow = () => {
