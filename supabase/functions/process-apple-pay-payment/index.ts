@@ -50,6 +50,19 @@ Deno.serve(async (req) => {
 
     console.log('🍎 ✅ Authenticated user:', user.id);
 
+    // Validate Application Identity is configured
+    const applicationIdentity = Deno.env.get('FINIX_USER_APPLICATION_ID');
+    if (!applicationIdentity) {
+      console.error('🍎 ❌ FINIX_USER_APPLICATION_ID not configured');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Apple Pay not configured for this platform'
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
     // Parse and validate request body
     const body = await req.json();
     console.log('🍎 📦 Request body:', {
@@ -118,8 +131,8 @@ Deno.serve(async (req) => {
     const instrumentResult = await finixAPI.createPaymentInstrument({
       type: 'APPLE_PAY',
       identity: userFinixIdentity,
-      merchantIdentity: merchantData.finixIdentityId,
-      applePayToken: applePayToken.paymentData
+      merchantIdentity: applicationIdentity,
+      applePayToken: applePayToken.token?.paymentData || applePayToken.paymentData
     });
 
     if (!instrumentResult.success || !instrumentResult.id) {

@@ -93,12 +93,25 @@ Deno.serve(async (req) => {
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixEnv = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
     
+    const applicationIdentity = Deno.env.get('FINIX_USER_APPLICATION_ID');
+    
     if (!finixAppId || !finixApiSecret) {
       console.error('[create-apple-pay-session] Missing Finix credentials');
       return new Response(
         JSON.stringify({ 
           success: false, 
           error: 'Finix credentials not configured'
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    if (!applicationIdentity) {
+      console.error('🍎 ❌ FINIX_USER_APPLICATION_ID not configured');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Apple Pay not configured for this platform'
         }),
         { status: 500, headers: corsHeaders }
       );
@@ -115,7 +128,7 @@ Deno.serve(async (req) => {
     const finixRequestBody = {
       display_name: display_name || 'Muni Now',
       domain: domain_name,
-      merchant_identity: finixMerchantIdentity,
+      merchant_identity: applicationIdentity,
       validation_url: validation_url
     };
     
