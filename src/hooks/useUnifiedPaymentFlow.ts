@@ -752,7 +752,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             label: "Muni Now Payment",
             amount: totalPriceDollars
           },
-          requiredBillingContactFields: ["postalAddress"]
+          requiredBillingContactFields: ["postalAddress", "email", "name", "phone"]
         };
 
         // Initialize Apple Pay session

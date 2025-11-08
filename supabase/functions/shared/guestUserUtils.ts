@@ -39,7 +39,10 @@ export async function createGuestUser(
       email_confirm: true, // Auto-confirm for guests
       user_metadata: {
         is_guest: true,
-        created_via: 'apple_pay_checkout'
+        created_via: 'apple_pay_checkout',
+        account_type: 'residentuser', // Required for handle_new_user trigger
+        first_name: params.firstName || 'Guest',
+        last_name: params.lastName || 'User'
       }
     });
 
