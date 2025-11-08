@@ -152,10 +152,13 @@ export const useServiceApplicationPaymentMethods = (
     }
 
     try {
-      console.log('💳 Processing Apple Pay for application:', applicationId);
-      // Set payment method and process through unified flow - application already exists
-      setSelectedPaymentMethod('apple-pay');
-      return await unifiedPayment.handleApplePayment();
+      console.log('💳 Apple Pay not available - requires authentication');
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to use Apple Pay',
+        variant: 'destructive',
+      });
+      throw new Error('Apple Pay requires authentication');
     } catch (error: any) {
       console.error('❌ Apple Pay error:', error);
       toast({

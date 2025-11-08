@@ -23,21 +23,13 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get user from auth token (optional for guest checkout)
+    // Auth token is optional - merchant validation doesn't require it
     const authHeader = req.headers.get('authorization')?.replace('Bearer ', '');
-    let userId: string | undefined;
-
     if (authHeader) {
-      const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
-      
-      if (userError || !user) {
-        console.warn('[create-apple-pay-session] Invalid auth token, proceeding as guest');
-      } else {
-        userId = user.id;
-        console.log('[create-apple-pay-session] Authenticated user:', userId);
+      const { data: { user } } = await supabase.auth.getUser(authHeader);
+      if (user) {
+        console.log('[create-apple-pay-session] User:', user.id);
       }
-    } else {
-      console.log('[create-apple-pay-session] Guest checkout - no auth token');
     }
 
     // Parse request body

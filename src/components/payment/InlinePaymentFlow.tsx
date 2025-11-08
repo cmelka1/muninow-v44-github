@@ -66,7 +66,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
     googlePayMerchantId,
     handlePayment,
     handleGooglePayment,
-    handleApplePayment,
   } = useUnifiedPaymentFlow({
     entityType,
     entityId,
@@ -235,22 +234,8 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
           </div>
 
           <div className="flex justify-center">
-            <div className="w-full">
-              <ApplePayButton
-                onPayment={async () => {
-                  try {
-                    await handleApplePayment();
-                  } catch (error) {
-                    console.error('Apple Pay error in button:', error);
-                  }
-                }}
-                totalAmount={totalWithFee}
-                merchantId={googlePayMerchantId || ''}
-                isDisabled={!googlePayMerchantId || isProcessingPayment}
-                onAvailabilityChange={(available) => {
-                  console.log('🍎 Apple Pay availability changed:', available);
-                }}
-              />
+            <div className="w-full h-[44px] flex items-center justify-center bg-muted rounded border border-border">
+              <span className="text-xs text-muted-foreground">Apple Pay requires authentication</span>
             </div>
           </div>
         </div>

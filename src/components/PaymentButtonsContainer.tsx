@@ -1,22 +1,36 @@
 import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import GooglePayButton from './GooglePayButton';
 import ApplePayButton from './ApplePayButton';
+import type { EntityType } from '@/hooks/useUnifiedPaymentFlow';
 
 interface PaymentButtonsContainerProps {
-  totalAmount: number;
+  entityType: EntityType;
+  entityId: string;
+  customerId: string;
   merchantId: string;
+  totalAmountCents: number;
+  finixSessionKey?: string;
   isDisabled?: boolean;
   onGooglePayment: () => Promise<void>;
-  onApplePayment: () => Promise<void>;
+  onApplePaySuccess?: (response: any) => void;
+  onApplePayError?: (error: any) => void;
 }
 
 const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
-  totalAmount,
+  entityType,
+  entityId,
+  customerId,
   merchantId,
+  totalAmountCents,
+  finixSessionKey,
   isDisabled = false,
   onGooglePayment,
-  onApplePayment
+  onApplePaySuccess,
+  onApplePayError
 }) => {
+  const { user } = useAuth();
+
   return (
     <div className="space-y-3 w-full">
       <div className="text-sm text-muted-foreground text-center mb-2">
@@ -25,17 +39,28 @@ const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
       
       <GooglePayButton
         onPayment={onGooglePayment}
-        totalAmount={totalAmount}
+        totalAmount={totalAmountCents / 100}
         merchantId={merchantId}
         isDisabled={isDisabled}
       />
       
-      <ApplePayButton
-        onPayment={onApplePayment}
-        totalAmount={totalAmount}
-        merchantId={merchantId}
-        isDisabled={isDisabled}
-      />
+      {user ? (
+        <ApplePayButton
+          entityType={entityType}
+          entityId={entityId}
+          customerId={customerId}
+          merchantId={merchantId}
+          totalAmountCents={totalAmountCents}
+          finixSessionKey={finixSessionKey}
+          isDisabled={isDisabled}
+          onSuccess={onApplePaySuccess}
+          onError={onApplePayError}
+        />
+      ) : (
+        <div className="w-full h-[44px] flex items-center justify-center bg-muted rounded border border-border">
+          <span className="text-xs text-muted-foreground">Login required for Apple Pay</span>
+        </div>
+      )}
       
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">

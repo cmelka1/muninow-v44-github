@@ -200,12 +200,14 @@ export const useTaxPaymentMethods = (taxData: {
     }
 
     try {
-      // Set payment method to apple-pay to trigger unified flow
-      setSelectedPaymentMethod('apple-pay');
-      await unifiedPayment.handleApplePayment();
+      console.log('Apple Pay not available - requires authentication');
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to use Apple Pay',
+        variant: 'destructive',
+      });
     } catch (error: any) {
       console.error('Apple Pay payment error:', error);
-      // Error handling is done in unified payment flow
     }
   };
 

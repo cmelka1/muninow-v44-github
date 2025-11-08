@@ -46,7 +46,6 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
     googlePayMerchantId,
     handlePayment,
     handleGooglePayment,
-    handleApplePayment,
   } = useUnifiedPaymentFlow({
     entityType,
     entityId,
@@ -155,14 +154,14 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
               >
                 Google Pay
               </Button>
-              <Button
-                variant="outline"
-                onClick={handleApplePayment}
-                disabled={isProcessingPayment}
-                className="flex-1"
-              >
-                Apple Pay
-              </Button>
+            {/* Apple Pay temporarily disabled - requires authentication */}
+            <Button
+              variant="outline"
+              disabled
+              className="flex-1"
+            >
+              Apple Pay (Login Required)
+            </Button>
             </div>
           </div>
 
