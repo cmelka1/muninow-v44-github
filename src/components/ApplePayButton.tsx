@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { useApplePayFlow } from '@/hooks/useApplePayFlow';
 import type { EntityType } from '@/hooks/useUnifiedPaymentFlow';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // Declare apple-pay-button custom element
 declare global {
@@ -47,13 +48,32 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
 
   // Check if session is valid and not expiring soon
   const isSessionValid = useMemo(() => {
-    if (!session) return false;
+    console.log('🍎 [ApplePayButton] Checking session validity...', { hasSession: !!session });
+    
+    if (!session) {
+      console.log('🍎 [ApplePayButton] ❌ No session object');
+      return false;
+    }
+    
+    if (!session.expires_at) {
+      console.log('🍎 [ApplePayButton] ⚠️ Session missing expires_at, assuming valid');
+      return true; // More lenient - assume valid if no expiry
+    }
     
     const expiresAt = session.expires_at || 0;
     const currentTime = Math.floor(Date.now() / 1000);
     const timeUntilExpiry = expiresAt - currentTime;
     
-    return timeUntilExpiry > 60; // At least 1 minute remaining
+    const isValid = timeUntilExpiry > 60;
+    console.log('🍎 [ApplePayButton] Session validity result:', {
+      expiresAt,
+      currentTime,
+      timeUntilExpiry,
+      isValid,
+      minutesRemaining: Math.floor(timeUntilExpiry / 60)
+    });
+    
+    return isValid;
   }, [session]);
 
   const { isAvailable, isCheckingAvailability, isProcessing, handleApplePayPayment } = useApplePayFlow({
@@ -65,6 +85,19 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     finixSessionKey,
     onSuccess,
     onError
+  });
+
+  // DEBUG: Log authentication and session state
+  console.log('🍎 [ApplePayButton] Component rendered with:', {
+    hasUser: !!user,
+    userId: user?.id,
+    hasSession: !!session,
+    sessionExpiresAt: session?.expires_at,
+    currentTime: Math.floor(Date.now() / 1000),
+    isDisabled,
+    isAvailable,
+    isCheckingAvailability,
+    isProcessing
   });
 
   // Notify parent of availability changes
@@ -95,18 +128,48 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   }, [user, isDisabled, isProcessing, handleApplePayPayment]);
 
   useEffect(() => {
+    console.log('🍎 [ApplePayButton] Setting up click handler...');
     const el = btnRef.current;
-    if (!el) return;
+    
+    if (!el) {
+      console.error('🍎 [ApplePayButton] ❌ btnRef.current is NULL - click handler NOT attached!');
+      return;
+    }
+    
+    console.log('🍎 [ApplePayButton] ✅ btnRef.current exists, attaching click handler', el);
     
     const clickHandler = (e: Event) => {
+      console.log('🍎 [ApplePayButton] 🎯 CLICK EVENT FIRED!', e);
       e.preventDefault();
       e.stopPropagation();
       void safeHandleClick();
     };
     
     el.addEventListener('click', clickHandler);
-    return () => el.removeEventListener('click', clickHandler);
+    console.log('🍎 [ApplePayButton] ✅ Click handler attached successfully');
+    
+    return () => {
+      console.log('🍎 [ApplePayButton] Cleaning up click handler');
+      el.removeEventListener('click', clickHandler);
+    };
   }, [safeHandleClick]);
+
+  // Attempt to recover session if missing
+  useEffect(() => {
+    const recoverSession = async () => {
+      if (user && !session) {
+        console.log('🍎 [ApplePayButton] ⚠️ User exists but no session, attempting recovery...');
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.log('🍎 [ApplePayButton] ✅ Session recovered via getSession');
+        } else {
+          console.error('🍎 [ApplePayButton] ❌ Could not recover session - this will prevent Apple Pay');
+        }
+      }
+    };
+    
+    recoverSession();
+  }, [user, session]);
 
   // Show loading state
   if (isCheckingAvailability) {
@@ -118,17 +181,37 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     );
   }
 
-  // Don't render if not authenticated, not available, or session invalid
-  if (!user || !isAvailable || !isSessionValid) {
+  // DEBUG: Log render decision
+  console.log('🍎 [ApplePayButton] Render decision:', {
+    user: !!user,
+    isAvailable,
+    isSessionValid,
+    willRender: !!(user && isAvailable)
+  });
+
+  // Temporarily less strict - render if user is authenticated and Apple Pay is available
+  if (!user || !isAvailable) {
+    console.log('🍎 [ApplePayButton] ❌ NOT RENDERING - user:', !!user, 'isAvailable:', isAvailable);
     return null;
   }
+
+  // Warn if session is questionable but still render
+  if (!isSessionValid) {
+    console.warn('🍎 [ApplePayButton] ⚠️ Session may be invalid/expiring but rendering button anyway for debugging');
+  }
+
+  console.log('🍎 [ApplePayButton] ✅ RENDERING button');
 
   return (
     <div
       className="relative w-full"
       role="button"
       tabIndex={0}
+      onClick={(e) => {
+        console.log('🍎 [ApplePayButton] 🎯 WRAPPER DIV CLICKED', e.target);
+      }}
       onKeyDown={(e) => {
+        console.log('🍎 [ApplePayButton] ⌨️ KEY PRESSED:', e.key);
         if ((e.key === 'Enter' || e.key === ' ') && !isDisabled && !isProcessing) {
           e.preventDefault();
           void safeHandleClick();
