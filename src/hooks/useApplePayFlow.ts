@@ -55,7 +55,7 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
     checkAvailability();
   }, [user]);
 
-  const handleApplePayPayment = useCallback(async (): Promise<PaymentResponse> => {
+  const handleApplePayPayment = useCallback((): Promise<PaymentResponse> => {
     console.log('🍎 [useApplePayFlow] ========================================');
     console.log('🍎 [useApplePayFlow] STARTING APPLE PAY PAYMENT');
     console.log('🍎 [useApplePayFlow] ========================================');
@@ -63,51 +63,7 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
     console.log('🍎 [useApplePayFlow] Entity:', params.entityType, params.entityId);
     console.log('🍎 [useApplePayFlow] Amount:', params.totalAmountCents);
 
-    // PRE-FLIGHT SESSION VALIDATION
-    console.log('🍎 [useApplePayFlow] Performing pre-flight session check...');
-
-    // Get current session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    let validSession = sessionData.session;
-
-    // If no session, try to refresh
-    if (!validSession || sessionError) {
-      console.log('🍎 [useApplePayFlow] No valid session, attempting refresh...');
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      
-      if (refreshError || !refreshData.session) {
-        const error = 'Your session has expired. Please refresh the page and try again.';
-        console.error('🍎 [useApplePayFlow] ❌ Session refresh failed');
-        toast({
-          title: "Session Expired",
-          description: error,
-          variant: "destructive",
-        });
-        throw new Error(error);
-      }
-      
-      validSession = refreshData.session;
-      console.log('🍎 [useApplePayFlow] ✅ Session refreshed successfully');
-    }
-
-    // Check session expiry (5 minute buffer)
-    const expiresAt = validSession.expires_at || 0;
-    const currentTime = Math.floor(Date.now() / 1000);
-    const timeUntilExpiry = expiresAt - currentTime;
-
-    if (timeUntilExpiry < 300) { // Less than 5 minutes
-      console.log('🍎 [useApplePayFlow] Session expiring soon, refreshing...');
-      const { data: refreshData } = await supabase.auth.refreshSession();
-      if (refreshData.session) {
-        validSession = refreshData.session;
-        console.log('🍎 [useApplePayFlow] ✅ Session proactively refreshed');
-      }
-    }
-
-    // Store validated token for later use
-    const validatedAuthToken = validSession.access_token;
-    console.log('🍎 [useApplePayFlow] ✅ Pre-flight validation complete');
-
+    // Basic pre-checks (synchronous only)
     if (!user) {
       const error = 'Please log in to use Apple Pay';
       console.error('🍎 [useApplePayFlow] ❌ Not authenticated');
@@ -164,6 +120,9 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
           reject(new Error('Payment session timed out'));
         }, 300000);
 
+        // Store validated auth token for use in payment authorization
+        let validatedAuthToken: string | null = null;
+
         // Handle merchant validation
         session.onvalidatemerchant = async (event: any) => {
           console.log('🍎 [useApplePayFlow] ========================================');
@@ -172,8 +131,45 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
           console.log('🍎 [useApplePayFlow] Validation URL:', event.validationURL);
 
           try {
-            // Always use actual hostname, ignore env override
-            // The env var VITE_APPLE_PAY_DOMAIN can cause issues if misconfigured
+            // SESSION VALIDATION (moved here from pre-flight)
+            console.log('🍎 [useApplePayFlow] Validating session...');
+            
+            // Get current session
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            let validSession = sessionData.session;
+
+            // If no session, try to refresh
+            if (!validSession || sessionError) {
+              console.log('🍎 [useApplePayFlow] No valid session, attempting refresh...');
+              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+              
+              if (refreshError || !refreshData.session) {
+                throw new Error('Your session has expired. Please refresh the page and try again.');
+              }
+              
+              validSession = refreshData.session;
+              console.log('🍎 [useApplePayFlow] ✅ Session refreshed successfully');
+            }
+
+            // Check session expiry (5 minute buffer)
+            const expiresAt = validSession.expires_at || 0;
+            const currentTime = Math.floor(Date.now() / 1000);
+            const timeUntilExpiry = expiresAt - currentTime;
+
+            if (timeUntilExpiry < 300) { // Less than 5 minutes
+              console.log('🍎 [useApplePayFlow] Session expiring soon, refreshing...');
+              const { data: refreshData } = await supabase.auth.refreshSession();
+              if (refreshData.session) {
+                validSession = refreshData.session;
+                console.log('🍎 [useApplePayFlow] ✅ Session proactively refreshed');
+              }
+            }
+
+            // Store validated token for later use
+            validatedAuthToken = validSession.access_token;
+            console.log('🍎 [useApplePayFlow] ✅ Session validation complete');
+
+            // MERCHANT VALIDATION
             const domainName = window.location.hostname;
             console.log('🍎 [useApplePayFlow] Using domain:', domainName);
             console.log('🍎 [useApplePayFlow] Merchant ID:', params.merchantId);
@@ -206,7 +202,7 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
             setIsProcessing(false);
             toast({
               title: "Validation Error",
-              description: "Unable to validate merchant. Please try again.",
+              description: err instanceof Error ? err.message : "Unable to validate merchant. Please try again.",
               variant: "destructive",
             });
             reject(err);
