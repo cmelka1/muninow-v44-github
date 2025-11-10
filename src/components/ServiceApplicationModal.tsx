@@ -812,6 +812,37 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               </Alert>
             )}
 
+            {/* PDF Form Download Section */}
+            {tile.pdf_form_url && (
+              <Card className="mb-6 border-primary/20 bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">Reference Form Available</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Review this form to understand all requirements before starting your application. You can keep it open in another tab while filling out this form.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(tile.pdf_form_url, '_blank')}
+                        className="gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download Reference Form
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Form Fields Section */}
             <Card className="mb-6">
               <CardContent className="pt-6 space-y-6">
