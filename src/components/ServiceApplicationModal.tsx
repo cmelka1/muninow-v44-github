@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { KeyboardNavigationForm } from '@/components/ui/keyboard-navigation-form';
-import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus, Info } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication, useUpdateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
@@ -804,7 +805,161 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         {currentStep === 1 ? (
           <>
             {/* Guidance Text Box */}
-...
+            {(tile as any).guidance_text && (
+              <Alert className="mb-6">
+                <Info className="h-4 w-4" />
+                <AlertDescription>{(tile as any).guidance_text}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Form Fields Section */}
+            <Card className="mb-6">
+              <CardContent className="pt-6 space-y-6">
+                {tile.form_fields?.map((field: any) => (
+                  <div key={field.id} className="space-y-2">
+                    <Label htmlFor={field.id} className="text-sm font-medium">
+                      {field.label}
+                      {field.required && <span className="text-destructive ml-1">*</span>}
+                    </Label>
+                    {renderFormField(field)}
+                    {validationErrors[field.id] && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {validationErrors[field.id]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
+                {/* User-Defined Amount Field */}
+                {tile.allow_user_defined_amount && (
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm font-medium">
+                      Amount <span className="text-destructive ml-1">*</span>
+                    </Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.amount_cents ? (formData.amount_cents / 100).toFixed(2) : ''}
+                      onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                      placeholder="Enter amount"
+                      className={validationErrors.amount_cents ? "border-destructive" : ""}
+                    />
+                    {validationErrors.amount_cents && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {validationErrors.amount_cents}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Document Upload Section */}
+            {(tile as any).requires_document_upload && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Required Documents</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    className={`
+                      border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                      transition-colors duration-200
+                      ${dragActive 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-muted-foreground/25 hover:border-primary/50'
+                      }
+                    `}
+                    onClick={() => document.getElementById('file-upload-input')?.click()}
+                  >
+                    <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Drag and drop files here, or click to select files
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Supported formats: PDF, DOC, DOCX, JPG, PNG, GIF (Max 10MB)
+                    </p>
+                    <input
+                      id="file-upload-input"
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Uploaded Documents List */}
+                  {uploadedDocuments.length > 0 && (
+                    <div className="space-y-2">
+                      {uploadedDocuments.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {getFileIcon(doc.type)}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{doc.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatFileSize(doc.size)}
+                              </p>
+                              {doc.uploadStatus === 'uploading' && (
+                                <Progress value={doc.uploadProgress} className="h-1 mt-1" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {doc.uploadStatus === 'completed' && (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            )}
+                            {doc.uploadStatus === 'error' && (
+                              <AlertCircle className="h-4 w-4 text-destructive" />
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveDocument(doc.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button"
+                onClick={handleNext}
+                disabled={Object.keys(validateStep1Fields()).length > 0}
+                className="flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </>
         ) : currentStep === 2 && tile.has_time_slots ? (
           /* Time Slot Booking Step */
