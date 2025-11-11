@@ -12,7 +12,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { KeyboardNavigationForm } from '@/components/ui/keyboard-navigation-form';
-import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus, Info } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus, Info, Loader2 } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication, useUpdateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,6 +79,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   onClose,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [currentSubStep, setCurrentSubStep] = useState<number>(1);
   const [draftApplicationId, setDraftApplicationId] = useState<string | null>(null);
   const dialogContentRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -128,6 +130,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     if (tile && isOpen) {
       // Reset state when modal opens
       setCurrentStep(1);
+      setCurrentSubStep(1);
       // Reset payment state when modal opens
       setIsSubmitting(false);
       setUploadedDocuments([]);
@@ -284,52 +287,80 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      // Validate step 1 mandatory fields before proceeding
-      const errors = validateStep1Fields();
-      if (Object.keys(errors).length > 0) {
-        setValidationErrors(errors);
-        // Scroll to first error field
-        const firstErrorField = document.querySelector(`[data-error="true"]`);
-        if (firstErrorField) {
-          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        return;
-      } else {
-        setValidationErrors({});
-      }
-
-      // For non-reviewable services, create draft application after validation
-      if (!tile?.requires_review && !draftApplicationId) {
-        try {
-          const draftApplication = await createApplication.mutateAsync({
-            tile_id: tile.id,
-            user_id: profile?.id || '',
-            customer_id: tile.customer_id,
-            status: 'draft',
-            payment_status: 'unpaid',
-            base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
-            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
-            applicant_email: formData.email || undefined,
-            applicant_phone: formData.phone || formData.phone_number || undefined,
-            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
-            street_address: formData.address || formData.street_address || formData.street || undefined,
-            apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
-            city: formData.city || undefined,
-            state: formData.state || undefined,
-            zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
-            service_specific_data: formData,
-          });
-          setDraftApplicationId(draftApplication.id);
-          console.log('✅ Draft application created:', draftApplication.id);
-        } catch (error) {
-          console.error('Error creating draft application:', error);
+      // Subtab navigation within Step 1
+      if (currentSubStep === 1) {
+        // Validate form fields before moving to document upload subtab
+        const errors = validateStep1Fields();
+        if (Object.keys(errors).length > 0) {
+          setValidationErrors(errors);
           toast({
-            title: "Error",
-            description: "Failed to create application draft. Please try again.",
+            title: "Please complete required fields",
+            description: "Check the highlighted fields and try again.",
             variant: "destructive",
           });
           return;
         }
+        
+        // Move to document upload subtab
+        setCurrentSubStep(2);
+        if (dialogContentRef.current) {
+          dialogContentRef.current.scrollTop = 0;
+        }
+        return;
+      }
+      
+      if (currentSubStep === 2) {
+        // Validate document upload if required
+        if (tile?.requires_document_upload && uploadedDocuments.length === 0) {
+          toast({
+            title: "Documents Required",
+            description: "Please upload at least one document before proceeding.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // For non-reviewable services, create draft application after validation
+        if (!tile?.requires_review && !draftApplicationId) {
+          try {
+            const draftApplication = await createApplication.mutateAsync({
+              tile_id: tile.id,
+              user_id: profile?.id || '',
+              customer_id: tile.customer_id,
+              status: 'draft',
+              payment_status: 'unpaid',
+              base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+              applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
+              applicant_email: formData.email || undefined,
+              applicant_phone: formData.phone || formData.phone_number || undefined,
+              business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
+              street_address: formData.address || formData.street_address || formData.street || undefined,
+              apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
+              city: formData.city || undefined,
+              state: formData.state || undefined,
+              zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+              service_specific_data: formData,
+            });
+            setDraftApplicationId(draftApplication.id);
+            console.log('✅ Draft application created:', draftApplication.id);
+          } catch (error) {
+            console.error('Error creating draft application:', error);
+            toast({
+              title: "Error",
+              description: "Failed to create application draft. Please try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+        
+        // Move to next step (time slot or review)
+        setCurrentSubStep(1); // Reset for next time
+        setCurrentStep(2);
+        if (dialogContentRef.current) {
+          dialogContentRef.current.scrollTop = 0;
+        }
+        return;
       }
     } else if (currentStep === 2 && tile?.has_time_slots) {
       // Validate booking step
@@ -353,6 +384,19 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   };
 
   const handlePrevious = () => {
+    if (currentStep === 1) {
+      // Handle subtab navigation
+      if (currentSubStep === 2) {
+        setCurrentSubStep(1);
+        if (dialogContentRef.current) {
+          dialogContentRef.current.scrollTop = 0;
+        }
+        return;
+      }
+      // If on first subtab, do nothing (Cancel button will close)
+      return;
+    }
+    
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       // Scroll to top of dialog content
@@ -780,7 +824,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 <span className="text-muted-foreground">Step {currentStep} of {totalSteps}</span>
                 <span className="text-muted-foreground">
                   {currentStep === 1 
-                    ? 'Application Details' 
+                    ? `Application Details ${currentSubStep === 1 ? '(1/2)' : '(2/2)'}` 
                     : tile.has_time_slots && currentStep === 2
                     ? 'Select Time Slot'
                     : 'Review & Submit'}
@@ -812,133 +856,234 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               </Alert>
             )}
 
-            {/* Form Fields Section */}
-            <Card className="mb-6">
-              <CardContent className="pt-6 space-y-6">
-                {tile.form_fields?.map((field: any) => (
-                  <div key={field.id} className="space-y-2">
-                    <Label htmlFor={field.id} className="text-sm font-medium">
-                      {field.label}
-                      {field.required && <span className="text-destructive ml-1">*</span>}
-                    </Label>
-                    {renderFormField(field)}
-                    {validationErrors[field.id] && (
-                      <p className="text-sm text-destructive flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
-                        {validationErrors[field.id]}
-                      </p>
-                    )}
-                  </div>
-                ))}
-
-                {/* User-Defined Amount Field */}
-                {tile.allow_user_defined_amount && (
-                  <div className="space-y-2">
-                    <Label htmlFor="amount" className="text-sm font-medium">
-                      Amount <span className="text-destructive ml-1">*</span>
-                    </Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.amount_cents ? (formData.amount_cents / 100).toFixed(2) : ''}
-                      onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                      placeholder="Enter amount"
-                      className={validationErrors.amount_cents ? "border-destructive" : ""}
-                    />
-                    {validationErrors.amount_cents && (
-                      <p className="text-sm text-destructive flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
-                        {validationErrors.amount_cents}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Document Upload Section */}
-            {tile.requires_document_upload && (
+            {/* PDF Download Section */}
+            {tile.pdf_form_url && (
               <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="text-lg">Required Documents</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    className={`
-                      border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                      transition-colors duration-200
-                      ${dragActive 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-muted-foreground/25 hover:border-primary/50'
-                      }
-                    `}
-                    onClick={() => document.getElementById('file-upload-input')?.click()}
-                  >
-                    <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Drag and drop files here, or click to select files
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Supported formats: PDF, DOC, DOCX, JPG, PNG, GIF (Max 10MB)
-                    </p>
-                    <input
-                      id="file-upload-input"
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-                      className="hidden"
-                    />
-                  </div>
-
-                  {/* Uploaded Documents List */}
-                  {uploadedDocuments.length > 0 && (
-                    <div className="space-y-2">
-                      {uploadedDocuments.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <FileText className="h-5 w-5 text-primary mt-1" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-base mb-2">Official Form Available</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Download the official PDF form directly to your device.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(tile.pdf_form_url, '_blank')}
+                          className="gap-2"
                         >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            {getFileIcon(doc.type)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{doc.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatFileSize(doc.size)}
-                              </p>
-                              {doc.uploadStatus === 'uploading' && (
-                                <Progress value={doc.uploadProgress} className="h-1 mt-1" />
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {doc.uploadStatus === 'completed' && (
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            )}
-                            {doc.uploadStatus === 'error' && (
-                              <AlertCircle className="h-4 w-4 text-destructive" />
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveDocument(doc.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                          <Download className="h-4 w-4" />
+                          Download PDF Form
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(tile.pdf_form_url);
+                            toast({ title: "Link copied to clipboard" });
+                          }}
+                          className="gap-2"
+                        >
+                          <Copy className="h-4 w-4" />
+                          Copy Link
+                        </Button>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Subtabs for Step 1 */}
+            <Tabs 
+              value={`subtab-${currentSubStep}`} 
+              onValueChange={(value) => {
+                const newSubStep = parseInt(value.split('-')[1]);
+                setCurrentSubStep(newSubStep);
+                // Scroll to top when switching subtabs
+                if (dialogContentRef.current) {
+                  dialogContentRef.current.scrollTop = 0;
+                }
+              }}
+              className="mb-6"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="subtab-1" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Application Form
+                </TabsTrigger>
+                <TabsTrigger value="subtab-2" className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Document Upload
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Subtab 1: Application Form */}
+              <TabsContent value="subtab-1" className="mt-6">
+                {/* Use Profile Information Toggle */}
+                <div className="flex items-center justify-between mb-6 p-4 bg-muted/30 rounded-lg">
+                  <Label htmlFor="use-profile-info" className="text-sm font-medium">
+                    Use Profile Information
+                  </Label>
+                  <Switch
+                    id="use-profile-info"
+                    checked={useAutoPopulate}
+                    onCheckedChange={setUseAutoPopulate}
+                  />
+                </div>
+
+                {/* Form Fields Card */}
+                <Card>
+                  <CardContent className="pt-6 space-y-6">
+                    {tile.form_fields?.map((field: any) => (
+                      <div key={field.id} className="space-y-2">
+                        <Label htmlFor={field.id} className="text-sm font-medium">
+                          {field.label}
+                          {field.required && <span className="text-destructive ml-1">*</span>}
+                        </Label>
+                        {renderFormField(field)}
+                        {validationErrors[field.id] && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-4 w-4" />
+                            {validationErrors[field.id]}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* User-Defined Amount Field */}
+                    {tile.allow_user_defined_amount && (
+                      <div className="space-y-2">
+                        <Label htmlFor="amount" className="text-sm font-medium">
+                          Amount <span className="text-destructive ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="amount"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.amount_cents ? (formData.amount_cents / 100).toFixed(2) : ''}
+                          onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                          placeholder="Enter amount"
+                          className={validationErrors.amount_cents ? "border-destructive" : ""}
+                        />
+                        {validationErrors.amount_cents && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-4 w-4" />
+                            {validationErrors.amount_cents}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Subtab 2: Document Upload */}
+              <TabsContent value="subtab-2" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                      <CardTitle className="text-lg">Document Upload</CardTitle>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Supporting Documents {tile.requires_document_upload ? '(Required)' : '(Optional)'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Upload any documents that support your application
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Drag and Drop Upload Area */}
+                    <div
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      className={`
+                        border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                        transition-colors duration-200
+                        ${dragActive 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-muted-foreground/25 hover:border-primary/50'
+                        }
+                      `}
+                      onClick={() => document.getElementById('file-upload-input')?.click()}
+                    >
+                      <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-sm font-medium mb-2">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground">
+                        PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
+                      </p>
+                      <input
+                        id="file-upload-input"
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                        onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                        className="hidden"
+                      />
+                    </div>
+
+                    {/* Uploaded Documents List */}
+                    {uploadedDocuments.length > 0 && (
+                      <div className="space-y-2">
+                        {uploadedDocuments.map((doc) => (
+                          <div
+                            key={doc.id}
+                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {getFileIcon(doc.type)}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{doc.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatFileSize(doc.size)}
+                                </p>
+                                {doc.uploadStatus === 'uploading' && (
+                                  <Progress value={doc.uploadProgress} className="h-1 mt-1" />
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {doc.uploadStatus === 'completed' && (
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                              )}
+                              {doc.uploadStatus === 'error' && (
+                                <AlertCircle className="h-4 w-4 text-destructive" />
+                              )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveDocument(doc.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            {/* Review Required Info Box */}
+            {tile.requires_review && (
+              <Alert className="mb-6">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Review Required:</strong> This application will be reviewed by municipal staff before approval. 
+                  Payment will only be processed after approval.
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Navigation Buttons */}
@@ -946,18 +1091,34 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={onClose}
+                onClick={() => {
+                  if (currentStep === 1 && currentSubStep === 1) {
+                    onClose();
+                  } else {
+                    handlePrevious();
+                  }
+                }}
               >
-                Cancel
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                {currentStep === 1 && currentSubStep === 1 ? 'Cancel' : 'Previous'}
               </Button>
               <Button 
                 type="button"
                 onClick={handleNext}
-                disabled={Object.keys(validateStep1Fields()).length > 0}
+                disabled={isSubmitting}
                 className="flex items-center gap-2"
               >
-                Next
-                <ChevronRight className="h-4 w-4" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
               </Button>
             </div>
           </>
