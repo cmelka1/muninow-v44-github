@@ -827,44 +827,62 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
             {/* PDF Download Section */}
             {tile.pdf_form_url && (
-              <Card className="mb-6">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <FileText className="h-5 w-5 text-primary mt-1" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-base mb-2">Official Form Available</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Download the official PDF form directly to your device.
+              <>
+                {/* PDF Instructions Alert */}
+                <Alert className="mb-6">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p>
+                        Please review the attached PDF carefully and either (a) provide responses to any applicable questions in the Additional Information text area, or (b) upload a completed copy of the document in the Document Upload section.
                       </p>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(tile.pdf_form_url, '_blank')}
-                          className="gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download PDF Form
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(tile.pdf_form_url);
-                            toast({ title: "Link copied to clipboard" });
-                          }}
-                          className="gap-2"
-                        >
-                          <Copy className="h-4 w-4" />
-                          Copy Link
-                        </Button>
+                      <p>
+                        If your payment amount is variable, please calculate the amount due and enter both the total and the calculation reasoning as the final item in the Additional Information text area.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+
+                {/* Official Form Available Card */}
+                <Card className="mb-6">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <FileText className="h-5 w-5 text-primary mt-1" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-base mb-2">Official Form Available</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Download the official PDF form directly to your device.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(tile.pdf_form_url, '_blank')}
+                            className="gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download PDF Form
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(tile.pdf_form_url);
+                              toast({ title: "Link copied to clipboard" });
+                            }}
+                            className="gap-2"
+                          >
+                            <Copy className="h-4 w-4" />
+                            Copy Link
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </>
             )}
 
             {/* Begin space-y-4 wrapper for uniform spacing */}
