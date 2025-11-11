@@ -333,16 +333,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             service_specific_data: formData,
           });
           setDraftApplicationId(draftApplication.id);
-          console.log('✅ Draft application created:', draftApplication.id);
-          
-          // Immediately mark as submitted with timestamp before payment
-          await updateApplication.mutateAsync({
-            id: draftApplication.id,
-            status: 'submitted',
-            payment_status: 'unpaid',
-            submitted_at: new Date().toISOString()
-          });
-          console.log('✅ Application marked as submitted');
+          console.log('✅ Draft application created (will be submitted after payment):', draftApplication.id);
         } catch (error) {
           console.error('Error creating draft application:', error);
           toast({
@@ -414,7 +405,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           p_booking_end_time: endTime,
           p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
-          p_submitted_at: new Date().toISOString(),
+          p_submitted_at: null,  // Will be set after payment completes
           p_form_data: {
             ...formData,
             applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
@@ -454,9 +445,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       else if (!tile.requires_review && draftApplicationId) {
         applicationData = await updateApplication.mutateAsync({
           id: draftApplicationId,
-          status: 'submitted',
+          status: 'draft',  // Keep as draft until payment completes
           payment_status: 'unpaid',
-          submitted_at: new Date().toISOString(),
           applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
           applicant_email: formData.email || undefined,
           applicant_phone: formData.phone || formData.phone_number || undefined,

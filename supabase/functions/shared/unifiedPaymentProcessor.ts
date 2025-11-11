@@ -529,8 +529,14 @@ async function updateEntityStatus(
     payment_instrument_id: finixPaymentInstrumentId,
     finix_transfer_id: finixTransferId,
     finix_merchant_id: merchantData.finixMerchantId,
-    merchant_name: merchantData.merchantName
+    merchant_name: merchantData.merchantName,
+    submitted_at: new Date().toISOString()  // Set submitted_at when payment succeeds
   };
+
+  // Update status to 'submitted' if currently 'draft' (will be overridden by autoIssueEntity if applicable)
+  if (entityType === 'service_application') {
+    updateData.status = 'submitted';
+  }
 
   // Use correct column name based on entity type
   if (entityType === 'tax_submission') {
