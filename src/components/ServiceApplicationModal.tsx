@@ -859,7 +859,15 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(tile.pdf_form_url, '_blank')}
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = tile.pdf_form_url;
+                              link.download = tile.pdf_form_url.split('/').pop() || 'form.pdf';
+                              link.target = '_blank';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
                             className="gap-2"
                           >
                             <Download className="h-4 w-4" />
