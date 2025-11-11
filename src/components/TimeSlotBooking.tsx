@@ -112,7 +112,7 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
       <div className="grid md:grid-cols-2 gap-6">
         {/* Calendar */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 flex flex-col items-center">
             <Label className="flex items-center gap-2 mb-3">
               <CalendarIcon className="h-4 w-4" />
               Select Date
