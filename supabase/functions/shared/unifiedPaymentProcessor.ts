@@ -122,7 +122,8 @@ export async function processUnifiedPayment(
       params,
       idempotencyUuid,
       idempotencyMetadata,
-      finixPaymentInstrumentId
+      finixPaymentInstrumentId,
+      merchantData.customerId
     );
 
     if (!transactionResult.success) {
@@ -325,11 +326,11 @@ async function checkForDuplicateTransaction(
 async function fetchMerchantData(
   supabase: any,
   merchantId: string
-): Promise<{ success: boolean; finixMerchantId?: string; finixIdentityId?: string; merchantName?: string; category?: string; subcategory?: string; statementDescriptor?: string; error?: string }> {
+): Promise<{ success: boolean; finixMerchantId?: string; finixIdentityId?: string; merchantName?: string; category?: string; subcategory?: string; statementDescriptor?: string; customerId?: string; error?: string }> {
   
   const { data: merchant, error } = await supabase
     .from('merchants')
-    .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory, statement_descriptor')
+    .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory, statement_descriptor, customer_id')
     .eq('id', merchantId)
     .single();
 
@@ -354,7 +355,8 @@ async function fetchMerchantData(
     merchantName: merchant.merchant_name,
     category: merchant.category,
     subcategory: merchant.subcategory,
-    statementDescriptor: merchant.statement_descriptor
+    statementDescriptor: merchant.statement_descriptor,
+    customerId: merchant.customer_id
   };
 }
 
@@ -364,13 +366,15 @@ async function createPaymentTransaction(
   params: UnifiedPaymentParams,
   idempotencyUuid: string,
   idempotencyMetadata: any,
-  finixPaymentInstrumentId: string
+  finixPaymentInstrumentId: string,
+  customerId?: string
 ): Promise<{ success: boolean; transaction_id?: string; service_fee_cents?: number; total_amount_cents?: number; error?: string }> {
   
   const isCard = ['card', 'PAYMENT_CARD', 'google-pay', 'apple-pay'].includes(params.paymentType);
 
   const { data, error } = await supabase.rpc('create_unified_payment_transaction', {
     p_user_id: params.userId,
+    p_customer_id: customerId || null,
     p_merchant_id: params.merchantId,
     p_entity_type: params.entityType,
     p_entity_id: params.entityId,
