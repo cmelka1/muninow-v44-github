@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -829,8 +829,9 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             {tile.pdf_form_url && (
               <>
                 {/* PDF Instructions Alert */}
-                <Alert className="mb-6">
+                <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-900">
                   <Info className="h-4 w-4" />
+                  <AlertTitle>Directions</AlertTitle>
                   <AlertDescription>
                     <div className="space-y-2">
                       <p>
