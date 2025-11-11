@@ -405,6 +405,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           p_booking_end_time: endTime,
           p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+          p_submitted_at: new Date().toISOString(),
           p_form_data: {
             ...formData,
             applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
@@ -446,6 +447,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           id: draftApplicationId,
           status: 'submitted',
           payment_status: 'unpaid',
+          submitted_at: new Date().toISOString(),
           applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
           applicant_email: formData.email || undefined,
           applicant_phone: formData.phone || formData.phone_number || undefined,
@@ -466,6 +468,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           customer_id: tile.customer_id,
           status: 'submitted',
           payment_status: tile.requires_review ? 'not_required' : 'unpaid',
+          submitted_at: new Date().toISOString(),
           base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
           applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
           applicant_email: formData.email || undefined,
