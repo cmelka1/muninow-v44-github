@@ -859,14 +859,33 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = tile.pdf_form_url;
-                              link.download = tile.pdf_form_url.split('/').pop() || 'form.pdf';
-                              link.target = '_blank';
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(tile.pdf_form_url);
+                                
+                                if (!response.ok) {
+                                  throw new Error('Failed to download PDF');
+                                }
+                                
+                                const blob = await response.blob();
+                                const blobUrl = URL.createObjectURL(blob);
+                                
+                                const link = document.createElement('a');
+                                link.href = blobUrl;
+                                link.download = tile.pdf_form_url.split('/').pop() || 'form.pdf';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                
+                                URL.revokeObjectURL(blobUrl);
+                              } catch (error) {
+                                console.error('Error downloading PDF:', error);
+                                toast({
+                                  title: "Download Failed",
+                                  description: "Unable to download the PDF. Please try again.",
+                                  variant: "destructive",
+                                });
+                              }
                             }}
                             className="gap-2"
                           >
