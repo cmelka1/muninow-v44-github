@@ -334,6 +334,15 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           });
           setDraftApplicationId(draftApplication.id);
           console.log('✅ Draft application created:', draftApplication.id);
+          
+          // Immediately mark as submitted with timestamp before payment
+          await updateApplication.mutateAsync({
+            id: draftApplication.id,
+            status: 'submitted',
+            payment_status: 'unpaid',
+            submitted_at: new Date().toISOString()
+          });
+          console.log('✅ Application marked as submitted');
         } catch (error) {
           console.error('Error creating draft application:', error);
           toast({
