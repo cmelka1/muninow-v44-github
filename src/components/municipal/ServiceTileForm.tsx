@@ -307,19 +307,19 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
           
           <div>
             <Label htmlFor="guidance-text">
-              Applicant Guidance Text
-              <span className="text-xs text-muted-foreground ml-2">(Optional)</span>
+              Application Directions
+              <span className="text-xs text-muted-foreground ml-2">(Optional - uses default if blank)</span>
             </Label>
             <Textarea
               id="guidance-text"
               value={guidanceText}
               onChange={(e) => setGuidanceText(e.target.value)}
-              placeholder="e.g., 'Please have your property deed and ID ready before starting this application'"
+              placeholder="Enter custom directions for applicants. If left blank, standard directions will be shown."
               rows={4}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              This text will appear at the top of the application form to help guide applicants.
+              This text appears in the blue "Directions" box at the top of the application form. If left blank, standard directions will be displayed.
             </p>
           </div>
           

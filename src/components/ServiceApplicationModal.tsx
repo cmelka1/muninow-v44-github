@@ -820,33 +820,31 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
         {currentStep === 1 ? (
           <>
-            {/* Guidance Text Box */}
-            {tile.guidance_text && (
-              <Alert className="mb-6">
-                <Info className="h-4 w-4" />
-                <AlertDescription>{tile.guidance_text}</AlertDescription>
-              </Alert>
-            )}
-
-            {/* PDF Download Section */}
-            {tile.pdf_form_url && (
-              <>
-                {/* PDF Instructions Alert */}
-                <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-900">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>Directions</AlertTitle>
-                  <AlertDescription>
-                    <div className="space-y-2">
+            {/* Application Directions Box - Always Visible */}
+            <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-900">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Directions</AlertTitle>
+              <AlertDescription>
+                <div className="space-y-2">
+                  {tile.guidance_text ? (
+                    <p>{tile.guidance_text}</p>
+                  ) : (
+                    <>
                       <p>
                         Please review the attached PDF carefully and either (a) provide responses to any applicable questions in the Additional Information text area, or (b) upload a completed copy of the document in the Document Upload section.
                       </p>
                       <p>
                         If your payment amount is variable, please calculate the amount due and enter both the total and the calculation reasoning as the final item in the Additional Information text area.
                       </p>
-                    </div>
-                  </AlertDescription>
-                </Alert>
+                    </>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
 
+            {/* PDF Download Section */}
+            {tile.pdf_form_url && (
+              <>
                 {/* Official Form Available Card */}
                 <Card className="mb-6">
                   <CardContent className="pt-6">
