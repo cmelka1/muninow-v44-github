@@ -148,13 +148,15 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
 
           <Separator />
 
-          {/* Update Status Button */}
-          <Button 
-            onClick={() => setShowStatusDialog(true)}
-            className="w-full"
-          >
-            Update Status
-          </Button>
+          {/* Update Status Button - Hide when issued and paid */}
+          {!(application?.status === 'issued' && application?.payment_status === 'paid') && (
+            <Button 
+              onClick={() => setShowStatusDialog(true)}
+              className="w-full"
+            >
+              Update Status
+            </Button>
+          )}
         </CardContent>
       </Card>
 

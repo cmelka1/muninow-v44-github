@@ -326,7 +326,8 @@ const MunicipalServiceApplicationDetail = () => {
           </div>
           <div className="flex items-center gap-3">
             <ServiceApplicationStatusBadge status={application.status} />
-            {profile?.account_type?.startsWith('municipal') && (
+            {profile?.account_type?.startsWith('municipal') && 
+             !(application.status === 'issued' && application.payment_status === 'paid') && (
               <Button
                 variant="outline"
                 size="sm"
