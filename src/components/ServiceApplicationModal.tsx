@@ -867,8 +867,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               </Card>
             )}
 
-            {/* Section 1: Application Information */}
-            <Card className="animate-fade-in">
+            {/* Begin space-y-4 wrapper for uniform spacing */}
+            <div className="space-y-4">
+              {/* Section 1: Application Information */}
+              <Card className="animate-fade-in">
               <CardHeader className="pb-4 flex flex-row items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
@@ -929,8 +931,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 </CardContent>
             </Card>
 
-            {/* Section 2: Document Upload */}
-            <Card className="animate-fade-in mt-4" style={{ animationDelay: '0.1s' }}>
+              {/* Section 2: Document Upload */}
+              <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
@@ -1016,16 +1018,18 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               </CardContent>
             </Card>
 
-            {/* Review Required Info Box */}
-            {tile.requires_review && (
-              <Alert className="mb-6">
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Review Required:</strong> This application will be reviewed by municipal staff before approval. 
-                  Payment will only be processed after approval.
-                </AlertDescription>
-              </Alert>
-            )}
+              {/* Review Required Info Box */}
+              {tile.requires_review && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Review Required:</strong> This application will be reviewed by municipal staff before approval. 
+                    Payment will only be processed after approval.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+            {/* End space-y-4 wrapper */}
 
             {/* Navigation Buttons */}
             <div className="flex justify-between pt-6">
