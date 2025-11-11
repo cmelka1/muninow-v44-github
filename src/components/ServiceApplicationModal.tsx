@@ -12,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { KeyboardNavigationForm } from '@/components/ui/keyboard-navigation-form';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus, Info, Loader2 } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication, useUpdateServiceApplication } from '@/hooks/useServiceApplications';
@@ -79,7 +79,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   onClose,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [currentSubStep, setCurrentSubStep] = useState<number>(1);
   const [draftApplicationId, setDraftApplicationId] = useState<string | null>(null);
   const dialogContentRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -130,7 +129,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     if (tile && isOpen) {
       // Reset state when modal opens
       setCurrentStep(1);
-      setCurrentSubStep(1);
       // Reset payment state when modal opens
       setIsSubmitting(false);
       setUploadedDocuments([]);
@@ -292,79 +290,59 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      // Subtab navigation within Step 1
-      if (currentSubStep === 1) {
-        // Validate form fields before moving to document upload subtab
-        if (Object.keys(validationResult).length > 0) {
-          setValidationErrors(validationResult);
-          toast({
-            title: "Please complete required fields",
-            description: "Check the highlighted fields and try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Move to document upload subtab
-        setCurrentSubStep(2);
-        if (dialogContentRef.current) {
-          dialogContentRef.current.scrollTop = 0;
-        }
+      // Validate form fields
+      if (Object.keys(validationResult).length > 0) {
+        setValidationErrors(validationResult);
+        toast({
+          title: "Please complete required fields",
+          description: "Check the highlighted fields and try again.",
+          variant: "destructive",
+        });
         return;
       }
       
-      if (currentSubStep === 2) {
-        // Validate document upload if required
-        if (tile?.requires_document_upload && uploadedDocuments.length === 0) {
+      // Validate document upload if required
+      if (tile?.requires_document_upload && uploadedDocuments.length === 0) {
+        toast({
+          title: "Documents Required",
+          description: "Please upload at least one document before proceeding.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // For non-reviewable services, create draft application after validation
+      if (!tile?.requires_review && !draftApplicationId) {
+        try {
+          const draftApplication = await createApplication.mutateAsync({
+            tile_id: tile.id,
+            user_id: profile?.id || '',
+            customer_id: tile.customer_id,
+            status: 'draft',
+            payment_status: 'unpaid',
+            base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
+            applicant_email: formData.email || undefined,
+            applicant_phone: formData.phone || formData.phone_number || undefined,
+            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
+            street_address: formData.address || formData.street_address || formData.street || undefined,
+            apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
+            city: formData.city || undefined,
+            state: formData.state || undefined,
+            zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+            service_specific_data: formData,
+          });
+          setDraftApplicationId(draftApplication.id);
+          console.log('✅ Draft application created:', draftApplication.id);
+        } catch (error) {
+          console.error('Error creating draft application:', error);
           toast({
-            title: "Documents Required",
-            description: "Please upload at least one document before proceeding.",
+            title: "Error",
+            description: "Failed to create application draft. Please try again.",
             variant: "destructive",
           });
           return;
         }
-        
-        // For non-reviewable services, create draft application after validation
-        if (!tile?.requires_review && !draftApplicationId) {
-          try {
-            const draftApplication = await createApplication.mutateAsync({
-              tile_id: tile.id,
-              user_id: profile?.id || '',
-              customer_id: tile.customer_id,
-              status: 'draft',
-              payment_status: 'unpaid',
-              base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
-              applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
-              applicant_email: formData.email || undefined,
-              applicant_phone: formData.phone || formData.phone_number || undefined,
-              business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
-              street_address: formData.address || formData.street_address || formData.street || undefined,
-              apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
-              city: formData.city || undefined,
-              state: formData.state || undefined,
-              zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
-              service_specific_data: formData,
-            });
-            setDraftApplicationId(draftApplication.id);
-            console.log('✅ Draft application created:', draftApplication.id);
-          } catch (error) {
-            console.error('Error creating draft application:', error);
-            toast({
-              title: "Error",
-              description: "Failed to create application draft. Please try again.",
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-        
-        // Move to next step (time slot or review)
-        setCurrentSubStep(1); // Reset for next time
-        setCurrentStep(2);
-        if (dialogContentRef.current) {
-          dialogContentRef.current.scrollTop = 0;
-        }
-        return;
       }
     } else if (currentStep === 2 && tile?.has_time_slots) {
       // Validate booking step
@@ -388,19 +366,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   };
 
   const handlePrevious = () => {
-    if (currentStep === 1) {
-      // Handle subtab navigation
-      if (currentSubStep === 2) {
-        setCurrentSubStep(1);
-        if (dialogContentRef.current) {
-          dialogContentRef.current.scrollTop = 0;
-        }
-        return;
-      }
-      // If on first subtab, do nothing (Cancel button will close)
-      return;
-    }
-    
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       // Scroll to top of dialog content
@@ -808,8 +773,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           onSubmit={currentStep === totalSteps && tile.requires_review ? handleSubmitApplication : undefined}
           onPrevious={currentStep > 1 ? handlePrevious : undefined}
           isNextDisabled={
-            (currentStep === 1 && currentSubStep === 1 && Object.keys(validationResult).length > 0) ||
-            (currentStep === 1 && currentSubStep === 2 && tile.requires_document_upload && uploadedDocuments.length === 0) ||
+            (currentStep === 1 && (Object.keys(validationResult).length > 0 || (tile.requires_document_upload && uploadedDocuments.length === 0))) ||
             (currentStep === 2 && tile.has_time_slots && (!selectedDate || !selectedTime))
           }
           isSubmitDisabled={isSubmitting}
@@ -829,7 +793,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 <span className="text-muted-foreground">Step {currentStep} of {totalSteps}</span>
                 <span className="text-muted-foreground">
                   {currentStep === 1 
-                    ? `Application Details ${currentSubStep === 1 ? '(1/2)' : '(2/2)'}` 
+                    ? 'Application Details' 
                     : tile.has_time_slots && currentStep === 2
                     ? 'Select Time Slot'
                     : 'Review & Submit'}
@@ -903,204 +867,162 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               </Card>
             )}
 
-            {/* Subtabs for Step 1 */}
-            <Tabs 
-              value={`subtab-${currentSubStep}`} 
-              onValueChange={(value) => {
-                const newSubStep = parseInt(value.split('-')[1]);
-                
-                // If trying to navigate to Subtab 2 from Subtab 1, validate first
-                if (newSubStep === 2 && currentSubStep === 1) {
-                  if (Object.keys(validationResult).length > 0) {
-                    setValidationErrors(validationResult);
-                    toast({
-                      title: "Please complete required fields",
-                      description: "Complete all required fields in the application form before proceeding to document upload.",
-                      variant: "destructive",
-                    });
-                    return; // Prevent tab switch
-                  }
-                }
-                
-                setCurrentSubStep(newSubStep);
-                // Scroll to top when switching subtabs
-                if (dialogContentRef.current) {
-                  dialogContentRef.current.scrollTop = 0;
-                }
-              }}
-              className="mb-6"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="subtab-1" className="gap-2">
-                  {Object.keys(validationResult).length === 0 && currentSubStep === 2 ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                  Application Form
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="subtab-2" 
-                  className="gap-2"
-                  disabled={Object.keys(validationResult).length > 0}
-                >
-                  <Upload className="h-4 w-4" />
-                  Document Upload
-                </TabsTrigger>
-              </TabsList>
+            {/* Section 1: Application Information */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <User className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Application Information</h3>
+              </div>
 
-              {/* Subtab 1: Application Form */}
-              <TabsContent value="subtab-1" className="mt-6">
-                {/* Use Profile Information Toggle */}
-                <div className="flex items-center justify-between mb-6 p-4 bg-muted/30 rounded-lg">
-                  <Label htmlFor="use-profile-info" className="text-sm font-medium">
-                    Use Profile Information
-                  </Label>
-                  <Switch
-                    id="use-profile-info"
-                    checked={useAutoPopulate}
-                    onCheckedChange={setUseAutoPopulate}
-                  />
-                </div>
+              {/* Use Profile Information Toggle */}
+              <div className="flex items-center justify-between mb-6 p-4 bg-muted/30 rounded-lg">
+                <Label htmlFor="use-profile-info" className="text-sm font-medium">
+                  Use Profile Information
+                </Label>
+                <Switch
+                  id="use-profile-info"
+                  checked={useAutoPopulate}
+                  onCheckedChange={setUseAutoPopulate}
+                />
+              </div>
 
-                {/* Form Fields Card */}
-                <Card>
-                  <CardContent className="pt-6 space-y-6">
-                    {tile.form_fields?.map((field: any) => (
-                      <div key={field.id} className="space-y-2">
-                        <Label htmlFor={field.id} className="text-sm font-medium">
-                          {field.label}
-                          {field.required && <span className="text-destructive ml-1">*</span>}
-                        </Label>
-                        {renderFormField(field)}
-                        {validationErrors[field.id] && (
-                          <p className="text-sm text-destructive flex items-center gap-1">
-                            <AlertCircle className="h-4 w-4" />
-                            {validationErrors[field.id]}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* User-Defined Amount Field */}
-                    {tile.allow_user_defined_amount && (
-                      <div className="space-y-2">
-                        <Label htmlFor="amount" className="text-sm font-medium">
-                          Amount <span className="text-destructive ml-1">*</span>
-                        </Label>
-                        <Input
-                          id="amount"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={formData.amount_cents ? (formData.amount_cents / 100).toFixed(2) : ''}
-                          onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                          placeholder="Enter amount"
-                          className={validationErrors.amount_cents ? "border-destructive" : ""}
-                        />
-                        {validationErrors.amount_cents && (
-                          <p className="text-sm text-destructive flex items-center gap-1">
-                            <AlertCircle className="h-4 w-4" />
-                            {validationErrors.amount_cents}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Subtab 2: Document Upload */}
-              <TabsContent value="subtab-2" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-primary" />
-                      <CardTitle className="text-lg">Document Upload</CardTitle>
+              {/* Form Fields Card */}
+              <Card>
+                <CardContent className="pt-6 space-y-6">
+                  {tile.form_fields?.map((field: any) => (
+                    <div key={field.id} className="space-y-2">
+                      <Label htmlFor={field.id} className="text-sm font-medium">
+                        {field.label}
+                        {field.required && <span className="text-destructive ml-1">*</span>}
+                      </Label>
+                      {renderFormField(field)}
+                      {validationErrors[field.id] && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-4 w-4" />
+                          {validationErrors[field.id]}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Supporting Documents {tile.requires_document_upload ? '(Required)' : '(Optional)'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Upload any documents that support your application
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Drag and Drop Upload Area */}
-                    <div
-                      onDragEnter={handleDragEnter}
-                      onDragLeave={handleDragLeave}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                      className={`
-                        border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                        transition-colors duration-200
-                        ${dragActive 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-muted-foreground/25 hover:border-primary/50'
-                        }
-                      `}
-                      onClick={() => document.getElementById('file-upload-input')?.click()}
-                    >
-                      <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-sm font-medium mb-2">Click to upload or drag and drop</p>
-                      <p className="text-xs text-muted-foreground">
-                        PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
-                      </p>
-                      <input
-                        id="file-upload-input"
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                        onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-                        className="hidden"
+                  ))}
+
+                  {/* User-Defined Amount Field */}
+                  {tile.allow_user_defined_amount && (
+                    <div className="space-y-2">
+                      <Label htmlFor="amount" className="text-sm font-medium">
+                        Amount <span className="text-destructive ml-1">*</span>
+                      </Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.amount_cents ? (formData.amount_cents / 100).toFixed(2) : ''}
+                        onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                        placeholder="Enter amount"
+                        className={validationErrors.amount_cents ? "border-destructive" : ""}
                       />
+                      {validationErrors.amount_cents && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-4 w-4" />
+                          {validationErrors.amount_cents}
+                        </p>
+                      )}
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-                    {/* Uploaded Documents List */}
-                    {uploadedDocuments.length > 0 && (
-                      <div className="space-y-2">
-                        {uploadedDocuments.map((doc) => (
-                          <div
-                            key={doc.id}
-                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                          >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              {getFileIcon(doc.type)}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{doc.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatFileSize(doc.size)}
-                                </p>
-                                {doc.uploadStatus === 'uploading' && (
-                                  <Progress value={doc.uploadProgress} className="h-1 mt-1" />
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {doc.uploadStatus === 'completed' && (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
+            {/* Section 2: Document Upload */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Upload className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Document Upload</h3>
+                <Badge variant={tile.requires_document_upload ? "default" : "secondary"} className="ml-2">
+                  {tile.requires_document_upload ? 'Required' : 'Optional'}
+                </Badge>
+              </div>
+
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Upload any documents that support your application
+                  </p>
+
+                  {/* Drag and Drop Upload Area */}
+                  <div
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    className={`
+                      border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                      transition-colors duration-200
+                      ${dragActive 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-muted-foreground/25 hover:border-primary/50'
+                      }
+                    `}
+                    onClick={() => document.getElementById('file-upload-input')?.click()}
+                  >
+                    <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-sm font-medium mb-2">Click to upload or drag and drop</p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
+                    </p>
+                    <input
+                      id="file-upload-input"
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Uploaded Documents List */}
+                  {uploadedDocuments.length > 0 && (
+                    <div className="space-y-2">
+                      {uploadedDocuments.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {getFileIcon(doc.type)}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{doc.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatFileSize(doc.size)}
+                              </p>
+                              {doc.uploadStatus === 'uploading' && (
+                                <Progress value={doc.uploadProgress} className="h-1 mt-1" />
                               )}
-                              {doc.uploadStatus === 'error' && (
-                                <AlertCircle className="h-4 w-4 text-destructive" />
-                              )}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveDocument(doc.id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                          <div className="flex items-center gap-2">
+                            {doc.uploadStatus === 'completed' && (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            )}
+                            {doc.uploadStatus === 'error' && (
+                              <AlertCircle className="h-4 w-4 text-destructive" />
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveDocument(doc.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Review Required Info Box */}
             {tile.requires_review && (
@@ -1119,7 +1041,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 type="button" 
                 variant="outline" 
                 onClick={() => {
-                  if (currentStep === 1 && currentSubStep === 1) {
+                  if (currentStep === 1) {
                     onClose();
                   } else {
                     handlePrevious();
@@ -1127,7 +1049,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 }}
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                {currentStep === 1 && currentSubStep === 1 ? 'Cancel' : 'Previous'}
+                {currentStep === 1 ? 'Cancel' : 'Previous'}
               </Button>
               <Button 
                 type="button"
