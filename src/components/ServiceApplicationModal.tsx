@@ -868,27 +868,24 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             )}
 
             {/* Section 1: Application Information */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <User className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Application Information</h3>
-              </div>
-
-              {/* Use Profile Information Toggle */}
-              <div className="flex items-center justify-between mb-6 p-4 bg-muted/30 rounded-lg">
-                <Label htmlFor="use-profile-info" className="text-sm font-medium">
-                  Use Profile Information
-                </Label>
-                <Switch
-                  id="use-profile-info"
-                  checked={useAutoPopulate}
-                  onCheckedChange={setUseAutoPopulate}
-                />
-              </div>
-
-              {/* Form Fields Card */}
-              <Card>
-                <CardContent className="pt-6 space-y-6">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Application Information
+                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="use-profile-info" className="text-sm text-muted-foreground">
+                    Use Profile Information
+                  </Label>
+                  <Switch
+                    id="use-profile-info"
+                    checked={useAutoPopulate}
+                    onCheckedChange={setUseAutoPopulate}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
                   {tile.form_fields?.map((field: any) => (
                     <div key={field.id} className="space-y-2">
                       <Label htmlFor={field.id} className="text-sm font-medium">
@@ -930,24 +927,28 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     </div>
                   )}
                 </CardContent>
-              </Card>
-            </div>
+            </Card>
 
             {/* Section 2: Document Upload */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Upload className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Document Upload</h3>
-                <Badge variant={tile.requires_document_upload ? "default" : "secondary"} className="ml-2">
-                  {tile.requires_document_upload ? 'Required' : 'Optional'}
-                </Badge>
-              </div>
-
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Upload any documents that support your application
-                  </p>
+            <Card className="animate-fade-in mt-4" style={{ animationDelay: '0.1s' }}>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Document Upload
+                  <Badge variant={tile.requires_document_upload ? "default" : "secondary"} className="ml-2">
+                    {tile.requires_document_upload ? 'Required' : 'Optional'}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">
+                      Supporting Documents {tile.requires_document_upload && <span className="text-destructive ml-1">*</span>}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Upload any documents that support your application
+                    </p>
+                  </div>
 
                   {/* Drag and Drop Upload Area */}
                   <div
@@ -1021,8 +1022,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     </div>
                   )}
                 </CardContent>
-              </Card>
-            </div>
+            </Card>
 
             {/* Review Required Info Box */}
             {tile.requires_review && (
