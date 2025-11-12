@@ -18,7 +18,7 @@ export const useBookedTimeSlots = (tileId: string, date: string) => {
         .select('id, booking_date, booking_start_time, booking_end_time, status')
         .eq('tile_id', tileId)
         .eq('booking_date', date)
-        .not('status', 'in', '(denied,rejected,withdrawn,cancelled,expired)');
+        .not('status', 'in', '(draft,denied,rejected,withdrawn,cancelled,expired)');
       
       if (error) throw error;
       return (data || []) as BookedSlot[];
