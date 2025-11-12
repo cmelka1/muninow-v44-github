@@ -3636,6 +3636,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      cleanup_abandoned_bookings: { Args: never; Returns: undefined }
       cleanup_abandoned_tax_drafts: {
         Args: { p_hours_threshold?: number }
         Returns: number
