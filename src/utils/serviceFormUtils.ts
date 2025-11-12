@@ -26,3 +26,9 @@ export {
   validateTimeSlot,
   validateApplicationForm,
 } from './serviceFormValidators';
+
+// Re-export address parsing utilities
+export {
+  parseAddressString,
+  enrichFormDataWithParsedAddress,
+} from './addressParser';

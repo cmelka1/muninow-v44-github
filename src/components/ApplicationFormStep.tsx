@@ -28,6 +28,7 @@ import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { isAddressField, validateFile, type FormFieldConfig } from '@/utils/serviceFormUtils';
+import { enrichFormDataWithParsedAddress } from '@/utils/addressParser';
 
 interface UploadedDocument {
   id: string;
@@ -328,6 +329,19 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const handleNext = () => {
+    // Enrich form data with parsed address components if needed
+    const enrichedFormData = enrichFormDataWithParsedAddress(formData);
+    
+    // Update form data with parsed components before proceeding
+    if (enrichedFormData !== formData) {
+      onFormDataChange(enrichedFormData);
+    }
+    
+    // Proceed to next step
+    onNext();
+  };
+
   return (
     <>
       {/* Application Directions Box */}
@@ -602,7 +616,7 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
         </Button>
         <Button
           type="button"
-          onClick={onNext}
+          onClick={handleNext}
           disabled={isSubmitting}
           className="flex items-center gap-2"
         >
