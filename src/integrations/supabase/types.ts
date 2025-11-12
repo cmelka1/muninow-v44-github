@@ -3656,15 +3656,16 @@ export type Database = {
       }
       create_booking_with_conflict_check: {
         Args: {
-          p_amount_cents: number
-          p_booking_date: string
-          p_booking_end_time: string
-          p_booking_start_time: string
-          p_booking_timezone: string
-          p_customer_id: string
-          p_form_data: Json
-          p_tile_id: string
-          p_user_id: string
+          p_amount_cents?: number
+          p_application_id?: string
+          p_booking_date?: string
+          p_booking_end_time?: string
+          p_booking_start_time?: string
+          p_booking_timezone?: string
+          p_customer_id?: string
+          p_form_data?: Json
+          p_tile_id?: string
+          p_user_id?: string
         }
         Returns: Json
       }
