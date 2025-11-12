@@ -21,16 +21,27 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Missing authorization header');
       throw new Error('No authorization header');
     }
 
     // Verify the user is authenticated
     const token = authHeader.replace('Bearer ', '');
+    console.log('Verifying JWT token...');
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !user) {
+    if (authError) {
+      console.error('JWT verification error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      console.error('No user found after JWT verification');
       throw new Error('Unauthorized');
     }
+    
+    console.log('User authenticated successfully:', user.id);
 
     // Parse request body to get merchant_id if provided
     let merchantId = null;
