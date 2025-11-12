@@ -114,6 +114,8 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
         return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
       case 'expired':
         return <Badge variant="secondary" className="bg-amber-100 text-amber-800">Expired</Badge>;
+      case 'reserved':
+        return <Badge variant="secondary" className="bg-emerald-600 text-white">Reserved</Badge>;
       default:
         return <Badge variant="outline">{status.replace('_', ' ').toUpperCase()}</Badge>;
     }
