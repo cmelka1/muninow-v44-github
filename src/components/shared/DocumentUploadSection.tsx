@@ -126,18 +126,14 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({
       try {
         const { path } = await uploadFile(file, documentId);
         
-        // Update document status
-        const updatedDocuments = documents.map(doc =>
-          doc.id === documentId
-            ? { ...doc, uploadStatus: 'completed' as const, filePath: path, uploadProgress: 100 }
-            : doc
+        // Update document status to completed
+        onDocumentsChange(
+          documents.map(doc =>
+            doc.id === documentId
+              ? { ...doc, uploadStatus: 'completed' as const, filePath: path, uploadProgress: 100 }
+              : doc
+          )
         );
-        onDocumentsChange([...updatedDocuments, newDocument].filter(d => d.id !== documentId).concat({
-          ...newDocument,
-          uploadStatus: 'completed',
-          filePath: path,
-          uploadProgress: 100,
-        }));
 
         toast({
           title: 'Upload Successful',
@@ -146,13 +142,14 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({
       } catch (error) {
         console.error('Upload error:', error);
         
-        // Update document with error
-        const updatedDocuments = documents.map(doc =>
-          doc.id === documentId
-            ? { ...doc, uploadStatus: 'error' as const, error: 'Upload failed' }
-            : doc
+        // Update document status to error
+        onDocumentsChange(
+          documents.map(doc =>
+            doc.id === documentId
+              ? { ...doc, uploadStatus: 'error' as const, error: 'Upload failed' }
+              : doc
+          )
         );
-        onDocumentsChange(updatedDocuments);
 
         toast({
           title: 'Upload Failed',
