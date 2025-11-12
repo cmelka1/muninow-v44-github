@@ -252,7 +252,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             user_id: profile?.id || '',
             customer_id: tile.customer_id,
             status: 'draft',
-            payment_status: 'unpaid',
+            payment_status: !tile.requires_payment ? 'not_required' : 'unpaid',
             base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
             ...applicantData,
             service_specific_data: formData,
