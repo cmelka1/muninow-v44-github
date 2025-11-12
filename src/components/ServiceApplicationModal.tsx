@@ -28,6 +28,7 @@ import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog'
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { format } from 'date-fns';
 import ServiceApplicationReviewStep from './ServiceApplicationReviewStep';
+import { TimeSlotBookingStep } from './TimeSlotBookingStep';
 import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
 import { InlinePaymentFlow } from './payment/InlinePaymentFlow';
 import { useNavigate } from 'react-router-dom';
@@ -596,36 +597,15 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           />
         ) : currentStep === 2 && tile.has_time_slots ? (
           /* Time Slot Booking Step */
-          <>
-            <TimeSlotBooking
-              tile={tile}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              onDateSelect={setSelectedDate}
-              onTimeSelect={setSelectedTime}
-            />
-            
-            <div className="flex justify-between pt-6">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handlePrevious}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <Button 
-                type="button"
-                onClick={handleNext}
-                disabled={!selectedDate || !selectedTime}
-                className="flex items-center gap-2"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </>
+          <TimeSlotBookingStep
+            tile={tile}
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            onDateSelect={setSelectedDate}
+            onTimeSelect={setSelectedTime}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+          />
         ) : (
           /* Review Step */
           <>
