@@ -96,6 +96,11 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
     onFormDataChange({
       ...formData,
       [fieldId]: fullAddress,
+      // Store parsed components for extractApplicantData
+      street_address: addressComponents.streetAddress,
+      city: addressComponents.city,
+      state: addressComponents.state,
+      zip_code: addressComponents.zipCode,
     });
     clearFieldError(fieldId);
   };
