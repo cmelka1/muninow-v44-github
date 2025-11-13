@@ -115,8 +115,9 @@ export function enrichFormDataWithParsedAddress(
   
   return {
     ...formData,
-    // CRITICAL: Use parsed street address first to ensure only street portion is stored
-    // This prevents storing the full address string in the street_address field
+    // Update BOTH the original field AND street_address with parsed street portion
+    // This ensures extractApplicantData gets the street-only value regardless of which field it checks
+    [addressField]: parsed.street_address || formData[addressField],
     street_address: parsed.street_address || formData.street_address,
     city: formData.city || parsed.city,
     state: formData.state || parsed.state,
