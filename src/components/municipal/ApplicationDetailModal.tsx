@@ -64,19 +64,46 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
     }
   };
 
+  // Helper to format field names with underscores to proper labels
+  const formatFieldLabel = (key: string): string => {
+    return key
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Helper to format applicant address
+  const formatApplicantAddress = (app: any): string => {
+    const full = (app?.street_address || '').trim();
+    const city = (app?.city || '').trim();
+    const state = (app?.state || '').trim();
+    const zip = (app?.zip_code || '').trim();
+
+    // Heuristic: if street_address already looks like a full address, use it as-is
+    const looksFull = full.includes(',') || /[A-Z]{2}\s*,?\s*\d{5}/.test(full);
+    if (full && looksFull) {
+      return full;
+    }
+
+    // Otherwise assemble from components
+    const parts = [
+      full || undefined,
+      app?.apt_number ? `Apt ${app.apt_number}` : undefined,
+      city || undefined,
+      state || undefined,
+      zip || undefined,
+    ].filter(Boolean);
+
+    return parts.length > 0 ? parts.join(', ') : '';
+  };
+
   // Get applicant information from structured fields
   const applicantInfo = {
     'Name': application.applicant_name,
     'Email': application.applicant_email,
     'Phone': application.applicant_phone,
     'Business Name': application.business_legal_name,
-    'Address': [
-      application.street_address,
-      application.apt_number && `Apt ${application.apt_number}`,
-      application.city,
-      application.state,
-      application.zip_code,
-    ].filter(Boolean).join(', '),
+    'Address': formatApplicantAddress(application),
     'Additional Information': application.additional_information,
   };
 
@@ -169,11 +196,11 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
                 if (skipFields.includes(key.toLowerCase())) return null;
                 
                 const field = formFields.find(f => f.id === key);
-                const fieldLabel = field?.label || key;
+                const fieldLabel = field?.label || formatFieldLabel(key);
                 
                 return (
                   <div key={key} className="flex justify-between">
-                    <span className="text-sm text-muted-foreground capitalize">
+                    <span className="text-sm text-muted-foreground">
                       {fieldLabel}:
                     </span>
                     <span className="text-sm font-medium">

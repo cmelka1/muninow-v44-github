@@ -114,6 +114,44 @@ const ServiceApplicationDetail: React.FC = () => {
     }
   };
 
+  // Helper to format field names with underscores to proper labels
+  const formatFieldLabel = (key: string): string => {
+    return key
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Helper to format applicant address, handling cases where street_address contains full address
+  const formatApplicantAddress = (app: any): string | undefined => {
+    const full = (app?.street_address || '').trim();
+    const city = (app?.city || '').trim();
+    const state = (app?.state || '').trim();
+    const zip = (app?.zip_code || '').trim();
+
+    // Heuristic: if street_address already looks like a full address (contains comma or state/zip pattern), use it as-is
+    const looksFull = full.includes(',') || /[A-Z]{2}\s*,?\s*\d{5}/.test(full);
+    if (full && looksFull) {
+      return full;
+    }
+
+    // Otherwise assemble from components
+    const parts = [
+      full || undefined,
+      app?.apt_number ? `Apt ${app.apt_number}` : undefined,
+      city || undefined,
+      state || undefined,
+      zip || undefined,
+    ].filter(Boolean);
+
+    if (parts.length > 0) {
+      return parts.join(', ');
+    }
+
+    // Fallback to service_specific_data address if present
+    return app?.service_specific_data?.address || undefined;
+  };
+
   const renderApplicationData = () => {
     const applicantData = [
       { label: 'Applicant Name', value: application?.applicant_name },
@@ -122,13 +160,7 @@ const ServiceApplicationDetail: React.FC = () => {
       { label: 'Business Name', value: application?.business_legal_name },
       { 
         label: 'Address', 
-        value: [
-          application?.street_address,
-          application?.apt_number && `Apt ${application.apt_number}`,
-          application?.city,
-          application?.state,
-          application?.zip_code,
-        ].filter(Boolean).join(', ') || undefined 
+        value: formatApplicantAddress(application)
       },
       
     ];
@@ -146,7 +178,7 @@ const ServiceApplicationDetail: React.FC = () => {
       if (skipFields.includes(key.toLowerCase()) || !value) return null;
       
       const field = formFields.find((f: any) => f.id === key);
-      const fieldLabel = field?.label || key;
+      const fieldLabel = field?.label || formatFieldLabel(key);
       
       return { label: fieldLabel, value: String(value) };
     }).filter(Boolean);
