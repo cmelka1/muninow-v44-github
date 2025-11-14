@@ -138,6 +138,14 @@ Deno.serve(async (req) => {
       postal_code: billingAddress.postal_code
     });
 
+    // Log token structure for debugging
+    console.log('🍎 🔍 Apple Pay token structure:', {
+      hasToken: !!applePayToken.token,
+      hasPaymentData: !!applePayToken.paymentData,
+      tokenKeys: Object.keys(applePayToken),
+      nestedTokenKeys: applePayToken.token ? Object.keys(applePayToken.token) : []
+    });
+
     // Create payment instrument with Finix
     console.log('🍎 💳 Creating payment instrument with Finix...');
     const finixAPI = new FinixAPI();
@@ -145,7 +153,7 @@ Deno.serve(async (req) => {
       type: 'APPLE_PAY',
       identity: userFinixIdentity,
       merchantIdentity: merchantData.finixIdentityId,
-      applePayToken: applePayToken.token?.paymentData || applePayToken.paymentData
+      applePayToken: applePayToken
     });
 
     if (!instrumentResult.success || !instrumentResult.id) {
