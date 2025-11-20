@@ -51,6 +51,8 @@ import BusinessLicenses from "./pages/BusinessLicenses";
 import { BusinessLicenseDetail } from "./pages/BusinessLicenseDetail";
 import Taxes from "./pages/Taxes";
 import OtherServices from "./pages/OtherServices";
+import SportReservations from "./pages/SportReservations";
+import MunicipalSportReservations from "./pages/MunicipalSportReservations";
 import PermitOverview from "./pages/PermitOverview";
 import PermitDetail from "./pages/PermitDetail";
 import PermitCertificate from "./pages/PermitCertificate";
@@ -133,6 +135,11 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
           <Route path="/other-services" element={<OtherServices />} />
+          <Route path="/sport-reservations" element={
+            <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
+              <SportReservations />
+            </SimpleProtectedRoute>
+          } />
           <Route path="/service-application/:applicationId" element={
             <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
               <SidebarProvider>
@@ -324,6 +331,13 @@ const App = () => (
             <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
               <MunicipalLayout>
                 <MunicipalOtherServices />
+              </MunicipalLayout>
+            </SimpleProtectedRoute>
+          } />
+          <Route path="/municipal/sport-reservations" element={
+            <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
+              <MunicipalLayout>
+                <MunicipalSportReservations />
               </MunicipalLayout>
             </SimpleProtectedRoute>
           } />
