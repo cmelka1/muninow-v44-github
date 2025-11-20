@@ -35,8 +35,11 @@ const OtherServices: React.FC = () => {
     error: tilesError 
   } = useMunicipalServiceTiles(selectedMunicipality?.customer_id);
 
+  // Filter OUT sport facilities (has_time_slots = true)
+  const nonSportTiles = serviceTiles.filter(tile => tile.has_time_slots !== true);
+
   // Filter tiles based on search term
-  const filteredTiles = serviceTiles.filter(tile =>
+  const filteredTiles = nonSportTiles.filter(tile =>
     tile.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (tile.description && tile.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
