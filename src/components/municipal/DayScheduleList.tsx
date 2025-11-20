@@ -63,6 +63,7 @@ export const DayScheduleList: React.FC<DayScheduleListProps> = ({
             facilityName={facility?.title || 'Unknown Facility'}
             viewMode="expanded"
             onClick={() => onBookingClick(booking.id)}
+            onActionComplete={() => window.location.reload()}
           />
         );
       })}
