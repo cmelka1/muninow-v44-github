@@ -108,7 +108,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
             <div className="h-12 font-semibold text-center border-b pb-2 mb-2">
               {facility.title}
             </div>
-            <div className="relative" style={{ height: `${timeSlots.length * 24}px` }}>
+            <div className="relative" style={{ height: `${timeSlots.length * 48}px` }}>
               {/* Grid lines */}
               {timeSlots.map((time, index) => (
                 <div

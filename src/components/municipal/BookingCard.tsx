@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Clock, User, DollarSign } from 'lucide-react';
+import { InlineApprovalMenu } from './InlineApprovalMenu';
 
 interface BookingCardProps {
   booking: {
@@ -16,6 +17,7 @@ interface BookingCardProps {
   facilityName: string;
   viewMode?: 'compact' | 'expanded';
   onClick?: () => void;
+  onActionComplete?: () => void;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   facilityName,
   viewMode = 'expanded',
   onClick,
+  onActionComplete,
   className,
 }) => {
   const getStatusColor = (status: string) => {
@@ -112,10 +115,16 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           )}
         </div>
 
-        <div className="flex gap-2 mt-3">
+        <div className="flex items-center justify-between gap-2 mt-3">
           <Badge variant={getStatusBadgeVariant(booking.status)}>
             {booking.status.replace('_', ' ')}
           </Badge>
+          {(booking.status === 'pending' || booking.status === 'under_review') && (
+            <InlineApprovalMenu 
+              applicationId={booking.id} 
+              onActionComplete={onActionComplete}
+            />
+          )}
         </div>
       </CardContent>
     </Card>
