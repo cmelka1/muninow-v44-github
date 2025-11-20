@@ -79,6 +79,12 @@ export interface ServiceApplication {
   additional_information?: string;
   service_specific_data?: Record<string, any>;
   
+  // Booking/Time Slot Information
+  booking_date?: string;
+  booking_start_time?: string;
+  booking_end_time?: string;
+  booking_timezone?: string;
+  
   created_at: string;
   updated_at: string;
 }

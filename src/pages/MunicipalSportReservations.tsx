@@ -1,0 +1,141 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, FileText, DollarSign, Settings } from 'lucide-react';
+import { ServiceTileManager } from '@/components/municipal/ServiceTileManager';
+import { ApplicationHistoryTable } from '@/components/municipal/ApplicationHistoryTable';
+import { useMunicipalServiceTiles } from '@/hooks/useMunicipalServiceTiles';
+import { useServiceApplications } from '@/hooks/useServiceApplications';
+import { useAuth } from '@/contexts/AuthContext';
+
+const MunicipalSportReservations = () => {
+  const { profile } = useAuth();
+  
+  // Fetch service tiles and applications for this municipality
+  const { data: serviceTiles, isLoading: tilesLoading } = useMunicipalServiceTiles(profile?.customer_id);
+  const { data: applications, isLoading: applicationsLoading } = useServiceApplications();
+  
+  // Filter for sport facilities only (has_time_slots = true)
+  const sportTiles = serviceTiles?.filter(tile => tile.has_time_slots === true) || [];
+  
+  // Filter applications for sport facilities and exclude drafts
+  const sportApplications = applications?.filter(app => {
+    const isFromSportTile = sportTiles.some(tile => tile.id === app.tile_id);
+    return app.customer_id === profile?.customer_id && app.status !== 'draft' && isFromSportTile;
+  }) || [];
+  
+  // Calculate stats
+  const activeFacilities = sportTiles.filter(tile => tile.is_active)?.length || 0;
+  const totalBookings = sportApplications.length;
+  const upcomingReservations = sportApplications.filter(app => 
+    app.status === 'approved' && app.booking_date && new Date(app.booking_date) >= new Date()
+  ).length;
+  const thisMonthRevenue = sportApplications
+    .filter(app => {
+      const appDate = new Date(app.created_at);
+      const now = new Date();
+      return appDate.getMonth() === now.getMonth() && 
+             appDate.getFullYear() === now.getFullYear() && 
+             app.status === 'issued';
+    })
+    .reduce((sum, app) => {
+      const tile = sportTiles.find(t => t.id === app.tile_id);
+      return sum + (tile?.amount_cents || 0);
+    }, 0);
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Sport Facility Management</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage sport facility reservations, schedules, and bookings
+          </p>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Facilities</CardTitle>
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeFacilities}</div>
+            <p className="text-xs text-muted-foreground">
+              {sportTiles.length} total facilities
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalBookings}</div>
+            <p className="text-xs text-muted-foreground">
+              All time reservations
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Upcoming Reservations</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{upcomingReservations}</div>
+            <p className="text-xs text-muted-foreground">
+              Approved bookings ahead
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue This Month</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${(thisMonthRevenue / 100).toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              From facility bookings
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="bookings" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="bookings">Booking History</TabsTrigger>
+          <TabsTrigger value="facilities">Facility Management</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="facilities" className="space-y-4">
+          <ServiceTileManager 
+            serviceTiles={sportTiles} 
+            isLoading={tilesLoading}
+            customerId={profile?.customer_id}
+          />
+        </TabsContent>
+        
+        <TabsContent value="bookings" className="space-y-4">
+          <ApplicationHistoryTable 
+            applications={sportApplications}
+            serviceTiles={sportTiles}
+            isLoading={applicationsLoading}
+            totalCount={totalBookings}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default MunicipalSportReservations;
